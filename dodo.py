@@ -1,18 +1,64 @@
-import pynliner
 import os
 import sys
+from shutil import copyfile
 import re
-import jinja2
-import latex
-import pandas as pd
+import markdown
+import pynliner
 import numpy as np
+import pandas as pd
+from pandas.api.types import CategoricalDtype
 from icalendar import Event, Calendar
 from datetime import datetime, date, timedelta
 from tabula import read_pdf
-
-# For doit to be able to store datetime objects
+import latex
+import jinja2
 import json
-json.JSONEncoder.default = lambda self,obj: (obj.isoformat() if isinstance(obj, datetime) else None)
+
+DATE_FORMAT = "%Y-%m-%d"
+TIME_FORMAT = "%H:%M:%S"
+
+
+def object_hook(obj):
+    if '_type' not in obj:
+        return obj
+    type = obj['_type']
+    if type == 'datetime':
+        return datetime.strptime(obj['value'],
+                                 DATE_FORMAT + ' ' + TIME_FORMAT)
+    elif type == 'date':
+        return datetime.strptime(obj['value'], DATE_FORMAT).date()
+    elif type == 'DataFrame':
+        return pd.read_json(obj['value'])
+    return obj
+
+
+json._default_decoder = json.JSONDecoder(
+    object_pairs_hook=None,
+    object_hook=object_hook)
+
+
+def json_encoder_default(self, obj):
+    if isinstance(obj, pd.DataFrame):
+        return {
+            "_type": "DataFrame",
+            "value": obj.to_json()
+        }
+    elif isinstance(obj, datetime):
+        return {
+            "_type": "datetime",
+            "value": obj.strftime("%s %s" % (
+                DATE_FORMAT, TIME_FORMAT
+            ))
+        }
+    elif isinstance(obj, date):
+        return {
+            "_type": "date",
+            "value": obj.strftime(DATE_FORMAT)
+        }
+    return json.JSONEncoder.default(self, obj)
+
+
+json.JSONEncoder.default = json_encoder_default
 
 
 CONFIG = {
@@ -23,27 +69,125 @@ CONFIG = {
 }
 
 
+def read_xls_details(fn):
+    sts = ['MCF', 'PR', 'PRAG', 'PRCE', 'PAST', 'ECC', 'Doct', 'ATER',
+           'Vacataire']
+    status_type = CategoricalDtype(categories=sts, ordered=True)
+
+    return pd.read_excel(fn, dtype={
+        'Statut': status_type
+    })
+
+
+def task_xls_inst_details():
+    """Fichier Excel des intervenants par UV avec détails"""
+
+    def xls_inst_details(inst_uv, inst_details, target):
+        inst_uv = pd.read_excel(inst_uv)
+        inst_details = pd.read_excel(inst_details)
+
+        # Add details from inst_details
+        df = inst_uv.merge(inst_details, how='left',
+                           left_on='Intervenants',
+                           right_on='Intervenants')
+
+        df.to_excel(target, index=False)
+
+    insts_details = 'documents/intervenants.xlsx'
+    for uv in CONFIG['UV']:
+        inst_uv = f'documents/{uv}_intervenants_rempli.xlsx'
+        target = f'generated/{uv}_intervenants_details.xlsx'
+        if os.path.exists(inst_uv):
+            yield {
+                'name': uv,
+                'file_dep': [inst_uv, insts_details],
+                'targets': [target],
+                'actions': [(xls_inst_details, [inst_uv, insts_details, target])]
+            }
+
+
+def create_insts_list(df):
+    "Agrège les données d'affectation des Cours/TD/TP"
+
+    def course_list(e):
+        "Return course list like C1, D2, T1A"
+
+        def lib_list(lib):
+            m = re.match('([CDT])([0-9]*)([AB]*)', lib)
+            crs = {'C': 0, 'D': 1, 'T': 2}[m.group(1)]
+            no = int('0' + m.group(2))
+            sem = 0 if m.group(3) == 'A' else 1
+            return (crs, no, sem)
+
+        return ', '.join(sorted(e, key=lib_list))
+
+    def score(libs):
+        sc = [0, 0, 0]
+        for lib in libs:
+            ix = {'C': 0, 'D': 1, 'T': 2}[re.search('[CDT]', lib).group()]
+            sc[ix] += 1
+        return tuple(sc)
+
+    def myapply(df):
+        e = df['Lib. créneau'] + df['Semaine'].fillna('')
+        resp = int(df['Responsable'].sum())
+        return pd.Series({
+            'CourseList': course_list(e),
+            'SortCourseList': score(e),
+            'Responsable': resp
+        })
+
+    df = df.groupby('Intervenants')
+    df = df.apply(myapply)
+    df = df.reset_index()
+
+    return(df)
+
+
 def task_xls_UTP():
     """Crée un document Excel pour calcul des heures et remplacements."""
 
     sys.path.append('scripts/')
     from excel_hours import create_excel_file
 
-    def create_excel_file0(inst_fn, target):
-        with open(inst_fn) as fd:
-            instructors = [line.rstrip() for line in fd]
-            create_excel_file(target, instructors)
+    def xls_UTP(xls, raw, details, target):
+        df = pd.read_excel(xls)
+
+        # Add details
+        df_details = read_xls_details(details)
+
+        if df['Intervenants'].isnull().all():
+            # Read from raw file
+            with open(raw) as fd:
+                instructors = [line.rstrip() for line in fd]
+                df_insts = np.DataFrame({'Intervenants': instructors})
+        else:
+            # Aggregate
+            df_insts = create_insts_list(df)
+
+        # Add details from df_details
+        df = df_insts.merge(df_details, how='left',
+                            left_on='Intervenants',
+                            right_on='Intervenants')
+
+        dfs = df.sort_values(['Responsable', 'Statut', 'SortCourseList'],
+                             ascending=False)
+        dfs = dfs.reset_index()
+
+        create_excel_file(target, dfs[['Intervenants', 'Statut']])
 
     for uv in CONFIG['UV']:
-        inst_fn = f'documents/{uv}_instructor_list.raw'
+        xls = f'documents/{uv}_intervenants_rempli.xlsx'
+        raw = f'documents/{uv}_intervenants.raw'
+        details = f'documents/intervenants.xlsx'
         target = f'generated/{uv}_remplacement.xlsx'
-        if os.path.exists(inst_fn):
-            yield {
-                'name': uv,
-                'file_dep': [inst_fn],
-                'targets': [target],
-                'actions': [(create_excel_file0, [inst_fn, target])]
-            }
+        yield {
+            'name': uv,
+            'file_dep': [xls, details],
+            'targets': [target],
+            'actions': [(xls_UTP, [xls, raw, details, target])],
+            'verbosity': 2
+        }
 
 
 def task_utc_uv_list_to_csv():
@@ -87,28 +231,117 @@ def task_utc_uv_list_to_csv():
 
 
 def task_xls_affectation():
-    """Fichier Excel d'affection des créneaux."""
+    """Fichier Excel d'affection des créneaux à remplir."""
 
     def extract_uv_instructor(uv_list_filename, uv, target):
         df = pd.read_csv(uv_list_filename)
         df_uv = df.loc[df['Code enseig.'] == uv, :]
         df_uv_real = df_uv.loc[df['Type créneau'] == 'Groupe actif', :]
 
-        selected_columns = ['Jour', 'Heure début', 'Heure fin', 'Locaux', 'Semaine', 'Lib. créneau']
+        selected_columns = ['Jour', 'Heure début', 'Heure fin', 'Locaux',
+                            'Semaine', 'Lib. créneau']
         df_uv_real = df_uv_real[selected_columns]
-        df_uv_real["Chargés"] = ""
+        df_uv_real['Intervenants'] = ''
+        df_uv_real['Responsable'] = ''
 
-        df_uv_real.to_excel(target, sheet_name='Chargés', index=False)
+        # Copy for modifications
+        df_uv_real.to_excel(target, sheet_name='Intervenants', index=False)
+
+        if os.path.exists(f'documents/{uv}_intervenants_rempli.xlsx'):
+            print(f'documents/{uv}_intervenants_rempli.xlsx obsolète')
+        else:
+            copyfile(target, f'documents/{uv}_intervenants_rempli.xlsx')
 
     for uv in CONFIG['UV']:
         uvlist_csv = 'generated/UTC_UV_list.csv'
-        target = f'generated/{uv}_chargés.xls'
+        target = f'generated/{uv}_intervenants.xlsx'
 
         yield {
             'name': uv,
             'file_dep': [uvlist_csv],
             'targets': [target],
-            'actions': [(extract_uv_instructor, [uvlist_csv, uv, target])]
+            'actions': [(extract_uv_instructor, [uvlist_csv, uv, target])],
+            'verbosity': 2
+        }
+
+
+def task_xls_emploi_du_temps():
+    "Sélection des créneaux pour envoi aux intervenants"
+
+    def xls_emploi_du_temps(xls_details, xls_edt):
+        df = pd.read_excel(xls_details)
+        selected_columns = ['Jour', 'Heure début', 'Heure fin', 'Locaux',
+                            'Semaine', 'Lib. créneau', 'Intervenants']
+        dfs = df[selected_columns]
+        dfs.to_excel(xls_edt, sheet_name='Emploi du temps', index=False)
+
+    for uv in CONFIG['UV']:
+        if os.path.exists(f'documents/{uv}_intervenants_rempli.xlsx'):
+            dep = f'documents/{uv}_intervenants_rempli.xlsx'
+            target = f'generated/{uv}_emploi_du_temps.xlsx'
+            yield {
+                'name': uv,
+                'file_dep': [dep],
+                'targets': [target],
+                'actions': [(xls_emploi_du_temps, [dep, target])],
+                'verbosity': 2
+            }
+
+
+def task_html_inst():
+    "Génère la description des intervenants pour Moodle"
+
+    def html_inst(xls_uv, xls_details, target):
+        df_uv = pd.read_excel(xls_uv)
+        df_uv = create_insts_list(df_uv)
+        df_details = read_xls_details(xls_details)
+
+        # Add details from df_details
+        df = df_uv.merge(df_details, how='left',
+                         left_on='Intervenants',
+                         right_on='Intervenants')
+
+        dfs = df.sort_values(['Responsable', 'Statut', 'SortCourseList'],
+                             ascending=False)
+        dfs = dfs.reset_index()
+
+        insts = []
+        for _, row in dfs.iterrows():
+            insts.append({
+                'inst': row['Intervenants'],
+                'libss': row['CourseList'],
+                'resp': row['Responsable'],
+                'website': row['Website'],
+                'email': row['Email']
+            })
+
+        def contact(info):
+            if not pd.isnull(info['website']):
+                return f'[{info["inst"]}]({info["website"]})'
+            elif not pd.isnull(info['email']):
+                return f'[{info["inst"]}](mailto:{info["email"]})'
+            else:
+                return info['inst']
+
+        env = jinja2.Environment(loader=jinja2.FileSystemLoader('documents/'))
+        # env.globals.update(contact=contact)
+        template = env.get_template('instructors.html.jinja2')
+        md = template.render(insts=insts, contact=contact)
+        html = markdown.markdown(md)
+
+        with open(target, 'w') as fd:
+            fd.write(html)
+
+    for uv in CONFIG['UV']:
+        insts_uv = f'documents/{uv}_intervenants_rempli.xlsx'
+        insts_details = f'documents/intervenants.xlsx'
+        target = f'generated/{uv}_intervenants.html'
+        yield {
+            'name': uv,
+            'file_dep': [insts_uv, 'documents/instructors.html.jinja2'],
+            'targets': [target],
+            'actions': [(html_inst, [insts_uv, insts_details, target])],
+            'verbosity': 2
         }
 
 
@@ -119,20 +352,20 @@ def task_cal_inst():
 
     def create_cal_from_list(uv, uv_list_filename):
         df = pd.read_csv(uv_list_filename)
-        if 'Chargés' not in df.columns:
+        if 'Intervenants' not in df.columns:
             raise Exception('Pas d\'enregistrement des intervenants')
         df_uv = df.loc[df['Code enseig.'] == uv, :]
         df_uv_real = df_uv.loc[df['Type créneau'] == 'Groupe actif', :]
 
         text = r'{name} \\ {room} \\ {author}'
-        for instructor, group in df_uv_real.groupby(['Chargés']):
-            target = f'generated/{uv}_{instructor}_calendrier.pdf'
+        for instructor, group in df_uv_real.groupby(['Intervenants']):
+            target = f'generated/{uv}_{instructor.replace(" ", "_")}_calendrier.pdf'
             create_cal_from_dataframe(group, text, target)
 
     for uv in CONFIG['UV']:
         yield {
             'name': uv,
-            'file_dep': [uv_list],
+            'file_dep': [uv_list, 'documents/calendar_template.tex.jinja2'],
             # 'targets': [target],
             'actions': [(create_cal_from_list, [uv, uv_list])]
         }
@@ -149,15 +382,13 @@ def task_add_instructors():
 
         df_merge = pd.merge(df_csv, df_inst, how='left', on=['Jour', 'Heure début', 'Heure fin', 'Semaine', 'Lib. créneau', 'Locaux'])
 
-        import pdb; pdb.set_trace()
-
         df_merge.to_csv(target, index=False)
 
     target = 'generated/UTC_UV_list_instructors.csv'
     deps = ['generated/UTC_UV_list.csv']
     for uv in CONFIG['UV']:
-        if os.path.exists(f'generated/{uv}_chargés_rempli.xls'):
-            deps.append(f'generated/{uv}_chargés_rempli.xls')
+        if os.path.exists(f'documents/{uv}_intervenants_rempli.xlsx'):
+            deps.append(f'documents/{uv}_intervenants_rempli.xlsx')
 
     return {
         'file_dep': deps,
@@ -202,11 +433,11 @@ def create_cal_from_dataframe(df, text, target):
         elif re.match('^C', name):
             ctype = 'Cours'
 
-        if 'Chargés' in row.keys():
-            if pd.isnull(row['Chargés']):
+        if 'Intervenants' in row.keys():
+            if pd.isnull(row['Intervenants']):
                 author = 'N/A'
             else:
-                author = convert_author(row['Chargés'])
+                author = convert_author(row['Intervenants'])
         else:
             author = 'N/A'
 
@@ -234,7 +465,7 @@ def create_cal_from_dataframe(df, text, target):
     blocks = []
     for hour, group in df.groupby(['Jour', 'Heure début', 'Heure fin']):
         if len(group) > 2:
-            raise StandardError("Trop de créneaux en même temps")
+            raise Exception("Trop de créneaux en même temps")
         elif len(group) == 2:
             group = group.sort_values('Semaine')
             block1 = build_block(group.iloc[0], text, half='atleft')
@@ -261,9 +492,9 @@ def create_cal_from_dataframe(df, text, target):
 
     tex = template.render(blocks=blocks)
 
-    base = os.path.splitext(target)[0]
-    with open(base+'.tex', 'w') as fd:
-        fd.write(tex)
+    # base = os.path.splitext(target)[0]
+    # with open(base+'.tex', 'w') as fd:
+    #     fd.write(tex)
 
     pdf = latex.build_pdf(tex)
     pdf.save_to(target)
@@ -288,7 +519,7 @@ CONFIG['UV'].
         target = 'generated/' + uv + '_calendrier.pdf'
         yield {
             'name': uv,
-            'file_dep': [uv_list],
+            'file_dep': [uv_list, 'documents/calendar_template.tex.jinja2'],
             'targets': [target],
             'actions': [(create_cal_from_list, [uv, uv_list, target])]
         }
@@ -415,7 +646,7 @@ def task_ical_inst():
 
     def create_ical_inst(csv):
         df = pd.read_csv(csv)
-        df = df.loc[~pd.isnull(df['Chargés']), :]
+        df = df.loc[~pd.isnull(df['Intervenants']), :]
 
         planning = create_plannings()
 
@@ -442,13 +673,56 @@ def task_ical_inst():
 
         dfm = pd.concat([df_Cm, df_Dm, df_Tm], ignore_index=True)
 
-        for inst, group in dfm.groupby('Chargés'):
-            output = f'generated/{inst}.ics'
+        for inst, group in dfm.groupby('Intervenants'):
+            output = f'generated/{inst.replace(" ", "_")}.ics'
             write_ical_file(group, output)
 
     return {
         'file_dep': ['generated/UTC_UV_list_instructors.csv'],
         'actions': [(create_ical_inst, deps)]
+    }
+
+
+def task_csv_all_courses():
+    "Fichier csv de tous les créneaux du semestre"
+
+    def csv_all_courses(csv, target):
+        df = pd.read_csv(csv)
+        df = df.loc[df['Code enseig.'].isin(CONFIG['UV'])]
+
+        planning = create_plannings()
+
+        planning_C = planning['C']
+        pl_C = pd.DataFrame(planning_C)
+        pl_C.columns = ['date', 'dayname', 'semaine', 'num', 'nweek']
+
+        df_C = df.loc[df['Lib. créneau'].str.startswith('C'), :]
+        df_Cm = pd.merge(df_C, pl_C, how='left', left_on='Jour', right_on='dayname')
+
+        planning_D = planning['D']
+        pl_D = pd.DataFrame(planning_D)
+        pl_D.columns = ['date', 'dayname', 'semaine', 'num', 'nweek']
+
+        df_D = df.loc[df['Lib. créneau'].str.startswith('D'), :]
+        df_Dm = pd.merge(df_D, pl_D, how='left', left_on='Jour', right_on='dayname')
+
+        planning_T = planning['T']
+        pl_T = pd.DataFrame(planning_T)
+        pl_T.columns = ['date', 'dayname', 'semaine', 'num', 'nweek']
+
+        df_T = df.loc[df['Lib. créneau'].str.startswith('T'), :]
+        df_Tm = pd.merge(df_T, pl_T, how='left', left_on=['Jour', 'Semaine'], right_on=['dayname', 'semaine'])
+
+        dfm = pd.concat([df_Cm, df_Dm, df_Tm], ignore_index=True)
+        dfm.to_csv(target, index=False)
+
+    dep = 'generated/UTC_UV_list_instructors.csv'
+    target = 'generated/UTC_UV_list_créneau.csv'
+
+    return {
+        'file_dep': [dep],
+        'actions': [(csv_all_courses, [dep, target])],
+        'targets': [target]
     }
 
 
@@ -461,7 +735,9 @@ def write_ical_file(dataframe, output):
         m = int(hm[1])
         return(datetime(year=d.year, month=d.month, day=d.day, hour=h, minute=m))
 
-    dataframe['timestamp'] = dataframe.apply(timestamp, axis=1)
+    ts = dataframe.apply(timestamp, axis=1)
+    dataframe.is_copy = False   # SettingWithCopyWarning
+    dataframe['timestamp'] = ts
     df = dataframe.sort_values('timestamp')
 
     cal = Calendar()
@@ -499,24 +775,39 @@ def write_ical_file(dataframe, output):
 
 
 def task_compute_plannings():
-    return {'actions': [(create_plannings,)]}
+    return {'actions': [create_plannings]}
 
 
 def task_html_table():
-    csv = 'generated/UTC_UV_list.csv'
+    """Table HTML des TD/TP"""
 
     def html_table(**kwargs):
         uv = kwargs['uv']
         course = kwargs['course']
-        planning = kwargs['planning']
+        slots = kwargs['slots']
 
-        df = pd.read_csv(csv)
-        df = df.loc[df['Code enseig.'] == uv, :]
-        df = df.loc[df['Activité'] == course, :]
+        # Select wanted slots
+        slots = slots.loc[slots['Code enseig.'] == uv, :]
+        slots = slots.loc[slots['Activité'] == course, :]
 
-        if len(df) == 0:
+        # Return if no slots
+        if len(slots) == 0:
             print("Pas de créneau")
             return
+
+        # Merge when multiple slots on same week
+        if course == 'TP':
+            lb = lambda df: ', '.join(df.semaine + df.num.apply(str))
+        elif course == 'TD':
+            lb = lambda df: ', '.join(df.num.apply(str))
+        elif course == 'Cours':
+            lb = lambda df: ', '.join(df.num.apply(str))
+            # def lb(df):
+            #     if len(df.index) > 1:
+            #         raise Exception('Plusieurs cours en une semaine')
+            #     else:
+        else:
+            raise Exception("Unknown course")
 
         def mondays(beg, end):
             while beg <= end:
@@ -524,27 +815,13 @@ def task_html_table():
                 yield (beg, nbeg)
                 beg = nbeg
 
-        pl = pd.DataFrame(planning)
-        pl.columns = ['date', 'dayname', 'semaine', 'num', 'nweek']
-
-        if course == 'TP':
-            dfm = pd.merge(df, pl, how='left', left_on=['Jour', 'Semaine'], right_on=['dayname', 'semaine'])
-        else:
-            dfm = pd.merge(df, pl, how='left', left_on='Jour', right_on='dayname')
-
-        if course == 'TP':
-            lb = lambda df: ', '.join(df.semaine + df.num.apply(str))
-        elif course == 'TD':
-            lb = lambda df: ', '.join('D' + df.num.apply(str))
-        else:
-            raise Exception("Unknown course")
-
+        # Iterate on each week of semester
         rows = []
         weeks = []
         for (mon, nmon) in mondays(CONFIG['PL_BEG'], CONFIG['PL_END']):
             weeks.append('{}-{}'.format(mon.strftime('%d/%m'),
                                         (nmon-timedelta(days=1)).strftime('%d/%m')))
-            cr_week = dfm.loc[(dfm.date >= mon) & (dfm.date < nmon)]
+            cr_week = slots.loc[(slots.date >= mon) & (slots.date < nmon)]
 
             if len(cr_week) > 0:
                 e = cr_week.groupby('Lib. créneau').apply(lb)
@@ -552,15 +829,18 @@ def task_html_table():
             else:
                 rows.append(pd.Series())
 
+        # Weeks on rows
         df = pd.concat(rows, axis=1).transpose()
 
         # Reorder columns
-        cols = sorted(df.columns.tolist(), key=lambda x: int(re.search('[0-9]+', x).group()))
-        df = df[cols]
+        if len(df.columns) > 1:
+            cols = sorted(df.columns.tolist(), key=lambda x: int(re.search('[0-9]+', x).group()))
+            df = df[cols]
 
         # Give name to indexes
-        df.columns.name = 'Semaine'
+        df.columns.name = 'Séance'
         df.index = weeks
+        df.index.name = 'Semaine'
 
         # Replace NaN
         df = df.fillna('—')
@@ -584,17 +864,133 @@ def task_html_table():
         with open(f'generated/{uv}_{course}_table.html', 'w') as fd:
             fd.write(output)
 
-    for course, short in [('TD', 'D'), ('TP', 'T')]:
+    for course, short in [('TD', 'D'), ('TP', 'T'), ('Cours', 'C')]:
         for uv in CONFIG['UV']:
             yield {
                 'name': f'{uv}{course}',
-                'getargs': {'planning': ('compute_plannings', short)},
                 'actions': [(html_table, [], {'uv': uv, 'course': course})],
+                'getargs': {'slots': ('compute_slots', 'slots')},
                 'targets': [f'generated/{uv}_{course}_table.html'],
-                'file_dep': [csv],
                 'verbosity': 2
             }
 
 
-def task_org_cal():
-    pass
+def task_compute_slots():
+    def compute_slots(**kwargs):
+        planning = kwargs['planning']
+        print(planning)
+        csv_inst_list = kwargs['csv']
+
+        df = pd.read_csv(csv_inst_list)
+        df = df.loc[~pd.isnull(df['Intervenants']), :]
+
+        planning_C = planning['C']
+        pl_C = pd.DataFrame(planning_C)
+        pl_C.columns = ['date', 'dayname', 'semaine', 'num', 'nweek']
+
+        df_C = df.loc[df['Activité'] == 'Cours', :]
+        df_Cm = pd.merge(df_C, pl_C, how='left', left_on='Jour', right_on='dayname')
+
+        planning_D = planning['D']
+        pl_D = pd.DataFrame(planning_D)
+        pl_D.columns = ['date', 'dayname', 'semaine', 'num', 'nweek']
+
+        df_D = df.loc[df['Activité'] == 'TD', :]
+        df_Dm = pd.merge(df_D, pl_D, how='left', left_on='Jour', right_on='dayname')
+
+        planning_T = planning['T']
+        pl_T = pd.DataFrame(planning_T)
+        pl_T.columns = ['date', 'dayname', 'semaine', 'num', 'nweek']
+
+        df_T = df.loc[df['Activité'] == 'TP', :]
+        df_Tm = pd.merge(df_T, pl_T, how='left', left_on=['Jour', 'Semaine'], right_on=['dayname', 'semaine'])
+
+        dfm = pd.concat([df_Cm, df_Dm, df_Tm], ignore_index=True)
+
+        return({'slots': dfm})
+
+    dep = 'generated/UTC_UV_list_instructors.csv'
+
+    return {
+        'file_dep': [dep],
+        'actions': [(compute_slots, [], {'csv': dep})],
+        'getargs': {'planning': ('compute_plannings', None)},
+        'verbosity': 2
+    }
+
+
+
+
+def to_moodle_restriction(restriction):
+    def datetime_gt(dt):
+        return {
+            'type': 'date',
+            'd': '&gt;=',
+            't': int(dt.timestamp())
+        }
+
+    def group(grp):
+        return {
+            'type': 'group',
+            'id': 'id'
+        }
+
+    conds = [{'op': '&amp;', 'c': [datetime_gt(dt), group(grp)]}
+             for grp, dt in restriction]
+    return {
+        'op': '|',
+        'c': conds,
+        'show': False
+    }
+
+
+def to_php_syntax(d):
+    if isinstance(d, dict):
+        return '{' + ', '.join(f'"{k}": {to_php_syntax(v)}' for k, v in d.items()) + '}'
+    elif isinstance(d, list):
+        return '[' + ', '.join(to_php_syntax(e) for e in d) + ']'
+    elif isinstance(d, bool):
+        return 'true' if d else 'false'
+    elif isinstance(d, int):
+        return str(d)
+    elif isinstance(d, str):
+        return '"' + d + '"'
+    else:
+        raise Exception(f"Type non pris en charge: {type(d)}")
+
+
+def task_restriction_list():
+    sys.path.append('scripts/')
+    from moodle_date import CondDate, CondGroup, CondAnd
+
+    def restriction_list(uv, csv, target):
+        df = pd.read_csv(csv)
+        df = df.loc[df['Code enseig.'] == uv]
+        df = df.loc[df['Activité'] == 'TP']
+
+        def get_beg_end_date_each(df):
+            sts = []
+            for _, row in df.iterrows():
+                group = row['Lib. créneau'] + row['Semaine']
+                dt = datetime.strptime(row['date'], DATE_FORMAT).date()
+                sts.append((CondGroup() == group) & (CondDate() > dt))
+            return CondAnd(sts=sts).to_PHP()
+
+        def get_beg_end_date(df):
+            print(df.name)
+            print(pd.to_datetime(df['date']).min().date())
+            print(pd.to_datetime(df['date']).max().date())
+
+        moodle_date = df.groupby('num').apply(get_beg_end_date_each)
+        moodle_date.to_csv('generated/moodle_date.csv')
+        print(moodle_date)
+
+    dep = 'generated/UTC_UV_list_créneau.csv'
+
+    uv = 'SY02'
+    target = ''
+    return {
+        'actions': [(restriction_list, [uv, dep, target])],
+        'file_dep': [dep],
+        'verbosity': 2
+    }
