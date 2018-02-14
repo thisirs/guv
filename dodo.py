@@ -70,6 +70,8 @@ CONFIG = {
 
 
 def read_xls_details(fn):
+    """Lit un fichier Excel avec un ordre sur le statut"""
+
     sts = ['MCF', 'PR', 'PRAG', 'PRCE', 'PAST', 'ECC', 'Doct', 'ATER',
            'Vacataire']
     status_type = CategoricalDtype(categories=sts, ordered=True)
@@ -150,7 +152,7 @@ def task_xls_UTP():
     sys.path.append('scripts/')
     from excel_hours import create_excel_file
 
-    def xls_UTP(xls, raw, details, target):
+    def xls_UTP(uv, xls, raw, details, target):
         df = pd.read_excel(xls)
 
         # Add details
@@ -176,6 +178,11 @@ def task_xls_UTP():
 
         create_excel_file(target, dfs[['Intervenants', 'Statut']])
 
+        if os.path.exists(f'documents/{uv}_remplacement_rempli.xlsx'):
+            print(f'documents/{uv}_remplacement_rempli.xlsx obsolète')
+        else:
+            copyfile(target, f'documents/{uv}_remplacement_rempli.xlsx')
+
     for uv in CONFIG['UV']:
         xls = f'documents/{uv}_intervenants_rempli.xlsx'
         raw = f'documents/{uv}_intervenants.raw'
@@ -185,7 +192,7 @@ def task_xls_UTP():
             'name': uv,
             'file_dep': [xls, details],
             'targets': [target],
-            'actions': [(xls_UTP, [xls, raw, details, target])],
+            'actions': [(xls_UTP, [uv, xls, raw, details, target])],
             'verbosity': 2
         }
 
@@ -231,7 +238,7 @@ def task_utc_uv_list_to_csv():
 
 
 def task_xls_affectation():
-    """Fichier Excel d'affection des créneaux à remplir."""
+    """Fichier Excel des créneaux de toutes les UV configurées."""
 
     def extract_uv_instructor(uv_list_filename, uv, target):
         df = pd.read_csv(uv_list_filename)
@@ -346,7 +353,7 @@ def task_html_inst():
 
 
 def task_cal_inst():
-    """Calendrier PDF de tous les intervenants"""
+    """Calendrier PDF par intervenants"""
 
     uv_list = 'generated/UTC_UV_list_instructors.csv'
 
@@ -366,7 +373,6 @@ def task_cal_inst():
         yield {
             'name': uv,
             'file_dep': [uv_list, 'documents/calendar_template.tex.jinja2'],
-            # 'targets': [target],
             'actions': [(create_cal_from_list, [uv, uv_list])]
         }
 
@@ -509,8 +515,12 @@ CONFIG['UV'].
 
     def create_cal_from_list(uv, uv_list_filename, target):
         df = pd.read_csv(uv_list_filename)
+
+        # Filtre par uv 'Groupe actif' et intervenant existant
         df_uv = df.loc[df['Code enseig.'] == uv, :]
         df_uv_real = df_uv.loc[df['Type créneau'] == 'Groupe actif', :]
+        df_uv_real = df_uv_real.loc[~pd.isnull(df['Intervenants']), :]
+
         text = r'{name} \\ {room} \\ {author}'
         return(create_cal_from_dataframe(df_uv_real, text, target))
 
@@ -919,71 +929,43 @@ def task_compute_slots():
     }
 
 
-
-
-def to_moodle_restriction(restriction):
-    def datetime_gt(dt):
-        return {
-            'type': 'date',
-            'd': '&gt;=',
-            't': int(dt.timestamp())
-        }
-
-    def group(grp):
-        return {
-            'type': 'group',
-            'id': 'id'
-        }
-
-    conds = [{'op': '&amp;', 'c': [datetime_gt(dt), group(grp)]}
-             for grp, dt in restriction]
-    return {
-        'op': '|',
-        'c': conds,
-        'show': False
-    }
-
-
-def to_php_syntax(d):
-    if isinstance(d, dict):
-        return '{' + ', '.join(f'"{k}": {to_php_syntax(v)}' for k, v in d.items()) + '}'
-    elif isinstance(d, list):
-        return '[' + ', '.join(to_php_syntax(e) for e in d) + ']'
-    elif isinstance(d, bool):
-        return 'true' if d else 'false'
-    elif isinstance(d, int):
-        return str(d)
-    elif isinstance(d, str):
-        return '"' + d + '"'
-    else:
-        raise Exception(f"Type non pris en charge: {type(d)}")
-
-
 def task_restriction_list():
+    """Ficher json des restrictions d'accès des TP"""
+
     sys.path.append('scripts/')
-    from moodle_date import CondDate, CondGroup, CondAnd
+    from moodle_date import CondDate, CondGroup, CondOr
 
     def restriction_list(uv, csv, target):
         df = pd.read_csv(csv)
         df = df.loc[df['Code enseig.'] == uv]
         df = df.loc[df['Activité'] == 'TP']
 
-        def get_beg_end_date_each(df):
+        def get_beg_end_date_each(num, df):
             sts = []
-            for _, row in df.iterrows():
-                group = row['Lib. créneau'] + row['Semaine']
-                dt = datetime.strptime(row['date'], DATE_FORMAT).date()
-                sts.append((CondGroup() == group) & (CondDate() > dt))
-            return CondAnd(sts=sts).to_PHP()
+            if num == 7:        # Exam
+                return None
+            if num == 6:        # Dispo juste après la séance
+                dt_min = pd.to_datetime(df['date']).min().date()
+                for _, row in df.iterrows():
+                    group = row['Lib. créneau'] + row['Semaine']
+                    dt = (datetime.strptime(row['date'], DATE_FORMAT).date() +
+                          timedelta(days=1))
+                    sts.append((CondGroup() == group) & (CondDate() >= dt))
 
-        def get_beg_end_date(df):
-            print(df.name)
-            print(pd.to_datetime(df['date']).min().date())
-            print(pd.to_datetime(df['date']).max().date())
+                return (num, {'enonce': (CondDate() >= dt_min).to_PHP(),
+                              'corrige': CondOr(sts=sts).to_PHP()})
 
-        moodle_date = df.groupby('num').apply(get_beg_end_date_each)
-        moodle_date.to_csv('generated/moodle_date.csv')
-        print(moodle_date)
+            else:               # Dispo après la dernière séance
+                dt_min = pd.to_datetime(df['date']).min().date()
+                dt_max = pd.to_datetime(df['date']).max().date()
+                return (num, {'enonce': (CondDate() >= dt_min).to_PHP(),
+                              'corrige': (CondDate() >= dt_max).to_PHP()})
+
+        gb = df.groupby('num')
+        moodle_date = dict([get_beg_end_date_each(name, g) for name, g in gb
+                            if get_beg_end_date_each(name, g) is not None])
+        with open('generated/moodle_date.json', 'w') as fd:
+            json.dump(moodle_date, fd, indent=4)
 
     dep = 'generated/UTC_UV_list_créneau.csv'
 

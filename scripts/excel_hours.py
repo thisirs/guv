@@ -135,7 +135,11 @@ def create_summary_table(ws, reference, df, ws_remp, C_total, TD_total, TP_total
 
     refcell = ws[reference]
 
-    fill_row(refcell, ['Intervenants', 'Statut', 'Cours', 'TD', 'TP', 'UTP', 'Remp. Cours', 'Remp.TD', 'Remp. TP', 'UTP finales'])
+    fill_row(refcell, ['Intervenants', 'Statut', 'Cours', 'TD', 'TP',
+                       'Heures Cours prév', 'Heures TD prév', 'Heures TP prév',
+                       'UTP prév', 'Remp. Cours', 'Remp. TD', 'Remp. TP',
+                       'Heures Cours finales', 'Heures TD finales', 'Heures TP finales',
+                       'UTP finales'])
 
     statut_mult = {
         'MCF': 1.5,
@@ -159,22 +163,31 @@ def create_summary_table(ws, reference, df, ws_remp, C_total, TD_total, TP_total
                 None,
                 None,
                 None,
+                lambda cell: "=2*16*{}".format(cell.left(3).coordinate),
+                lambda cell: "=2*16*{}".format(cell.left(3).coordinate),
+                lambda cell: "=2*16*{}".format(cell.left(3).coordinate),
                 lambda cell: "=2*16*2.25*{}+2*16*1.5*{}+2*16*{}*{}".format(
-                    cell.left(3).coordinate,
-                    cell.left(2).coordinate,
-                    cell.left(1).coordinate,
-                    cell.left(4).coordinate),
+                    cell.left(6).coordinate,
+                    cell.left(5).coordinate,
+                    cell.left(4).coordinate,
+                    cell.left(7).coordinate),
                 '={}!{}'.format(ws_remp.title, C_total[inst]),
                 '={}!{}'.format(ws_remp.title, TD_total[inst]),
                 '={}!{}'.format(ws_remp.title, TP_total[inst]),
-                lambda cell: "=2.25*(2*16*{}+2*{}) + 1.5*(2*16*{}+2*{}) + {}*(2*16*{}+2*{})".format(
+                lambda cell: "={}+2*16*{}".format(
                     cell.left(7).coordinate,
+                    cell.left(3).coordinate),
+                lambda cell: "={}+2*16*{}".format(
+                    cell.left(7).coordinate,
+                    cell.left(3).coordinate),
+                lambda cell: "={}+2*16*{}".format(
+                    cell.left(7).coordinate,
+                    cell.left(3).coordinate),
+                lambda cell: "=2.25*{} + 1.5*{} + {}*{}".format(
                     cell.left(3).coordinate,
-                    cell.left(6).coordinate,
                     cell.left(2).coordinate,
-                    cell.left(8).coordinate,
-                    cell.left(5).coordinate,
-                    cell.left(1).coordinate)]
+                    cell.left(1).coordinate,
+                    cell.left(14).coordinate)]
         fill_row(cell, elts)
 
     cell = refcell.below(len(df.index)+1)
