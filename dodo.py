@@ -124,6 +124,7 @@ def create_insts_list(df):
         return ', '.join(sorted(e, key=lib_list))
 
     def score(libs):
+        "Renvoie un tuple comptant les types de cours Cours/TD/TP"
         sc = [0, 0, 0]
         for lib in libs:
             ix = {'C': 0, 'D': 1, 'T': 2}[re.search('[CDT]', lib).group()]
@@ -535,17 +536,27 @@ CONFIG['UV'].
         }
 
 
-# def task_utc_listing_to_csv():
-#     """Construit un fichier CSV à partir des données brutes de la promo
-#     fournies par l'UTC."""
+def task_csv_inscrits():
+    """Construit un fichier CSV à partir des données brutes de la promo
+    fournies par l'UTC."""
 
-#     utc_listing = 'documents/SY02_P2018_INSCRITS.raw'
+    sys.path.append('scripts/')
+    from parse_utc_list import parse_UTC_listing
 
-#     return {
-#         'file_dep': [utc_listing],
-#         'targets': ['generated/SY02_P2018_INSCRITS.csv'],
-#         'actions': [['scripts/']]
-#     }
+    def csv_inscrits(fn, target):
+        df = parse_UTC_listing(fn)
+        df.to_csv(target)
+
+    for uv in CONFIG['UV']:
+        semester = CONFIG['SEMESTER']
+        utc_listing = f'documents/{uv}_{semester}_INSCRITS.raw'
+        target = f'generated/{uv}_{semester}_INSCRITS.csv'
+        yield {
+            'name': uv,
+            'file_dep': [utc_listing],
+            'targets': [target],
+            'actions': [(csv_inscrits, [utc_listing, target])]
+        }
 
 
 # def task_merge_utc_moodle_csv():
@@ -570,22 +581,29 @@ def create_plannings():
     def skip_week(d1, weeks=1):
         return([d1 + timedelta(days=x) for x in range(7*weeks-1)])
 
+    # Jours fériés
     ferie = [date(2018, 4, 2),
              date(2018, 5, 1),
              date(2018, 5, 8),
              date(2018, 5, 10),
              date(2018, 5, 21)]
 
-    debut = skip_week(date(2018, 2, 19))
+    # Première semaine sans TD/TP
+    debut = skip_week(CONFIG['PL_BEG'])
+
+    # Semaine des médians
     median = skip_range(date(2018, 5, 2), date(2018, 5, 9))
 
+    # Semaine SU
     semaine_su = skip_week(date(2018, 4, 16), weeks=2)
 
+    # Jours changés
     turn = {
         date(2018, 5, 9): 'Mardi',
         date(2018, 5, 25): 'Lundi'
     }
 
+    # Jours sautés pour Cours/TD/TP
     skip_days_C = ferie + semaine_su + median
     skip_days_D = ferie + semaine_su + debut + median
     skip_days_T = ferie + semaine_su + debut
@@ -600,28 +618,28 @@ def create_plannings():
         semaine = {'Lundi': 0, 'Mardi': 0, 'Mercredi': 0, 'Jeudi': 0, 'Vendredi': 0}
 
         nweek = 0
+
         for i in range(delta.days + 1):
             d = beg + timedelta(days=i)
 
+            # Lundi
             if i % 7 == 0:
                 nweek += 1
 
+            # Ignore week-end
             if d.weekday() in [5, 6]:
                 continue
 
+            # Skip days
             if d in skip:
                 continue
 
-            if d in turn:
-                day = turn[d]
-            else:
-                day = daynames[d.weekday()]
+            # Get real day
+            day = turn[d] if d in turn else daynames[d.weekday()]
 
+            # Get week A or B
             if course == 'T':
-                if semaine[day] % 2 == 0:
-                    sem = 'A'
-                else:
-                    sem = 'B'
+                sem = 'A' if semaine[day] % 2 == 0 else 'B'
                 num = semaine[day] // 2 + 1
                 semaine[day] += 1
             elif course in ['C', 'D']:
@@ -738,6 +756,9 @@ def task_csv_all_courses():
 
 def write_ical_file(dataframe, output):
 
+    from pytz import timezone
+    localtz = timezone('Europe/Paris')
+
     def timestamp(row):
         d = row['date']
         hm = row['Heure début'].split(':')
@@ -775,6 +796,7 @@ def write_ical_file(dataframe, output):
             event.add('summary', summary)
 
             dt = row['timestamp']
+            dt = localtz.localize(dt)
             event.add('dtstart', dt)
             event.add('dtend', dt + timedelta(hours=2))
 
@@ -888,7 +910,6 @@ def task_html_table():
 def task_compute_slots():
     def compute_slots(**kwargs):
         planning = kwargs['planning']
-        print(planning)
         csv_inst_list = kwargs['csv']
 
         df = pd.read_csv(csv_inst_list)
@@ -922,6 +943,7 @@ def task_compute_slots():
     dep = 'generated/UTC_UV_list_instructors.csv'
 
     return {
+        # 'uptodate': [False],
         'file_dep': [dep],
         'actions': [(compute_slots, [], {'csv': dep})],
         'getargs': {'planning': ('compute_plannings', None)},
@@ -929,7 +951,7 @@ def task_compute_slots():
     }
 
 
-def task_restriction_list():
+def task_json_restriction():
     """Ficher json des restrictions d'accès des TP"""
 
     sys.path.append('scripts/')
@@ -970,7 +992,7 @@ def task_restriction_list():
     dep = 'generated/UTC_UV_list_créneau.csv'
 
     uv = 'SY02'
-    target = ''
+    target = 'generated/moodle_date.json'
     return {
         'actions': [(restriction_list, [uv, dep, target])],
         'file_dep': [dep],

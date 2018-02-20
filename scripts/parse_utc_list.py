@@ -13,6 +13,7 @@ import math
 
 def parse_UTC_listing(filename):
     """Parse FILENAME into DataFrame"""
+
     RX_STU = re.compile(r'^\s*\d{3}\s{3}(.{23})\s{3}(.{4})$')
     RX_UV = re.compile(r'^\s*(?P<uv>\w+)\s+(?P<course>[CTD])\s*(?P<number>[0-9]+)\s*(?P<week>[AB])?')
 
@@ -35,6 +36,8 @@ def parse_UTC_listing(filename):
 
     df = pd.DataFrame(rows)
     df = df.groupby('Name', as_index=False).agg(lambda s: s.loc[s.first_valid_index()])
+
+    return df
 
 
 def add_exam_split(df):
@@ -63,13 +66,20 @@ if __name__ == '__main__':
                         help='Chemin vers le fichier des inscrits')
     parser.add_argument('-o', '--output-dir', required=False, type=str,
                         dest='output_dir',
-                        help='Dossier d\'écriture du fichier CSV')
+                        help='Dossier/fichier d\'écriture du fichier CSV')
     args = parser.parse_args()
 
     cwd = os.getcwd()
     utc_fp = os.path.join(cwd, args.utc_fn)
 
-    if args.output_dir:
-        output_dir = args.output_dir
+    outdir = os.path.join(cwd, args.output_dir)
+
+    if os.path.isfile(outdir):
+        raise Exception('File exists')
+    elif os.path.isdir(outdir):
+        out = os.path.join(outdir, 'out.csv')
     else:
-        output_dir = cwd
+        out = outdir
+
+    df = parse_UTC_listing(utc_fp)
+    df.to_csv(out)
