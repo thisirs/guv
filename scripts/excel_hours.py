@@ -96,7 +96,7 @@ def create_double_entry_table(ws, reference, df, title):
         cellsm = '+'.join(cellsm)
         inst_to_cellsm[inst] = cellsm
 
-    # Colonne total
+    # Balance des séances
     total_col = ref[1]+len(instructors)+1
     ws.cell(row=ref[0], column=total_col).value = 'Balance'
 
@@ -108,17 +108,14 @@ def create_double_entry_table(ws, reference, df, title):
         cell = '{}{}'.format(utils.get_column_letter(total_col), ref[0]+i+1)
         inst_to_total[inst] = cell
 
-    # Colonne total absolu
+    # Total des échanges en absolu
     total_col = ref[1]+len(instructors)+2
     ws.cell(row=ref[0], column=total_col).value = 'Échange'
 
-    inst_to_total = {}
     for i in range(len(instructors)):
         inst = instructors[i]
         formule = '={}+{}'.format(inst_to_cellsp[inst], inst_to_cellsm[inst])
         ws.cell(row=ref[0]+i+1, column=total_col).value = formule
-        cell = '{}{}'.format(utils.get_column_letter(total_col), ref[0]+i+1)
-        inst_to_total[inst] = cell
 
     return(inst_to_total)
 
@@ -174,13 +171,13 @@ def create_summary_table(ws, reference, df, ws_remp, C_total, TD_total, TP_total
                 '={}!{}'.format(ws_remp.title, C_total[inst]),
                 '={}!{}'.format(ws_remp.title, TD_total[inst]),
                 '={}!{}'.format(ws_remp.title, TP_total[inst]),
-                lambda cell: "={}+2*16*{}".format(
+                lambda cell: "={}+2*{}".format(
                     cell.left(7).coordinate,
                     cell.left(3).coordinate),
-                lambda cell: "={}+2*16*{}".format(
+                lambda cell: "={}+2*{}".format(
                     cell.left(7).coordinate,
                     cell.left(3).coordinate),
-                lambda cell: "={}+2*16*{}".format(
+                lambda cell: "={}+2*{}".format(
                     cell.left(7).coordinate,
                     cell.left(3).coordinate),
                 lambda cell: "=2.25*{} + 1.5*{} + {}*{}".format(

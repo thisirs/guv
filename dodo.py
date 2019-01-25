@@ -1,21 +1,90 @@
 import os
+import glob
 import sys
 from shutil import copyfile
+import tempfile
+import zipfile
 import re
-import markdown
+import random
+import time
+from datetime import datetime, date, timedelta
+import math
+import json
+import asyncio
+import aiohttp
 import pynliner
+import markdown
 import numpy as np
 import pandas as pd
 from pandas.api.types import CategoricalDtype
 from icalendar import Event, Calendar
-from datetime import datetime, date, timedelta
+from PyPDF2 import PdfFileReader
 from tabula import read_pdf
 import latex
 import jinja2
-import json
+import oyaml as yaml            # Ordered yaml
+
+from doit import get_var
+
+
+class KeepError(Exception):
+    pass
+
+class Output():
+    def __init__(self, target, protected=False):
+        self.target = target
+        self.protected = protected
+
+    def __enter__(self):
+        if os.path.exists(self.target):
+            if self.protected:
+                while True:
+                    try:
+                        choice = input('Le fichier `%s'' existe déjà. Écraser (d), garder (g), sauvegarder (s), annuler (a) ? ' % self.target)
+                        if choice == 'd':
+                            os.remove(self.target)
+                        elif choice == 's':
+                            parts = os.path.splitext(self.target)
+                            timestr = time.strftime("_%Y%m%d-%H%M%S")
+                            target0 = parts[0] + timestr + parts[1]
+                            os.rename(self.target, target0)
+                        elif choice == 'g':
+                            return lambda: 1/0
+                        elif choice == 'a':
+                            raise Exception('Annulation')
+                        else:
+                            raise ValueError
+                    except ValueError:
+                        continue
+                    else:
+                        break
+            else:
+                print('Écrasement du fichier `%s''' % self.target)
+
+        return lambda: self.target
+
+    def __exit__(self, type, value, traceback):
+        return type == ZeroDivisionError
+
 
 DATE_FORMAT = "%Y-%m-%d"
 TIME_FORMAT = "%H:%M:%S"
+URL = 'https://demeter.utc.fr/portal/pls/portal30/portal30.get_photo_utilisateur?username='
+
+LATEX_SUBS = (
+    (re.compile(r'\\'), r'\\textbackslash'),
+    (re.compile(r'([{}_#%&$])'), r'\\\1'),
+    (re.compile(r'~'), r'\~{}'),
+    (re.compile(r'\^'), r'\^{}'),
+    (re.compile(r'"'), r"''"),
+    (re.compile(r'\.\.\.+'), r'\\ldots'))
+
+
+def escape_tex(value):
+    newval = value
+    for pattern, replacement in LATEX_SUBS:
+        newval = pattern.sub(replacement, newval)
+    return newval
 
 
 def object_hook(obj):
@@ -63,14 +132,43 @@ json.JSONEncoder.default = json_encoder_default
 
 CONFIG = {
     'UV': ['SY02', 'SY09'],
-    'PL_BEG': date(2018, 2, 19),
-    'PL_END': date(2018, 6, 22),
-    'SEMESTER': 'P2018'
+    'DEFAULT_UV': 'SY02',
+    'DEFAULT_INSTRUCTOR': 'Sylvain Rousseau',
+    'DEFAULT_SEMESTER': 'A2018',
+    'DEFAULT_PLANNING': 'A2018',
+    'DEFAULT_PLANNINGS': ['A2018', '2018_T1', '2018_T2'],
+    'PLANNING': {
+        'P2018': {
+            'UV': ['SY02', 'SY09'],
+            'PL_BEG': date(2018, 2, 19),
+            'PL_END': date(2018, 6, 22)
+        },
+        'A2018': {
+            'UV': ['SY02', 'SY19'],
+            'PL_BEG': date(2018, 9, 10),
+            'PL_END': date(2019, 1, 10)
+        },
+        '2018_T1': {
+            'UE': ['AOS1'],
+            'PL_BEG': date(2018, 9, 10),
+            'PL_END': date(2018, 11, 5)
+        },
+        '2018_T2': {
+            'UE': ['AOS2'],
+            'PL_BEG': date(2018, 11, 13),
+            'PL_END': date(2019, 1, 10)
+        },
+        'P2019': {
+            'UV': ['SY02', 'SY09'],
+            'PL_BEG': date(2019, 2, 25),
+            'PL_END': date(2019, 6, 29)
+        }
+    }
 }
 
 
 def read_xls_details(fn):
-    """Lit un fichier Excel avec un ordre sur le statut"""
+    """Lit un fichier Excel avec un ordre sur la colonne 'Statut'."""
 
     sts = ['MCF', 'PR', 'PRAG', 'PRCE', 'PAST', 'ECC', 'Doct', 'ATER',
            'Vacataire']
@@ -93,19 +191,24 @@ def task_xls_inst_details():
                            left_on='Intervenants',
                            right_on='Intervenants')
 
-        df.to_excel(target, index=False)
+        with Output(target) as target:
+            df.to_excel(target(), index=False)
+
+    plannings = get_var('planning', '').split() or CONFIG['DEFAULT_PLANNINGS']
 
     insts_details = 'documents/intervenants.xlsx'
-    for uv in CONFIG['UV']:
-        inst_uv = f'documents/{uv}_intervenants_rempli.xlsx'
-        target = f'generated/{uv}_intervenants_details.xlsx'
-        if os.path.exists(inst_uv):
-            yield {
-                'name': uv,
-                'file_dep': [inst_uv, insts_details],
-                'targets': [target],
-                'actions': [(xls_inst_details, [inst_uv, insts_details, target])]
-            }
+    if os.path.exists(insts_details):
+        for planning in plannings:
+            for uv in CONFIG['PLANNING'][planning].get('UV') or CONFIG['PLANNING'][planning].get('UE'):
+                inst_uv = f'documents/{planning}_{uv}_intervenants.xlsx'
+                target = f'generated/{planning}_{uv}_intervenants_details.xlsx'
+                if os.path.exists(inst_uv):
+                    yield {
+                        'name': uv + '_' + planning,
+                        'file_dep': [inst_uv, insts_details],
+                        'targets': [target],
+                        'actions': [(xls_inst_details, [inst_uv, insts_details, target])]
+                    }
 
 
 def create_insts_list(df):
@@ -153,17 +256,19 @@ def task_xls_UTP():
     sys.path.append('scripts/')
     from excel_hours import create_excel_file
 
-    def xls_UTP(uv, xls, raw, details, target):
+    def xls_UTP(xls, details, target):
         df = pd.read_excel(xls)
 
         # Add details
         df_details = read_xls_details(details)
 
         if df['Intervenants'].isnull().all():
-            # Read from raw file
-            with open(raw) as fd:
-                instructors = [line.rstrip() for line in fd]
-                df_insts = np.DataFrame({'Intervenants': instructors})
+            print("Pas d'intervenants renseignés dans le fichier %s" % xls)
+            raise
+            # # Read from raw file
+            # with open(raw) as fd:
+            #     instructors = [line.rstrip() for line in fd]
+            #     df_insts = np.DataFrame({'Intervenants': instructors})
         else:
             # Aggregate
             df_insts = create_insts_list(df)
@@ -177,65 +282,141 @@ def task_xls_UTP():
                              ascending=False)
         dfs = dfs.reset_index()
 
-        create_excel_file(target, dfs[['Intervenants', 'Statut']])
+        with Output(target, protected=True) as target:
+            create_excel_file(target(), dfs[['Intervenants', 'Statut']])
 
-        if os.path.exists(f'documents/{uv}_remplacement_rempli.xlsx'):
-            print(f'documents/{uv}_remplacement_rempli.xlsx obsolète')
-        else:
-            copyfile(target, f'documents/{uv}_remplacement_rempli.xlsx')
-
-    for uv in CONFIG['UV']:
-        xls = f'documents/{uv}_intervenants_rempli.xlsx'
-        raw = f'documents/{uv}_intervenants.raw'
-        details = f'documents/intervenants.xlsx'
-        target = f'generated/{uv}_remplacement.xlsx'
-        yield {
-            'name': uv,
-            'file_dep': [xls, details],
-            'targets': [target],
-            'actions': [(xls_UTP, [uv, xls, raw, details, target])],
-            'verbosity': 2
-        }
+    plannings = get_var('planning', '').split() or CONFIG['DEFAULT_PLANNINGS']
+    for planning in plannings:
+        for uv in CONFIG['PLANNING'][planning].get('UV') or CONFIG['PLANNING'][planning].get('UE'):
+            xls = f'documents/{planning}_{uv}_intervenants.xlsx'
+            # raw = f'documents/{planning}_{uv}_intervenants.raw'
+            if os.path.exists(xls):
+                details = f'documents/intervenants.xlsx'
+                if os.path.exists(details):
+                    target = f'generated/{planning}_{uv}_remplacement.xlsx'
+                    yield {
+                        'name': uv + '_' + planning,
+                        'file_dep': [xls, details],
+                        'targets': [target],
+                        'actions': [(xls_UTP, [xls, details, target])],
+                        'verbosity': 2
+                    }
+                else:
+                    print("Pas de fichier `%s'" % details)
+            else:
+                print("Pas de fichier `%s'" % xls)
 
 
 def task_utc_uv_list_to_csv():
-    "Crée un fichier CSV à partir de la liste d'UV au format PDF."
+    """Crée un fichier CSV à partir de la liste d'UV au format PDF."""
 
-    def utc_uv_list_to_csv(uv_list_filename, target):
-        # Extraire toutes les pages
-        tabula_args = {'pages': 'all'}
-        df = read_pdf(uv_list_filename, **tabula_args)
+    def utc_uv_list_to_csv(semester, uv_list_filename, ue_list_filename, target):
+        tables = []
 
-        # On renomme les colonnes qui sont mal passées
-        df = df.rename(columns={'Activit': 'Activité',
-                                'Heure d': 'Heure début',
-                                'Type cr neau': 'Type créneau',
-                                'Lib. cr': 'Lib. créneau'})
+        if os.path.exists(uv_list_filename):
+            # Nombre de pages
+            pdf = PdfFileReader(open(uv_list_filename, 'rb'))
+            npages = pdf.getNumPages()
 
-        # On enlève les fausses colonnes
-        cols = ['Code enseig.', 'Activité', 'Jour', 'Heure début', 'Heure fin',
-                'Semaine', 'Locaux', 'Type créneau', 'Lib. créneau']
-        df = df[cols]
+            possible_cols = ['Code enseig.', 'Activité', 'Jour', 'Heure début',
+                             'Heure fin', 'Semaine', 'Locaux', 'Type créneau',
+                             'Lib. créneau', 'Responsable enseig.']
 
-        # On enlève les fausses lignes en-têtes
-        df = df.loc[df['Code enseig.'] != 'Code enseig.', :]
+            for i in range(npages):
+                print(f'Processing page ({i+1}/{npages})')
+                page = i + 1
+                tabula_args = {'pages': page}
+                if page == 1:
+                    pdo = {}
+                else:
+                    pdo = {'header': None}
 
-        # A ou B au lieu de semaine A et semaine B
-        df['Semaine'].replace("^semaine ([AB])$", "\\1", regex=True, inplace=True)
+                df = read_pdf(uv_list_filename, pandas_options=pdo, **tabula_args)
+
+                if page == 1:
+                    df = df.rename(columns={'Activit': 'Activité',
+                                            'Heure d': 'Heure début',
+                                            'Type cr neau': 'Type créneau',
+                                            'Lib. cr': 'Lib. créneau'})
+                    unordered_cols = list(set(df.columns).intersection(set(possible_cols)))
+                    cols_order = {k: i for i, k in enumerate(df.columns)}
+                    cols = sorted(unordered_cols, key=lambda x: cols_order[x])
+                    week_idx = cols.index('Semaine')
+                    df = df[cols]
+                    print('%d columns found' % len(df.columns))
+                else:
+                    print('%d columns found' % len(df.columns))
+                    if len(df.columns) == len(cols) - 1:
+                        df.insert(week_idx, 'Semaine', np.nan)
+                    df.columns = cols
+
+                df['Planning'] = semester
+                tables.append(df)
+
+        if os.path.exists(ue_list_filename):
+            df_ue = pd.read_excel(ue_list_filename)
+            tables.append(df_ue)
+
+        df = pd.concat(tables)
+
+        # Remove duplicate indexes from concat
+        df.reset_index(drop=True, inplace=True)
 
         # T1 instead of T 1
         df['Lib. créneau'].replace(' +', '', regex=True, inplace=True)
 
-        df.to_csv(target, index=False)
+        # A ou B au lieu de semaine A et semaine B
+        df['Semaine'].replace("^semaine ([AB])$", "\\1", regex=True, inplace=True)
+
+        # Semaine ni A ni B pour les TP: mettre à A
+        uvs = CONFIG['PLANNING'][CONFIG['DEFAULT_SEMESTER']]['UV']
+        def fix_semaineAB(group):
+            if group.name[1] == 'TP' and len(group.index) > 1:
+                nans = group.loc[(pd.isnull(group['Semaine']))]
+                if 0 < len(nans.index) or len(nans.index) < len(group.index):
+                    if group.name[0] in uvs:
+                        for index, row in nans.iterrows():
+                            while True:
+                                try:
+                                    choice = input(f'Semaine pour le créneau {row["Lib. créneau"]} de TP de {group.name[0]} (A ou B) ? ')
+                                    if choice.upper() in ['A', 'B']:
+                                        group.loc[index, 'Semaine'] = choice.upper()
+                                    else:
+                                        raise ValueError
+                                except ValueError:
+                                    continue
+                                else:
+                                    break
+                    else:
+                        group.loc[nans.index, 'Semaine'] = 'A'
+                return group
+            else:
+                return group
+
+        df = df.groupby(['Code enseig.', 'Activité']).apply(fix_semaineAB)
+
+        with Output(target) as target:
+            df.to_csv(target(), index=False)
 
     uv_list_filename = 'documents/UTC_UV_list.pdf'
+    ue_list_filename = 'documents/UTC_UE_list.xlsx'
     target = 'generated/UTC_UV_list.csv'
 
-    return {
-        'file_dep': [uv_list_filename],
-        'targets': [target],
-        'actions': [(utc_uv_list_to_csv, [uv_list_filename, target])]
-    }
+    deps = []
+    if os.path.exists(uv_list_filename):
+        deps.append(uv_list_filename)
+
+    if os.path.exists(ue_list_filename):
+        deps.append(ue_list_filename)
+
+    if deps:
+        semester = CONFIG['DEFAULT_SEMESTER']
+        return {
+            'file_dep': deps,
+            'targets': [target],
+            'actions': [(utc_uv_list_to_csv, [semester, uv_list_filename, ue_list_filename, target])],
+            'verbosity': 2
+        }
 
 
 def task_xls_affectation():
@@ -244,33 +425,33 @@ def task_xls_affectation():
     def extract_uv_instructor(uv_list_filename, uv, target):
         df = pd.read_csv(uv_list_filename)
         df_uv = df.loc[df['Code enseig.'] == uv, :]
-        df_uv_real = df_uv.loc[df['Type créneau'] == 'Groupe actif', :]
 
         selected_columns = ['Jour', 'Heure début', 'Heure fin', 'Locaux',
                             'Semaine', 'Lib. créneau']
-        df_uv_real = df_uv_real[selected_columns]
-        df_uv_real['Intervenants'] = ''
-        df_uv_real['Responsable'] = ''
+        df_uv = df_uv[selected_columns]
+        df_uv['Intervenants'] = ''
+        df_uv['Responsable'] = ''
 
         # Copy for modifications
-        df_uv_real.to_excel(target, sheet_name='Intervenants', index=False)
+        with Output(target, protected=True) as target:
+            df_uv.to_excel(target(), sheet_name='Intervenants', index=False)
 
-        if os.path.exists(f'documents/{uv}_intervenants_rempli.xlsx'):
-            print(f'documents/{uv}_intervenants_rempli.xlsx obsolète')
-        else:
-            copyfile(target, f'documents/{uv}_intervenants_rempli.xlsx')
+    plannings = get_var('planning', '').split() or CONFIG['DEFAULT_PLANNINGS']
+    for planning in plannings:
+        for uv in CONFIG['PLANNING'][planning].get('UV') or CONFIG['PLANNING'][planning].get('UE'):
+            uvlist_csv = 'generated/UTC_UV_list.csv'
+            if os.path.exists(uvlist_csv):
+                target = f'documents/{planning}_{uv}_intervenants.xlsx'
 
-    for uv in CONFIG['UV']:
-        uvlist_csv = 'generated/UTC_UV_list.csv'
-        target = f'generated/{uv}_intervenants.xlsx'
-
-        yield {
-            'name': uv,
-            'file_dep': [uvlist_csv],
-            'targets': [target],
-            'actions': [(extract_uv_instructor, [uvlist_csv, uv, target])],
-            'verbosity': 2
-        }
+                yield {
+                    'name': uv + '_' + planning,
+                    'file_dep': [uvlist_csv],
+                    'targets': [target],
+                    'actions': [(extract_uv_instructor, [uvlist_csv, uv, target])],
+                    'verbosity': 2
+                }
+            else:
+                print('Pas de fichier `%s''' % uvlist_csv)
 
 
 def task_xls_emploi_du_temps():
@@ -281,19 +462,23 @@ def task_xls_emploi_du_temps():
         selected_columns = ['Jour', 'Heure début', 'Heure fin', 'Locaux',
                             'Semaine', 'Lib. créneau', 'Intervenants']
         dfs = df[selected_columns]
-        dfs.to_excel(xls_edt, sheet_name='Emploi du temps', index=False)
 
-    for uv in CONFIG['UV']:
-        if os.path.exists(f'documents/{uv}_intervenants_rempli.xlsx'):
-            dep = f'documents/{uv}_intervenants_rempli.xlsx'
-            target = f'generated/{uv}_emploi_du_temps.xlsx'
-            yield {
-                'name': uv,
-                'file_dep': [dep],
-                'targets': [target],
-                'actions': [(xls_emploi_du_temps, [dep, target])],
-                'verbosity': 2
-            }
+        with Output(xls_edt, protected=True) as xls_edt:
+            dfs.to_excel(xls_edt(), sheet_name='Emploi du temps', index=False)
+
+    plannings = get_var('planning', '').split() or CONFIG['DEFAULT_PLANNINGS']
+    for planning in plannings:
+        for uv in CONFIG['PLANNING'][planning].get('UV') or CONFIG['PLANNING'][planning].get('UE'):
+            if os.path.exists(f'documents/{planning}_{uv}_intervenants.xlsx'):
+                dep = f'documents/{planning}_{uv}_intervenants.xlsx'
+                target = f'generated/{planning}_{uv}_emploi_du_temps.xlsx'
+                yield {
+                    'name': uv + '_' + planning,
+                    'file_dep': [dep],
+                    'targets': [target],
+                    'actions': [(xls_emploi_du_temps, [dep, target])],
+                    'verbosity': 2
+                }
 
 
 def task_html_inst():
@@ -331,51 +516,65 @@ def task_html_inst():
             else:
                 return info['inst']
 
-        env = jinja2.Environment(loader=jinja2.FileSystemLoader('documents/'))
+        env = jinja2.Environment(loader=jinja2.FileSystemLoader('templates/'))
         # env.globals.update(contact=contact)
         template = env.get_template('instructors.html.jinja2')
         md = template.render(insts=insts, contact=contact)
         html = markdown.markdown(md)
 
-        with open(target, 'w') as fd:
-            fd.write(html)
+        with Output(target) as target:
+            with open(target(), 'w') as fd:
+                fd.write(html)
 
-    for uv in CONFIG['UV']:
-        insts_uv = f'documents/{uv}_intervenants_rempli.xlsx'
-        insts_details = f'documents/intervenants.xlsx'
-        target = f'generated/{uv}_intervenants.html'
-        yield {
-            'name': uv,
-            'file_dep': [insts_uv, 'documents/instructors.html.jinja2'],
-            'targets': [target],
-            'actions': [(html_inst, [insts_uv, insts_details, target])],
-            'verbosity': 2
-        }
+    plannings = get_var('planning', '').split() or CONFIG['DEFAULT_PLANNINGS']
+    for planning in plannings:
+        for uv in CONFIG['PLANNING'][planning].get('UV') or CONFIG['PLANNING'][planning].get('UE'):
+            insts_uv = f'documents/{planning}_{uv}_intervenants.xlsx'
+            insts_details = f'documents/intervenants.xlsx'
+            if not os.path.exists(insts_uv):
+                print("Fichier `%s' inexistant" % insts_uv)
+            elif not os.path.exists(insts_details):
+                print("Fichier `%s' inexistant" % insts_details)
+            else:
+                target = f'generated/{planning}_{uv}_intervenants.html'
+                yield {
+                    'name': uv + '_' + planning,
+                    'file_dep': [insts_uv, 'templates/instructors.html.jinja2'],
+                    'targets': [target],
+                    'actions': [(html_inst, [insts_uv, insts_details, target])],
+                    'verbosity': 2
+                }
 
 
 def task_cal_inst():
-    """Calendrier PDF par intervenants"""
+    """Calendrier PDF d'une semaine de toutes les UV/UE d'un intervenant."""
 
     uv_list = 'generated/UTC_UV_list_instructors.csv'
 
-    def create_cal_from_list(uv, uv_list_filename):
+    def create_cal_from_list(inst, plannings, uv_list_filename, target):
         df = pd.read_csv(uv_list_filename)
         if 'Intervenants' not in df.columns:
             raise Exception('Pas d\'enregistrement des intervenants')
-        df_uv = df.loc[df['Code enseig.'] == uv, :]
-        df_uv_real = df_uv.loc[df['Type créneau'] == 'Groupe actif', :]
 
-        text = r'{name} \\ {room} \\ {author}'
-        for instructor, group in df_uv_real.groupby(['Intervenants']):
-            target = f'generated/{uv}_{instructor.replace(" ", "_")}_calendrier.pdf'
-            create_cal_from_dataframe(group, text, target)
+        df_inst = df.loc[(df['Intervenants'].astype(str) == inst) &
+                         (df['Planning'].isin(plannings)), :]
+        text = r'{uv} \\ {name} \\ {room}'
+        create_cal_from_dataframe(df_inst, text, target)
 
-    for uv in CONFIG['UV']:
-        yield {
-            'name': uv,
-            'file_dep': [uv_list, 'documents/calendar_template.tex.jinja2'],
-            'actions': [(create_cal_from_list, [uv, uv_list])]
-        }
+    if os.path.exists(uv_list):
+        plannings = get_var('planning', '').split() or CONFIG['DEFAULT_PLANNINGS']
+        insts = get_var('insts', '').split() or [CONFIG['DEFAULT_INSTRUCTOR']]
+        for inst in insts:
+            target = f'generated/{inst.replace(" ", "_")}_{"_".join(plannings)}_calendrier.pdf'
+            yield {
+                'name': '_'.join(plannings) + '_' + inst,
+                'targets': [target],
+                'file_dep': [uv_list, 'templates/calendar_template.tex.jinja2'],
+                'actions': [(create_cal_from_list, [inst, plannings, uv_list, target])],
+                'verbosity': 2
+            }
+    else:
+        print("Fichier `%s' inexistant" % uv_list)
 
 
 def task_add_instructors():
@@ -389,20 +588,30 @@ def task_add_instructors():
 
         df_merge = pd.merge(df_csv, df_inst, how='left', on=['Jour', 'Heure début', 'Heure fin', 'Semaine', 'Lib. créneau', 'Locaux'])
 
-        df_merge.to_csv(target, index=False)
+        with Output(target) as target:
+            df_merge.to_csv(target(), index=False)
 
     target = 'generated/UTC_UV_list_instructors.csv'
-    deps = ['generated/UTC_UV_list.csv']
-    for uv in CONFIG['UV']:
-        if os.path.exists(f'documents/{uv}_intervenants_rempli.xlsx'):
-            deps.append(f'documents/{uv}_intervenants_rempli.xlsx')
+    plannings = CONFIG['DEFAULT_PLANNINGS']
+    uv_list = 'generated/UTC_UV_list.csv'
+    deps = [uv_list]
+    if os.path.exists(uv_list):
+        for planning in plannings:
+            for uv in CONFIG['PLANNING'][planning].get('UV') or CONFIG['PLANNING'][planning].get('UE'):
+                if os.path.exists(f'documents/{planning}_{uv}_intervenants.xlsx'):
+                    deps.append(f'documents/{planning}_{uv}_intervenants.xlsx')
 
-    return {
-        'file_dep': deps,
-        'targets': [target],
-        'actions': [(add_instructors, [target] + deps)],
-        'verbosity': 2
-    }
+        if len(deps) == 1:
+            print(f"Pas de fichier `documents/{planning}_{uv}_intervenants.xlsx' existant")
+        else:
+            return {
+                'file_dep': deps,
+                'targets': [target],
+                'actions': [(add_instructors, [target] + deps)],
+                'verbosity': 2
+            }
+    else:
+        print("Fichier `%s' inexistant" % uv_list)
 
 
 def create_cal_from_dataframe(df, text, target):
@@ -434,7 +643,8 @@ def create_cal_from_dataframe(df, text, target):
         name = row['Lib. créneau'].replace(' ', '')
         if re.match('^T', name):
             ctype = 'TP'
-            name = name + row['Semaine']
+            if isinstance(row['Semaine'], str):
+                name = name + row['Semaine']
         elif re.match('^D', name):
             ctype = 'TD'
         elif re.match('^C', name):
@@ -451,7 +661,7 @@ def create_cal_from_dataframe(df, text, target):
         room = row['Locaux']
         room = room.replace(' ', '').replace('BF', 'F')
 
-        text = text.format(room=room, name=name, author=author)
+        text = text.format(room=room, name=name, author=author, uv=uv)
 
         # if half:
         #     text = r"""
@@ -492,7 +702,7 @@ def create_cal_from_dataframe(df, text, target):
         variable_end_string=')))',
         comment_start_string='((=',
         comment_end_string='=))',
-        loader=jinja2.FileSystemLoader('documents/')
+        loader=jinja2.FileSystemLoader('templates/')
     )
 
     template = latex_jinja_env.get_template('calendar_template.tex.jinja2')
@@ -504,7 +714,9 @@ def create_cal_from_dataframe(df, text, target):
     #     fd.write(tex)
 
     pdf = latex.build_pdf(tex)
-    pdf.save_to(target)
+
+    with Output(target) as target:
+        pdf.save_to(target())
 
 
 def task_cal_uv():
@@ -515,25 +727,28 @@ CONFIG['UV'].
     """
 
     def create_cal_from_list(uv, uv_list_filename, target):
-        df = pd.read_csv(uv_list_filename)
-
-        # Filtre par uv 'Groupe actif' et intervenant existant
-        df_uv = df.loc[df['Code enseig.'] == uv, :]
-        df_uv_real = df_uv.loc[df['Type créneau'] == 'Groupe actif', :]
-        df_uv_real = df_uv_real.loc[~pd.isnull(df['Intervenants']), :]
+        df = pd.read_excel(uv_list_filename)
+        # df_uv_real = df.loc[~pd.isnull(df['Intervenants']), :]
+        df_uv_real = df
+        df_uv_real['Code enseig.'] = uv
 
         text = r'{name} \\ {room} \\ {author}'
         return(create_cal_from_dataframe(df_uv_real, text, target))
 
-    uv_list = 'generated/UTC_UV_list_instructors.csv'
-    for uv in CONFIG['UV']:
-        target = 'generated/' + uv + '_calendrier.pdf'
-        yield {
-            'name': uv,
-            'file_dep': [uv_list, 'documents/calendar_template.tex.jinja2'],
-            'targets': [target],
-            'actions': [(create_cal_from_list, [uv, uv_list, target])]
-        }
+    plannings = get_var('planning', '').split() or CONFIG['DEFAULT_PLANNINGS']
+    for planning in plannings:
+        for uv in CONFIG['PLANNING'][planning].get('UV') or CONFIG['PLANNING'][planning].get('UE'):
+            uv_list = f'documents/{planning}_{uv}_intervenants.xlsx'
+            if os.path.exists(uv_list):
+                target = 'generated/' + uv + '_calendrier.pdf'
+                yield {
+                    'name': uv + '_' + planning,
+                    'file_dep': [uv_list, 'templates/calendar_template.tex.jinja2'],
+                    'targets': [target],
+                    'actions': [(create_cal_from_list, [uv, uv_list, target])]
+                }
+            else:
+                print("Fichier `%s' inexistant" % uv_list)
 
 
 def task_csv_inscrits():
@@ -545,71 +760,686 @@ def task_csv_inscrits():
 
     def csv_inscrits(fn, target):
         df = parse_UTC_listing(fn)
-        df.to_csv(target)
+        with Output(target) as target:
+            df.to_csv(target(), index=False)
 
-    for uv in CONFIG['UV']:
-        semester = CONFIG['SEMESTER']
-        utc_listing = f'documents/{uv}_{semester}_INSCRITS.raw'
-        target = f'generated/{uv}_{semester}_INSCRITS.csv'
-        yield {
-            'name': uv,
-            'file_dep': [utc_listing],
-            'targets': [target],
-            'actions': [(csv_inscrits, [utc_listing, target])]
-        }
-
-
-# def task_merge_utc_moodle_csv():
-#     """Construit un fichier CSV unique avec les informations de Moodle et
-#     de l'UTC."""
-
-#     moodle_listing = 'documents/SY02_P2018_MOODLE.csv'
-#     utc_listing_csv = 'generated/SY02_P2018_INSCRITS.csv'
-#     tiers_temps = 'documents/SY02_P2018_TIERS_TEMPS.lst'
-
-#     return {
-#         'file_dep': [moodle_listing, utc_listing_csv, tiers_temps],
-#         'targets': ['generated/SY02_P2018_UTC_MOODLE_MERGE.csv'],
-#         'actions': [['scripts/']]
-#     }
+    plannings = get_var('planning', '').split() or CONFIG['DEFAULT_PLANNINGS']
+    for planning in plannings:
+        for uv in CONFIG['PLANNING'][planning].get('UV') or CONFIG['PLANNING'][planning].get('UE'):
+            utc_listing = f'documents/{planning}_{uv}_inscrits.raw'
+            if os.path.exists(utc_listing):
+                target = f'generated/{planning}_{uv}_inscrits.csv'
+                yield {
+                    'name': uv + '_' + planning,
+                    'file_dep': [utc_listing],
+                    'targets': [target],
+                    'actions': [(csv_inscrits, [utc_listing, target])],
+                    'verbosity': 2
+                }
+            else:
+                print("Fichier `%s' inexistant" % utc_listing)
 
 
-def create_plannings():
+def task_xls_student_data():
+    """Fusionne les informations sur les étudiants fournies par Moodle et
+l'UTC."""
+
+    def merge_student_data(target, **kw):
+        sys.path.append('scripts/')
+        from add_student_data import (add_moodle_data,
+                                      add_UTC_data,
+                                      add_tiers_temps,
+                                      add_switches)
+
+        if 'extraction_ENT' in kw:
+            df = pd.read_excel(kw['extraction_ENT'])
+            if 'csv_moodle' in kw:
+                df = add_moodle_data(df, kw['csv_moodle'])
+
+            if 'csv_UTC' in kw:
+                df = add_UTC_data(df, kw['csv_UTC'])
+        elif 'csv_UTC' in kw:
+            df = pd.read_csv(kw['csv_UTC'])
+            if 'csv_moodle' in kw:
+                df = add_moodle_data(df, kw['csv_moodle'])
+        elif 'csv_moodle' in kw:
+            df = pd.read_csv(kw['csv_moodle'])
+
+        if 'tiers_temps' in kw:
+            df = add_tiers_temps(df, kw['tiers_temps'])
+
+        if 'TD_switches' in kw:
+            df = add_switches(df, kw['TD_switches'], 'TD')
+
+        if 'TP_switches' in kw:
+            df = add_switches(df, kw['TP_switches'], 'TP')
+
+        dff = df.sort_values(['Nom', 'Prénom'])
+
+        with Output(target) as target:
+            dff.to_excel(target(), index=False)
+
+    plannings = get_var('planning', '').split() or CONFIG['DEFAULT_PLANNINGS']
+    uvs = [get_var('uv')]
+    for planning in plannings:
+        for uv in uvs or CONFIG['PLANNING'][planning].get('UV') or CONFIG['PLANNING'][planning].get('UE'):
+
+            kw = {}
+            deps = []
+
+            extraction_ENT = f'documents/{planning}_{uv}_extraction_enseig_note.xlsx'
+            if os.path.exists(extraction_ENT):
+                kw['extraction_ENT'] = extraction_ENT
+                deps.append(extraction_ENT)
+
+            csv_moodle = f'documents/{planning}_{uv}_inscrits_moodle.csv'
+            if os.path.exists(csv_moodle):
+                kw['csv_moodle'] = csv_moodle
+                deps.append(csv_moodle)
+
+            csv_UTC = f'generated/{planning}_{uv}_inscrits.csv'
+            raw_UTC = f'documents/{planning}_{uv}_inscrits.raw'
+            if os.path.exists(raw_UTC):
+                kw['csv_UTC'] = csv_UTC
+                deps.append(csv_UTC)
+
+            tiers_temps = f'documents/{planning}_{uv}_tiers_temps.raw'
+            if os.path.exists(tiers_temps):
+                kw['tiers_temps'] = tiers_temps
+                deps.append(tiers_temps)
+
+            TD_switches = f'documents/{planning}_{uv}_TD_switches.raw'
+            if os.path.exists(TD_switches):
+                kw['TD_switches'] = TD_switches
+                deps.append(TD_switches)
+
+            TP_switches = f'documents/{planning}_{uv}_TP_switches.raw'
+            if os.path.exists(TP_switches):
+                kw['TP_switches'] = TP_switches
+                deps.append(TP_switches)
+
+            target = f'generated/{planning}_{uv}_student_data.xlsx'
+
+            if deps:
+                yield {
+                    'name': uv + '_' + planning,
+                    'file_dep': deps,
+                    'targets': [target],
+                    'actions': [(merge_student_data, [target], kw)],
+                    'verbosity': 2
+                }
+            else:
+                print("Pas de données étudiants")
+
+
+def task_xls_student_data_merge():
+    """Ajoute toutes les autres informations étudiants"""
+
+    def merge_student_data(source, target, data):
+        df = pd.read_excel(source)
+
+        for path, agregater in data.items():
+            print('Agregating %s' % path)
+            df = agregater(df, path)
+
+        dff = df.sort_values(['Nom', 'Prénom'])
+
+        with Output(target) as target0:
+            dff.to_excel(target0(), index=False)
+
+        target = os.path.splitext(target)[0] + '.csv'
+        with Output(target) as target:
+            dff.to_csv(target(), index=False)
+
+    def agregate(left_on, right_on, subset=None, drop=None, rename=None, read_method=None, kw_read={}):
+        def agregate0(df, path):
+            if left_on not in df.columns:
+                raise Exception("Pas de colonne %s dans le dataframe", left_on)
+            if read_method is None:
+                if path.endswith('.csv'):
+                    dff = pd.read_csv(path, **kw_read)
+                elif path.endswith('.xlsx'):
+                    dff = pd.read_excel(path, **kw_read)
+                else:
+                    raise Exception('No read method and unsupported file extension')
+            else:
+                dff = read_method(path, **kw_read)
+
+            if subset is not None:
+                dff = dff[list(set([right_on] + subset))]
+            if drop is not None:
+                if right_on in drop:
+                    raise Exception('On enlève pas la clé')
+                dff = dff.drop(drop, axis=1, errors='ignore')
+            if rename is not None:
+                if right_on in rename:
+                    raise Exception('Pas de renommage de la clé possible')
+                dff = dff.rename(columns=rename)
+            if right_on not in dff.columns:
+                raise Exception("Pas de colonne %s dans le dataframe", right_on)
+            df = df.merge(dff, left_on=left_on, right_on=right_on, suffixes=('', '_y'))
+            drop_cols = [right_on + '_y', right_on]
+            df = df.drop(drop_cols, axis=1, errors='ignore')
+            return df
+        return agregate0
+
+    plannings = get_var('planning', '').split() or CONFIG['DEFAULT_PLANNINGS']
+    if get_var('uv'):
+        uvs = [get_var('uv')]
+    else:
+        uvs = None
+    for planning in plannings:
+        for uv in uvs or CONFIG['PLANNING'][planning].get('UV') or CONFIG['PLANNING'][planning].get('UE'):
+            data = {}
+
+            # Ajout des feuilles Excel de notes générées par xls_grades_sheet
+            # for file in os.listdir('documents/'):
+            #     m = re.match(rf"{planning}_{uv}_([^_]+)_gradebook.xlsx", file)
+            #     if m:
+            #         data['documents/' + file] = agregate(
+            #             left_on='Courriel',
+            #             right_on='Courriel',
+            #             subset=['Note']
+            #         )
+
+            if uv == 'SY02':
+                # Ajout des demi-groupes de TP pour examen
+                data[f'generated/{planning}_{uv}_exam_groups.csv'] = agregate(
+                    left_on='Courriel',
+                    right_on='Adresse de courriel')
+
+                # Ajout de la note de médian si existant
+                data[f'documents/{planning}_{uv}_median_notes.xlsx'] = agregate(
+                    left_on='Courriel',
+                    right_on='Courriel',
+                    subset=['Note', 'Correcteur médian'],
+                    rename={'Note': 'Note médian'})
+
+                # Ajout de la note de final si existant
+                data[f'documents/{planning}_{uv}_final_notes.xlsx'] = agregate(
+                    left_on='Courriel',
+                    right_on='Courriel',
+                    subset=['Note', 'Correcteur final'],
+                    rename={'Note': 'Note final'})
+
+                # Ajout de la note globale
+                data[f'documents/{planning}_{uv}_jury.xlsx'] = agregate(
+                    left_on='Courriel',
+                    right_on='Courriel',
+                    subset=['Note'])
+
+                # Ajout de la note de TP
+                data['documents/SY02 Notes-20180614_1702-comma_separated.csv'] = agregate(
+                    left_on='Courriel',
+                    right_on='Adresse de courriel',
+                    kw_read={'na_values': ['-']},
+                    subset=["Test Quiz P2018 (Brut)"],
+                    rename={"Test Quiz P2018 (Brut)": 'Note_TP'})
+            elif uv == 'SY09':
+                # Ajout des groupes de TP si existant
+                data[f'generated/{planning}_{uv}_TD_P1_binomes.csv'] = agregate(
+                    left_on='Courriel',
+                    right_on='Adresse de courriel',
+                    subset=['group'],
+                    rename={'group': 'group_P1'})
+
+                data[f'generated/{planning}_{uv}_TD_P2_binomes.csv'] = agregate(
+                    left_on='Courriel',
+                    right_on='Adresse de courriel',
+                    rename={'group': 'group_P2'})
+            elif uv == 'SY19':
+                # Ajout des binomes finaux du projet 1, exporté de Moodle
+                data[f'documents/{planning}_{uv}_TD_P1_binomes_final.tsv'] = agregate(
+                    left_on='Courriel',
+                    right_on='Adresse de courriel',
+                    subset=['Groupe'],
+                    rename={'Groupe': 'group_P1'},
+                    read_method=pd.read_csv,
+                    kw_read={'delimiter': '\t'})
+
+                # Ajout des binomes finaux du projet 2, exporté de Moodle
+                data[f'documents/{planning}_{uv}_TD_P2_binomes_final.tsv'] = agregate(
+                    left_on='Courriel',
+                    right_on='Adresse de courriel',
+                    subset=['Groupe'],
+                    rename={'Groupe': 'group_P2'},
+                    read_method=pd.read_csv,
+                    kw_read={'delimiter': '\t'})
+
+                # Ajout de la note de premier projet, TP3
+                data[f'documents/A2018_SY19_TP3.xlsx'] = agregate(
+                    left_on='Courriel',
+                    right_on='Adresse de courriel',
+                    subset=['Devoir TP 3 (Brut)'],
+                    rename={'Devoir TP 3 (Brut)': 'note_P1'})
+
+                # Ajout de la note du QCM
+                data[f'generated/A2018_SY19_QCM.csv'] = agregate(
+                    left_on='Courriel',
+                    right_on='Courriel',
+                    drop=['Name'])
+
+                # Ajout de la note examen hors QCM
+                data[f'documents/A2018_SY19_final_gradebook.xlsx'] = agregate(
+                    left_on='Courriel',
+                    right_on='Courriel',
+                    subset=['final'])
+
+                # Ajout de la note du deuxième projet
+                data[f'documents/A2018_SY19_P2_gradebook.xlsx'] = agregate(
+                    left_on='Courriel',
+                    right_on='Courriel',
+                    subset=['P2'])
+
+                # Ajout de la note du deuxième projet
+                data[f'documents/A2018_SY19_jury_gradebook.xlsx'] = agregate(
+                    left_on='Courriel',
+                    right_on='Courriel',
+                    subset=['Note ECTS'])
+
+            elif uv == "AOS2":
+                data[f'generated/2018_T2_AOS2_QCM.csv'] = agregate(
+                    left_on='Courriel',
+                    drop=['Name'],
+                    right_on='Courriel',
+                    read_method=pd.read_csv)
+
+                data[f'documents/2018_T2_AOS2_groups.tsv'] = agregate(
+                    left_on='Courriel',
+                    right_on='Adresse de courriel',
+                    subset=['Groupe'],
+                    read_method=pd.read_csv,
+                    kw_read={'delimiter': '\t'})
+
+            source = f'generated/{planning}_{uv}_student_data.xlsx'
+
+            if os.path.exists(source):
+                target = f'generated/{planning}_{uv}_student_data_merge.xlsx'
+                deps = [source]
+                data_exist = {}
+
+                for path, agregater in data.items():
+                    if os.path.exists(path):
+                        deps.append(path)
+                        data_exist[path] = agregater
+
+                yield {
+                    'name': uv + '_' + planning,
+                    'file_dep': deps,
+                    'targets': [target],
+                    'actions': [(merge_student_data, [source, target, data_exist])],
+                    'verbosity': 2
+                }
+            else:
+                print("Pas de fichier `%s'" % source)
+
+
+def task_csv_exam_groups():
+    """Fichier csv des demi-groupe de TP pour le passage des examens de TP."""
+
+    def csv_exam_groups(target, target_moodle, xls_merge):
+        df = pd.read_excel(xls_merge)
+
+        def exam_split(df):
+            if 'Tiers-temps' in df.columns:
+                dff = df.sort_values('Tiers-temps', ascending=False)
+            else:
+                dff = df
+            n = len(df.index)
+            m = math.ceil(n / 2)
+            sg1 = dff.iloc[:m, :]['TP'] + 'i'
+            sg2 = dff.iloc[m:, :]['TP'] + 'ii'
+            dff['TPE'] = pd.concat([sg1, sg2])
+            return dff
+
+        if 'TP' not in df.columns:
+            return
+
+        dff = df.groupby('TP', group_keys=False).apply(exam_split)
+        dff = dff[['Adresse de courriel', 'TPE']]
+
+        with Output(target) as target0:
+            dff.to_csv(target0(), index=False)
+
+        with Output(target_moodle) as target:
+            dff.to_csv(target(), index=False, header=False)
+
+    plannings = get_var('planning', '').split() or CONFIG['DEFAULT_PLANNINGS']
+    for planning in plannings:
+        for uv in CONFIG['PLANNING'][planning].get('UV') or CONFIG['PLANNING'][planning].get('UE'):
+            deps = [f'generated/{planning}_{uv}_student_data_merge.xlsx']
+            target = f'generated/{planning}_{uv}_exam_groups.csv'
+            target_moodle = f'generated/{planning}_{uv}_exam_groups_moodle.csv'
+
+            if os.path.exists(deps[0]):
+                yield {
+                    'name': uv + '_' + planning,
+                    'actions': [(csv_exam_groups, [target, target_moodle, deps[0]])],
+                    'file_dep': deps,
+                    'targets': [target_moodle],
+                    'verbosity': 2
+                }
+            else:
+                yield {
+                    'name': uv + '_' + planning,
+                    'actions': [lambda: print("Pas de fichier `%s'" % deps[0])],
+                    'verbosity': 2
+                }
+
+
+def task_csv_groups():
+    """Fichiers csv des groupes de Cours/TD/TP pour Moodle"""
+
+    def csv_groups(target, xls_merge, ctype):
+        df = pd.read_excel(xls_merge)
+        if ctype not in df.columns:
+            return
+        dff = df[['Courriel', ctype]]
+
+        with Output(target) as target:
+            dff.to_csv(target(), index=False, header=False)
+
+    def selected_uv():
+        uvs = get_var('uv', '').split()
+        plannings = get_var('planning', '').split()
+
+        if not uvs and not plannings:
+            plannings = CONFIG['DEFAULT_PLANNINGS']
+
+        for planning in CONFIG['DEFAULT_PLANNINGS']:
+            uvp = (CONFIG['PLANNING'][planning].get('UV') or
+                   CONFIG['PLANNING'][planning].get('UE'))
+            if planning in plannings:
+                for uv in uvp:
+                    yield uv, planning
+            else:
+                for uv in uvp:
+                    if uv in uvs:
+                        yield uv, planning
+
+    for uv, planning in selected_uv():
+        deps = [f'generated/{planning}_{uv}_student_data_merge.xlsx']
+
+        if os.path.exists(deps[0]):
+            for ctype in ['Cours', 'TD', 'TP']:
+                target = f'generated/{planning}_{uv}_{ctype}_group_moodle.csv'
+
+                yield {
+                    'name': f'{uv}_{planning}_{ctype}',
+                    'actions': [(csv_groups, [target, deps[0], ctype])],
+                    'file_dep': deps,
+                    'targets': [target],
+                    'verbosity': 2
+                }
+        else:
+            print("Fichier `%s' inexistant" % deps[0])
+
+
+def task_csv_binomes():
+    """Fichier csv des groupes + binômes
+
+Variables à fournir:
+    planning: (default)
+    uv: (default)
+    course: Name of column to group by
+    project: Identifier of grouping
+    other_groups: Other column defining a grouping
+"""
+
+    def csv_binomes(target, target_moodle, xls_merge, ctype, project, other_groups):
+        df = pd.read_excel(xls_merge)
+
+        def binome_match(row1, row2, other_groups=None, foreign=True):
+            "Renvoie vrai si le binôme est bon"
+
+            if foreign:
+                e = ['DIPLOME ETAB ETRANGER SECONDAIRE',
+                     'DIPLOME ETAB ETRANGER SUPERIEUR',
+                     'AUTRE DIPLOME UNIVERSITAIRE DE 1ER CYCLE HORS DUT']
+
+                # 2 étrangers == catastrophe
+                if (row1['Dernier diplôme obtenu'] in e and
+                    row2['Dernier diplôme obtenu'] in e):
+                    return False
+
+                # 2 GB == catastrophe
+                if (re.search('^GB', row1['Spécialité 1']) and
+                    re.search('^GB', row2['Spécialité 1'])):
+                    return False
+
+            # Binomes précédents
+            if other_groups is not None:
+                for gp in other_groups:
+                    if row1[gp] == row2[gp]:
+                        return False
+
+            return True
+
+        def trinome_match(row1, row2, row3, other_groups=None):
+            return (binome_match(row1, row2, other_groups=other_groups, foreign=False) and
+                    binome_match(row1, row3, other_groups=other_groups, foreign=False) and
+                    binome_match(row2, row3, other_groups=other_groups, foreign=False))
+
+        class Ooops(Exception):
+            pass
+
+        def add_binome(group, other_groups=None, foreign=True):
+            gpn = group.name
+
+            while True:
+                try:
+                    # Création de GROUPS qui associe indice avec groupe
+                    index = list(group.index)
+                    letters = list('ABCDEFGHIJKLMNOPQRSTUVWXYZ')[::-1]
+                    l = letters[0]
+                    groups = {}
+                    maxiter = 1000
+                    it = 0
+                    while index:
+                        it += 1
+                        if it > maxiter:
+                            raise Ooops
+                        if len(index) == 1:
+                            # Le binome du dernier groupe
+                            stu1, stu2 = [k for k, v in groups.items() if v == l]
+                            if trinome_match(group.loc[stu1], group.loc[stu2], group.loc[index[0]], other_groups=other_groups):
+                                raise Ooops
+                            groups[index[0]] = l
+                            index = []
+                        else:
+                            stu1, stu2 = random.sample(index, 2)
+                            if binome_match(group.loc[stu1], group.loc[stu2], other_groups=other_groups, foreign=foreign):
+                                l = letters.pop()
+                                groups[stu1] = l
+                                groups[stu2] = l
+                                index.remove(stu1)
+                                index.remove(stu2)
+                    # do stuff
+                except Ooops:
+                    continue
+                break
+
+            def add_group(g):
+                g['binome'] = f'{gpn}_{project}_{g.name}'
+                return g
+
+            gb = group.groupby(pd.Series(groups)).apply(add_group)
+
+            return gb
+
+        if ctype not in df.columns:
+            print("Pas de colonne `%s'" % ctype)
+            print("Colonnes disponibles: %s" % ', '.join(df.columns))
+            return None
+
+        gdf = df.groupby(ctype)
+
+        if other_groups is not None:
+            if not isinstance(other_groups, list):
+                other_groups = [other_groups]
+
+            diff = set(other_groups) - set(df.columns.values)
+            if diff:
+                print("Colonnes non reconnues: %s" % diff)
+                print("Colonnes possibles: %s" % df.columns.values)
+                return None
+
+        df = gdf.apply(add_binome, other_groups=other_groups)
+        df = df[['Courriel', ctype, 'binome']]
+
+        # dfa = df[['Adresse de courriel', ctype]].rename(columns={ctype: 'group'})
+        dfb = df[['Courriel', 'binome']].rename(columns={'binome': 'group'})
+        # df = pd.concat([dfa, dfb])
+        df = dfb
+        df = df.sort_values('group')
+
+        with Output(target) as target0:
+            df.to_csv(target0(), index=False)
+
+        with Output(target_moodle) as target:
+            df.to_csv(target(), index=False, header=False)
+
+    planning = get_var('planning') or CONFIG['DEFAULT_PLANNING']
+    uv = get_var('uv') or CONFIG['DEFAULT_UV']
+    deps = [f'generated/{planning}_{uv}_student_data_merge.xlsx']
+
+    if os.path.exists(deps[0]):
+        course = get_var('course')
+        project = get_var('project')
+        other_groups = get_var('other_groups')
+
+        if planning and uv and course and project:
+            target = f'generated/{planning}_{uv}_{course}_{project}_binomes.csv'
+            target_moodle = f'generated/{planning}_{uv}_{course}_{project}_binomes_moodle.csv'
+
+            yield {
+                'name': f'{uv} {course}',
+                'actions': [(csv_binomes, [target, target_moodle, deps[0], course, project, other_groups])],
+                'file_dep': deps,
+                'targets': [target_moodle],  # target_moodle only to
+                                             # avoid circular dep
+                'verbosity': 2
+            }
+    else:
+        print("Fichier `%s' inexistant" % deps[0])
+
+
+def skip_days(planning):
     def skip_range(d1, d2):
         return([d1 + timedelta(days=x) for x in range((d2 - d1).days + 1)])
 
     def skip_week(d1, weeks=1):
         return([d1 + timedelta(days=x) for x in range(7*weeks-1)])
 
-    # Jours fériés
-    ferie = [date(2018, 4, 2),
-             date(2018, 5, 1),
-             date(2018, 5, 8),
-             date(2018, 5, 10),
-             date(2018, 5, 21)]
+    if planning == 'P2018':
+        # Jours fériés
+        ferie = [date(2018, 4, 2),
+                 date(2018, 5, 1),
+                 date(2018, 5, 8),
+                 date(2018, 5, 10),
+                 date(2018, 5, 21)]
 
-    # Première semaine sans TD/TP
-    debut = skip_week(CONFIG['PL_BEG'])
+        # Première semaine sans TD/TP
+        debut = skip_week(CONFIG['PLANNING'][planning]['PL_BEG'])
 
-    # Semaine des médians
-    median = skip_range(date(2018, 5, 2), date(2018, 5, 9))
+        # Semaine des médians
+        median = skip_range(date(2018, 5, 2), date(2018, 5, 9))
 
-    # Semaine SU
-    semaine_su = skip_week(date(2018, 4, 16), weeks=2)
+        # Semaine SU
+        semaine_su = skip_week(date(2018, 4, 16), weeks=2)
 
-    # Jours changés
-    turn = {
-        date(2018, 5, 9): 'Mardi',
-        date(2018, 5, 25): 'Lundi'
-    }
+        # Jours changés
+        turn = {
+            date(2018, 5, 9): 'Mardi',
+            date(2018, 5, 25): 'Lundi'
+        }
 
-    # Jours sautés pour Cours/TD/TP
-    skip_days_C = ferie + semaine_su + median
-    skip_days_D = ferie + semaine_su + debut + median
-    skip_days_T = ferie + semaine_su + debut
+        # Jours sautés pour Cours/TD/TP
+        skip_days_C = ferie + semaine_su + median
+        skip_days_D = ferie + semaine_su + debut + median
+        skip_days_T = ferie + semaine_su + debut
+    elif planning == 'A2018':
+        ferie = [date(2018, 10, 18)]  # Comutec
 
-    beg = CONFIG['PL_BEG']
-    end = CONFIG['PL_END']
+        # Première semaine sans TD/TP
+        debut = skip_week(CONFIG['PLANNING'][planning]['PL_BEG'])
+
+        # Semaine des médians
+        median = skip_range(date(2018, 11, 6), date(2018, 11, 12))
+
+        noel = skip_range(date(2018, 12, 24), date(2019, 1, 2))
+
+        vacances = skip_range(date(2018, 10, 29), date(2018, 11, 3))
+
+        # Jours changés
+        turn = {
+            date(2018, 10, 22): 'Jeudi',
+            date(2019, 1, 3): 'Lundi'
+        }
+
+        # Jours sautés pour Cours/TD/TP
+        skip_days_C = vacances + ferie + median + noel
+        skip_days_D = vacances + ferie + debut + median + noel
+        skip_days_T = vacances + ferie + debut + noel
+    elif planning == '2018_T1':
+        # Jours fériés
+        ferie = [date(2018, 10, 18)]  # Comutec
+
+        vacances = skip_range(date(2018, 10, 29), date(2018, 11, 4))
+
+        # Jours changés
+        turn = {
+            date(2018, 10, 22): 'Jeudi'
+        }
+
+        # Jours sautés pour Cours/TD/TP
+        skip_days_C = ferie + vacances
+        skip_days_D = ferie + vacances + [date(2018, 9, 10)]
+        skip_days_T = ferie + vacances + [date(2018, 9, 10)]
+
+    elif planning == '2018_T2':
+        vacances = skip_range(date(2018, 12, 24), date(2019, 1, 2))
+
+        turn = {}
+
+        # Jours sautés pour Cours/TD/TP
+        skip_days_C = vacances
+        skip_days_D = vacances
+        skip_days_T = vacances
+    elif planning == 'P2019':
+        # Jours fériés
+        ferie = [date(2019, 4, 22),
+                 date(2019, 5, 1),
+                 date(2019, 5, 8),
+                 date(2019, 5, 30),
+                 date(2019, 6, 10)]
+
+        # Première semaine sans TD/TP
+        debut = skip_week(CONFIG['PLANNING'][planning]['PL_BEG'])
+
+        # Semaine des médians
+        median = skip_range(date(2019, 4, 23), date(2019, 4, 29))
+
+        vacances = skip_range(date(2019, 4, 15), date(2019, 4, 20))
+
+        # Jours changés
+        turn = {
+            date(2019, 5, 7): 'Mercredi',
+            date(2019, 5, 14): 'Lundi'
+        }
+
+        # Jours sautés pour Cours/TD/TP
+        skip_days_C = ferie + vacances + median
+        skip_days_D = ferie + vacances + debut + median
+        skip_days_T = ferie + vacances + debut
+    else:
+        raise Exception('Unsupported planning')
+
+    return skip_days_C, skip_days_D, skip_days_T, turn
+
+
+def create_plannings(planning_type):
+    """Generate list of working days according to planning"""
 
     def generate_days(beg, end, skip, turn, course):
         daynames = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi']
@@ -640,22 +1470,27 @@ def create_plannings():
             # Get week A or B
             if course == 'T':
                 sem = 'A' if semaine[day] % 2 == 0 else 'B'
-                num = semaine[day] // 2 + 1
+                numAB = semaine[day] // 2 + 1
                 semaine[day] += 1
+                num = semaine[day]
             elif course in ['C', 'D']:
                 semaine[day] += 1
+                numAB = None
                 sem = None
                 num = semaine[day]
             else:
                 raise Exception("course inconnu")
 
             if d in turn:
-                days.append((d, turn[d], sem, num, nweek))
+                days.append((d, turn[d], sem, num, numAB, nweek))
             else:
-                days.append((d, daynames[d.weekday()], sem, num, nweek))
+                days.append((d, daynames[d.weekday()], sem, num, numAB, nweek))
 
         return(days)
 
+    beg = CONFIG['PLANNING'][planning_type]['PL_BEG']
+    end = CONFIG['PLANNING'][planning_type]['PL_END']
+    skip_days_C, skip_days_D, skip_days_T, turn = skip_days(planning_type)
     planning_C = generate_days(beg, end, skip_days_C, turn, 'C')
     planning_D = generate_days(beg, end, skip_days_D, turn, 'D')
     planning_T = generate_days(beg, end, skip_days_T, turn, 'T')
@@ -670,88 +1505,124 @@ def create_plannings():
 def task_ical_inst():
     """Create iCal file for each instructor"""
 
-    deps = ['generated/UTC_UV_list_instructors.csv']
-
-    def create_ical_inst(csv):
+    def create_ical_inst(insts, plannings, csv):
         df = pd.read_csv(csv)
         df = df.loc[~pd.isnull(df['Intervenants']), :]
 
-        planning = create_plannings()
+        tables = []
+        for planning_type in plannings:
+            df_planning = df.loc[df['Planning'] == planning_type]
+            planning = create_plannings(planning_type)
 
-        planning_C = planning['C']
-        pl_C = pd.DataFrame(planning_C)
-        pl_C.columns = ['date', 'dayname', 'semaine', 'num', 'nweek']
+            planning_C = planning['C']
+            pl_C = pd.DataFrame(planning_C)
+            pl_C.columns = ['date', 'dayname', 'semaine', 'num', 'numAB', 'nweek']
 
-        df_C = df.loc[df['Lib. créneau'].str.startswith('C'), :]
-        df_Cm = pd.merge(df_C, pl_C, how='left', left_on='Jour', right_on='dayname')
+            df_C = df_planning.loc[df_planning['Lib. créneau'].str.startswith('C'), :]
+            df_Cm = pd.merge(df_C, pl_C, how='left', left_on='Jour', right_on='dayname')
 
-        planning_D = planning['D']
-        pl_D = pd.DataFrame(planning_D)
-        pl_D.columns = ['date', 'dayname', 'semaine', 'num', 'nweek']
+            planning_D = planning['D']
+            pl_D = pd.DataFrame(planning_D)
+            pl_D.columns = ['date', 'dayname', 'semaine', 'num', 'numAB', 'nweek']
 
-        df_D = df.loc[df['Lib. créneau'].str.startswith('D'), :]
-        df_Dm = pd.merge(df_D, pl_D, how='left', left_on='Jour', right_on='dayname')
+            df_D = df_planning.loc[df_planning['Lib. créneau'].str.startswith('D'), :]
+            df_Dm = pd.merge(df_D, pl_D, how='left', left_on='Jour', right_on='dayname')
 
-        planning_T = planning['T']
-        pl_T = pd.DataFrame(planning_T)
-        pl_T.columns = ['date', 'dayname', 'semaine', 'num', 'nweek']
+            planning_T = planning['T']
+            pl_T = pd.DataFrame(planning_T)
+            pl_T.columns = ['date', 'dayname', 'semaine', 'num', 'numAB', 'nweek']
 
-        df_T = df.loc[df['Lib. créneau'].str.startswith('T'), :]
-        df_Tm = pd.merge(df_T, pl_T, how='left', left_on=['Jour', 'Semaine'], right_on=['dayname', 'semaine'])
+            df_T = df_planning.loc[df_planning['Lib. créneau'].str.startswith('T'), :]
+            if df_T['Semaine'].hasnans:
+                df_Tm = pd.merge(df_T, pl_T, how='left', left_on='Jour', right_on='dayname')
+            else:
+                df_Tm = pd.merge(df_T, pl_T, how='left', left_on=['Jour', 'Semaine'], right_on=['dayname', 'semaine'])
 
-        dfm = pd.concat([df_Cm, df_Dm, df_Tm], ignore_index=True)
+            dfm = pd.concat([df_Cm, df_Dm, df_Tm], ignore_index=True)
+            tables.append(dfm)
 
-        for inst, group in dfm.groupby('Intervenants'):
+        dfm = pd.concat(tables)
+
+        if len(insts) == 1 and insts[0] == 'all':
+            insts = dfm['Intervenants'].unique()
+
+        for inst in insts:
+            dfm_inst = dfm.loc[dfm['Intervenants'].astype(str) == inst, :]
             output = f'generated/{inst.replace(" ", "_")}.ics'
-            write_ical_file(group, output)
+            write_ical_file(dfm_inst, output)
 
-    return {
-        'file_dep': ['generated/UTC_UV_list_instructors.csv'],
-        'actions': [(create_ical_inst, deps)]
-    }
+    deps = ['generated/UTC_UV_list_instructors.csv']
+
+    plannings = get_var('planning', '').split() or CONFIG['DEFAULT_PLANNINGS']
+    insts = get_var('insts', '').split() or [CONFIG['DEFAULT_INSTRUCTOR']]
+    if os.path.exists(deps[0]):
+        return {
+            'file_dep': deps,
+            'actions': [(create_ical_inst, [insts, plannings, deps[0]])],
+            'uptodate': [False],
+            'verbosity': 2
+        }
+    else:
+        print("Fichier `%s' inexistant" % deps[0])
 
 
 def task_csv_all_courses():
     "Fichier csv de tous les créneaux du semestre"
 
-    def csv_all_courses(csv, target):
+    def csv_all_courses(plannings, csv, target):
         df = pd.read_csv(csv)
-        df = df.loc[df['Code enseig.'].isin(CONFIG['UV'])]
 
-        planning = create_plannings()
+        tables = []
+        for planning_type in plannings:
+            uv = (CONFIG['PLANNING'][planning_type].get('UV') or
+                  CONFIG['PLANNING'][planning_type].get('UE'))
+            df_planning = df.loc[df['Code enseig.'].isin(uv)]
+            planning = create_plannings(planning_type)
 
-        planning_C = planning['C']
-        pl_C = pd.DataFrame(planning_C)
-        pl_C.columns = ['date', 'dayname', 'semaine', 'num', 'nweek']
+            planning_C = planning['C']
+            pl_C = pd.DataFrame(planning_C)
+            pl_C.columns = ['date', 'dayname', 'semaine', 'num', 'numAB', 'nweek']
 
-        df_C = df.loc[df['Lib. créneau'].str.startswith('C'), :]
-        df_Cm = pd.merge(df_C, pl_C, how='left', left_on='Jour', right_on='dayname')
+            df_C = df_planning.loc[df_planning['Lib. créneau'].str.startswith('C'), :]
+            df_Cm = pd.merge(df_C, pl_C, how='left', left_on='Jour', right_on='dayname')
 
-        planning_D = planning['D']
-        pl_D = pd.DataFrame(planning_D)
-        pl_D.columns = ['date', 'dayname', 'semaine', 'num', 'nweek']
+            planning_D = planning['D']
+            pl_D = pd.DataFrame(planning_D)
+            pl_D.columns = ['date', 'dayname', 'semaine', 'num', 'numAB', 'nweek']
 
-        df_D = df.loc[df['Lib. créneau'].str.startswith('D'), :]
-        df_Dm = pd.merge(df_D, pl_D, how='left', left_on='Jour', right_on='dayname')
+            df_D = df_planning.loc[df_planning['Lib. créneau'].str.startswith('D'), :]
+            df_Dm = pd.merge(df_D, pl_D, how='left', left_on='Jour', right_on='dayname')
 
-        planning_T = planning['T']
-        pl_T = pd.DataFrame(planning_T)
-        pl_T.columns = ['date', 'dayname', 'semaine', 'num', 'nweek']
+            planning_T = planning['T']
+            pl_T = pd.DataFrame(planning_T)
+            pl_T.columns = ['date', 'dayname', 'semaine', 'num', 'numAB', 'nweek']
 
-        df_T = df.loc[df['Lib. créneau'].str.startswith('T'), :]
-        df_Tm = pd.merge(df_T, pl_T, how='left', left_on=['Jour', 'Semaine'], right_on=['dayname', 'semaine'])
+            df_T = df_planning.loc[df_planning['Lib. créneau'].str.startswith('T'), :]
+            if df_T['Semaine'].hasnans:
+                df_Tm = pd.merge(df_T, pl_T, how='left', left_on='Jour', right_on='dayname')
+            else:
+                df_Tm = pd.merge(df_T, pl_T, how='left', left_on=['Jour', 'Semaine'], right_on=['dayname', 'semaine'])
 
-        dfm = pd.concat([df_Cm, df_Dm, df_Tm], ignore_index=True)
-        dfm.to_csv(target, index=False)
+            dfm = pd.concat([df_Cm, df_Dm, df_Tm], ignore_index=True)
+            tables.append(dfm)
+
+        dfm = pd.concat(tables)
+        with Output(target) as target:
+            dfm.to_csv(target(), index=False)
 
     dep = 'generated/UTC_UV_list_instructors.csv'
     target = 'generated/UTC_UV_list_créneau.csv'
 
-    return {
-        'file_dep': [dep],
-        'actions': [(csv_all_courses, [dep, target])],
-        'targets': [target]
-    }
+    plannings = get_var('plannings') or CONFIG['DEFAULT_PLANNINGS']
+    if os.path.exists(dep):
+        return {
+            'file_dep': [dep],
+            'actions': [(csv_all_courses, [plannings, dep, target])],
+            'targets': [target],
+            'verbosity': 2
+        }
+    else:
+        print("Fichier `%s' inexistant" % dep)
 
 
 def write_ical_file(dataframe, output):
@@ -772,7 +1643,7 @@ def write_ical_file(dataframe, output):
     df = dataframe.sort_values('timestamp')
 
     cal = Calendar()
-    cal['summary'] = CONFIG['SEMESTER']
+    cal['summary'] = CONFIG['DEFAULT_PLANNING']
 
     for uv, group in df.groupby('Code enseig.'):
         for index, row in group.iterrows():
@@ -780,16 +1651,13 @@ def write_ical_file(dataframe, output):
 
             name = row['Lib. créneau'].replace(' ', '')
             week = row['Semaine']
-
-            if re.match('^T', name):
-                name = name + row['Semaine']
-
             room = row['Locaux'].replace(' ', '').replace('BF', 'F')
             num = row['num']
             activity = row['Activité']
+            numAB = row['numAB']
 
-            if activity == 'TP':
-                summary = f'{uv} {activity}{num} {week} {room}'
+            if week is not np.nan:
+                summary = f'{uv} {activity}{numAB} {week} {room}'
             else:
                 summary = f'{uv} {activity}{num} {room}'
 
@@ -802,23 +1670,19 @@ def write_ical_file(dataframe, output):
 
             cal.add_component(event)
 
-    with open(output, 'wb') as fd:
-        fd.write(cal.to_ical(sorted=True))
-
-
-def task_compute_plannings():
-    return {'actions': [create_plannings]}
+    with Output(output) as output:
+        with open(output(), 'wb') as fd:
+            fd.write(cal.to_ical(sorted=True))
 
 
 def task_html_table():
     """Table HTML des TD/TP"""
 
-    def html_table(**kwargs):
-        uv = kwargs['uv']
-        course = kwargs['course']
-        slots = kwargs['slots']
+    def html_table(planning, csv_inst_list, uv, course):
+        print(planning, course, uv)
 
         # Select wanted slots
+        slots = compute_slots(planning, csv_inst_list)
         slots = slots.loc[slots['Code enseig.'] == uv, :]
         slots = slots.loc[slots['Activité'] == course, :]
 
@@ -829,7 +1693,7 @@ def task_html_table():
 
         # Merge when multiple slots on same week
         if course == 'TP':
-            lb = lambda df: ', '.join(df.semaine + df.num.apply(str))
+            lb = lambda df: ', '.join(df.semaine + df.numAB.apply(str))
         elif course == 'TD':
             lb = lambda df: ', '.join(df.num.apply(str))
         elif course == 'Cours':
@@ -850,11 +1714,14 @@ def task_html_table():
         # Iterate on each week of semester
         rows = []
         weeks = []
-        for (mon, nmon) in mondays(CONFIG['PL_BEG'], CONFIG['PL_END']):
+        planning = get_var('planning') or CONFIG['DEFAULT_PLANNING']
+        for (mon, nmon) in mondays(CONFIG['PLANNING'][planning]['PL_BEG'],
+                                   CONFIG['PLANNING'][planning]['PL_END']):
             weeks.append('{}-{}'.format(mon.strftime('%d/%m'),
                                         (nmon-timedelta(days=1)).strftime('%d/%m')))
-            cr_week = slots.loc[(slots.date >= mon) & (slots.date < nmon)]
 
+            # Select
+            cr_week = slots.loc[(slots.date >= mon) & (slots.date < nmon)]
             if len(cr_week) > 0:
                 e = cr_week.groupby('Lib. créneau').apply(lb)
                 rows.append(e)
@@ -893,62 +1760,58 @@ def task_html_table():
         # Inline style for Moodle
         output = pynliner.fromString(html)
 
-        with open(f'generated/{uv}_{course}_table.html', 'w') as fd:
-            fd.write(output)
-
-    for course, short in [('TD', 'D'), ('TP', 'T'), ('Cours', 'C')]:
-        for uv in CONFIG['UV']:
-            yield {
-                'name': f'{uv}{course}',
-                'actions': [(html_table, [], {'uv': uv, 'course': course})],
-                'getargs': {'slots': ('compute_slots', 'slots')},
-                'targets': [f'generated/{uv}_{course}_table.html'],
-                'verbosity': 2
-            }
-
-
-def task_compute_slots():
-    def compute_slots(**kwargs):
-        planning = kwargs['planning']
-        csv_inst_list = kwargs['csv']
-
-        df = pd.read_csv(csv_inst_list)
-        df = df.loc[~pd.isnull(df['Intervenants']), :]
-
-        planning_C = planning['C']
-        pl_C = pd.DataFrame(planning_C)
-        pl_C.columns = ['date', 'dayname', 'semaine', 'num', 'nweek']
-
-        df_C = df.loc[df['Activité'] == 'Cours', :]
-        df_Cm = pd.merge(df_C, pl_C, how='left', left_on='Jour', right_on='dayname')
-
-        planning_D = planning['D']
-        pl_D = pd.DataFrame(planning_D)
-        pl_D.columns = ['date', 'dayname', 'semaine', 'num', 'nweek']
-
-        df_D = df.loc[df['Activité'] == 'TD', :]
-        df_Dm = pd.merge(df_D, pl_D, how='left', left_on='Jour', right_on='dayname')
-
-        planning_T = planning['T']
-        pl_T = pd.DataFrame(planning_T)
-        pl_T.columns = ['date', 'dayname', 'semaine', 'num', 'nweek']
-
-        df_T = df.loc[df['Activité'] == 'TP', :]
-        df_Tm = pd.merge(df_T, pl_T, how='left', left_on=['Jour', 'Semaine'], right_on=['dayname', 'semaine'])
-
-        dfm = pd.concat([df_Cm, df_Dm, df_Tm], ignore_index=True)
-
-        return({'slots': dfm})
+        target = f'generated/{planning}_{uv}_{course}_table.html'
+        with Output(target) as target:
+            with open(target(), 'w') as fd:
+                fd.write(output)
 
     dep = 'generated/UTC_UV_list_instructors.csv'
+    if os.path.exists(dep):
+        plannings = get_var('planning', '').split() or CONFIG['DEFAULT_PLANNINGS']
+        for planning in plannings:
+            for course, short in [('TD', 'D'), ('TP', 'T'), ('Cours', 'C')]:
+                for uv in CONFIG['PLANNING'][planning].get('UV') or CONFIG['PLANNING'][planning].get('UE'):
+                    yield {
+                        'name': f'{planning}{uv}{course}',
+                        'file_dep': [dep],
+                        'actions': [(html_table, [planning, dep, uv, course])],
+                        'targets': [f'generated/{planning}_{uv}_{course}_table.html'],
+                        'verbosity': 2
+                    }
 
-    return {
-        # 'uptodate': [False],
-        'file_dep': [dep],
-        'actions': [(compute_slots, [], {'csv': dep})],
-        'getargs': {'planning': ('compute_plannings', None)},
-        'verbosity': 2
-    }
+
+def compute_slots(planning_type, csv_inst_list):
+    df = pd.read_csv(csv_inst_list)
+    df_planning = df.loc[(~pd.isnull(df['Intervenants'])) &
+                         (df['Planning'] == planning_type), :]
+    planning = create_plannings(planning_type)
+
+    planning_C = planning['C']
+    pl_C = pd.DataFrame(planning_C)
+    pl_C.columns = ['date', 'dayname', 'semaine', 'num', 'numAB', 'nweek']
+
+    df_C = df_planning.loc[df_planning['Lib. créneau'].str.startswith('C'), :]
+    df_Cm = pd.merge(df_C, pl_C, how='left', left_on='Jour', right_on='dayname')
+
+    planning_D = planning['D']
+    pl_D = pd.DataFrame(planning_D)
+    pl_D.columns = ['date', 'dayname', 'semaine', 'num', 'numAB', 'nweek']
+
+    df_D = df_planning.loc[df_planning['Lib. créneau'].str.startswith('D'), :]
+    df_Dm = pd.merge(df_D, pl_D, how='left', left_on='Jour', right_on='dayname')
+
+    planning_T = planning['T']
+    pl_T = pd.DataFrame(planning_T)
+    pl_T.columns = ['date', 'dayname', 'semaine', 'num', 'numAB', 'nweek']
+
+    df_T = df_planning.loc[df_planning['Lib. créneau'].str.startswith('T'), :]
+    if df_T['Semaine'].hasnans:
+        df_Tm = pd.merge(df_T, pl_T, how='left', left_on='Jour', right_on='dayname')
+    else:
+        df_Tm = pd.merge(df_T, pl_T, how='left', left_on=['Jour', 'Semaine'], right_on=['dayname', 'semaine'])
+
+    dfm = pd.concat([df_Cm, df_Dm, df_Tm], ignore_index=True)
+    return dfm
 
 
 def task_json_restriction():
@@ -963,13 +1826,17 @@ def task_json_restriction():
         df = df.loc[df['Activité'] == 'TP']
 
         def get_beg_end_date_each(num, df):
+            print(num)
+            # print(df)
+            print(df.date)
+
             sts = []
             if num == 7:        # Exam
                 return None
             if num == 6:        # Dispo juste après la séance
                 dt_min = pd.to_datetime(df['date']).min().date()
                 for _, row in df.iterrows():
-                    group = row['Lib. créneau'] + row['Semaine']
+                    group = row['Lib. créneau'] + row['semaine']
                     dt = (datetime.strptime(row['date'], DATE_FORMAT).date() +
                           timedelta(days=1))
                     sts.append((CondGroup() == group) & (CondDate() >= dt))
@@ -979,22 +1846,585 @@ def task_json_restriction():
 
             else:               # Dispo après la dernière séance
                 dt_min = pd.to_datetime(df['date']).min().date()
-                dt_max = pd.to_datetime(df['date']).max().date()
+                dt_max = (pd.to_datetime(df['date']).max().date() +
+                          timedelta(days=1))
                 return (num, {'enonce': (CondDate() >= dt_min).to_PHP(),
                               'corrige': (CondDate() >= dt_max).to_PHP()})
 
-        gb = df.groupby('num')
+        gb = df.groupby('numAB')
         moodle_date = dict([get_beg_end_date_each(name, g) for name, g in gb
                             if get_beg_end_date_each(name, g) is not None])
-        with open('generated/moodle_date.json', 'w') as fd:
-            json.dump(moodle_date, fd, indent=4)
+
+        target = 'generated/moodle_date.json'
+        with Output(target) as target:
+            with open(target(), 'w') as fd:
+                json.dump(moodle_date, fd, indent=4)
 
     dep = 'generated/UTC_UV_list_créneau.csv'
+    uv = get_var('uv') or CONFIG['DEFAULT_UV']
 
-    uv = 'SY02'
-    target = 'generated/moodle_date.json'
+    if uv:
+        if os.path.exists(dep):
+            target = 'generated/moodle_date.json'
+            return {
+                'actions': [(restriction_list, [uv, dep, target])],
+                'file_dep': [dep],
+                'verbosity': 2
+            }
+        else:
+            print("Fichier `%s' inexistant" % dep)
+
+    else:
+        print("Fichier `%s' inexistant" % dep)
+
+
+def task_pdf_trombinoscope():
+    """Fichier PDF des trombinoscopes par groupes et/ou sous-groupes"""
+
+    def pdf_trombinoscope(xls_merge, target, groupby, subgroupby, width):
+        async def download_image(session, login):
+            url = URL + login
+            async with session.get(url) as response:
+                content = await response.content.read()
+                if len(content) < 100:
+                    copyfile('documents/inconnu.jpg',
+                             f'generated/images/{login}.jpg')
+                else:
+                    with open(f'generated/images/{login}.jpg', 'wb') as handler:
+                        handler.write(content)
+
+        async def download_session(loop):
+            os.makedirs('generated/images', exist_ok=True)
+            async with aiohttp.ClientSession(loop=loop) as session:
+                for login in df.Login:
+                    if not os.path.exists(f'generated/images/{login}.jpg'):
+                        await download_image(session, login)
+
+        # Getting images
+        df = pd.read_excel(xls_merge)
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(download_session(loop))
+
+        latex_jinja_env = jinja2.Environment(
+            block_start_string='((*',
+            block_end_string='*))',
+            variable_start_string='(((',
+            variable_end_string=')))',
+            comment_start_string='((=',
+            comment_end_string='=))',
+            loader=jinja2.FileSystemLoader('templates/'))
+        latex_jinja_env.filters['escape_tex'] = escape_tex
+
+        tmpl = latex_jinja_env.get_template('trombinoscope_template_2.tex.jinja2')
+
+        # On vérifie que GROUPBY et SUBGROUPBY sont licites
+        if groupby is not None and groupby not in df.columns:
+            raise Exception('No column %s to group by' % groupby)
+        if subgroupby is not None and subgroupby not in df.columns:
+            raise Exception('No column %s to subgroup by' % subgroupby)
+
+        # Diviser par groupe de TP/TP
+        for title, group in df.groupby(groupby or (lambda x: "Full class")):
+
+            # Diviser par binomes, sous-groupes
+            dff = group.groupby(subgroupby or (lambda x: 0))
+
+            # Nom de fichier
+            if len(dff) == 1:
+                fn = target % title
+            else:
+                fn = target % (title + '_' + subgroupby)
+            data = []
+            # Intérer sur ces sous-groupes des groupes de TP/TD
+            for name, df_group in dff:
+                group = {}
+                if len(dff) != 1:
+                    group['title'] = name
+
+                rows = []
+                dfs = df_group.sort_values(['Nom', 'Prénom'])
+                # Grouper par WIDTH sur une ligne si plus de WIDTH
+                for _, df_row in dfs.groupby(np.arange(len(df_group.index)) // width):
+                    cells = []
+                    for _, row in df_row.iterrows():
+                        d = os.path.dirname(os.path.abspath(__file__))
+                        path = os.path.join(d, f'generated/images/{row["Login"]}.jpg')
+                        cell = {'name': row['Prénom'],
+                                'lastname': row['Nom'],
+                                'photograph': path}
+                        cells.append(cell)
+                    rows.append(cells)
+
+                group['rows'] = rows
+                data.append(group)
+
+            tex = tmpl.render(title=title, data=data, width='c'*width)
+            # with open(target0+'.tex', 'w') as fd:
+            #     fd.write(tex)
+
+            pdf = latex.build_pdf(tex)
+            with Output(fn) as target0:
+                pdf.save_to(target0())
+
+    planning = get_var('planning') or CONFIG['DEFAULT_PLANNING']
+    uv = get_var('uv') or CONFIG['DEFAULT_UV']
+    course = get_var('course')
+
+    if uv:
+        dep = f'generated/{planning}_{uv}_student_data_merge.xlsx'
+        target = f'generated/{planning}_{uv}_trombi_%s.pdf'
+        subgroup = get_var('subgroup')
+
+        if os.path.exists(dep):
+            return {
+                'file_dep': [dep],
+                'targets': [],  # Possibly several files
+                'actions': [(pdf_trombinoscope, [dep, target, course, subgroup, 5])],
+                'uptodate': [False],
+                'verbosity': 2
+            }
+        else:
+            print("Fichier `%s' inexistant" % dep)
+    else:
+        print("Missing parameter `uv' or `course'")
+
+
+def task_pdf_attendance_list():
+    """Fichier pdf de fiches de présence"""
+
+    def pdf_attendance_list(xls_merge, group, target):
+        df = pd.read_excel(xls_merge)
+
+        latex_jinja_env = jinja2.Environment(
+            block_start_string='((*',
+            block_end_string='*))',
+            variable_start_string='(((',
+            variable_end_string=')))',
+            comment_start_string='((=',
+            comment_end_string='=))',
+            loader=jinja2.FileSystemLoader('templates/'))
+
+        template = latex_jinja_env.get_template('attendance_list.tex.jinja2')
+
+        temp_dir = tempfile.mkdtemp()
+        for gn, group in df.groupby(group):
+            group = group.sort_values(['Nom', 'Prénom'])
+
+            students = [{'name': f'{row["Nom"]} {row["Prénom"]}'}
+                        for _, row in group.iterrows()]
+            tex = template.render(students=students, group=f'Groupe: {gn}')
+
+            # with open(target0+'.tex', 'w') as fd:
+            #     fd.write(tex)
+
+            pdf = latex.build_pdf(tex)
+            pdf.save_to(os.path.join(temp_dir, gn + ".pdf"))
+
+        with Output(target) as target0:
+            print(target0())
+            with zipfile.ZipFile(target0(), 'w') as z:
+                for filepath in glob.glob(os.path.join(temp_dir, '*.pdf')):
+                    z.write(filepath, os.path.basename(filepath))
+
+    planning = get_var('planning') or CONFIG['DEFAULT_PLANNING']
+    uv = get_var('uv') or CONFIG['DEFAULT_UV']
+    group = get_var('group')
+    exam = get_var('exam') or group
+
+    if group:
+        xls_merge = f'generated/{planning}_{uv}_student_data_merge.xlsx'
+        target = f'generated/{planning}_{uv}_attendance_{group}.zip'
+
+        if not os.path.exists(xls_merge):
+            print("Fichier `%s' inexistant" % xls_merge)
+        else:
+            return {
+                'file_dep': [xls_merge],
+                'targets': [target],
+                'actions': [(pdf_attendance_list, [xls_merge, group, target])],
+                'verbosity': 2
+            }
+    else:
+        return {
+            'actions': [lambda: print('Il faut fournir un nom de colonne de `*_student_data_merge.xlsx` pour grouper.')],
+            'verbosity': 2
+        }
+
+
+def task_xls_assignment_grade():
+    """Création d'un fichier Excel pour remplissage des notes par les intervenants"""
+
+    def xls_assignment_grade(inst_uv, xls_merge, target):
+        inst_uv = pd.read_excel(inst_uv)
+        TD = inst_uv['Lib. créneau'].str.contains('^D')
+        inst_uv_TD = inst_uv.loc[TD]
+        insts = inst_uv_TD['Intervenants'].unique()
+
+        df = pd.read_excel(xls_merge)
+        df = df[['Nom', 'Prénom', 'Courriel']].sort_values(['Nom', 'Prénom'])
+        df = df.assign(Note=np.nan)
+
+        with Output(target) as target:
+            writer = pd.ExcelWriter(target())
+            for inst in insts:
+                df.to_excel(writer, sheet_name=inst, index=False)
+            writer.save()
+
+    exam = get_var('exam') or 'median'
+    plannings = get_var('planning', '').split() or CONFIG['DEFAULT_PLANNINGS']
+    for planning in plannings:
+        for uv in CONFIG['PLANNING'][planning].get('UV') or CONFIG['PLANNING'][planning].get('UE'):
+            xls_merge = f'generated/{planning}_{uv}_student_data_merge.xlsx'
+            inst_uv = f'documents/{planning}_{uv}_intervenants.xlsx'
+            target = f'generated/{planning}_{uv}_{exam}.xlsx'
+
+            if not os.path.exists(xls_merge):
+                print("Fichier `%s' inexistant" % xls_merge)
+            elif not os.path.exists(inst_uv):
+                print("Fichier `%s' inexistant" % inst_uv)
+            else:
+                yield {
+                    'name': uv + '_' + planning,
+                    'file_dep': [xls_merge],
+                    'targets': [target],
+                    'actions': [(xls_assignment_grade, [inst_uv, xls_merge, target])],
+                    'pos_arg': 'args',
+                    'verbosity': 2
+                }
+
+
+# def task_xls_assignment_grade():
+#     """Fichier Excel pour insertion de notes"""
+
+#     def xls_assignment_grade(xls_merge, target, args):
+#         df = pd.read_excel(xls_merge)
+#         target0 = target % args[0]
+#         dfe = df[['Nom', 'Prénom']]
+#         dfe = dfe.assign(Notes=np.nan)
+#         dfe.to_excel(target0, sheet_name=args[0], index=False)
+
+#     semester = get_var('semester', CONFIG['SEMESTER'])
+#     for uv in CONFIG['UV']:
+#         xls_merge = f'generated/{semester}_{uv}_merge.xlsx'
+#         target = f'generated/{semester}_{uv}_%s.xlsx'
+
+#         yield {
+#             'name': uv,
+#             'file_dep': [xls_merge],
+#             'targets': [target],
+#             'actions': [(xls_assignment_grade, [xls_merge, target])],
+#             'pos_arg': 'args',
+#             'verbosity': 2
+#         }
+
+
+def task_xls_jury():
+    """Fichier Excel pour le jury final"""
+
+    def agregate_grades(row):
+        """Création de la note finale"""
+
+        # def sanitize_grade(grade):
+        #     if grade == 'NaN':
+        #         return 0
+        #     try:
+        #         return(float(grade))
+        #     except ValueError:
+        #         pass
+        #     if grade.lower() == "excusé":
+        #         return np.nan
+        #     return 0
+
+        # grades = row[['Note médian', 'Note final', 'Note_TP']]
+        # grades = grades.applymap(sanitize_grade)
+        # coeffs = [1/3, 1/2, 1/6]
+        # mask = ~grades.isna()
+
+        # final_grade = grades.loc[mask] * coeffs.loc[mask] / sum(coeffs.loc[mask])
+
+        # if ~grades['Note final'].isnan() and grades['Note final'] < 6:
+        #     final_grade = 0
+
+        # return final_grade
+
+    def xls_assignment_grade(xls_merge, target):
+        df = pd.read_excel(xls_merge)
+
+        missing = set(['Nom', 'Prénom', 'Note médian', 'Note final', 'Note_TP']) - set(df.columns.values)
+        if missing:
+            print("Colonnes manquantes: %s" % missing)
+        else:
+            dfe = df[['Nom', 'Prénom', 'Login', 'Courriel', 'Note médian', 'Correcteur médian', 'Note final', 'Correcteur final', 'Note_TP']]
+            # dfe = dfe.assign(**{'Note agrégée': agregate_grades})
+            # ects = pd.cut(dfe['Note agrégée'],
+            #               bins=[0, 8, 10, 12, 14, 16, 20],
+            #               labels=['F', 'E', 'D', 'C', 'B', 'A'],
+            #               right=False)
+            # dfe = dfe.assign(**{'Note ECTS': ects})
+            # dfe = dfe.sort_values('Note agrégée')
+
+            with Output(target, protected=True) as target:
+                dfe.to_excel(target(), index=False)
+
+    planning = get_var('planning') or CONFIG['DEFAULT_PLANNING']
+    uv = get_var('uv') or CONFIG['DEFAULT_UV']
+    xls_merge = f'generated/{planning}_{uv}_student_data_merge.xlsx'
+    target = f'generated/{planning}_{uv}_jury.xlsx'
+
+    if os.path.exists(xls_merge):
+        return {
+            'file_dep': [xls_merge],
+            'targets': [target],
+            'actions': [(xls_assignment_grade, [xls_merge, target])],
+            'pos_arg': 'args',
+            'verbosity': 2
+        }
+    else:
+        print("Fichier `%s' inexistant" % xls_merge)
+
+
+def task_attendance_sheet():
+    """Fichier pdf de feuilles de présence"""
+
+    def generate_attendance_sheets(groupby, target, **kwargs):
+        groupby = {}
+        while True:
+            room = input('Salle: ')
+            num = input('Nombre: ')
+            if not room:
+                if not num:
+                    if groupby:
+                        print('Liste des salles: \n%s' % groupby)
+                        break
+                    else:
+                        raise
+            elif re.fullmatch('[0-9]+', num):
+                groupby[room] = int(num)
+
+        if isinstance(groupby, tuple):
+            sort_cols = kwargs.get('sort_cols')
+
+        elif isinstance(groupby, dict):
+            latex_jinja_env = jinja2.Environment(
+                block_start_string='((*',
+                block_end_string='*))',
+                variable_start_string='(((',
+                variable_end_string=')))',
+                comment_start_string='((=',
+                comment_end_string='=))',
+                loader=jinja2.FileSystemLoader('templates/'))
+
+            template = latex_jinja_env.get_template('attendance_list_noname.tex.jinja2')
+
+            for room, number in groupby.items():
+                tex = template.render(number=number, group=f'Salle {room}')
+
+                target0 = target % room
+                # with open(target0+'.tex', 'w') as fd:
+                #     fd.write(tex)
+
+                pdf = latex.build_pdf(tex)
+                pdf.save_to(target0)
+
+    planning = get_var('planning') or CONFIG['DEFAULT_PLANNING']
+    uv = get_var('uv') or CONFIG['DEFAULT_UV']
+    exam = get_var('exam')
+
+    # groupby = [
+    #     {
+    #         'room': 'FA300',
+    #         'planning': planning,
+    #         'date': None,
+    #         'number': 90
+    #     }
+    # ]
+    groupby = {
+        'FA300': 90,
+        'FA321': 70,
+        'FA310': 50
+    }
+
+    if exam:
+        target = f'generated/{planning}_{uv}_{exam}_présence_%s.pdf'
+        return {
+            'targets': [target],
+            'actions': [(generate_attendance_sheets, [groupby, target])],
+            'verbosity': 2
+        }
+
+
+def task_csv_for_upload():
+    """Fichier csv de notes prêtes à être chargées sur l'ENT.
+
+Prend les informations dans le fichier
+'generated/{planning}_{uv}_student_data_merge.xlsx' grâce aux
+variables fournies en arguments: PLANNING, UV, GRADE_COLNAME,
+COMMENT_COLNAME.
+    """
+
+    def csv_for_upload(csv_fname, xls_merge, grade_colname, comment_colname):
+        if grade_colname is None:
+            raise Exception('Missing grade_colname')
+
+        df = pd.read_excel(xls_merge)
+        cols = {
+            'Nom': df.Nom,
+            'Prénom': df['Prénom'],
+            'Login': df.Login,
+            'Note': df[grade_colname],
+        }
+        col_names = ['Nom', 'Prénom', 'Login', 'Note']
+        if comment_colname is not None:
+            col_names.append('Commentaire')
+            cols['Commentaire'] = np.where(df[comment_colname].isnull(),
+                                           np.nan,
+                                           'Corrigé par ' + df[comment_colname])
+
+        df0 = pd.DataFrame(cols, columns=col_names)
+        df0 = df0[col_names]
+        df0 = df0.sort_values(['Nom', 'Prénom'])
+
+        with Output(csv_fname) as csv_fname:
+            df0.to_csv(csv_fname(), index=False, sep=';')
+
+    planning = get_var('planning') or CONFIG['DEFAULT_PLANNING']
+    uv = get_var('uv') or CONFIG['DEFAULT_UV']
+    grade_colname = get_var('grade_colname')
+    comment_colname = get_var('comment_colname')
+
+    xls_merge = f'generated/{planning}_{uv}_student_data_merge.xlsx'
+    if os.path.exists(xls_merge):
+        if grade_colname:
+            csv_fname = f'generated/{planning}_{uv}_{grade_colname}_ENT.csv'
+            deps = [f'generated/{planning}_{uv}_student_data_merge.xlsx']
+
+            return {
+                'actions': [(csv_for_upload, [csv_fname, xls_merge, grade_colname, comment_colname])],
+                'targets': [csv_fname],
+                'file_dep': deps
+            }
+        else:
+            print("Colonnes manquantes")
+    else:
+        print("Fichier `%s' inexistant" % xls_merge)
+
+
+def task_xls_merge_final_grade():
+    """Fichier Excel des notes finales attribuées
+
+Transforme un classeur Excel avec une feuille par correcteur en une
+seule feuille où les notes sont concaténées pour fusion/révision
+manuelle."""
+
+    def xls_merge_final_grade(xls_sheets, xls_grades):
+        xls = pd.ExcelFile(xls_sheets)
+        dfall = xls.parse(xls.sheet_names[0])
+        dfall = dfall[['Nom', 'Prénom', 'Courriel']]
+
+        dfs = []
+        for sheet in xls.sheet_names:
+            df = xls.parse(sheet)
+            df = df.loc[~df.Note.isnull()]
+            df['Correcteur médian'] = sheet
+            dfs.append(df)
+        # Concaténation de tous les devoirs qui ont une note
+        df = pd.concat(dfs, axis=0)
+
+        # On rattrape les absents
+        df = pd.merge(dfall, df, how='left', on=['Nom', 'Prénom', 'Courriel'])
+        df = df.sort_values(['Nom', 'Prénom'])
+
+        csv_grades = os.path.splitext(xls_grades)[0] + '.csv'
+        with Output(csv_grades, protected=True) as csv_grades:
+            df.to_csv(csv_grades(), index=False)
+
+        with Output(xls_grades, protected=True) as xls_grades:
+            df.to_excel(xls_grades(), index=False)
+
+        # def max_grade(group):
+        #     return group.loc[df['Note'].idxmax()]
+
+        # dff = df.groupby(['Nom', 'Prénom'], group_keys=False).apply(max_grade)
+        # dff.to_excel(xls_grades, index=False)
+
+    planning = get_var('planning') or CONFIG['DEFAULT_PLANNING']
+    uv = get_var('uv') or CONFIG['DEFAULT_UV']
+    exam = get_var('exam')
+
+    if exam:
+        xls_sheets = f'documents/{planning}_{uv}_{exam}.xlsx'
+        xls_grades = f'documents/{planning}_{uv}_{exam}_notes.xlsx'
+        deps = [xls_sheets]
+
+        if not os.path.exists(xls_sheets):
+            print("Fichier `%s' inexistant" % xls_sheets)
+        else:
+            return {
+                'actions': [(xls_merge_final_grade, [xls_sheets, xls_grades])],
+                'targets': [xls_grades],
+                'file_dep': deps,
+                'verbosity': 2
+            }
+
+
+def task_xls_grades_sheet():
+    """Génère un fichier Excel pour faciliter la correction des examens/projets/jury"""
+
+    sys.path.append('scripts/')
+    from xls_gradebook import run, arg
+
+    cmd_args = get_var("args", "").split() + ['-o', 'documents/', '-d', 'generated/']
+    cmd_args = sys.argv[2:] + ['-o', 'documents/', '-d', 'generated/']
+
+    data_file = arg(sys.argv[2:] + ['-o', 'documents/', '-d', 'generated/'])
+
     return {
-        'actions': [(restriction_list, [uv, dep, target])],
-        'file_dep': [dep],
+        'actions': [(run, [cmd_args])],
+        'file_dep': [data_file] if data_file else [],
+        'params': ([{'name': arg,
+                     'long': arg,
+                     'default': 'dummy'} for arg in ['type', 'name', 'uv', 'planning', 'data', 'output-file', 'struct', 'group', 'config']] +
+                   [{'name': arg,
+                     'short': arg,
+                     'default': 'dummy'} for arg in ['d', 'o', 's', 'g', 'c']] +
+                   [{'name': arg,
+                     'short': arg,
+                     'type': bool,
+                     'default': 'dummy'} for arg in ['h']]),
         'verbosity': 2
     }
+
+def task_yaml_QCM():
+    def yaml_QCM(yaml_fname, xls_merge):
+        df = pd.read_excel(xls_merge)
+        dff = df[['Nom', 'Prénom', 'Courriel']]
+        d = dff.to_dict(orient='index')
+        rec = [{'Nom': record['Nom'] + ' ' + record['Prénom'],
+                'Courriel': record['Courriel'],
+                'Resultat': ''} for record in d.values()]
+
+        rec = {'Students': rec, 'Answers': ''}
+
+        with Output(yaml_fname, protected=True) as yaml_fname:
+            with open(yaml_fname(), 'w') as fd:
+                yaml.dump(rec, fd, default_flow_style=False)
+
+    planning = get_var('planning') or CONFIG['DEFAULT_PLANNING']
+    uv = get_var('uv') or CONFIG['DEFAULT_UV']
+
+    xls_merge = f'generated/{planning}_{uv}_student_data_merge.xlsx'
+    yaml_fname = f'generated/{planning}_{uv}_QCM.yaml'
+
+    if os.path.exists(xls_merge):
+        return {
+            'actions': [(yaml_QCM, [yaml_fname, xls_merge])],
+            'targets': [yaml_fname],
+            'file_dep': [xls_merge],
+            'verbosity': 2
+        }
+    else:
+        print("Fichier `%s' inexistant" % xls_merge)
+
+
+if __name__ == '__main__':
+    print(create_plannings('2018_T1'))

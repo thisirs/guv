@@ -37,6 +37,23 @@ def parse_UTC_listing(filename):
     df = pd.DataFrame(rows)
     df = df.groupby('Name', as_index=False).agg(lambda s: s.loc[s.first_valid_index()])
 
+    if 'TP' in df.columns:
+        gr = [i for i in df.TP.unique() if re.match('^T[0-9]{,2}$', i)]
+        rep = {}
+        for g in gr:
+            while True:
+                try:
+                    choice = input(f'Semaine pour le créneau {g} (A ou B) ? ')
+                    if choice.upper() in ['A', 'B']:
+                        rep[g] = g + choice.upper()
+                    else:
+                        raise ValueError
+                except ValueError:
+                    continue
+                else:
+                    break
+
+        df = df.replace({'TP': rep})
     return df
 
 
