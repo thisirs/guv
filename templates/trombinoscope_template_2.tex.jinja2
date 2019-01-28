@@ -1,0 +1,40 @@
+% -*- mode: latex; -*-
+
+\documentclass[a4paper,10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[french]{babel}
+\usepackage{geometry}
+\geometry{hmargin=1cm,vmargin=1cm}
+\usepackage{graphicx}
+\pagestyle{empty}
+\begin{document}
+
+\begin{center}
+  {\Large (((title | escape_tex)))} \vspace{1cm}
+\end{center}
+
+((* for group in data *))
+((* if 'title' in group *)) \paragraph{((( group['title'] | escape_tex )))} ((* endif *))
+((* for row in group['rows'] *))
+\begin{center}
+  \begin{tabular}{(((width)))}
+    ((* for cell in row *))
+    \includegraphics[width=.15\textwidth]{((( cell['photograph'] )))}
+    ((* if loop.last *)) \\ ((* else *)) & ((* endif *))
+    ((* endfor *))
+
+    ((* for cell in row *))
+    \begin{minipage}{.15\textwidth}
+      \centering
+      ((( cell['lastname'] ))) \\
+      ((( cell['name'] )))
+    \end{minipage}
+    ((* if loop.last *))\\((* else *)) & ((* endif *))
+    ((* endfor *))
+  \end{tabular}
+\end{center}
+((* endfor *))
+((* endfor *))
+\end{document}

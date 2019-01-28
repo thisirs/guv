@@ -1,0 +1,168 @@
+% -*- mode: latex; -*-
+
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage[a4paper, landscape,margin=0pt]{geometry}
+
+\usepackage{environ}% http://ctan.org/pkg/environ
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\usetikzlibrary{patterns}
+\newcommand{\daywidth}{3.5cm}
+\newcommand{\quarterwidth}{0.3cm}
+
+\usepackage{datetime}
+\newcommand\heure[2]{\formattime{#1}{#2}{00}}
+
+\begin{document}
+\pagestyle{empty}
+\parindent=0pt
+
+\newdimen\fontdim
+\newdimen\upperfontdim
+\newdimen\lowerfontdim
+\newif\ifmoreiterations
+\fontdim12pt
+
+\makeatletter
+\NewEnviron{fitbox}[2]{% \begin{fitbox}{<width>}{<height>} stuff \end{fitbox}
+  \def\buildbox{%
+    \setbox0\vbox{\hbox{\minipage{#1}%
+      \fontsize{\fontdim}{1.2\fontdim}%
+      \selectfont%
+      \stuff%
+    \endminipage}}%
+    \dimen@\ht0
+    \advance\dimen@\dp0
+  }
+  \def\stuff{\BODY}% Store environment body
+  \buildbox
+  % Compute upper and lower bounds
+  \ifdim\dimen@>#2
+    \loop
+      \fontdim.5\fontdim % Reduce font size by half
+      \buildbox
+    \ifdim\dimen@>#2 \repeat
+    \lowerfontdim\fontdim
+    \upperfontdim2\fontdim
+    \fontdim1.5\fontdim
+  \else
+    \loop
+      \fontdim2\fontdim % Double font size
+      \buildbox
+    \ifdim\dimen@<#2 \repeat
+    \upperfontdim\fontdim
+    \lowerfontdim.5\fontdim
+    \fontdim.75\fontdim
+  \fi
+  % Now try to find the optimum size
+  \loop
+    %\message{Bounds: \the\lowerfontdim\space
+    %         \the\fontdim\space \the\upperfontdim^^J}
+    \buildbox
+    \ifdim\dimen@>#2
+      \moreiterationstrue
+      \upperfontdim\fontdim
+      \advance\fontdim\lowerfontdim
+      \fontdim.5\fontdim
+    \else
+      \advance\dimen@-#2
+      \ifdim\dimen@<10pt
+        \lowerfontdim\fontdim
+        \advance\fontdim\upperfontdim
+        \fontdim.5\fontdim
+        \dimen@\upperfontdim
+        \advance\dimen@-\lowerfontdim
+        \ifdim\dimen@<.2pt
+          \moreiterationsfalse
+        \else
+          \moreiterationstrue
+        \fi
+      \else
+        \moreiterationsfalse
+      \fi
+    \fi
+  \ifmoreiterations \repeat
+  \box0% Typeset content
+}
+\makeatother
+
+\begin{tikzpicture}[remember picture,overlay]
+  \node[anchor=center] at (current page.center) {%
+    \begin{tikzpicture}[
+      scale=1.2,
+      every node/.style={scale=1.2},
+      x=\daywidth, y=-\quarterwidth, node distance=0 cm,outer sep = 0pt]
+
+      % \begin{tikzpicture}[]
+      \tikzstyle{day}=[draw, rectangle,  minimum height=1cm, minimum width=\daywidth, fill=yellow!20,anchor=south west]
+      % Style for hours
+      \tikzstyle{hour}=[draw, rectangle, minimum height=4*\quarterwidth, minimum width=1.5 cm, fill=yellow!30,anchor=north east]
+
+      \def\days{Lundi/Lun,Mardi/Mar,Mercredi/Mer,Jeudi/Jeu,Vendredi/Ven,Samedi/Sam}
+      \def\hours{8_00,8_15,8_30,8_45,9_00,9_15,9_30,9_45,10_00,10_15,10_30,10_45,11_00,11_15,11_30,11_45,12_00,12_15,12_30,12_45,13_00,13_15,13_30,13_45,14_00,14_15,14_30,14_45,15_00,15_15,15_30,15_45,16_00,16_15,16_30,16_45,17_00,17_15,17_30,17_45,18_00,18_15,18_30,18_45,19_00}
+
+      % Define coordinates
+      \foreach \day/\sday [count=\iday] in \days {
+        \foreach \hour [count=\ihour] in \hours {
+          \coordinate (\sday-\hour) at (\iday, \ihour);
+        }
+      }
+
+      % Draw days
+      \node[day] (lundi) at (Lun-8_00) {Lundi};
+      \node[day] (mardi) [right = of lundi] {Mardi};
+      \node[day] (mercredi) [right = of mardi] {Mercredi};
+      \node[day] (jeudi) [right = of mercredi] {Jeudi};
+      \node[day] (vendredi) [right = of jeudi] {Vendredi};
+
+      % Draw hours
+      \node[hour] at (Lun-8_00) {\heure{08}{00}--\heure{09}{00}};
+      \node[hour] at (Lun-9_00) {\heure{09}{00}--\heure{10}{00}};
+      \node[hour] at (Lun-10_00) {\heure{10}{00}--\heure{11}{00}};
+      \node[hour] at (Lun-11_00) {\heure{11}{00}--\heure{12}{00}};
+      \node[hour] at (Lun-12_00) {\heure{12}{00}--\heure{13}{00}};
+      \node[hour] at (Lun-13_00) {\heure{13}{00}--\heure{14}{00}};
+      \node[hour] at (Lun-14_00) {\heure{14}{00}--\heure{15}{00}};
+      \node[hour] at (Lun-15_00) {\heure{15}{00}--\heure{16}{00}};
+      \node[hour] at (Lun-16_00) {\heure{16}{00}--\heure{17}{00}};
+      \node[hour] at (Lun-17_00) {\heure{17}{00}--\heure{18}{00}};
+      \node[hour] at (Lun-18_00) {\heure{18}{00}--\heure{19}{00}};
+
+      % Block length
+      \tikzstyle{hours}=[rectangle,draw, anchor=north west, align=center]
+      \tikzstyle{qhour}=[hours,minimum height=\quarterwidth]
+      \tikzstyle{1hour}=[hours,minimum height=4*\quarterwidth]
+      \tikzstyle{2hours}=[hours,minimum height=8*\quarterwidth]
+      \tikzstyle{3hours}=[hours,minimum height=12*\quarterwidth]
+
+      % Block positions
+      \tikzstyle{atleft}=[minimum width=.5*\daywidth]
+      \tikzstyle{atright}=[minimum width=.5*\daywidth, xshift =.5*\daywidth]
+      \tikzstyle{full}=[minimum width=\daywidth]
+
+      \tikzstyle{Cours}=[fill=blue!20]
+      \tikzstyle{TP}=[fill=red!20]
+      \tikzstyle{TD}=[fill=yellow!20]
+
+      \foreach \dummy/\day in \days {
+        \draw (\day-8_00) -- (\day-19_00);
+      }
+      \draw (Lun-19_00) -- (Sam-19_00);
+
+      % Hatched area
+      \draw[pattern=north east lines] (Lun-12_00) rectangle (Sam-14_00);
+
+      % Draw dotted lines
+      \foreach \day in {Lun,Mar,Mer,Jeu,Ven} {
+        \draw[dotted, ] ([xshift=.5*\daywidth]\day-8_00) -- ([xshift=.5*\daywidth]\day-19_00);
+      }
+
+      (((blocks)))
+
+    \end{tikzpicture}
+  };
+\end{tikzpicture}
+\end{document}

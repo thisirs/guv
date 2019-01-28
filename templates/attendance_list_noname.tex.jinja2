@@ -1,0 +1,47 @@
+% -*- mode: latex; -*-
+
+\documentclass[12pt, a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[french]{babel}
+\usepackage[margin=2cm]{geometry}
+
+\begin{document}
+
+\baselineskip=25pt
+
+\noindent\hrulefill
+\begin{center}
+  \begin{Huge}
+    \textbf{Feuille de présence}
+  \end{Huge}
+  \smallskip
+
+  \textbf{(((group)))}
+\end{center}
+\noindent\hrulefill\bigskip
+
+\noindent\hfill\textbf{Semestre:} \makebox[3cm][l]{\hrulefill}\par
+\noindent\hfill\textbf{UV:} \makebox[3cm][l]{\hrulefill}\par
+\noindent\hfill\textbf{Date:} \makebox[3cm][l]{\hrulefill}\par
+\bigskip
+\newcounter{stunum}
+\begin{list}{\arabic{stunum}.}{\usecounter{stunum}}
+  \item[] \makebox[4.5in][l]{\textbf{Nom,\quad Prénom}}\quad\textbf{Signature}
+  ((* for i in range(number) *))
+  \item\makebox[4.5in][l]{\hrulefill}\quad\hrulefill
+  ((* endfor *))
+\end{list}
+
+\vfill
+\noindent \textbf{Surveillants}
+\begin{list}{}{\usecounter{stunum}}
+  \item[] \makebox[4.5in][l]{\textbf{Nom,\quad Prénom}}\quad \textbf{Signature}
+  \item\makebox[4.5in][l]{\hrulefill}\quad\hrulefill
+  \item\makebox[4.5in][l]{\hrulefill}\quad\hrulefill
+  \item\makebox[4.5in][l]{\hrulefill}\quad\hrulefill
+\end{list}
+
+\end{document}
