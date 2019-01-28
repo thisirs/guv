@@ -1,0 +1,6 @@
+documents/
+old/
+
+__pycache__/
+generated/
+*.db
