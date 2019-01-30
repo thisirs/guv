@@ -909,7 +909,7 @@ def task_csv_inscrits():
     """Construit un fichier CSV à partir des données brutes de la promo
     fournies par l'UTC."""
 
-    sys.path.append('scripts/')
+    sys.path.append(os.path.join(os.path.dirname(__file__), 'scripts/'))
     from parse_utc_list import parse_UTC_listing
 
     def csv_inscrits(fn, target):
@@ -1956,7 +1956,7 @@ def compute_slots(planning_type, csv_inst_list):
 def task_json_restriction():
     """Ficher json des restrictions d'accès des TP"""
 
-    sys.path.append('scripts/')
+    sys.path.append(os.path.join(os.path.dirname(__file__), 'scripts/'))
     from moodle_date import CondDate, CondGroup, CondOr
 
     def restriction_list(uv, csv, target):
@@ -2423,7 +2423,7 @@ manuelle."""
 def task_xls_grades_sheet():
     """Génère un fichier Excel pour faciliter la correction des examens/projets/jury"""
 
-    sys.path.append('scripts/')
+    sys.path.append(os.path.join(os.path.dirname(__file__), 'scripts/'))
     from xls_gradebook import run, arg
 
     cmd_args = get_var("args", "").split() + ['-o', 'documents/', '-d', 'generated/']
