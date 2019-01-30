@@ -533,7 +533,7 @@ class GradeSheetJuryWriter(GradeSheetWriter):
             self.gradesheet.cell(ref[0] + i, ref[1] + 1).value = (
                 '=PERCENTILE({}, {})'.format(
                     self.get_range_of_cells('Note admis'),
-                    self.get_address_of_cell(percentile_cell)
+                    self.get_address_of_cell(percentile_cell, absolute=True)
                 )
             )
             keytocell['barre_' + ects] = self.gradesheet.cell(ref[0] + i, ref[1] + 1)
@@ -546,7 +546,7 @@ class GradeSheetJuryWriter(GradeSheetWriter):
                 key = name + '_note_éliminatoire'
                 ifs.append("IF({}>={})".format(
                     self.get_address_of_cell(record[name]),
-                    self.get_address_of_cell(keytocell[key])))
+                    self.get_address_of_cell(keytocell[key], absolute=True)))
             record['Admis'].value = f"=IFERROR({'*'.join(ifs)}, 0)"
 
         # On écrit un bloc détaillant le nombre d'admis et le ratio en
@@ -574,13 +574,13 @@ class GradeSheetJuryWriter(GradeSheetWriter):
                 '=IF({}=0, "F", IF({}>={}, "A", IF({}>={}, "B", IF({}>={}, "C", IF({}>={}, "D", "E")))))'.format(
                     self.get_address_of_cell(record['Admis']),
                     self.get_address_of_cell(record['Note agrégée']),
-                    self.get_address_of_cell(keytocell['barre_A']),
+                    self.get_address_of_cell(keytocell['barre_A'], absolute=True),
                     self.get_address_of_cell(record['Note agrégée']),
-                    self.get_address_of_cell(keytocell['barre_B']),
+                    self.get_address_of_cell(keytocell['barre_B'], absolute=True),
                     self.get_address_of_cell(record['Note agrégée']),
-                    self.get_address_of_cell(keytocell['barre_C']),
+                    self.get_address_of_cell(keytocell['barre_C'], absolute=True),
                     self.get_address_of_cell(record['Note agrégée']),
-                    self.get_address_of_cell(keytocell['barre_D'])
+                    self.get_address_of_cell(keytocell['barre_D'], absolute=True)
                 )
             )
         for cell in self.df["Note ECTS"]:
