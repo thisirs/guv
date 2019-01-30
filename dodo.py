@@ -2446,7 +2446,8 @@ def task_xls_grades_sheet():
                      'short': arg,
                      'type': bool,
                      'default': 'dummy'} for arg in ['h']]),
-        'verbosity': 2
+        'verbosity': 2,
+        'uptodate': [False]
     }
 
 def task_yaml_QCM():
