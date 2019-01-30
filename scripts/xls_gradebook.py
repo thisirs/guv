@@ -547,7 +547,7 @@ class GradeSheetJuryWriter(GradeSheetWriter):
                 ifs.append("IF({}>={})".format(
                     self.get_address_of_cell(record[name]),
                     self.get_address_of_cell(keytocell[key])))
-            record['Admis'].value = "=" + "*".join(ifs)
+            record['Admis'].value = f"=IFERROR({'*'.join(ifs)}, 0)"
 
         # On écrit un bloc détaillant le nombre d'admis et le ratio en
         # fonction de la colonne `Admis`
