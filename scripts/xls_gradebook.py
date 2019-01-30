@@ -588,19 +588,18 @@ class GradeSheetJuryWriter(GradeSheetWriter):
         for cell in self.df["Note ECTS"]:
             cell.alignment = Alignment(horizontal='center')
 
-        # range = self.get_range_of_cells('Note ECTS')
-        # for ects, color in zip('ABCDEF', [
-        #         '00FF00',
-        #         '58FF00',
-        #         'C2FF00',
-        #         'FFD300',
-        #         'FF6900',
-        #         'FF0000'
-        # ]):
-
-        #     fill = PatternFill(start_color=color, end_color=color, fill_type='solid')
-        #     rule = CellIsRule(operator='equal', formula=[f'"{ects}"'], fill=fill)
-        #     self.ws_data.conditional_formatting.add(range, rule)
+        range = self.get_range_of_cells('Note ECTS')
+        for ects, color in zip('ABCDEF', [
+                '00FF00',
+                '58FF00',
+                'C2FF00',
+                'FFD300',
+                'FF6900',
+                'FF0000'
+        ]):
+            fill = PatternFill(start_color=color, end_color=color, fill_type='solid')
+            rule = CellIsRule(operator='equal', formula=[f'"{ects}"'], fill=fill)
+            self.ws_data.conditional_formatting.add(range, rule)
 
         # On écrit les proportions de notes ECTS en fonction de la
         # colonne `Admis`
