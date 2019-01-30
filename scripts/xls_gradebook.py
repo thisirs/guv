@@ -636,7 +636,11 @@ class GradeSheetJuryWriter(GradeSheetWriter):
 
         # On offre la possibilité de trier
         self.wb.active = self.ws_data
-        self.ws_data.auto_filter.ref = 'A1:L64'
+        max_column = self.ws_data.max_column
+        max_row = self.ws_data.max_row
+        self.ws_data.auto_filter.ref = 'A1:{}{}'.format(
+            utils.get_column_letter(max_column),
+            max_row)
         range = self.get_range_of_cells('Note ECTS')
         self.ws_data.auto_filter.add_sort_condition(range)
 
