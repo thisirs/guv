@@ -938,7 +938,7 @@ def task_xls_student_data():
 l'UTC."""
 
     def merge_student_data(target, **kw):
-        sys.path.append('scripts/')
+        sys.path.append(os.path.join(os.path.dirname(__file__), 'scripts/'))
         from add_student_data import (add_moodle_data,
                                       add_UTC_data,
                                       add_tiers_temps,
@@ -1068,7 +1068,7 @@ def task_xls_student_data_merge():
             if right_on not in dff.columns:
                 raise Exception("Pas de colonne %s dans le dataframe", right_on)
             df = df.merge(dff, left_on=left_on, right_on=right_on, suffixes=('', '_y'))
-            drop_cols = [right_on + '_y', right_on]
+            drop_cols = [right_on + '_y']
             df = df.drop(drop_cols, axis=1, errors='ignore')
             return df
         return agregate0
@@ -1200,6 +1200,16 @@ def task_xls_student_data_merge():
                     subset=['Groupe'],
                     read_method=pd.read_csv,
                     kw_read={'delimiter': '\t'})
+
+                data[documents('2018_T2_AOS2_Project_gradebook.xlsx'] = agregate(
+                    left_on='Courriel',
+                    right_on='Courriel',
+                    subset=['Project'])
+
+                data[documents('2018_T2_AOS2_jury_gradebook.xlsx'] = agregate(
+                    left_on='Courriel',
+                    right_on='Courriel',
+                    subset=['Note ECTS'])
 
             source = generated(task_xls_student_data.target)
 

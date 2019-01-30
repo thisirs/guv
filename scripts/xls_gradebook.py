@@ -102,7 +102,12 @@ class GradeSheetWriter:
         self.df = pd.DataFrame()
         columns = self.get_columns(**self.args.__dict__)
 
-        from pandas.io.formats.excel import header_style
+        try:
+            from pandas.io.formats.excel import header_style
+        except ImportError:
+            from pandas.io.formats.excel import ExcelFormatter
+            header_style = ExcelFormatter(pd.DataFrame()).header_style
+
         from pandas.io.excel import _OpenpyxlWriter
         style_kwargs = _OpenpyxlWriter._convert_to_style_kwargs(header_style)
 
