@@ -452,10 +452,10 @@ class GradeSheetJuryWriter(GradeSheetWriter):
         with open(config, "r") as stream:
             return list(yaml.load_all(stream))[0]
 
-    def get_address_of_cell(self, cell, absolute=False):
+    def get_address_of_cell(self, cell, absolute=False, force=False):
         parent = cell.parent
         current = self.wb.active
-        if parent == current:
+        if parent == current and not force:
             if absolute:
                 return absolute_coordinate(cell.coordinate)
             else:
@@ -627,7 +627,8 @@ class GradeSheetJuryWriter(GradeSheetWriter):
                     threshold_cell = keytocell[id]
                     threshold_addr = self.get_address_of_cell(
                         threshold_cell,
-                        absolute=True)
+                        absolute=True,
+                        force=True)
                     self.ws_data.conditional_formatting.add(
                         self.get_range_of_cells(name),
                         CellIsRule(operator='lessThan',
