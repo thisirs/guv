@@ -544,7 +544,7 @@ class GradeSheetJuryWriter(GradeSheetWriter):
             ifs = []
             for name, settings in self.config['columns'].items():
                 key = name + '_note_éliminatoire'
-                ifs.append("IF({}>={})".format(
+                ifs.append("IF({}+0>={}, 1)".format(
                     self.get_address_of_cell(record[name]),
                     self.get_address_of_cell(keytocell[key], absolute=True)))
             record['Admis'].value = f"=IFERROR({'*'.join(ifs)}, 0)"
