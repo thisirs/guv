@@ -86,6 +86,7 @@ def add_templates(**templates):
 @add_templates(target='creneaux-UV-prov_P19.pdf')
 def task_UTC_UV_list():
     doc = common_doc(task_UTC_UV_list.target)
+
     def UTC_UV_list(doc):
         if not os.path.exists(doc):
             return TaskFailed(f"Pas de fichier `{doc}'")
@@ -99,6 +100,7 @@ def task_UTC_UV_list():
 @add_templates(target='intervenants.xlsx')
 def task_xls_instructors():
     doc = common_doc(task_xls_instructors.target)
+
     def xls_instructors(doc):
         if not os.path.exists(doc):
             return TaskFailed(f"Pas de fichier `{doc}'")
