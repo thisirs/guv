@@ -571,7 +571,9 @@ class GradeSheetJuryWriter(GradeSheetWriter):
         self.wb.active = self.ws_data
         for i, (index, record) in enumerate(self.df.iterrows()):
             record['Note ECTS'].value = (
-                '=IF({}=0, "F", IF({}>={}, "A", IF({}>={}, "B", IF({}>={}, "C", IF({}>={}, "D", "E")))))'.format(
+                '=IF({}="RESERVE", "RESERVE", IF({}="ABS", "ABS", IF({}=0, "F", IF({}>={}, "A", IF({}>={}, "B", IF({}>={}, "C", IF({}>={}, "D", "E")))))))'.format(
+                    self.get_address_of_cell(record['Note agrégée']),
+                    self.get_address_of_cell(record['Note agrégée']),
                     self.get_address_of_cell(record['Admis']),
                     self.get_address_of_cell(record['Note agrégée']),
                     self.get_address_of_cell(keytocell['barre_A'], absolute=True),
