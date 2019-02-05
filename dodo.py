@@ -1203,12 +1203,12 @@ def task_xls_student_data_merge():
                     read_method=pd.read_csv,
                     kw_read={'delimiter': '\t'})
 
-                data[documents('2018_T2_AOS2_Project_gradebook.xlsx'] = agregate(
+                data[documents('2018_T2_AOS2_Project_gradebook.xlsx')] = agregate(
                     left_on='Courriel',
                     right_on='Courriel',
                     subset=['Project'])
 
-                data[documents('2018_T2_AOS2_jury_gradebook.xlsx'] = agregate(
+                data[documents('2018_T2_AOS2_jury_gradebook.xlsx')] = agregate(
                     left_on='Courriel',
                     right_on='Courriel',
                     subset=['Note ECTS'])
