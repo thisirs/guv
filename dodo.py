@@ -439,15 +439,15 @@ def task_xls_UTP():
 
         # add details from df_details
         df = df_insts.merge(df_details, how='left',
-                            left_on='intervenants',
-                            right_on='intervenants')
+                            left_on='Intervenants',
+                            right_on='Intervenants')
 
-        dfs = df.sort_values(['responsable', 'statut', 'sortcourselist'],
-                             ascending=false)
+        dfs = df.sort_values(['Responsable', 'Statut', 'SortCourseList'],
+                             ascending=False)
         dfs = dfs.reset_index()
 
-        with output(target, protected=true) as target:
-            create_excel_file(target(), dfs[['intervenants', 'statut']])
+        with Output(target, protected=True) as target:
+            create_excel_file(target(), dfs[['Intervenants', 'Statut']])
 
     for planning, uv in selected_uv():
         xls = documents(task_xls_affectation.target)
