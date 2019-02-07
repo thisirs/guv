@@ -157,9 +157,9 @@ def create_summary_table(ws, reference, df, ws_remp, C_total, TD_total, TP_total
         statut = row['Statut']
         elts = [inst,
                 statut_mult[statut],
-                None,
-                None,
-                None,
+                row['Cours'],
+                row['TD'],
+                row['TP'],
                 lambda cell: "=2*16*{}".format(cell.left(3).coordinate),
                 lambda cell: "=2*16*{}".format(cell.left(3).coordinate),
                 lambda cell: "=2*16*{}".format(cell.left(3).coordinate),

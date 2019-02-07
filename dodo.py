@@ -399,9 +399,13 @@ def create_insts_list(df):
     def myapply(df):
         e = df['Lib. créneau'] + df['Semaine'].fillna('')
         resp = int(df['Responsable'].sum())
+        s = score(e)
         return pd.Series({
             'CourseList': course_list(e),
-            'SortCourseList': score(e),
+            'SortCourseList': s,
+            'Cours': s[0],
+            'TD': s[1],
+            'TP': s[2],
             'Responsable': resp
         })
 
@@ -447,7 +451,7 @@ def task_xls_UTP():
         dfs = dfs.reset_index()
 
         with Output(target, protected=True) as target:
-            create_excel_file(target(), dfs[['Intervenants', 'Statut']])
+            create_excel_file(target(), dfs)
 
     for planning, uv in selected_uv():
         xls = documents(task_xls_affectation.target)
