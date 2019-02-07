@@ -391,9 +391,17 @@ def create_insts_list(df):
     def score(libs):
         "Renvoie un tuple comptant les types de cours Cours/TD/TP"
         sc = [0, 0, 0]
+        mapping = {'C': 0, 'D': 1, 'T': 2}
         for lib in libs:
-            ix = {'C': 0, 'D': 1, 'T': 2}[re.search('[CDT]', lib).group()]
-            sc[ix] += 1
+            m = re.search('([CDT])[0-9]*([AB]?)', lib)
+            if m:
+                ix = mapping[m.group(1)]
+                if m.group(2):
+                    sc[ix] += .5
+                else:
+                    sc[ix] += 1
+            else:
+                raise Exception(f"L'identifiant {lib} n'est pas matché")
         return tuple(sc)
 
     def myapply(df):
