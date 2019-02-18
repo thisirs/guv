@@ -737,7 +737,7 @@ def task_cal_inst():
         plannings = get_var('planning', '').split() or CONFIG['DEFAULT_PLANNINGS']
         insts = get_var('insts', '').split() or [CONFIG['DEFAULT_INSTRUCTOR']]
         for inst in insts:
-            target = f'generated/{inst.replace(" ", "_")}_{"_".join(plannings)}_calendrier.pdf'
+            target = generated(f'{inst.replace(" ", "_")}_{"_".join(plannings)}_calendrier.pdf')
             jinja_dir = os.path.join(os.path.dirname(__file__), 'templates')
 
             yield {
@@ -1698,7 +1698,7 @@ def task_ical_inst():
 
         for inst in insts:
             dfm_inst = dfm.loc[dfm['Intervenants'].astype(str) == inst, :]
-            output = f'generated/{inst.replace(" ", "_")}.ics'
+            output = generated(f'{inst.replace(" ", "_")}.ics')
             if len(dfm_inst):
                 write_ical_file(dfm_inst, output)
 
@@ -2039,17 +2039,17 @@ def task_pdf_trombinoscope():
             async with session.get(url) as response:
                 content = await response.content.read()
                 if len(content) < 100:
-                    copyfile('documents/inconnu.jpg',
-                             f'generated/images/{login}.jpg')
+                    copyfile(os.path.join(os.path.dirname(__file__), 'documents/inconnu.jpg'),
+                             generated(f'images/{login}.jpg'))
                 else:
-                    with open(f'generated/images/{login}.jpg', 'wb') as handler:
+                    with open(generated(f'images/{login}.jpg'), 'wb') as handler:
                         handler.write(content)
 
         async def download_session(loop):
-            os.makedirs('generated/images', exist_ok=True)
+            os.makedirs(generated('images'), exist_ok=True)
             async with aiohttp.ClientSession(loop=loop) as session:
                 for login in df.Login:
-                    if not os.path.exists(f'generated/images/{login}.jpg'):
+                    if not os.path.exists(generated(f'images/{login}.jpg')):
                         await download_image(session, login)
 
         # Getting images
@@ -2101,7 +2101,7 @@ def task_pdf_trombinoscope():
                     cells = []
                     for _, row in df_row.iterrows():
                         d = os.path.dirname(os.path.abspath(__file__))
-                        path = os.path.join(d, f'generated/images/{row["Login"]}.jpg')
+                        path = os.path.join(d, generated(f'images/{row["Login"]}.jpg'))
                         cell = {'name': row['Prénom'],
                                 'lastname': row['Nom'],
                                 'photograph': path}
