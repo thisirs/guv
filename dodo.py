@@ -1574,6 +1574,9 @@ def skip_days(planning):
 
         vacances = skip_range(date(2019, 4, 15), date(2019, 4, 20))
 
+        # Semaine des finals
+        final = skip_range(date(2019, 6, 24), date(2019, 6, 29))
+
         # Jours changés
         turn = {
             date(2019, 5, 7): 'Mercredi',
@@ -1581,9 +1584,9 @@ def skip_days(planning):
         }
 
         # Jours sautés pour Cours/TD/TP
-        skip_days_C = ferie + vacances + median
-        skip_days_D = ferie + vacances + debut + median
-        skip_days_T = ferie + vacances + debut
+        skip_days_C = ferie + vacances + median + final
+        skip_days_D = ferie + vacances + debut + median + final
+        skip_days_T = ferie + vacances + debut + final
     else:
         raise Exception('Unsupported planning')
 
