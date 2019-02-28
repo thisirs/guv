@@ -712,7 +712,7 @@ def task_html_inst():
 
             yield {
                 'name': f'{planning}_{uv}',
-                'file_dep': [insts_uv, os.path.join(jinja_dir, 'templates/instructors.html.jinja2')],
+                'file_dep': [insts_uv, insts_details, os.path.join(jinja_dir, 'instructors.html.jinja2')],
                 'targets': [target],
                 'actions': [(html_inst, [insts_uv, insts_details, target])],
                 'verbosity': 2
