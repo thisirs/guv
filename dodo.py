@@ -761,6 +761,7 @@ def task_add_instructors():
 
         df_insts = [pd.read_excel(inst) for inst in insts]
         df_inst = pd.concat(df_insts, ignore_index=True)
+        df_inst.Semaine = df_inst.Semaine.astype(object)
 
         df_merge = pd.merge(df_csv, df_inst, how='left', on=['Jour', 'Heure début', 'Heure fin', 'Semaine', 'Lib. créneau', 'Locaux'])
 
