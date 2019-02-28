@@ -698,9 +698,10 @@ def task_html_inst():
             with open(target(), 'w') as fd:
                 fd.write(html)
 
+    insts_details = documents('intervenants.xlsx')
     for planning, uv in selected_uv():
         insts_uv = documents(task_xls_affectation.target)
-        insts_details = documents('intervenants.xlsx')
+
         if not os.path.exists(insts_uv):
             return action_msg("Fichier `%s' inexistant" % insts_uv, name=f'{planning}_{uv}')
         elif not os.path.exists(insts_details):
