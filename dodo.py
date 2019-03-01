@@ -1711,7 +1711,7 @@ def task_ical_inst():
     deps = [generated(task_add_instructors.target)]
 
     plannings = get_var('planning', '').split() or CONFIG['DEFAULT_PLANNINGS']
-    insts = get_var('insts', '').split() or [CONFIG['DEFAULT_INSTRUCTOR']]
+    insts = get_var('insts', '').split(',') or [CONFIG['DEFAULT_INSTRUCTOR']]
     if os.path.exists(deps[0]):
         return {
             'file_dep': deps,
