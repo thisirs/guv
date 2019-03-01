@@ -756,7 +756,7 @@ def task_cal_inst():
 def task_add_instructors():
     """Ajoute les intervenants dans la liste csv des créneaux"""
 
-    def add_instructors(target, csv, *insts):
+    def add_instructors(target, csv, insts):
         df_csv = pd.read_csv(csv)
 
         df_insts = [pd.read_excel(inst) for inst in insts]
@@ -770,15 +770,16 @@ def task_add_instructors():
 
     target = generated(task_add_instructors.target)
     uv_list = common_doc(task_utc_uv_list_to_csv.target)
-    deps = [uv_list]
+    insts = []
     for planning, uv in selected_uv():
-        doc = documents(task_xls_affectation.target)
-        deps.append(doc)
+        insts.append(documents(task_xls_affectation.target))
+
+    deps = insts + [uv_list]
 
     return {
         'file_dep': deps,
         'targets': [target],
-        'actions': [(add_instructors, [target] + deps)],
+        'actions': [(add_instructors, [target, uv_list, insts])],
         'verbosity': 2
     }
 
