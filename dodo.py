@@ -935,7 +935,7 @@ def task_csv_inscrits():
             df.to_csv(target(), index=False)
 
     for planning, uv in selected_uv():
-        utc_listing = documents('{planning}_{uv}_inscrits.raw')
+        utc_listing = documents('inscrits.raw')
         if os.path.exists(utc_listing):
             target = generated(task_csv_inscrits.target)
             yield {
@@ -993,33 +993,33 @@ l'UTC."""
         kw = {}
         deps = []
 
-        extraction_ENT = documents('{planning}_{uv}_extraction_enseig_note.xlsx')
+        extraction_ENT = documents('extraction_enseig_note.xlsx')
         if os.path.exists(extraction_ENT):
             kw['extraction_ENT'] = extraction_ENT
             deps.append(extraction_ENT)
 
-        csv_moodle = documents('{planning}_{uv}_inscrits_moodle.csv')
+        csv_moodle = documents('inscrits_moodle.csv')
         if os.path.exists(csv_moodle):
             kw['csv_moodle'] = csv_moodle
             deps.append(csv_moodle)
 
         csv_UTC = generated(task_csv_inscrits.target)
-        raw_UTC = documents('{planning}_{uv}_inscrits.raw')
+        raw_UTC = documents('inscrits.raw')
         if os.path.exists(raw_UTC):
             kw['csv_UTC'] = csv_UTC
             deps.append(csv_UTC)
 
-        tiers_temps = documents('{planning}_{uv}_tiers_temps.raw')
+        tiers_temps = documents('tiers_temps.raw')
         if os.path.exists(tiers_temps):
             kw['tiers_temps'] = tiers_temps
             deps.append(tiers_temps)
 
-        TD_switches = documents('{planning}_{uv}_TD_switches.raw')
+        TD_switches = documents('TD_switches.raw')
         if os.path.exists(TD_switches):
             kw['TD_switches'] = TD_switches
             deps.append(TD_switches)
 
-        TP_switches = documents('{planning}_{uv}_TP_switches.raw')
+        TP_switches = documents('TP_switches.raw')
         if os.path.exists(TP_switches):
             kw['TP_switches'] = TP_switches
             deps.append(TP_switches)
