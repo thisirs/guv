@@ -111,10 +111,17 @@ def task_xls_instructors():
     }
 
 
-def selected_uv():
+def selected_uv(all=None):
     uvs = get_var('uv', '').split()
     plannings = get_var('planning', '').split()
 
+    if all:
+        uvs = plannings = []
+
+    yield from selected_uv0(plannings, uvs)
+
+
+def selected_uv0(plannings, uvs):
     if not uvs and not plannings:
         plannings = CONFIG['DEFAULT_PLANNINGS']
 
@@ -771,7 +778,8 @@ def task_add_instructors():
     target = generated(task_add_instructors.target)
     uv_list = common_doc(task_utc_uv_list_to_csv.target)
     insts = []
-    for planning, uv in selected_uv():
+    for planning, uv in selected_uv('all'):
+        print(f"Adding file `{documents(task_xls_affectation.target)}'")
         insts.append(documents(task_xls_affectation.target))
 
     deps = insts + [uv_list]
