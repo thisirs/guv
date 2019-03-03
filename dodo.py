@@ -1927,7 +1927,7 @@ def task_html_table():
     if os.path.exists(dep):
         for planning, uv in selected_uv():
             for course, short in [('TD', 'D'), ('TP', 'T'), ('Cours', 'C')]:
-                target = generated('{planning}_{uv}_{course}_table.html')
+                target = generated('{course}_table.html')
                 yield {
                     'name': f'{planning}_{uv}_{course}',
                     'file_dep': [dep],
@@ -2083,7 +2083,7 @@ def task_pdf_trombinoscope():
             raise Exception('No column %s to subgroup by' % subgroupby)
 
         # Diviser par groupe de TP/TP
-        for title, group in df.groupby(groupby or (lambda x: "Full class")):
+        for title, group in df.groupby(groupby or (lambda x: "all")):
 
             # Diviser par binomes, sous-groupes
             dff = group.groupby(subgroupby or (lambda x: 0))
@@ -2131,7 +2131,7 @@ def task_pdf_trombinoscope():
 
     if uv:
         dep = generated(task_xls_student_data_merge.target)
-        target = generated('{planning}_{uv}_trombi_%s.pdf')
+        target = generated('trombi_%s.pdf')
         subgroup = get_var('subgroup')
 
         if os.path.exists(dep):
