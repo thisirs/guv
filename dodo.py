@@ -83,6 +83,24 @@ def add_templates(**templates):
     return decorator
 
 
+@add_templates(target='inscrits.raw')
+def task_inscrits():
+    def inscrits(doc):
+        if not os.path.exists(doc):
+            return TaskFailed(f"Pas de fichier `{doc}'")
+        else:
+            print(f"Utilisation du fichier `{doc}'")
+
+    for planning, uv in selected_uv():
+        doc = documents(task_inscrits.target)
+        yield {
+            'name': f'{planning}_{uv}',
+            'actions': [(inscrits, [doc])],
+            'targets': [doc],
+            'uptodate': [True]
+        }
+
+
 @add_templates(target='creneaux-UV-prov_P19.pdf')
 def task_UTC_UV_list():
     doc = common_doc(task_UTC_UV_list.target)
@@ -122,19 +140,19 @@ def selected_uv(all=None):
 
 
 def selected_uv0(plannings, uvs):
-    if not uvs and not plannings:
+    if not plannings and not uvs:
         plannings = CONFIG['DEFAULT_PLANNINGS']
 
-    for planning in CONFIG['DEFAULT_PLANNINGS']:
-        uvp = (CONFIG['PLANNING'][planning].get('UV') or
-               CONFIG['PLANNING'][planning].get('UE'))
-        if planning in plannings:
+    for pl in CONFIG['ALL_PLANNINGS']:
+        uvp = (CONFIG['PLANNING'][pl].get('UV') or
+               CONFIG['PLANNING'][pl].get('UE'))
+        if pl in plannings:
             for uv in uvp:
-                yield planning, uv
+                yield pl, uv
         else:
-            for uv in uvp:
-                if uv in uvs:
-                    yield planning, uv
+            for uv in uvs:
+                if uv in uvp:
+                    yield pl, uv
 
 
 def action_missing(fn):
@@ -232,7 +250,10 @@ class Output():
         return lambda: self.target
 
     def __exit__(self, type, value, traceback):
-        return type == ZeroDivisionError
+        if type is ZeroDivisionError:
+            return True
+        if type is None:
+            print(f"Wrote `{self.target}'")
 
 
 DATE_FORMAT = "%Y-%m-%d"
@@ -365,19 +386,15 @@ def task_xls_inst_details():
 
     insts_details = common_doc(task_xls_instructors.target)
 
-    if os.path.exists(insts_details):
-        for planning, uv in selected_uv():
-            inst_uv = documents(task_xls_affectation.target)
-            target = generated(task_xls_inst_details.target)
-            if os.path.exists(inst_uv):
-                yield {
-                    'name': f'{planning}_{uv}',
-                    'file_dep': [inst_uv, insts_details],
-                    'targets': [target],
-                    'actions': [(xls_inst_details, [inst_uv, insts_details, target])]
-                }
-    else:
-        return action_fail(insts_details)
+    for planning, uv in selected_uv():
+        inst_uv = documents(task_xls_affectation.target)
+        target = generated(task_xls_inst_details.target)
+        yield {
+            'name': f'{planning}_{uv}',
+            'file_dep': [inst_uv, insts_details],
+            'targets': [target],
+            'actions': [(xls_inst_details, [inst_uv, insts_details, target])]
+        }
 
 
 def create_insts_list(df):
@@ -468,10 +485,10 @@ def task_xls_UTP():
         with Output(target, protected=True) as target:
             create_excel_file(target(), dfs)
 
+    insts = common_doc(task_xls_instructors.target)
     for planning, uv in selected_uv():
         xls = documents(task_xls_affectation.target)
         target = generated(task_xls_UTP.target)
-        insts = common_doc(task_xls_instructors.target)
 
         yield {
             'name': f'{planning}_{uv}',
@@ -578,24 +595,17 @@ def task_utc_uv_list_to_csv():
     ue_list_filename = common_doc('UTC_UE_list.xlsx')
     target = common_doc(task_utc_uv_list_to_csv.target)
 
-    deps = []
-    if os.path.exists(uv_list_filename):
-        deps.append(uv_list_filename)
-
+    deps = [uv_list_filename]
     if os.path.exists(ue_list_filename):
         deps.append(ue_list_filename)
 
-    if deps:
-        semester = CONFIG['DEFAULT_SEMESTER']
-        return {
-            'file_dep': deps,
-            'targets': [target],
-            'actions': [(utc_uv_list_to_csv, [semester, uv_list_filename, ue_list_filename, target])],
-            'verbosity': 2
-        }
-    else:
-        msg = ' or '.join([uv_list_filename, ue_list_filename])
-        return action_msg(f"Missing files one of {msg}")
+    semester = CONFIG['DEFAULT_SEMESTER']
+    return {
+        'file_dep': deps,
+        'targets': [target],
+        'actions': [(utc_uv_list_to_csv, [semester, uv_list_filename, ue_list_filename, target])],
+        'verbosity': 2
+    }
 
 
 @add_templates(target='intervenants.xlsx')
@@ -618,18 +628,15 @@ def task_xls_affectation():
 
     for planning, uv in selected_uv():
         uvlist_csv = common_doc(task_utc_uv_list_to_csv.target)
-        if os.path.exists(uvlist_csv):
-            target = documents(task_xls_affectation.target)
+        target = documents(task_xls_affectation.target)
 
-            yield {
-                'name': f'{planning}_{uv}',
-                'file_dep': [uvlist_csv],
-                'targets': [target],
-                'actions': [(extract_uv_instructor, [uvlist_csv, uv, target])],
-                'verbosity': 2
-            }
-        else:
-            yield action_fail(uvlist_csv, name=f'{planning}_{uv}')
+        yield {
+            'name': f'{planning}_{uv}',
+            'file_dep': [uvlist_csv],
+            'targets': [target],
+            'actions': [(extract_uv_instructor, [uvlist_csv, uv, target])],
+            'verbosity': 2
+        }
 
 
 @add_templates(target='emploi_du_temps.xlsx')
@@ -647,15 +654,14 @@ def task_xls_emploi_du_temps():
 
     for planning, uv in selected_uv():
         dep = documents(task_xls_affectation.target)
-        if os.path.exists(dep):
-            target = generated(task_xls_emploi_du_temps.target)
-            yield {
-                'name': f'{planning}_{uv}',
-                'file_dep': [dep],
-                'targets': [target],
-                'actions': [(xls_emploi_du_temps, [dep, target])],
-                'verbosity': 2
-            }
+        target = generated(task_xls_emploi_du_temps.target)
+        yield {
+            'name': f'{planning}_{uv}',
+            'file_dep': [dep],
+            'targets': [target],
+            'actions': [(xls_emploi_du_temps, [dep, target])],
+            'verbosity': 2
+        }
 
 
 @add_templates(target='intervenants.html')
@@ -706,24 +712,20 @@ def task_html_inst():
                 fd.write(html)
 
     insts_details = documents('intervenants.xlsx')
+    jinja_dir = os.path.join(os.path.dirname(__file__), 'templates')
+    template = os.path.join(jinja_dir, 'instructors.html.jinja2')
+
     for planning, uv in selected_uv():
         insts_uv = documents(task_xls_affectation.target)
+        target = generated(task_html_inst.target)
 
-        if not os.path.exists(insts_uv):
-            return action_msg("Fichier `%s' inexistant" % insts_uv, name=f'{planning}_{uv}')
-        elif not os.path.exists(insts_details):
-            return action_msg("Fichier `%s' inexistant" % insts_details, name=f'{planning}_{uv}')
-        else:
-            target = generated(task_html_inst.target)
-            jinja_dir = os.path.join(os.path.dirname(__file__), 'templates')
-
-            yield {
-                'name': f'{planning}_{uv}',
-                'file_dep': [insts_uv, insts_details, os.path.join(jinja_dir, 'instructors.html.jinja2')],
-                'targets': [target],
-                'actions': [(html_inst, [insts_uv, insts_details, target])],
-                'verbosity': 2
-            }
+        yield {
+            'name': f'{planning}_{uv}',
+            'file_dep': [insts_uv, insts_details, template],
+            'targets': [target],
+            'actions': [(html_inst, [insts_uv, insts_details, target])],
+            'verbosity': 2
+        }
 
 
 def task_cal_inst():
@@ -741,22 +743,19 @@ def task_cal_inst():
         text = r'{uv} \\ {name} \\ {room}'
         create_cal_from_dataframe(df_inst, text, target)
 
-    if os.path.exists(uv_list):
-        plannings = get_var('planning', '').split() or CONFIG['DEFAULT_PLANNINGS']
-        insts = get_var('insts', '').split() or [CONFIG['DEFAULT_INSTRUCTOR']]
-        for inst in insts:
-            target = generated(f'{inst.replace(" ", "_")}_{"_".join(plannings)}_calendrier.pdf')
-            jinja_dir = os.path.join(os.path.dirname(__file__), 'templates')
+    plannings = get_var('planning', '').split() or CONFIG['DEFAULT_PLANNINGS']
+    insts = get_var('insts', '').split() or [CONFIG['DEFAULT_INSTRUCTOR']]
+    for inst in insts:
+        target = generated(f'{inst.replace(" ", "_")}_{"_".join(plannings)}_calendrier.pdf')
+        jinja_dir = os.path.join(os.path.dirname(__file__), 'templates')
 
-            yield {
-                'name': '_'.join(plannings) + '_' + inst,
-                'targets': [target],
-                'file_dep': [uv_list, os.path.join(jinja_dir, 'calendar_template.tex.jinja2')],
-                'actions': [(create_cal_from_list, [inst, plannings, uv_list, target])],
-                'verbosity': 2
-            }
-    else:
-        return action_fail(uv_list)
+        yield {
+            'name': '_'.join(plannings) + '_' + inst,
+            'targets': [target],
+            'file_dep': [uv_list, os.path.join(jinja_dir, 'calendar_template.tex.jinja2')],
+            'actions': [(create_cal_from_list, [inst, plannings, uv_list, target])],
+            'verbosity': 2
+        }
 
 
 @add_templates(target='UTC_UV_list_instructors.csv')
@@ -779,7 +778,6 @@ def task_add_instructors():
     uv_list = common_doc(task_utc_uv_list_to_csv.target)
     insts = []
     for planning, uv in selected_uv('all'):
-        print(f"Adding file `{documents(task_xls_affectation.target)}'")
         insts.append(documents(task_xls_affectation.target))
 
     deps = insts + [uv_list]
@@ -914,19 +912,19 @@ CONFIG['UV'].
         text = r'{name} \\ {room} \\ {author}'
         return(create_cal_from_dataframe(df_uv_real, text, target))
 
+    jinja_dir = os.path.join(os.path.dirname(__file__), 'templates')
+    template = os.path.join(jinja_dir, 'calendar_template.tex.jinja2')
+
     for planning, uv in selected_uv():
         uv_list = documents(task_xls_affectation.target)
-        if os.path.exists(uv_list):
-            target = generated(task_cal_uv.target)
-            jinja_dir = os.path.join(os.path.dirname(__file__), 'templates')
-            yield {
-                'name': f'{planning}_{uv}',
-                'file_dep': [uv_list, os.path.join(jinja_dir, 'calendar_template.tex.jinja2')],
-                'targets': [target],
-                'actions': [(create_cal_from_list, [uv, uv_list, target])]
-            }
-        else:
-            return action_fail(uv_list)
+        target = generated(task_cal_uv.target)
+
+        yield {
+            'name': f'{planning}_{uv}',
+            'file_dep': [uv_list, template],
+            'targets': [target],
+            'actions': [(create_cal_from_list, [uv, uv_list, target])]
+        }
 
 
 @add_templates(target='inscrits.csv')
@@ -943,18 +941,15 @@ def task_csv_inscrits():
             df.to_csv(target(), index=False)
 
     for planning, uv in selected_uv():
-        utc_listing = documents('inscrits.raw')
-        if os.path.exists(utc_listing):
-            target = generated(task_csv_inscrits.target)
-            yield {
-                'name': f'{planning}_{uv}',
-                'file_dep': [utc_listing],
-                'targets': [target],
-                'actions': [(csv_inscrits, [utc_listing, target])],
-                'verbosity': 2
-            }
-        else:
-            return action_fail(utc_listing)
+        utc_listing = documents(task_inscrits.target)
+        target = generated(task_csv_inscrits.target)
+        yield {
+            'name': f'{planning}_{uv}',
+            'file_dep': [utc_listing],
+            'targets': [target],
+            'actions': [(csv_inscrits, [utc_listing, target])],
+            'verbosity': 2
+        }
 
 
 @add_templates(target='student_data.xlsx')
@@ -1012,7 +1007,7 @@ l'UTC."""
             deps.append(csv_moodle)
 
         csv_UTC = generated(task_csv_inscrits.target)
-        raw_UTC = documents('inscrits.raw')
+        raw_UTC = documents(task_inscrits.target)
         if os.path.exists(raw_UTC):
             kw['csv_UTC'] = csv_UTC
             deps.append(csv_UTC)
@@ -1098,165 +1093,156 @@ def task_xls_student_data_merge():
             return df
         return agregate0
 
-    plannings = get_var('planning', '').split() or CONFIG['DEFAULT_PLANNINGS']
-    if get_var('uv'):
-        uvs = [get_var('uv')]
-    else:
-        uvs = None
-    for planning in plannings:
-        for uv in uvs or CONFIG['PLANNING'][planning].get('UV') or CONFIG['PLANNING'][planning].get('UE'):
-            data = {}
+    for planning, uv in selected_uv():
+        data = {}
 
-            # Ajout des feuilles Excel de notes générées par xls_grades_sheet
-            # for file in os.listdir('documents/'):
-            #     m = re.match(rf"{planning}_{uv}_([^_]+)_gradebook.xlsx", file)
-            #     if m:
-            #         data['documents/' + file] = agregate(
-            #             left_on='Courriel',
-            #             right_on='Courriel',
-            #             subset=['Note']
-            #         )
+        # Ajout des feuilles Excel de notes générées par xls_grades_sheet
+        # for file in os.listdir('documents/'):
+        #     m = re.match(rf"{planning}_{uv}_([^_]+)_gradebook.xlsx", file)
+        #     if m:
+        #         data['documents/' + file] = agregate(
+        #             left_on='Courriel',
+        #             right_on='Courriel',
+        #             subset=['Note']
+        #         )
 
-            if uv == 'SY02':
-                # Ajout des demi-groupes de TP pour examen
-                data[generated('{planning}_{uv}_exam_groups.csv')] = agregate(
-                    left_on='Courriel',
-                    right_on='Adresse de courriel')
+        if uv == 'SY02':
+            # Ajout des demi-groupes de TP pour examen
+            data[generated('{planning}_{uv}_exam_groups.csv')] = agregate(
+                left_on='Courriel',
+                right_on='Adresse de courriel')
 
-                # Ajout de la note de médian si existant
-                data[documents('{planning}_{uv}_median_notes.xlsx')] = agregate(
-                    left_on='Courriel',
-                    right_on='Courriel',
-                    subset=['Note', 'Correcteur médian'],
-                    rename={'Note': 'Note médian'})
+            # Ajout de la note de médian si existant
+            data[documents('{planning}_{uv}_median_notes.xlsx')] = agregate(
+                left_on='Courriel',
+                right_on='Courriel',
+                subset=['Note', 'Correcteur médian'],
+                rename={'Note': 'Note médian'})
 
-                # Ajout de la note de final si existant
-                data[documents('{planning}_{uv}_final_notes.xlsx')] = agregate(
-                    left_on='Courriel',
-                    right_on='Courriel',
-                    subset=['Note', 'Correcteur final'],
-                    rename={'Note': 'Note final'})
+            # Ajout de la note de final si existant
+            data[documents('{planning}_{uv}_final_notes.xlsx')] = agregate(
+                left_on='Courriel',
+                right_on='Courriel',
+                subset=['Note', 'Correcteur final'],
+                rename={'Note': 'Note final'})
 
-                # Ajout de la note globale
-                data[documents('{planning}_{uv}_jury.xlsx')] = agregate(
-                    left_on='Courriel',
-                    right_on='Courriel',
-                    subset=['Note'])
+            # Ajout de la note globale
+            data[documents('{planning}_{uv}_jury.xlsx')] = agregate(
+                left_on='Courriel',
+                right_on='Courriel',
+                subset=['Note'])
 
-                # Ajout de la note de TP
-                data[documents('SY02 Notes-20180614_1702-comma_separated.csv')] = agregate(
-                    left_on='Courriel',
-                    right_on='Adresse de courriel',
-                    kw_read={'na_values': ['-']},
-                    subset=["Test Quiz P2018 (Brut)"],
-                    rename={"Test Quiz P2018 (Brut)": 'Note_TP'})
-            elif uv == 'SY09':
-                # Ajout des groupes de TP si existant
-                data[generated('{planning}_{uv}_TD_P1_binomes.csv')] = agregate(
-                    left_on='Courriel',
-                    right_on='Adresse de courriel',
-                    subset=['group'],
-                    rename={'group': 'group_P1'})
+            # Ajout de la note de TP
+            data[documents('SY02 Notes-20180614_1702-comma_separated.csv')] = agregate(
+                left_on='Courriel',
+                right_on='Adresse de courriel',
+                kw_read={'na_values': ['-']},
+                subset=["Test Quiz P2018 (Brut)"],
+                rename={"Test Quiz P2018 (Brut)": 'Note_TP'})
+        elif uv == 'SY09':
+            # Ajout des groupes de TP si existant
+            data[generated('{planning}_{uv}_TD_P1_binomes.csv')] = agregate(
+                left_on='Courriel',
+                right_on='Adresse de courriel',
+                subset=['group'],
+                rename={'group': 'group_P1'})
 
-                data[generated('{planning}_{uv}_TD_P2_binomes.csv')] = agregate(
-                    left_on='Courriel',
-                    right_on='Adresse de courriel',
-                    rename={'group': 'group_P2'})
-            elif uv == 'SY19':
-                # Ajout des binomes finaux du projet 1, exporté de Moodle
-                data[documents('{planning}_{uv}_TD_P1_binomes_final.tsv')] = agregate(
-                    left_on='Courriel',
-                    right_on='Adresse de courriel',
-                    subset=['Groupe'],
-                    rename={'Groupe': 'group_P1'},
-                    read_method=pd.read_csv,
-                    kw_read={'delimiter': '\t'})
+            data[generated('{planning}_{uv}_TD_P2_binomes.csv')] = agregate(
+                left_on='Courriel',
+                right_on='Adresse de courriel',
+                rename={'group': 'group_P2'})
+        elif uv == 'SY19':
+            # Ajout des binomes finaux du projet 1, exporté de Moodle
+            data[documents('{planning}_{uv}_TD_P1_binomes_final.tsv')] = agregate(
+                left_on='Courriel',
+                right_on='Adresse de courriel',
+                subset=['Groupe'],
+                rename={'Groupe': 'group_P1'},
+                read_method=pd.read_csv,
+                kw_read={'delimiter': '\t'})
 
-                # Ajout des binomes finaux du projet 2, exporté de Moodle
-                data[documents('{planning}_{uv}_TD_P2_binomes_final.tsv')] = agregate(
-                    left_on='Courriel',
-                    right_on='Adresse de courriel',
-                    subset=['Groupe'],
-                    rename={'Groupe': 'group_P2'},
-                    read_method=pd.read_csv,
-                    kw_read={'delimiter': '\t'})
+            # Ajout des binomes finaux du projet 2, exporté de Moodle
+            data[documents('{planning}_{uv}_TD_P2_binomes_final.tsv')] = agregate(
+                left_on='Courriel',
+                right_on='Adresse de courriel',
+                subset=['Groupe'],
+                rename={'Groupe': 'group_P2'},
+                read_method=pd.read_csv,
+                kw_read={'delimiter': '\t'})
 
-                # Ajout de la note de premier projet, TP3
-                data[documents('A2018_SY19_TP3.xlsx')] = agregate(
-                    left_on='Courriel',
-                    right_on='Adresse de courriel',
-                    subset=['Devoir TP 3 (Brut)'],
-                    rename={'Devoir TP 3 (Brut)': 'note_P1'})
+            # Ajout de la note de premier projet, TP3
+            data[documents('A2018_SY19_TP3.xlsx')] = agregate(
+                left_on='Courriel',
+                right_on='Adresse de courriel',
+                subset=['Devoir TP 3 (Brut)'],
+                rename={'Devoir TP 3 (Brut)': 'note_P1'})
 
-                # Ajout de la note du QCM
-                data[generated('A2018_SY19_QCM.csv')] = agregate(
-                    left_on='Courriel',
-                    right_on='Courriel',
-                    drop=['Name'])
+            # Ajout de la note du QCM
+            data[generated('A2018_SY19_QCM.csv')] = agregate(
+                left_on='Courriel',
+                right_on='Courriel',
+                drop=['Name'])
 
-                # Ajout de la note examen hors QCM
-                data[documents('A2018_SY19_final_gradebook.xlsx')] = agregate(
-                    left_on='Courriel',
-                    right_on='Courriel',
-                    subset=['final'])
+            # Ajout de la note examen hors QCM
+            data[documents('A2018_SY19_final_gradebook.xlsx')] = agregate(
+                left_on='Courriel',
+                right_on='Courriel',
+                subset=['final'])
 
-                # Ajout de la note du deuxième projet
-                data[documents('A2018_SY19_P2_gradebook.xlsx')] = agregate(
-                    left_on='Courriel',
-                    right_on='Courriel',
-                    subset=['P2'])
+            # Ajout de la note du deuxième projet
+            data[documents('A2018_SY19_P2_gradebook.xlsx')] = agregate(
+                left_on='Courriel',
+                right_on='Courriel',
+                subset=['P2'])
 
-                # Ajout de la note du deuxième projet
-                data[documents('A2018_SY19_jury_gradebook.xlsx')] = agregate(
-                    left_on='Courriel',
-                    right_on='Courriel',
-                    subset=['Note ECTS'])
+            # Ajout de la note du deuxième projet
+            data[documents('A2018_SY19_jury_gradebook.xlsx')] = agregate(
+                left_on='Courriel',
+                right_on='Courriel',
+                subset=['Note ECTS'])
 
-            elif uv == "AOS2":
-                data[generated('2018_T2_AOS2_QCM.csv')] = agregate(
-                    left_on='Courriel',
-                    drop=['Name'],
-                    right_on='Courriel',
-                    read_method=pd.read_csv)
+        elif uv == "AOS2":
+            data[generated('2018_T2_AOS2_QCM.csv')] = agregate(
+                left_on='Courriel',
+                drop=['Name'],
+                right_on='Courriel',
+                read_method=pd.read_csv)
 
-                data[documents('2018_T2_AOS2_groups.tsv')] = agregate(
-                    left_on='Courriel',
-                    right_on='Adresse de courriel',
-                    subset=['Groupe'],
-                    read_method=pd.read_csv,
-                    kw_read={'delimiter': '\t'})
+            data[documents('2018_T2_AOS2_groups.tsv')] = agregate(
+                left_on='Courriel',
+                right_on='Adresse de courriel',
+                subset=['Groupe'],
+                read_method=pd.read_csv,
+                kw_read={'delimiter': '\t'})
 
-                data[documents('2018_T2_AOS2_Project_gradebook.xlsx')] = agregate(
-                    left_on='Courriel',
-                    right_on='Courriel',
-                    subset=['Project'])
+            data[documents('2018_T2_AOS2_Project_gradebook.xlsx')] = agregate(
+                left_on='Courriel',
+                right_on='Courriel',
+                subset=['Project'])
 
-                data[documents('2018_T2_AOS2_jury_gradebook.xlsx')] = agregate(
-                    left_on='Courriel',
-                    right_on='Courriel',
-                    subset=['Note ECTS'])
+            data[documents('2018_T2_AOS2_jury_gradebook.xlsx')] = agregate(
+                left_on='Courriel',
+                right_on='Courriel',
+                subset=['Note ECTS'])
 
-            source = generated(task_xls_student_data.target)
+        source = generated(task_xls_student_data.target)
 
-            if os.path.exists(source):
-                target = generated(task_xls_student_data_merge.target)
-                deps = [source]
-                data_exist = {}
+        target = generated(task_xls_student_data_merge.target)
+        deps = [source]
+        data_exist = {}
 
-                for path, agregater in data.items():
-                    if os.path.exists(path):
-                        deps.append(path)
-                        data_exist[path] = agregater
+        for path, agregater in data.items():
+            if os.path.exists(path):
+                deps.append(path)
+                data_exist[path] = agregater
 
-                yield {
-                    'name': f'{planning}_{uv}',
-                    'file_dep': deps,
-                    'targets': [target],
-                    'actions': [(merge_student_data, [source, target, data_exist])],
-                    'verbosity': 2
-                }
-            else:
-                yield action_msg("Pas de fichier `%s'" % source, name=f'{planning}_{uv}')
+        yield {
+            'name': f'{planning}_{uv}',
+            'file_dep': deps,
+            'targets': [target],
+            'actions': [(merge_student_data, [source, target, data_exist])],
+            'verbosity': 2
+        }
 
 
 def task_csv_exam_groups():
@@ -1291,19 +1277,16 @@ def task_csv_exam_groups():
 
     for planning, uv in selected_uv():
         deps = [generated(task_xls_student_data_merge.target)]
-        target = generated('{planning}_{uv}_exam_groups.csv')
-        target_moodle = generated('{planning}_{uv}_exam_groups_moodle.csv')
+        target = generated('exam_groups.csv')
+        target_moodle = generated('exam_groups_moodle.csv')
 
-        if os.path.exists(deps[0]):
-            yield {
-                'name': f'{planning}_{uv}',
-                'actions': [(csv_exam_groups, [target, target_moodle, deps[0]])],
-                'file_dep': deps,
-                'targets': [target_moodle],
-                'verbosity': 2
-            }
-        else:
-            yield action_fail(deps[0], name=f'{planning}_{uv}')
+        yield {
+            'name': f'{planning}_{uv}',
+            'actions': [(csv_exam_groups, [target, target_moodle, deps[0]])],
+            'file_dep': deps,
+            'targets': [target_moodle],
+            'verbosity': 2
+        }
 
 
 def task_csv_groups():
@@ -1321,19 +1304,16 @@ def task_csv_groups():
     for planning, uv in selected_uv():
         deps = [generated(task_xls_student_data_merge.target)]
 
-        if os.path.exists(deps[0]):
-            for ctype in ['Cours', 'TD', 'TP']:
-                target = generated('{planning}_{uv}_{ctype}_group_moodle.csv')
+        for ctype in ['Cours', 'TD', 'TP']:
+            target = generated('{ctype}_group_moodle.csv')
 
-                yield {
-                    'name': f'{planning}_{uv}_{ctype}',
-                    'actions': [(csv_groups, [target, deps[0], ctype])],
-                    'file_dep': deps,
-                    'targets': [target],
-                    'verbosity': 2
-                }
-        else:
-            return action_fail(deps[0])
+            yield {
+                'name': f'{planning}_{uv}_{ctype}',
+                'actions': [(csv_groups, [target, deps[0], ctype])],
+                'file_dep': deps,
+                'targets': [target],
+                'verbosity': 2
+            }
 
 
 def task_csv_binomes():
@@ -1460,29 +1440,26 @@ Variables à fournir:
         with Output(target_moodle) as target:
             df.to_csv(target(), index=False, header=False)
 
-    planning = get_var('planning') or CONFIG['DEFAULT_PLANNING']
-    uv = get_var('uv') or CONFIG['DEFAULT_UV']
     deps = [generated(task_xls_student_data_merge.target)]
-
-    if os.path.exists(deps[0]):
+    uvs = list(selected_uv())
+    if len(uvs) == 1:
+        planning, uv = uvs[0]
         course = get_var('course')
         project = get_var('project')
         other_groups = get_var('other_groups')
 
-        if planning and uv and course and project:
-            target = generated('{planning}_{uv}_{course}_{project}_binomes.csv')
-            target_moodle = generated('{planning}_{uv}_{course}_{project}_binomes_moodle.csv')
+        target = generated('{course}_{project}_binomes.csv')
+        target_moodle = generated('{course}_{project}_binomes_moodle.csv')
 
-            yield {
-                'name': f'{uv} {course}',
-                'actions': [(csv_binomes, [target, target_moodle, deps[0], course, project, other_groups])],
-                'file_dep': deps,
-                'targets': [target_moodle],  # target_moodle only to
-                                             # avoid circular dep
-                'verbosity': 2
-            }
+        return {
+            'actions': [(csv_binomes, [target, target_moodle, deps[0], course, project, other_groups])],
+            'file_dep': deps,
+            'targets': [target_moodle],  # target_moodle only to
+                                         # avoid circular dep
+            'verbosity': 2
+        }
     else:
-        return action_fail(deps[0])
+        return action_msg("Une seule UV doit être sélectionnée")
 
 
 def skip_days(planning):
@@ -1720,15 +1697,12 @@ def task_ical_inst():
 
     plannings = get_var('planning', '').split() or CONFIG['DEFAULT_PLANNINGS']
     insts = get_var('insts', '').split(',') or [CONFIG['DEFAULT_INSTRUCTOR']]
-    if os.path.exists(deps[0]):
-        return {
-            'file_dep': deps,
-            'actions': [(create_ical_inst, [insts, plannings, deps[0]])],
-            'uptodate': [False],
-            'verbosity': 2
-        }
-    else:
-        return action_fail(deps[0])
+    return {
+        'file_dep': deps,
+        'actions': [(create_ical_inst, [insts, plannings, deps[0]])],
+        'uptodate': [False],
+        'verbosity': 2
+    }
 
 
 @add_templates(target='UTC_UV_list_créneau.csv')
@@ -1780,18 +1754,16 @@ def task_csv_all_courses():
     target = generated(task_csv_all_courses.target)
 
     plannings = get_var('plannings') or CONFIG['DEFAULT_PLANNINGS']
-    if os.path.exists(dep):
-        return {
-            'actions': [(csv_all_courses, [plannings, dep, target])],
-            'file_dep': [dep],
-            'targets': [target],
-            'verbosity': 2
-        }
-    else:
-        return action_fail(dep)
+    return {
+        'actions': [(csv_all_courses, [plannings, dep, target])],
+        'file_dep': [dep],
+        'targets': [target],
+        'verbosity': 2
+    }
 
 
 def write_ical_file(dataframe, output):
+    """Écrit un fichier iCal de tous les cours trouvés dans DATAFRAME"""
 
     from pytz import timezone
     localtz = timezone('Europe/Paris')
@@ -1932,19 +1904,16 @@ def task_html_table():
                 fd.write(output)
 
     dep = generated(task_add_instructors.target)
-    if os.path.exists(dep):
-        for planning, uv in selected_uv():
-            for course, short in [('TD', 'D'), ('TP', 'T'), ('Cours', 'C')]:
-                target = generated('{course}_table.html')
-                yield {
-                    'name': f'{planning}_{uv}_{course}',
-                    'file_dep': [dep],
-                    'actions': [(html_table, [planning, dep, uv, course])],
-                    'targets': [target],
-                    'verbosity': 2
-                }
-    else:
-        return action_fail(dep)
+    for planning, uv in selected_uv():
+        for course, short in [('TD', 'D'), ('TP', 'T'), ('Cours', 'C')]:
+            target = generated('{course}_table.html')
+            yield {
+                'name': f'{planning}_{uv}_{course}',
+                'file_dep': [dep],
+                'actions': [(html_table, [planning, dep, uv, course])],
+                'targets': [target],
+                'verbosity': 2
+            }
 
 
 def compute_slots(planning_type, csv_inst_list):
@@ -2023,21 +1992,18 @@ def task_json_restriction():
                 json.dump(moodle_date, fd, indent=4)
 
     dep = generated(task_csv_all_courses.target)
-    uv = get_var('uv') or CONFIG['DEFAULT_UV']
 
-    if uv:
-        if os.path.exists(dep):
-            target = generated('moodle_date.json')
-            return {
-                'actions': [(restriction_list, [uv, dep, target])],
-                'file_dep': [dep],
-                'verbosity': 2
-            }
-        else:
-            return action_fail(dep)
-
+    uvs = list(selected_uv())
+    if len(uvs) == 1:
+        planning, uv = uvs[0]
+        target = generated('moodle_date.json')
+        return {
+            'actions': [(restriction_list, [uv, dep, target])],
+            'file_dep': [dep],
+            'verbosity': 2
+        }
     else:
-        return action_fail(dep)
+        return action_msg("Une seule UV doit être sélectionnée")
 
 
 def task_pdf_trombinoscope():
@@ -2128,27 +2094,21 @@ def task_pdf_trombinoscope():
             with Output(fn) as target0:
                 pdf.save_to(target0())
 
-    planning = get_var('planning') or CONFIG['DEFAULT_PLANNING']
-    uv = get_var('uv') or CONFIG['DEFAULT_UV']
     course = get_var('course')
+    subgroup = get_var('subgroup')
 
-    if uv:
+    for planning, uv in selected_uv():
         dep = generated(task_xls_student_data_merge.target)
         target = generated('trombi_%s.pdf')
-        subgroup = get_var('subgroup')
 
-        if os.path.exists(dep):
-            return {
-                'file_dep': [dep],
-                'targets': [],  # Possibly several files
-                'actions': [(pdf_trombinoscope, [dep, target, course, subgroup, 5])],
-                'uptodate': [False],
-                'verbosity': 2
-            }
-        else:
-            return action_fail(dep)
-    else:
-        print("Missing parameter `uv' or `course'")
+        yield {
+            'name': f'{planning}_{uv}',
+            'file_dep': [dep],
+            'targets': [],  # Possibly several files
+            'actions': [(pdf_trombinoscope, [dep, target, course, subgroup, 5])],
+            'uptodate': [False],
+            'verbosity': 2
+        }
 
 
 def task_pdf_attendance_list():
@@ -2184,34 +2144,28 @@ def task_pdf_attendance_list():
             pdf.save_to(os.path.join(temp_dir, gn + ".pdf"))
 
         with Output(target) as target0:
-            print(target0())
             with zipfile.ZipFile(target0(), 'w') as z:
                 for filepath in glob.glob(os.path.join(temp_dir, '*.pdf')):
                     z.write(filepath, os.path.basename(filepath))
 
-    planning = get_var('planning') or CONFIG['DEFAULT_PLANNING']
-    uv = get_var('uv') or CONFIG['DEFAULT_UV']
-    group = get_var('group')
-    exam = get_var('exam') or group
-
-    if group:
-        xls_merge = generated(task_xls_student_data_merge.target)
-        target = generated('{planning}_{uv}_attendance_{group}.zip')
-
-        if not os.path.exists(xls_merge):
-            return action_fail(xls_merge)
-        else:
+    uvs = list(selected_uv())
+    if len(uvs) == 1:
+        planning, uv = uvs[0]
+        group = get_var('group')
+        exam = get_var('exam') or group
+        if group:
+            xls_merge = generated(task_xls_student_data_merge.target)
+            target = generated('{planning}_{uv}_attendance_{group}.zip')
             return {
                 'file_dep': [xls_merge],
                 'targets': [target],
                 'actions': [(pdf_attendance_list, [xls_merge, group, target])],
                 'verbosity': 2
             }
+        else:
+            return action_msg('Il faut fournir un nom de colonne de `*_student_data_merge.xlsx` pour grouper.')
     else:
-        return {
-            'actions': [lambda: print('Il faut fournir un nom de colonne de `*_student_data_merge.xlsx` pour grouper.')],
-            'verbosity': 2
-        }
+        return action_msg("Une seule UV doit être sélectionnée")
 
 
 def task_xls_assignment_grade():
@@ -2233,27 +2187,24 @@ def task_xls_assignment_grade():
                 df.to_excel(writer, sheet_name=inst, index=False)
             writer.save()
 
-    exam = get_var('exam') or 'median'
-
-    for planning, uv in selected_uv():
-        xls_merge = generated(task_xls_student_data_merge.target)
-        inst_uv = documents(task_xls_affectation.target)
-        target = generated('{planning}_{uv}_{exam}.xlsx')
-        name = f'{planning}_{uv}'
-
-        if not os.path.exists(xls_merge):
-            yield action_fail(xls_merge, name=name)
-        elif not os.path.exists(inst_uv):
-            yield action_fail(inst_uv, name=name)
-        else:
-            yield {
-                'name': name,
-                'file_dep': [xls_merge],
+    uvs = list(selected_uv())
+    if len(uvs) == 1:
+        exam = get_var('exam')
+        if exam:
+            planning, uv = uvs[0]
+            xls_merge = generated(task_xls_student_data_merge.target)
+            inst_uv = documents(task_xls_affectation.target)
+            target = generated('{exam}.xlsx')
+            return {
+                'file_dep': [xls_merge, inst_uv],
                 'targets': [target],
                 'actions': [(xls_assignment_grade, [inst_uv, xls_merge, target])],
-                'pos_arg': 'args',
                 'verbosity': 2
             }
+        else:
+            return action_msg("Il faut spécifier le nom de l'examen")
+    else:
+        return action_msg("Une seule UV doit être sélectionnée")
 
 
 def task_attendance_sheet():
@@ -2300,31 +2251,26 @@ def task_attendance_sheet():
                 pdf = latex.build_pdf(tex)
                 pdf.save_to(target0)
 
-    planning = get_var('planning') or CONFIG['DEFAULT_PLANNING']
-    uv = get_var('uv') or CONFIG['DEFAULT_UV']
-    exam = get_var('exam')
-
-    # groupby = [
-    #     {
-    #         'room': 'FA300',
-    #         'planning': planning,
-    #         'date': None,
-    #         'number': 90
-    #     }
-    # ]
     groupby = {
         'FA300': 90,
         'FA321': 70,
         'FA310': 50
     }
 
-    if exam:
-        target = generated('{planning}_{uv}_{exam}_présence_%s.pdf')
-        return {
-            'targets': [target],
-            'actions': [(generate_attendance_sheets, [groupby, target])],
-            'verbosity': 2
-        }
+    uvs = list(selected_uv())
+    if len(uvs) == 1:
+        exam = get_var('exam')
+        if exam:
+            target = generated('{exam}_présence_%s.pdf')
+            return {
+                'targets': [target],
+                'actions': [(generate_attendance_sheets, [groupby, target])],
+                'verbosity': 2
+            }
+        else:
+            return action_msg("Il faut spécifier le nom de l'examen")
+    else:
+        return action_msg("Une seule UV doit être sélectionnée")
 
 
 def task_csv_for_upload():
@@ -2361,26 +2307,24 @@ COMMENT_COLNAME.
         with Output(csv_fname) as csv_fname:
             df0.to_csv(csv_fname(), index=False, sep=';')
 
-    planning = get_var('planning') or CONFIG['DEFAULT_PLANNING']
-    uv = get_var('uv') or CONFIG['DEFAULT_UV']
-    grade_colname = get_var('grade_colname')
-    comment_colname = get_var('comment_colname')
-
-    xls_merge = generated(task_xls_student_data_merge.target)
-    if os.path.exists(xls_merge):
+    uvs = list(selected_uv())
+    if len(uvs) == 1:
+        grade_colname = get_var('grade_colname')
+        comment_colname = get_var('comment_colname')
         if grade_colname:
-            csv_fname = generated('{planning}_{uv}_{grade_colname}_ENT.csv')
+            planning, uv = uvs[0]
+            csv_fname = generated('{grade_colname}_ENT.csv')
+            xls_merge = generated(task_xls_student_data_merge.target)
             deps = [generated(task_xls_student_data_merge.target)]
-
             return {
                 'actions': [(csv_for_upload, [csv_fname, xls_merge, grade_colname, comment_colname])],
                 'targets': [csv_fname],
                 'file_dep': deps
             }
         else:
-            return action_msg("Colonnes manquantes")
+            return action_msg("Il faut spécifier le nom de la colonne")
     else:
-        return action_fail(xls_merge)
+        return action_msg("Une seule UV doit être sélectionnée")
 
 
 def task_xls_merge_final_grade():
@@ -2421,26 +2365,23 @@ manuelle."""
         # dff = df.groupby(['Nom', 'Prénom'], group_keys=False).apply(max_grade)
         # dff.to_excel(xls_grades, index=False)
 
-    planning = get_var('planning') or CONFIG['DEFAULT_PLANNING']
-    uv = get_var('uv') or CONFIG['DEFAULT_UV']
-    exam = get_var('exam')
+    uvs = list(selected_uv())
+    if len(uvs) == 1:
+        exam = get_var('exam')
+        if exam:
+            xls_sheets = documents('{exam}.xlsx')
+            xls_grades = documents('{exam}_notes.xlsx')
 
-    if exam:
-        xls_sheets = documents('{planning}_{uv}_{exam}.xlsx')
-        xls_grades = documents('{planning}_{uv}_{exam}_notes.xlsx')
-        deps = [xls_sheets]
-
-        if not os.path.exists(xls_sheets):
-            return action_fail(xls_sheets)
-        else:
             return {
                 'actions': [(xls_merge_final_grade, [xls_sheets, xls_grades])],
                 'targets': [xls_grades],
-                'file_dep': deps,
+                'file_dep': [xls_sheets],
                 'verbosity': 2
             }
+        else:
+            return action_msg("Il faut spécifier le nom de l'examen")
     else:
-        return action_msg("Missing exam argument")
+        return action_msg("Une seule UV doit être sélectionnée")
 
 
 def task_xls_grades_sheet():
@@ -2488,13 +2429,11 @@ def task_yaml_QCM():
             with open(yaml_fname(), 'w') as fd:
                 yaml.dump(rec, fd, default_flow_style=False)
 
-    planning = get_var('planning') or CONFIG['DEFAULT_PLANNING']
-    uv = get_var('uv') or CONFIG['DEFAULT_UV']
-
-    xls_merge = generated(task_xls_student_data_merge.target)
-    yaml_fname = generated('{planning}_{uv}_QCM.yaml')
-
-    if os.path.exists(xls_merge):
+    uvs = list(selected_uv())
+    if len(uvs) == 1:
+        planning, uv = uvs[0]
+        xls_merge = generated(task_xls_student_data_merge.target)
+        yaml_fname = generated('QCM.yaml')
         return {
             'actions': [(yaml_QCM, [yaml_fname, xls_merge])],
             'targets': [yaml_fname],
@@ -2502,4 +2441,4 @@ def task_yaml_QCM():
             'verbosity': 2
         }
     else:
-        return action_fail(xls_merge)
+        return action_msg("Une seule UV doit être sélectionnée")
