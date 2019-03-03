@@ -1985,10 +1985,6 @@ def task_json_restriction():
         df = df.loc[df['Activité'] == 'TP']
 
         def get_beg_end_date_each(num, df):
-            print(num)
-            # print(df)
-            print(df.date)
-
             sts = []
             if num == 7:        # Exam
                 return None
