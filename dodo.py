@@ -184,31 +184,6 @@ def action_msg(msg, name=None):
     return action
 
 
-def action_fail(*args, name=None):
-    def fail():
-        files = []
-        for arg in args:
-            if not os.path.exists(arg):
-                files.append(arg)
-
-        s = "s" if len(files) > 1 else ""
-        files = ', '.join('`' + f + '\'' for f in files)
-        print(f"Fichier{s} {files} inexistant{s}")
-
-    if name:
-        return {
-            'name': name,
-            'actions': [(fail)],
-            'uptodate': [False],
-            'verbosity': 2
-        }
-    else:
-        return {
-            'actions': [(fail)],
-            'uptodate': [False],
-            'verbosity': 2
-        }
-
 class KeepError(Exception):
     pass
 
