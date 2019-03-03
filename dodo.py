@@ -2042,9 +2042,9 @@ def task_pdf_trombinoscope():
                 content = await response.content.read()
                 if len(content) < 100:
                     copyfile(os.path.join(os.path.dirname(__file__), 'documents/inconnu.jpg'),
-                             generated(f'images/{login}.jpg'))
+                             common_doc(f'images/{login}.jpg'))
                 else:
-                    with open(generated(f'images/{login}.jpg'), 'wb') as handler:
+                    with open(common_doc(f'images/{login}.jpg'), 'wb') as handler:
                         handler.write(content)
 
         async def download_session(loop):
@@ -2102,8 +2102,7 @@ def task_pdf_trombinoscope():
                 for _, df_row in dfs.groupby(np.arange(len(df_group.index)) // width):
                     cells = []
                     for _, row in df_row.iterrows():
-                        d = os.path.dirname(os.path.abspath(__file__))
-                        path = os.path.join(d, generated(f'images/{row["Login"]}.jpg'))
+                        path = os.path.abspath(common_doc(f'images/{row["Login"]}.jpg'))
                         cell = {'name': row['Prénom'],
                                 'lastname': row['Nom'],
                                 'photograph': path}
