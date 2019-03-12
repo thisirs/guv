@@ -1601,6 +1601,54 @@ def create_plannings(planning_type):
     })
 
 
+def ical_events(dataframe):
+    """Retourne les évènements iCal de tous les cours trouvés dans DATAFRAME"""
+
+    from pytz import timezone
+    localtz = timezone('Europe/Paris')
+
+    def timestamp(row):
+        d = row['date']
+        hm = row['Heure début'].split(':')
+        h = int(hm[0])
+        m = int(hm[1])
+        return(datetime(year=d.year, month=d.month, day=d.day, hour=h, minute=m))
+
+    ts = dataframe.apply(timestamp, axis=1)
+    dataframe = dataframe.assign(timestamp=ts.values)
+    df = dataframe.sort_values('timestamp')
+
+    cal = Calendar()
+    cal['summary'] = CONFIG['DEFAULT_PLANNING']
+
+    for uv, group in df.groupby('Code enseig.'):
+        for index, row in group.iterrows():
+            event = Event()
+
+            name = row['Lib. créneau'].replace(' ', '')
+            week = row['Semaine']
+            room = row['Locaux'].replace(' ', '').replace('BF', 'F')
+            num = row['num']
+            activity = row['Activité']
+            numAB = row['numAB']
+
+            if week is not np.nan:
+                summary = f'{uv} {activity}{numAB} {week} {room}'
+            else:
+                summary = f'{uv} {activity}{num} {room}'
+
+            event.add('summary', summary)
+
+            dt = row['timestamp']
+            dt = localtz.localize(dt)
+            event.add('dtstart', dt)
+            event.add('dtend', dt + timedelta(hours=2))
+
+            cal.add_component(event)
+
+    return cal.to_ical(sorted=True)
+
+
 def task_ical_inst():
     """Create iCal file for each instructor"""
 
@@ -1642,14 +1690,38 @@ def task_ical_inst():
 
         dfm = pd.concat(tables)
 
+        all_insts = dfm['Intervenants'].unique()
         if len(insts) == 1 and insts[0] == 'all':
-            insts = dfm['Intervenants'].unique()
+            insts = all_insts
 
-        for inst in insts:
-            dfm_inst = dfm.loc[dfm['Intervenants'].astype(str) == inst, :]
-            output = generated(f'{inst.replace(" ", "_")}.ics')
-            if len(dfm_inst):
-                write_ical_file(dfm_inst, output)
+        if set(insts).issubset(set(all_insts)):
+            if len(insts) == 1:
+                inst = insts[0]
+                dfm_inst = dfm.loc[dfm['Intervenants'].astype(str) == inst, :]
+                output = generated(f'{inst.replace(" ", "_")}.ics')
+                events = ical_events(dfm_inst)
+                with Output(output) as output:
+                    with open(output(), 'wb') as fd:
+                        fd.write(events)
+            else:
+                temp_dir = tempfile.mkdtemp()
+                for inst in insts:
+                    dfm_inst = dfm.loc[dfm['Intervenants'].astype(str) == inst, :]
+                    events = ical_events(dfm_inst)
+
+                    output = f'{inst.replace(" ", "_")}.ics'
+                    with open(os.path.join(temp_dir, output), 'wb') as fd:
+                        fd.write(events)
+
+                output = generated(f'ics.zip')
+                with Output(output) as output0:
+                    with zipfile.ZipFile(output0(), 'w') as z:
+                        for filepath in glob.glob(os.path.join(temp_dir, '*.ics')):
+                            z.write(filepath, os.path.basename(filepath))
+
+        else:
+            unknown = set(insts).difference(all_insts)
+            return TaskFailed(f"Intervenant(s) inconnu(s): {', '.join(unknown)}")
 
     deps = [generated(task_add_instructors.target)]
 
@@ -1718,57 +1790,6 @@ def task_csv_all_courses():
         'targets': [target],
         'verbosity': 2
     }
-
-
-def write_ical_file(dataframe, output):
-    """Écrit un fichier iCal de tous les cours trouvés dans DATAFRAME"""
-
-    from pytz import timezone
-    localtz = timezone('Europe/Paris')
-
-    def timestamp(row):
-        d = row['date']
-        hm = row['Heure début'].split(':')
-        h = int(hm[0])
-        m = int(hm[1])
-        return(datetime(year=d.year, month=d.month, day=d.day, hour=h, minute=m))
-
-    ts = dataframe.apply(timestamp, axis=1)
-    dataframe.is_copy = False   # SettingWithCopyWarning
-    dataframe['timestamp'] = ts
-    df = dataframe.sort_values('timestamp')
-
-    cal = Calendar()
-    cal['summary'] = CONFIG['DEFAULT_PLANNING']
-
-    for uv, group in df.groupby('Code enseig.'):
-        for index, row in group.iterrows():
-            event = Event()
-
-            name = row['Lib. créneau'].replace(' ', '')
-            week = row['Semaine']
-            room = row['Locaux'].replace(' ', '').replace('BF', 'F')
-            num = row['num']
-            activity = row['Activité']
-            numAB = row['numAB']
-
-            if week is not np.nan:
-                summary = f'{uv} {activity}{numAB} {week} {room}'
-            else:
-                summary = f'{uv} {activity}{num} {room}'
-
-            event.add('summary', summary)
-
-            dt = row['timestamp']
-            dt = localtz.localize(dt)
-            event.add('dtstart', dt)
-            event.add('dtend', dt + timedelta(hours=2))
-
-            cal.add_component(event)
-
-    with Output(output) as output:
-        with open(output(), 'wb') as fd:
-            fd.write(cal.to_ical(sorted=True))
 
 
 def task_html_table():
