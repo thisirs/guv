@@ -1618,30 +1618,29 @@ def ical_events(dataframe):
     cal = Calendar()
     cal['summary'] = CONFIG['DEFAULT_PLANNING']
 
-    for uv, group in df.groupby('Code enseig.'):
-        for index, row in group.iterrows():
-            event = Event()
+    for index, row in df.iterrows():
+        event = Event()
 
-            name = row['Lib. créneau'].replace(' ', '')
-            week = row['Semaine']
-            room = row['Locaux'].replace(' ', '').replace('BF', 'F')
-            num = row['num']
-            activity = row['Activité']
-            numAB = row['numAB']
+        name = row['Lib. créneau'].replace(' ', '')
+        week = row['Semaine']
+        room = row['Locaux'].replace(' ', '').replace('BF', 'F')
+        num = row['num']
+        activity = row['Activité']
+        numAB = row['numAB']
 
-            if week is not np.nan:
-                summary = f'{uv} {activity}{numAB} {week} {room}'
-            else:
-                summary = f'{uv} {activity}{num} {room}'
+        if week is not np.nan:
+            summary = f'{uv} {activity}{numAB} {week} {room}'
+        else:
+            summary = f'{uv} {activity}{num} {room}'
 
-            event.add('summary', summary)
+        event.add('summary', summary)
 
-            dt = row['timestamp']
-            dt = localtz.localize(dt)
-            event.add('dtstart', dt)
-            event.add('dtend', dt + timedelta(hours=2))
+        dt = row['timestamp']
+        dt = localtz.localize(dt)
+        event.add('dtstart', dt)
+        event.add('dtend', dt + timedelta(hours=2))
 
-            cal.add_component(event)
+        cal.add_component(event)
 
     return cal.to_ical(sorted=True)
 
