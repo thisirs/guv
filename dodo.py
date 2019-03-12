@@ -155,23 +155,6 @@ def selected_uv0(plannings, uvs):
                     yield pl, uv
 
 
-def action_missing(fn):
-    msg = f"Missing file `{fn}'"
-    return {
-        'actions': [lambda: print(msg)],
-        'uptodate': [False]
-    }
-
-
-# def action_missing(msg, *missing):
-#     f = [e for e in missing if not os.path.exists(e)]
-#     msg = msg % (', '.join(f))
-#     return {
-#         'actions': [lambda: TaskError(msg)],
-#         'uptodate': [False]
-#     }
-
-
 def action_msg(msg, name=None):
     action = {
         'actions': [lambda: print(msg)],
