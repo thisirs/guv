@@ -2002,6 +2002,7 @@ def task_pdf_trombinoscope():
             loader=jinja2.FileSystemLoader(jinja_dir))
         latex_jinja_env.filters['escape_tex'] = escape_tex
 
+        temp_dir = tempfile.mkdtemp()
         tmpl = latex_jinja_env.get_template('trombinoscope_template_2.tex.jinja2')
 
         # On vérifie que GROUPBY et SUBGROUPBY sont licites
@@ -2018,9 +2019,9 @@ def task_pdf_trombinoscope():
 
             # Nom de fichier
             if len(dff) == 1:
-                fn = target % title
+                fn = title + ".pdf"
             else:
-                fn = target % (title + '_' + subgroupby)
+                fn = title + '_' + subgroupby + ".pdf"
             data = []
             # Intérer sur ces sous-groupes des groupes de TP/TD
             for name, df_group in dff:
@@ -2049,20 +2050,33 @@ def task_pdf_trombinoscope():
             #     fd.write(tex)
 
             pdf = latex.build_pdf(tex)
-            with Output(fn) as target0:
-                pdf.save_to(target0())
+            pdf.save_to(os.path.join(temp_dir, fn))
+
+        # with Output(fn) as target0:
+        #     pdf.save_to(target0())
+        with Output(target) as target0:
+            with zipfile.ZipFile(target0(), 'w') as z:
+                for filepath in glob.glob(os.path.join(temp_dir, '*.pdf')):
+                    z.write(filepath, os.path.basename(filepath))
+
 
     course = get_var('course')
     subgroup = get_var('subgroup')
 
     for planning, uv in selected_uv():
         dep = generated(task_xls_student_data_merge.target)
-        target = generated('trombi_%s.pdf')
+        if course:
+            if subgroup:
+                target = generated(f'trombi_{course}_{subgroup}.zip')
+            else:
+                target = generated(f'trombi_{course}.zip')
+        else:
+            return action_msg('Il faut spécifier `course')
 
         yield {
             'name': f'{planning}_{uv}',
             'file_dep': [dep],
-            'targets': [],  # Possibly several files
+            'targets': [target],
             'actions': [(pdf_trombinoscope, [dep, target, course, subgroup, 5])],
             'uptodate': [False],
             'verbosity': 2
@@ -2110,10 +2124,9 @@ def task_pdf_attendance_list():
     if len(uvs) == 1:
         planning, uv = uvs[0]
         group = get_var('group')
-        exam = get_var('exam') or group
         if group:
             xls_merge = generated(task_xls_student_data_merge.target)
-            target = generated('{planning}_{uv}_attendance_{group}.zip')
+            target = generated(f'attendance_{group}.zip')
             return {
                 'file_dep': [xls_merge],
                 'targets': [target],
