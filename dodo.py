@@ -1621,6 +1621,7 @@ def ical_events(dataframe):
     for index, row in df.iterrows():
         event = Event()
 
+        uv = row['Code enseig.']
         name = row['Lib. créneau'].replace(' ', '')
         week = row['Semaine']
         room = row['Locaux'].replace(' ', '').replace('BF', 'F')
