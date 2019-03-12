@@ -1222,7 +1222,7 @@ def task_csv_exam_groups():
             return dff
 
         if 'TP' not in df.columns:
-            return
+            return TaskFailed(f"Pas de colonne `TP'; les colonnes sont : {', '.join(df.columns)}")
 
         dff = df.groupby('TP', group_keys=False).apply(exam_split)
         dff = dff[['Adresse de courriel', 'TPE']]
@@ -1253,7 +1253,7 @@ def task_csv_groups():
     def csv_groups(target, xls_merge, ctype):
         df = pd.read_excel(xls_merge)
         if ctype not in df.columns:
-            return
+            return TaskFailed(f"Pas de colonne `{ctype}'; les colonnes sont : {', '.join(df.columns)}")
         dff = df[['Courriel', ctype]]
 
         with Output(target) as target:
@@ -1367,9 +1367,7 @@ Variables à fournir:
             return gb
 
         if ctype not in df.columns:
-            print("Pas de colonne `%s'" % ctype)
-            print("Colonnes disponibles: %s" % ', '.join(df.columns))
-            return None
+            return TaskFailed(f"Pas de colonne `{ctype}'; les colonnes sont : {', '.join(df.columns)}")
 
         gdf = df.groupby(ctype)
 
@@ -1379,9 +1377,8 @@ Variables à fournir:
 
             diff = set(other_groups) - set(df.columns.values)
             if diff:
-                print("Colonnes non reconnues: %s" % diff)
-                print("Colonnes possibles: %s" % df.columns.values)
-                return None
+                s = "s" if len(diff) > 1 else ""
+                return TaskFailed(f"Colonne{s} inconnue{s} : `{', '.join(diff)}'; les colonnes sont : {', '.join(df.columns)}")
 
         df = gdf.apply(add_binome, other_groups=other_groups)
         df = df[['Courriel', ctype, 'binome']]
