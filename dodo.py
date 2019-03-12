@@ -1795,18 +1795,15 @@ def task_csv_all_courses():
 def task_html_table():
     """Table HTML des TD/TP"""
 
-    def html_table(planning, csv_inst_list, uv, course):
-        print(planning, course, uv)
-
+    def html_table(planning, csv_inst_list, uv, course, target):
         # Select wanted slots
         slots = compute_slots(planning, csv_inst_list)
         slots = slots.loc[slots['Code enseig.'] == uv, :]
         slots = slots.loc[slots['Activité'] == course, :]
 
-        # Return if no slots
+        # Fail if no slot
         if len(slots) == 0:
-            print("Pas de créneau")
-            return
+            return TaskFailed(f"Pas de créneau pour le planning `{planning}', l'uv `{uv}' et le cours `{course}'")
 
         # Merge when multiple slots on same week
         if course == 'TP':
@@ -1831,7 +1828,6 @@ def task_html_table():
         # Iterate on each week of semester
         rows = []
         weeks = []
-        planning = get_var('planning') or CONFIG['DEFAULT_PLANNING']
         for (mon, nmon) in mondays(CONFIG['PLANNING'][planning]['PL_BEG'],
                                    CONFIG['PLANNING'][planning]['PL_END']):
             weeks.append('{}-{}'.format(mon.strftime('%d/%m'),
@@ -1846,7 +1842,7 @@ def task_html_table():
                 rows.append(pd.Series())
 
         # Weeks on rows
-        df = pd.concat(rows, axis=1).transpose()
+        df = pd.concat(rows, axis=1, sort=True).transpose()
 
         # Reorder columns
         if len(df.columns) > 1:
@@ -1877,7 +1873,6 @@ def task_html_table():
         # Inline style for Moodle
         output = pynliner.fromString(html)
 
-        target = generated('{planning}_{uv}_{course}_table.html')
         with Output(target) as target:
             with open(target(), 'w') as fd:
                 fd.write(output)
@@ -1889,7 +1884,7 @@ def task_html_table():
             yield {
                 'name': f'{planning}_{uv}_{course}',
                 'file_dep': [dep],
-                'actions': [(html_table, [planning, dep, uv, course])],
+                'actions': [(html_table, [planning, dep, uv, course, target])],
                 'targets': [target],
                 'verbosity': 2
             }
