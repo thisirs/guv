@@ -2025,8 +2025,10 @@ def task_pdf_trombinoscope():
         tmpl = latex_jinja_env.get_template('trombinoscope_template_2.tex.jinja2')
 
         # On vérifie que GROUPBY et SUBGROUPBY sont licites
-        if groupby is not None and groupby not in df.columns:
+        if groupby != 'all' and groupby not in df.columns:
             return TaskFailed(f"No column `{groupby}' to group by")
+        if groupby == 'all':
+            groupby = None
         if subgroupby is not None and subgroupby not in df.columns:
             return TaskFailed(f"No column `{subgroupby}' to subgroup by")
 
