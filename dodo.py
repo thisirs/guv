@@ -2016,9 +2016,9 @@ def task_pdf_trombinoscope():
 
         # On vérifie que GROUPBY et SUBGROUPBY sont licites
         if groupby is not None and groupby not in df.columns:
-            raise Exception('No column %s to group by' % groupby)
+            return TaskFailed(f"No column `{groupby}' to group by")
         if subgroupby is not None and subgroupby not in df.columns:
-            raise Exception('No column %s to subgroup by' % subgroupby)
+            return TaskFailed(f"No column `{subgroupby}' to subgroup by")
 
         # Diviser par groupe de TP/TP
         for title, group in df.groupby(groupby or (lambda x: "all")):
