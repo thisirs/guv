@@ -12,6 +12,7 @@ import math
 import json
 import asyncio
 import aiohttp
+import hashlib
 import pynliner
 import markdown
 import numpy as np
@@ -1988,11 +1989,20 @@ def task_pdf_trombinoscope():
                     with open(common_doc(f'images/{login}.jpg'), 'wb') as handler:
                         handler.write(content)
 
+        def md5(fname):
+            hash_md5 = hashlib.md5()
+            with open(fname, "rb") as f:
+                for chunk in iter(lambda: f.read(4096), b""):
+                    hash_md5.update(chunk)
+            return hash_md5.hexdigest()
+
         async def download_session(loop):
             os.makedirs(generated('images'), exist_ok=True)
             async with aiohttp.ClientSession(loop=loop) as session:
+                md5_inconnu = md5(os.path.join(os.path.dirname(__file__), 'documents/inconnu.jpg'))
                 for login in df.Login:
-                    if not os.path.exists(generated(f'images/{login}.jpg')):
+                    md5_curr = md5(generated(f'images/{login}.jpg'))
+                    if not os.path.exists(generated(f'images/{login}.jpg')) or md5_curr == md5_inconnu:
                         await download_image(session, login)
 
         # Getting images
