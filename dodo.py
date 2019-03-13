@@ -2069,27 +2069,28 @@ def task_pdf_trombinoscope():
                     z.write(filepath, os.path.basename(filepath))
 
 
-    course = get_var('course')
+    group = get_var('group')
     subgroup = get_var('subgroup')
 
     for planning, uv, info in selected_uv():
         dep = generated(task_xls_student_data_merge.target, **info)
-        if course:
+        if group:
             if subgroup:
-                target = generated(f'trombi_{course}_{subgroup}.zip', **info)
+                target = generated(f'trombi_{group}_{subgroup}.zip', **info)
             else:
-                target = generated(f'trombi_{course}.zip', **info)
-        else:
-            return action_msg("Il faut spécifier `course'")
+                target = generated(f'trombi_{group}.zip', **info)
 
-        yield {
-            'name': f'{planning}_{uv}',
-            'file_dep': [dep],
-            'targets': [target],
-            'actions': [(pdf_trombinoscope, [dep, target, course, subgroup, 5])],
-            'uptodate': [False],
-            'verbosity': 2
-        }
+            yield {
+                'name': f'{planning}_{uv}',
+                'file_dep': [dep],
+                'targets': [target],
+                'actions': [(pdf_trombinoscope, [dep, target, group, subgroup, 5])],
+                'uptodate': [False],
+                'verbosity': 2
+            }
+        else:
+            yield action_msg("Argument manquant: `group=<colname>'", name=f'{planning}_{uv}')
+
 
 
 def task_pdf_attendance_list():
