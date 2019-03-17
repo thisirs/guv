@@ -1719,8 +1719,18 @@ def task_ical_inst():
 
     deps = [generated(task_add_instructors.target)]
 
-    plannings = get_var('planning', '').split() or CONFIG['DEFAULT_PLANNINGS']
-    insts = get_var('insts', '').split(',') or [CONFIG['DEFAULT_INSTRUCTOR']]
+    plannings = get_var('planning', '')
+    if plannings:
+        plannings = plannings.split()
+    else:
+        plannings = CONFIG['DEFAULT_PLANNINGS']
+
+    insts = get_var('insts', '')
+    if insts:
+        insts = insts.split()
+    else:
+        insts = [CONFIG['DEFAULT_INSTRUCTOR']]
+
     return {
         'file_dep': deps,
         'actions': [(create_ical_inst, [insts, plannings, deps[0]])],
