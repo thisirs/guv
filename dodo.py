@@ -1647,41 +1647,7 @@ def task_ical_inst():
     """Create iCal file for each instructor"""
 
     def create_ical_inst(insts, plannings, csv):
-        df = pd.read_csv(csv)
-        df = df.loc[~pd.isnull(df['Intervenants']), :]
-
-        tables = []
-        for planning_type in plannings:
-            df_planning = df.loc[df['Planning'] == planning_type]
-            planning = create_plannings(planning_type)
-
-            planning_C = planning['C']
-            pl_C = pd.DataFrame(planning_C)
-            pl_C.columns = ['date', 'dayname', 'semaine', 'num', 'numAB', 'nweek']
-
-            df_C = df_planning.loc[df_planning['Lib. créneau'].str.startswith('C'), :]
-            df_Cm = pd.merge(df_C, pl_C, how='left', left_on='Jour', right_on='dayname')
-
-            planning_D = planning['D']
-            pl_D = pd.DataFrame(planning_D)
-            pl_D.columns = ['date', 'dayname', 'semaine', 'num', 'numAB', 'nweek']
-
-            df_D = df_planning.loc[df_planning['Lib. créneau'].str.startswith('D'), :]
-            df_Dm = pd.merge(df_D, pl_D, how='left', left_on='Jour', right_on='dayname')
-
-            planning_T = planning['T']
-            pl_T = pd.DataFrame(planning_T)
-            pl_T.columns = ['date', 'dayname', 'semaine', 'num', 'numAB', 'nweek']
-
-            df_T = df_planning.loc[df_planning['Lib. créneau'].str.startswith('T'), :]
-            if df_T['Semaine'].hasnans:
-                df_Tm = pd.merge(df_T, pl_T, how='left', left_on='Jour', right_on='dayname')
-            else:
-                df_Tm = pd.merge(df_T, pl_T, how='left', left_on=['Jour', 'Semaine'], right_on=['dayname', 'semaine'])
-
-            dfm = pd.concat([df_Cm, df_Dm, df_Tm], ignore_index=True)
-            tables.append(dfm)
-
+        tables = [compute_slots(ptype, csv) for ptype in plannings]
         dfm = pd.concat(tables)
 
         all_insts = dfm['Intervenants'].unique()
