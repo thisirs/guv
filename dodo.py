@@ -1861,6 +1861,8 @@ def task_html_table():
 
 
 def compute_slots(planning_type, csv_inst_list):
+    """Renvoie la liste des créneaux sur tout le semestre"""
+
     df = pd.read_csv(csv_inst_list)
     df_planning = df.loc[(~pd.isnull(df['Intervenants'])) &
                          (df['Planning'] == planning_type), :]
