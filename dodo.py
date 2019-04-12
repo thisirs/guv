@@ -996,6 +996,43 @@ l'UTC."""
             yield action_msg("Pas de données étudiants", name=f'{planning}_{uv}')
 
 
+def agregate(left_on, right_on, subset=None, drop=None, rename=None, read_method=None, kw_read={}):
+    def agregate0(df, path):
+        if left_on not in df.columns:
+            raise Exception("Pas de colonne %s dans le dataframe", left_on)
+        if read_method is None:
+            if path.endswith('.csv'):
+                dff = pd.read_csv(path, **kw_read)
+            elif path.endswith('.xlsx'):
+                dff = pd.read_excel(path, **kw_read)
+            else:
+                raise Exception('No read method and unsupported file extension')
+        else:
+            dff = read_method(path, **kw_read)
+
+        if subset is not None:
+            dff = dff[list(set([right_on] + subset))]
+        if drop is not None:
+            if right_on in drop:
+                raise Exception('On enlève pas la clé')
+            dff = dff.drop(drop, axis=1, errors='ignore')
+        if rename is not None:
+            if right_on in rename:
+                raise Exception('Pas de renommage de la clé possible')
+            dff = dff.rename(columns=rename)
+        if right_on not in dff.columns:
+            raise Exception("Pas de colonne %s dans le dataframe", right_on)
+        df = df.merge(dff, left_on=left_on, right_on=right_on, suffixes=('', '_y'))
+        drop_cols = [right_on + '_y']
+        df = df.drop(drop_cols, axis=1, errors='ignore')
+        return df
+    return agregate0
+
+
+def aggregate_documents(data, **info):
+    raise Exception("Pas d'incorporation de fichiers sans être dans un dossier uv")
+
+
 @add_templates(target='student_data_merge.xlsx')
 def task_xls_student_data_merge():
     """Ajoute toutes les autres informations étudiants"""
@@ -1016,40 +1053,10 @@ def task_xls_student_data_merge():
         with Output(target) as target:
             dff.to_csv(target(), index=False)
 
-    def agregate(left_on, right_on, subset=None, drop=None, rename=None, read_method=None, kw_read={}):
-        def agregate0(df, path):
-            if left_on not in df.columns:
-                raise Exception("Pas de colonne %s dans le dataframe", left_on)
-            if read_method is None:
-                if path.endswith('.csv'):
-                    dff = pd.read_csv(path, **kw_read)
-                elif path.endswith('.xlsx'):
-                    dff = pd.read_excel(path, **kw_read)
-                else:
-                    raise Exception('No read method and unsupported file extension')
-            else:
-                dff = read_method(path, **kw_read)
-
-            if subset is not None:
-                dff = dff[list(set([right_on] + subset))]
-            if drop is not None:
-                if right_on in drop:
-                    raise Exception('On enlève pas la clé')
-                dff = dff.drop(drop, axis=1, errors='ignore')
-            if rename is not None:
-                if right_on in rename:
-                    raise Exception('Pas de renommage de la clé possible')
-                dff = dff.rename(columns=rename)
-            if right_on not in dff.columns:
-                raise Exception("Pas de colonne %s dans le dataframe", right_on)
-            df = df.merge(dff, left_on=left_on, right_on=right_on, suffixes=('', '_y'))
-            drop_cols = [right_on + '_y']
-            df = df.drop(drop_cols, axis=1, errors='ignore')
-            return df
-        return agregate0
-
     for planning, uv, info in selected_uv():
         data = {}
+
+        data = aggregate_documents(data, **info)
 
         # Ajout des feuilles Excel de notes générées par xls_grades_sheet
         # for file in os.listdir('documents/'):
@@ -1060,125 +1067,127 @@ def task_xls_student_data_merge():
         #             right_on='Courriel',
         #             subset=['Note']
         #         )
+        
+        # data = aggregate_documents(data, **info)
+        
+        # if uv == 'SY02':
+        #     # Ajout des demi-groupes de TP pour examen
+        #     data[generated('{planning}_{uv}_exam_groups.csv', **info)] = agregate(
+        #         left_on='Courriel',
+        #         right_on='Adresse de courriel')
 
-        if uv == 'SY02':
-            # Ajout des demi-groupes de TP pour examen
-            data[generated('{planning}_{uv}_exam_groups.csv', **info)] = agregate(
-                left_on='Courriel',
-                right_on='Adresse de courriel')
+        #     # Ajout de la note de médian si existant
+        #     data[documents('{planning}_{uv}_median_notes.xlsx', **info)] = agregate(
+        #         left_on='Courriel',
+        #         right_on='Courriel',
+        #         subset=['Note', 'Correcteur médian'],
+        #         rename={'Note': 'Note médian'})
 
-            # Ajout de la note de médian si existant
-            data[documents('{planning}_{uv}_median_notes.xlsx', **info)] = agregate(
-                left_on='Courriel',
-                right_on='Courriel',
-                subset=['Note', 'Correcteur médian'],
-                rename={'Note': 'Note médian'})
+        #     # Ajout de la note de final si existant
+        #     data[documents('{planning}_{uv}_final_notes.xlsx', **info)] = agregate(
+        #         left_on='Courriel',
+        #         right_on='Courriel',
+        #         subset=['Note', 'Correcteur final'],
+        #         rename={'Note': 'Note final'})
 
-            # Ajout de la note de final si existant
-            data[documents('{planning}_{uv}_final_notes.xlsx', **info)] = agregate(
-                left_on='Courriel',
-                right_on='Courriel',
-                subset=['Note', 'Correcteur final'],
-                rename={'Note': 'Note final'})
+        #     # Ajout de la note globale
+        #     data[documents('{planning}_{uv}_jury.xlsx', **info)] = agregate(
+        #         left_on='Courriel',
+        #         right_on='Courriel',
+        #         subset=['Note'])
 
-            # Ajout de la note globale
-            data[documents('{planning}_{uv}_jury.xlsx', **info)] = agregate(
-                left_on='Courriel',
-                right_on='Courriel',
-                subset=['Note'])
+        #     # Ajout de la note de TP
+        #     data[documents('SY02 Notes-20180614_1702-comma_separated.csv', **info)] = agregate(
+        #         left_on='Courriel',
+        #         right_on='Adresse de courriel',
+        #         kw_read={'na_values': ['-']},
+        #         subset=["Test Quiz P2018 (Brut)"],
+        #         rename={"Test Quiz P2018 (Brut)": 'Note_TP'})
+        # elif uv == 'SY09':
+        #     # Ajout des groupes de TP si existant
+        #     data[generated('{planning}_{uv}_TD_P1_binomes.csv', **info)] = agregate(
+        #         left_on='Courriel',
+        #         right_on='Adresse de courriel',
+        #         subset=['group'],
+        #         rename={'group': 'group_P1'})
 
-            # Ajout de la note de TP
-            data[documents('SY02 Notes-20180614_1702-comma_separated.csv', **info)] = agregate(
-                left_on='Courriel',
-                right_on='Adresse de courriel',
-                kw_read={'na_values': ['-']},
-                subset=["Test Quiz P2018 (Brut)"],
-                rename={"Test Quiz P2018 (Brut)": 'Note_TP'})
-        elif uv == 'SY09':
-            # Ajout des groupes de TP si existant
-            data[generated('{planning}_{uv}_TD_P1_binomes.csv', **info)] = agregate(
-                left_on='Courriel',
-                right_on='Adresse de courriel',
-                subset=['group'],
-                rename={'group': 'group_P1'})
+        #     data[generated('{planning}_{uv}_TD_P2_binomes.csv', **info)] = agregate(
+        #         left_on='Courriel',
+        #         right_on='Adresse de courriel',
+        #         rename={'group': 'group_P2'})
+        # elif uv == 'SY19':
+        #     # Ajout des binomes finaux du projet 1, exporté de Moodle
+        #     data[documents('{planning}_{uv}_TD_P1_binomes_final.tsv', **info)] = agregate(
+        #         left_on='Courriel',
+        #         right_on='Adresse de courriel',
+        #         subset=['Groupe'],
+        #         rename={'Groupe': 'group_P1'},
+        #         read_method=pd.read_csv,
+        #         kw_read={'delimiter': '\t'})
 
-            data[generated('{planning}_{uv}_TD_P2_binomes.csv', **info)] = agregate(
-                left_on='Courriel',
-                right_on='Adresse de courriel',
-                rename={'group': 'group_P2'})
-        elif uv == 'SY19':
-            # Ajout des binomes finaux du projet 1, exporté de Moodle
-            data[documents('{planning}_{uv}_TD_P1_binomes_final.tsv', **info)] = agregate(
-                left_on='Courriel',
-                right_on='Adresse de courriel',
-                subset=['Groupe'],
-                rename={'Groupe': 'group_P1'},
-                read_method=pd.read_csv,
-                kw_read={'delimiter': '\t'})
+        #     # Ajout des binomes finaux du projet 2, exporté de Moodle
+        #     data[documents('{planning}_{uv}_TD_P2_binomes_final.tsv', **info)] = agregate(
+        #         left_on='Courriel',
+        #         right_on='Adresse de courriel',
+        #         subset=['Groupe'],
+        #         rename={'Groupe': 'group_P2'},
+        #         read_method=pd.read_csv,
+        #         kw_read={'delimiter': '\t'})
 
-            # Ajout des binomes finaux du projet 2, exporté de Moodle
-            data[documents('{planning}_{uv}_TD_P2_binomes_final.tsv', **info)] = agregate(
-                left_on='Courriel',
-                right_on='Adresse de courriel',
-                subset=['Groupe'],
-                rename={'Groupe': 'group_P2'},
-                read_method=pd.read_csv,
-                kw_read={'delimiter': '\t'})
+        #     # Ajout de la note de premier projet, TP3
+        #     data[documents('A2018_SY19_TP3.xlsx', **info)] = agregate(
+        #         left_on='Courriel',
+        #         right_on='Adresse de courriel',
+        #         subset=['Devoir TP 3 (Brut)'],
+        #         rename={'Devoir TP 3 (Brut)': 'note_P1'})
 
-            # Ajout de la note de premier projet, TP3
-            data[documents('A2018_SY19_TP3.xlsx', **info)] = agregate(
-                left_on='Courriel',
-                right_on='Adresse de courriel',
-                subset=['Devoir TP 3 (Brut)'],
-                rename={'Devoir TP 3 (Brut)': 'note_P1'})
+        #     # Ajout de la note du QCM
+        #     data[generated('A2018_SY19_QCM.csv', **info)] = agregate(
+        #         left_on='Courriel',
+        #         right_on='Courriel',
+        #         drop=['Name'])
 
-            # Ajout de la note du QCM
-            data[generated('A2018_SY19_QCM.csv', **info)] = agregate(
-                left_on='Courriel',
-                right_on='Courriel',
-                drop=['Name'])
+        #     # Ajout de la note examen hors QCM
+        #     data[documents('A2018_SY19_final_gradebook.xlsx', **info)] = agregate(
+        #         left_on='Courriel',
+        #         right_on='Courriel',
+        #         subset=['final'])
 
-            # Ajout de la note examen hors QCM
-            data[documents('A2018_SY19_final_gradebook.xlsx', **info)] = agregate(
-                left_on='Courriel',
-                right_on='Courriel',
-                subset=['final'])
+        #     # Ajout de la note du deuxième projet
+        #     data[documents('A2018_SY19_P2_gradebook.xlsx', **info)] = agregate(
+        #         left_on='Courriel',
+        #         right_on='Courriel',
+        #         subset=['P2'])
 
-            # Ajout de la note du deuxième projet
-            data[documents('A2018_SY19_P2_gradebook.xlsx', **info)] = agregate(
-                left_on='Courriel',
-                right_on='Courriel',
-                subset=['P2'])
+        #     # Ajout de la note du deuxième projet
+        #     data[documents('A2018_SY19_jury_gradebook.xlsx', **info)] = agregate(
+        #         left_on='Courriel',
+        #         right_on='Courriel',
+        #         subset=['Note ECTS'])
 
-            # Ajout de la note du deuxième projet
-            data[documents('A2018_SY19_jury_gradebook.xlsx', **info)] = agregate(
-                left_on='Courriel',
-                right_on='Courriel',
-                subset=['Note ECTS'])
+        # elif uv == "AOS2":
+        #     data[generated('2018_T2_AOS2_QCM.csv', **info)] = agregate(
+        #         left_on='Courriel',
+        #         drop=['Name'],
+        #         right_on='Courriel',
+        #         read_method=pd.read_csv)
 
-        elif uv == "AOS2":
-            data[generated('2018_T2_AOS2_QCM.csv', **info)] = agregate(
-                left_on='Courriel',
-                drop=['Name'],
-                right_on='Courriel',
-                read_method=pd.read_csv)
+        #     data[documents('2018_T2_AOS2_groups.tsv', **info)] = agregate(
+        #         left_on='Courriel',
+        #         right_on='Adresse de courriel',
+        #         subset=['Groupe'],
+        #         read_method=pd.read_csv,
+        #         kw_read={'delimiter': '\t'})
 
-            data[documents('2018_T2_AOS2_groups.tsv', **info)] = agregate(
-                left_on='Courriel',
-                right_on='Adresse de courriel',
-                subset=['Groupe'],
-                read_method=pd.read_csv,
-                kw_read={'delimiter': '\t'})
+        #     data[documents('2018_T2_AOS2_Project_gradebook.xlsx', **info)] = agregate(
+        #         left_on='Courriel',
+        #         right_on='Courriel',
+        #         subset=['Project'])
 
-            data[documents('2018_T2_AOS2_Project_gradebook.xlsx', **info)] = agregate(
-                left_on='Courriel',
-                right_on='Courriel',
-                subset=['Project'])
-
-            data[documents('2018_T2_AOS2_jury_gradebook.xlsx', **info)] = agregate(
-                left_on='Courriel',
-                right_on='Courriel',
-                subset=['Note ECTS'])
+        #     data[documents('2018_T2_AOS2_jury_gradebook.xlsx', **info)] = agregate(
+        #         left_on='Courriel',
+        #         right_on='Courriel',
+        #         subset=['Note ECTS'])
 
         source = generated(task_xls_student_data.target, **info)
 
@@ -2089,7 +2098,6 @@ def task_pdf_trombinoscope():
             with zipfile.ZipFile(target0(), 'w') as z:
                 for filepath in glob.glob(os.path.join(temp_dir, '*.pdf')):
                     z.write(filepath, os.path.basename(filepath))
-
 
     group = get_var('group')
     subgroup = get_var('subgroup')
