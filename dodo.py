@@ -2363,8 +2363,8 @@ manuelle."""
         pl, uv, info = uvs[0]
         exam = get_var('exam')
         if exam:
-            xls_sheets = documents('{exam}.xlsx', **info)
-            xls_grades = documents('{exam}_notes.xlsx', **info)
+            xls_sheets = documents(f'{exam}.xlsx', **info)
+            xls_grades = documents(f'{exam}_notes.xlsx', **info)
 
             return {
                 'actions': [(xls_merge_final_grade, [xls_sheets, xls_grades])],
