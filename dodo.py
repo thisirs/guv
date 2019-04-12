@@ -1312,9 +1312,10 @@ Variables à fournir:
             return True
 
         def trinome_match(row1, row2, row3, other_groups=None):
-            return (binome_match(row1, row2, other_groups=other_groups, foreign=False) and
-                    binome_match(row1, row3, other_groups=other_groups, foreign=False) and
-                    binome_match(row2, row3, other_groups=other_groups, foreign=False))
+            a = binome_match(row1, row2, other_groups=other_groups, foreign=False)
+            b = binome_match(row1, row3, other_groups=other_groups, foreign=False)
+            c = binome_match(row2, row3, other_groups=other_groups, foreign=False)
+            return a or b or c
 
         class Ooops(Exception):
             pass
@@ -1335,21 +1336,52 @@ Variables à fournir:
                         it += 1
                         if it > maxiter:
                             raise Ooops
-                        if len(index) == 1:
-                            # Le binome du dernier groupe
-                            stu1, stu2 = [k for k, v in groups.items() if v == l]
-                            if trinome_match(group.loc[stu1], group.loc[stu2], group.loc[index[0]], other_groups=other_groups):
+                        if len(index) == 4:
+                            stu1, stu2, stu3, stu4 = random.sample(index, 4)
+                            if (not binome_match(group.loc[stu1], group.loc[stu2]) or
+                                not binome_match(group.loc[stu3], group.loc[stu4])):
                                 raise Ooops
-                            groups[index[0]] = l
-                            index = []
-                        else:
+                            l = letters.pop()
+                            groups[stu1] = l
+                            groups[stu2] = l
+                            l = letters.pop()
+                            groups[stu3] = l
+                            groups[stu4] = l
+                            index.remove(stu1)
+                            index.remove(stu2)
+                            index.remove(stu3)
+                            index.remove(stu4)
+                        elif len(index) == 2:
                             stu1, stu2 = random.sample(index, 2)
-                            if binome_match(group.loc[stu1], group.loc[stu2], other_groups=other_groups, foreign=foreign):
-                                l = letters.pop()
-                                groups[stu1] = l
-                                groups[stu2] = l
-                                index.remove(stu1)
-                                index.remove(stu2)
+                            if not binome_match(group.loc[stu1], group.loc[stu2]):
+                                raise Ooops
+                            l = letters.pop()
+                            groups[stu1] = l
+                            groups[stu2] = l
+                            index.remove(stu1)
+                            index.remove(stu2)
+
+                        # if len(index) == 1:
+                        #     # Le binome du dernier groupe
+                        #     stu1, stu2 = [k for k, v in groups.items() if v == l]
+                        #     if trinome_match(group.loc[stu1], group.loc[stu2], group.loc[index[0]], other_groups=other_groups):
+                        #         raise Ooops
+                        #     groups[index[0]] = l
+                        #     index = []
+                        else:
+                            stu1, stu2, stu3 = random.sample(index, 3)
+                            if not trinome_match(group.loc[stu1],
+                                                 group.loc[stu2],
+                                                 group.loc[stu3],
+                                                 other_groups=other_groups):
+                                raise Ooops
+                            l = letters.pop()
+                            groups[stu1] = l
+                            groups[stu2] = l
+                            groups[stu3] = l
+                            index.remove(stu1)
+                            index.remove(stu2)
+                            index.remove(stu3)
                     # do stuff
                 except Ooops:
                     continue
