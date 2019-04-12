@@ -2196,7 +2196,7 @@ def task_xls_assignment_grade():
         if exam:
             planning, uv, info = uvs[0]
             xls_merge = generated(task_xls_student_data_merge.target, **info)
-            inst_uv = documents(task_xls_affectation.target, **info, **info)
+            inst_uv = documents(task_xls_affectation.target, **info)
             target = generated(f'{exam}.xlsx', **info)
             return {
                 'file_dep': [xls_merge, inst_uv],
