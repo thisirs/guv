@@ -2211,9 +2211,9 @@ def task_xls_assignment_grade():
 
 
 def task_attendance_sheet():
-    """Fichier pdf de feuilles de présence"""
+    """Fichiers pdf de feuilles de présence sans les noms des étudiants."""
 
-    def generate_attendance_sheets(groupby, target, **kwargs):
+    def generate_attendance_sheets(target, **kwargs):
         groupby = {}
         while True:
             room = input('Salle: ')
@@ -2228,37 +2228,27 @@ def task_attendance_sheet():
             elif re.fullmatch('[0-9]+', num):
                 groupby[room] = int(num)
 
-        if isinstance(groupby, tuple):
-            sort_cols = kwargs.get('sort_cols')
+        jinja_dir = os.path.join(os.path.dirname(__file__), 'templates')
+        latex_jinja_env = jinja2.Environment(
+            block_start_string='((*',
+            block_end_string='*))',
+            variable_start_string='(((',
+            variable_end_string=')))',
+            comment_start_string='((=',
+            comment_end_string='=))',
+            loader=jinja2.FileSystemLoader(jinja_dir))
 
-        elif isinstance(groupby, dict):
-            jinja_dir = os.path.join(os.path.dirname(__file__), 'templates')
-            latex_jinja_env = jinja2.Environment(
-                block_start_string='((*',
-                block_end_string='*))',
-                variable_start_string='(((',
-                variable_end_string=')))',
-                comment_start_string='((=',
-                comment_end_string='=))',
-                loader=jinja2.FileSystemLoader(jinja_dir))
+        template = latex_jinja_env.get_template('attendance_list_noname.tex.jinja2')
 
-            template = latex_jinja_env.get_template('attendance_list_noname.tex.jinja2')
+        for room, number in groupby.items():
+            tex = template.render(number=number, group=f'Salle {room}')
 
-            for room, number in groupby.items():
-                tex = template.render(number=number, group=f'Salle {room}')
+            target0 = target % room
+            # with open(target0+'.tex', 'w') as fd:
+            #     fd.write(tex)
 
-                target0 = target % room
-                # with open(target0+'.tex', 'w') as fd:
-                #     fd.write(tex)
-
-                pdf = latex.build_pdf(tex)
-                pdf.save_to(target0)
-
-    groupby = {
-        'FA300': 90,
-        'FA321': 70,
-        'FA310': 50
-    }
+            pdf = latex.build_pdf(tex)
+            pdf.save_to(target0)
 
     uvs = list(selected_uv())
     if len(uvs) != 1:
@@ -2271,7 +2261,7 @@ def task_attendance_sheet():
     target = generated(f'{exam}_présence_%s.pdf', **info)
     return {
         'targets': [target],
-        'actions': [(generate_attendance_sheets, [groupby, target])],
+        'actions': [(generate_attendance_sheets, [target])],
         'verbosity': 2
     }
 
