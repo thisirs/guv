@@ -125,12 +125,12 @@ class GradeSheetWriter:
         # Setting path of current gradebook
         if self.args.output_file:
             if os.path.isdir(self.args.output_file):
-                fn = f'{self.args.planning}_{self.args.uv}_{self.args.name}_gradebook.xlsx'
+                fn = f'{self.args.name}_gradebook.xlsx'
                 self.output_file = os.path.join(self.args.output_file, fn)
             else:
                 self.output_file = self.args.output_file
         else:
-            self.output_file = f'{self.args.planning}_{self.args.uv}_{self.args.name}_gradebook.xlsx'
+            self.output_file = f'{self.args.name}_gradebook.xlsx'
 
         # Write workbook with columns from data
         self.wb = Workbook()
