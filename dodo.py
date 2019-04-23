@@ -2392,27 +2392,31 @@ def task_xls_grades_sheet():
     sys.path.append(os.path.join(os.path.dirname(__file__), 'scripts/'))
     from xls_gradebook import run, arg
 
-    cmd_args = get_var("args", "").split() + ['-o', 'documents/', '-d', 'generated/']
-    cmd_args = sys.argv[2:] + ['-o', 'documents/', '-d', 'generated/']
+    uvs = list(selected_uv())
+    if len(uvs) == 1:
+        pl, uv, info = uvs[0]
+        data_file = generated(task_xls_student_data_merge.target, **info)
+        cmd_args = sys.argv[2:] + ['-o', f'{uv}/documents/', '-d', data_file]
 
-    data_file = arg(sys.argv[2:] + ['-o', 'documents/', '-d', 'generated/'])
+        return {
+            'actions': [(run, [cmd_args])],
+            'file_dep': [data_file] if data_file else [],
+            'params': ([{'name': arg,
+                         'long': arg,
+                         'default': 'dummy'} for arg in ['type', 'name', 'uv', 'planning', 'data', 'output-file', 'struct', 'group', 'config']] +
+                       [{'name': arg,
+                         'short': arg,
+                         'default': 'dummy'} for arg in ['d', 'o', 's', 'g', 'c']] +
+                       [{'name': arg,
+                         'short': arg,
+                         'type': bool,
+                         'default': 'dummy'} for arg in ['h']]),
+            'verbosity': 2,
+            'uptodate': [False]
+        }
+    else:
+        return action_msg("Une seule UV doit être sélectionnée")
 
-    return {
-        'actions': [(run, [cmd_args])],
-        'file_dep': [data_file] if data_file else [],
-        'params': ([{'name': arg,
-                     'long': arg,
-                     'default': 'dummy'} for arg in ['type', 'name', 'uv', 'planning', 'data', 'output-file', 'struct', 'group', 'config']] +
-                   [{'name': arg,
-                     'short': arg,
-                     'default': 'dummy'} for arg in ['d', 'o', 's', 'g', 'c']] +
-                   [{'name': arg,
-                     'short': arg,
-                     'type': bool,
-                     'default': 'dummy'} for arg in ['h']]),
-        'verbosity': 2,
-        'uptodate': [False]
-    }
 
 def task_yaml_QCM():
     """Génère un fichier yaml prérempli pour noter un QCM"""
