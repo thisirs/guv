@@ -387,22 +387,30 @@ class GradeSheetSimpleGroup(GradeSheetSimpleWriter):
         self.parser.add_argument('-g', '--group', required=True, dest='group')
 
     def write(self, ref=None):
-        if ref is None:
-            ref = (3, 1)
-        row, col = ref
-
-        self.gradesheet.cell(row+1, col, "Note")
+        header_ref_cell = self.gradesheet['B1']
+        header_ref_cell.below().left().text("Note").below().text("Correction")
 
         for i, (key, group) in enumerate(self.df.groupby(self.group)):
-            group_names = ', '.join(group['Nom'] + ' ' + group['Prénom'])
-            self.gradesheet.cell(ref[0]-2, col+i+1, key)
-            self.gradesheet.cell(ref[0]-1, col+i+1, group_names)
+            # Group name
+            self.gradesheet.merge_cells2(
+                header_ref_cell.right(2*i),
+                header_ref_cell.right(2*i+1))
+            header_ref_cell.right(2*i).value = key
 
-            for index, record in group.iterrows():
-                record[self.name].value = "='{}'!{}{}".format(
+            # Note
+            self.gradesheet.merge_cells2(
+                header_ref_cell.right(2*i).below(),
+                header_ref_cell.right(2*i+1).below())
+
+            for j, (index, record) in enumerate(group.iterrows()):
+                name = record['Nom'] + ' ' + record['Prénom']
+                header_ref_cell.right(2*i).below(2+j).value = name
+
+                record[self.name].value = "='{}'!{}+'{}'!{}".format(
                     self.gradesheet.title,
-                    utils.get_column_letter(col+i+1).upper(),
-                    str(row+1))
+                    header_ref_cell.right(2*i).below().coordinate,
+                    self.gradesheet.title,
+                    header_ref_cell.right(2*i+1).below(2+j).coordinate)
 
         self.wb.save(self.output_file)
 
