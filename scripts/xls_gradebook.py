@@ -12,6 +12,7 @@ from openpyxl import Workbook
 from openpyxl import load_workbook
 from openpyxl import utils
 from openpyxl.cell import Cell
+from openpyxl.worksheet import Worksheet
 from collections import OrderedDict
 from openpyxl.styles import Alignment, Color, PatternFill, Font, Border
 from openpyxl.formatting.rule import CellIsRule, Rule
@@ -19,6 +20,42 @@ from openpyxl.utils.cell import absolute_coordinate
 
 import pandas as pd
 import oyaml as yaml            # Ordered yaml
+
+# Custom navigation functions
+def left(self, step=1):
+    return self.offset(0, -step)
+
+def right(self, step=1):
+    return self.offset(0, step)
+
+def above(self, step=1):
+    return self.offset(-step, 0)
+
+def below(self, step=1):
+    return self.offset(step, 0)
+
+def text(self, value):
+    self.value = value
+    return self
+
+
+Cell.left = left
+Cell.right = right
+Cell.above = above
+Cell.below = below
+Cell.text = text
+
+
+def merge_cells2(self, cell1, cell2):
+    return self.merge_cells(
+        start_row=cell1.row,
+        start_column=cell1.col_idx,
+        end_row=cell2.row,
+        end_column=cell2.col_idx
+    )
+
+
+Worksheet.merge_cells2 = merge_cells2
 
 
 def walk_tree(tree, depth=None, start_at=0):
