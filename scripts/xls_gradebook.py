@@ -535,6 +535,7 @@ class GradeSheetSimpleGroup(GradeSheetSimpleWriter):
 
         self.wb.save(self.output_file)
 
+
 class GradeSheetAssignmentWriter(GradeSheetExamWriter):
     def __init__(self, argv):
         super(GradeSheetAssignmentWriter, self).__init__(argv)
