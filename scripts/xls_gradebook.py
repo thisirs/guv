@@ -174,9 +174,6 @@ class GradeSheetWriter:
             else:
                 raise Exception("Unsupported type: {}".format(type))
 
-        # Write new gradesheet
-        self.gradesheet = self.wb.create_sheet(title=self.name)
-
     def parse_args(self, argv):
         self.args = self.parser.parse_args(argv)
 
@@ -276,6 +273,9 @@ class GradeSheetSimpleWriter(GradeSheetWriter):
         super(GradeSheetSimpleWriter, self).__init__(argv)
 
     def write(self, ref=None):
+        # Write new gradesheet
+        self.gradesheet = self.wb.create_sheet(title=self.name)
+
         if ref is None:
             ref = (3, 1)
         row, col = ref
@@ -338,6 +338,9 @@ questions structurées."""
         return maxi + upper_left[0] - 1, maxj + upper_left[1] - 1
 
     def write(self, ref=None):
+        # Write new gradesheet
+        self.gradesheet = self.wb.create_sheet(title=self.name)
+
         if ref is None:
             ref = (3, 1)
         row, col = self.write_structure(upper_left=ref)
@@ -387,6 +390,9 @@ class GradeSheetSimpleGroup(GradeSheetSimpleWriter):
         self.parser.add_argument('-g', '--group', required=True, dest='group')
 
     def write(self, ref=None):
+        # Write new gradesheet
+        self.gradesheet = self.wb.create_sheet(title=self.name)
+
         header_ref_cell = self.gradesheet['B1']
         header_ref_cell.below().left().text("Note").below().text("Correction")
 
@@ -433,6 +439,9 @@ class GradeSheetAssignmentWriter(GradeSheetExamWriter):
         self.parser.add_argument('-g', '--group', required=True, dest='group')
 
     def write(self, ref=None):
+        # Write new gradesheet
+        self.gradesheet = self.wb.create_sheet(title=self.name)
+
         if ref is None:
             ref = (3, 1)
         row, col = self.write_structure(upper_left=ref)
@@ -532,6 +541,9 @@ class GradeSheetJuryWriter(GradeSheetWriter):
                 last.coordinate)
 
     def write(self, ref=None):
+        # Write new gradesheet
+        self.gradesheet = self.wb.create_sheet(title=self.name)
+
         # On écrit les grandeurs utiles pour les différents calculs
         ref = (1, 1)
         keytocell = {}
