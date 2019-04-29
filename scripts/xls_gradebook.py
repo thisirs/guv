@@ -72,7 +72,7 @@ def walk_tree(tree, depth=None, start_at=0):
         pass
 
     def walk_tree0(name, tree, current_depth, nleaves):
-        if isinstance(tree, (OrderedDict, dict)):
+        if isinstance(tree, (OrderedDict, dict)):  # Inner node
             current_leaves = 0
             sdepth = None
             x_span = None
@@ -87,7 +87,7 @@ def walk_tree(tree, depth=None, start_at=0):
             if current_depth != 0:
                 yield name, nleaves, sdepth, current_leaves, x_span
                 raise RunOut(current_leaves, sdepth)
-        else:
+        else:                   # Leave
             x_span = math.ceil((depth + 1) // (current_depth + 1))
             sdepth = depth - x_span
             yield name, nleaves, sdepth, 1, x_span
