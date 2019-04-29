@@ -369,6 +369,121 @@ questions structurées."""
         self.wb.save(self.output_file)
 
 
+class GradeSheetExamMultipleWriter(GradeSheetExamWriter):
+    """Feuille de notes avec barème et liste des correcteurs."""
+
+    def __init__(self, argv):
+        super().__init__(argv)
+        self.tree = self.read_structure(self.args.struct)
+        insts_file = self.args.insts
+        df = pd.read_excel(insts_file)
+        insts = df['Intervenants'].unique()
+
+        def select_inst(i):
+            while True:
+                try:
+                    choice = input(f'Sélectionner le correcteur {i} (y/n)? ')
+                    if choice.upper() == "Y":
+                        print(f"Correcteur {i} sélectionné")
+                        return True
+                    elif choice.upper() == "N":
+                        print(f"Correcteur {i} non sélectionné")
+                        return False
+                    else:
+                        raise ValueError
+                except ValueError:
+                    continue
+                else:
+                    break
+
+        self.insts = [i for i in insts if select_inst(i)]
+
+    def init_parser(self):
+        super().init_parser()
+        self.parser.add_argument('-i', '--instructors', required=True, dest='insts')
+
+    def get_columns(self, **kwargs):
+        return {
+            'Nom': 'value',
+            'Prénom': 'value',
+            'Courriel': 'value',
+            'Note': 'cell',
+            "Correcteur": 'cell',
+        }
+
+    def write(self, ref=None):
+        if ref is None:
+            ref = (3, 1)
+
+        for inst in self.insts:
+            self.gradesheet = self.wb.create_sheet(title=inst)
+
+            row, col = self.write_structure(upper_left=ref)
+            self.gradesheet.cell(row+1, col, "Note")
+
+            # On fige les colonnes après le barème
+            self.gradesheet.freeze_panes = self.gradesheet.cell(1, col+1).coordinate
+
+            for i, (index, record) in enumerate(self.df.iterrows()):
+                self.gradesheet.cell(ref[0]-2, col+i+1, record['Nom'])
+                self.gradesheet.cell(ref[0]-1, col+i+1, record['Prénom'])
+
+                # On écrit le total des points pour former la note globale
+                range = (
+                    utils.get_column_letter(col+i+1) + str(ref[0]) +
+                    ':' +
+                    utils.get_column_letter(col+i+1) + str(row)
+                )
+                formula = f'=IF(COUNTBLANK({range})>0, "", SUM({range}))'
+
+                self.gradesheet.cell(row+1, col+i+1, formula)
+
+        # Formula to return first non empty cell
+        grade_format = '""'
+        for inst in self.insts:
+            cell = "'{}'!{{0}}{{1}}".format(inst)
+            grade_format = f"IF({cell} = \"\", {grade_format}, {cell})"
+
+        # Formula to return first instructor
+        inst_format = '""'
+        for inst in self.insts:
+            cell = "'{}'!{{0}}{{1}}".format(inst)
+            inst_format = f"IF({cell} = \"\", {inst_format}, \"{inst}\")"
+        # inst_format = "CONCATENATE(\"Corrigé par \", {})".format(inst_format)
+
+        # List of booleans of non empty cells from each sheet
+        non_empty_grades = ["'{}'!{{0}}{{1}} <> \"\"".format(inst)
+                            for inst in self.insts]
+        non_empty_grades = ", ".join(non_empty_grades)
+
+        for i, (index, record) in enumerate(self.df.iterrows()):
+            formula = "=IF(SUM({0}) = 0, \"\", IF(SUM({0}) = 1, {1}, NA())".format(
+                non_empty_grades.format(
+                    utils.get_column_letter(col+i+1).upper(),
+                    row+1
+                ),
+                grade_format.format(
+                    utils.get_column_letter(col+i+1).upper(),
+                    row+1
+                )
+            )
+            record["Note"].value = formula
+
+            formula = "=IF(SUM({0}) = 0, \"\", IF(SUM({0}) = 1, {1}, NA())".format(
+                non_empty_grades.format(
+                    utils.get_column_letter(col+i+1).upper(),
+                    row+1
+                ),
+                inst_format.format(
+                    utils.get_column_letter(col+i+1).upper(),
+                    row+1
+                )
+            )
+            record["Correcteur"].value = formula
+
+        self.wb.save(self.output_file)
+
+
 class GradeSheetSimpleGroup(GradeSheetSimpleWriter):
     """Simple gradesheet per groups, no subgrading"""
 
@@ -716,6 +831,7 @@ class GradeSheetJuryWriter(GradeSheetWriter):
 
 WRITERS = {
     'exam': GradeSheetExamWriter,
+    'exammult': GradeSheetExamMultipleWriter,
     'assignment': GradeSheetAssignmentWriter,
     'simple': GradeSheetSimpleWriter,
     'jury': GradeSheetJuryWriter,
