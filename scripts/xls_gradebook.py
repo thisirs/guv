@@ -452,7 +452,7 @@ class GradeSheetExamMultipleWriter(GradeSheetExamWriter):
         # inst_format = "CONCATENATE(\"Corrigé par \", {})".format(inst_format)
 
         # List of booleans of non empty cells from each sheet
-        non_empty_grades = ["'{}'!{{0}}{{1}} <> \"\"".format(inst)
+        non_empty_grades = ["IF('{}'!{{0}}{{1}} <> \"\", 1, 0)".format(inst)
                             for inst in self.insts]
         non_empty_grades = ", ".join(non_empty_grades)
 
