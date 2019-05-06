@@ -29,6 +29,14 @@ import oyaml as yaml            # Ordered yaml
 from doit import get_var
 from doit.exceptions import TaskError, TaskFailed
 
+from .scripts.excel_hours import create_excel_file
+from .scripts.parse_utc_list import parse_UTC_listing
+from .scripts.add_student_data import (add_moodle_data,
+                                       add_UTC_data,
+                                       add_tiers_temps,
+                                       add_switches)
+from .scripts.moodle_date import CondDate, CondGroup, CondOr
+from .scripts.xls_gradebook import run, arg
 
 # Loading configuration files
 CONFIG_VARIABLE = "SETTINGS_FILES"
@@ -358,9 +366,6 @@ def create_insts_list(df):
 )
 def task_xls_UTP():
     """Crée un document Excel pour calcul des heures et remplacements."""
-
-    sys.path.append(os.path.join(os.path.dirname(__file__), 'scripts/'))
-    from excel_hours import create_excel_file
 
     def xls_UTP(xls, details, target):
         df = pd.read_excel(xls)
@@ -837,9 +842,6 @@ def task_csv_inscrits():
     """Construit un fichier CSV à partir des données brutes de la promo
     fournies par l'UTC."""
 
-    sys.path.append(os.path.join(os.path.dirname(__file__), 'scripts/'))
-    from parse_utc_list import parse_UTC_listing
-
     def csv_inscrits(fn, target):
         df = parse_UTC_listing(fn)
         with Output(target) as target:
@@ -863,12 +865,6 @@ def task_xls_student_data():
 l'UTC."""
 
     def merge_student_data(target, **kw):
-        sys.path.append(os.path.join(os.path.dirname(__file__), 'scripts/'))
-        from add_student_data import (add_moodle_data,
-                                      add_UTC_data,
-                                      add_tiers_temps,
-                                      add_switches)
-
         if 'extraction_ENT' in kw:
             df = pd.read_excel(kw['extraction_ENT'])
             if 'csv_moodle' in kw:
@@ -1600,9 +1596,6 @@ def compute_slots(planning_type, csv_inst_list):
 def task_json_restriction():
     """Ficher json des restrictions d'accès des TP"""
 
-    sys.path.append(os.path.join(os.path.dirname(__file__), 'scripts/'))
-    from moodle_date import CondDate, CondGroup, CondOr
-
     def restriction_list(uv, csv, target):
         df = pd.read_csv(csv)
         df = df.loc[df['Code enseig.'] == uv]
@@ -1662,7 +1655,7 @@ def task_pdf_trombinoscope():
             async with session.get(url) as response:
                 content = await response.content.read()
                 if len(content) < 100:
-                    copyfile(os.path.join(os.path.dirname(__file__), 'documents/inconnu.jpg'),
+                    copyfile(os.path.join(os.path.dirname(__file__), 'images/inconnu.jpg'),
                              common_doc(f'images/{login}.jpg'))
                 else:
                     with open(common_doc(f'images/{login}.jpg'), 'wb') as handler:
@@ -1678,7 +1671,7 @@ def task_pdf_trombinoscope():
         async def download_session(loop):
             os.makedirs(generated('images'), exist_ok=True)
             async with aiohttp.ClientSession(loop=loop) as session:
-                md5_inconnu = md5(os.path.join(os.path.dirname(__file__), 'documents/inconnu.jpg'))
+                md5_inconnu = md5(os.path.join(os.path.dirname(__file__), 'images/inconnu.jpg'))
                 for login in df.Login:
                     md5_curr = md5(generated(f'images/{login}.jpg'))
                     if not os.path.exists(generated(f'images/{login}.jpg')) or md5_curr == md5_inconnu:
@@ -2206,9 +2199,6 @@ manuelle."""
 
 def task_xls_grades_sheet():
     """Génère un fichier Excel pour faciliter la correction des examens/projets/jury"""
-
-    sys.path.append(os.path.join(os.path.dirname(__file__), 'scripts/'))
-    from xls_gradebook import run, arg
 
     uvs = list(selected_uv())
     if len(uvs) == 1:
