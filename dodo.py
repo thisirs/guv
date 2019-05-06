@@ -2183,6 +2183,70 @@ def task_pdf_attendance_list():
         return action_msg("Une seule UV doit être sélectionnée")
 
 
+def pdf_attendance_full_render(df, template, **kwargs):
+    jinja_dir = os.path.join(os.path.dirname(__file__), 'templates')
+    latex_jinja_env = jinja2.Environment(
+        block_start_string='((*',
+        block_end_string='*))',
+        variable_start_string='(((',
+        variable_end_string=')))',
+        comment_start_string='((=',
+        comment_end_string='=))',
+        loader=jinja2.FileSystemLoader(jinja_dir))
+    template = latex_jinja_env.get_template(template)
+
+    temp_dir = tempfile.mkdtemp()
+    df = df.sort_values(['Nom', 'Prénom'])
+    students = [{'name': f'{row["Nom"]} {row["Prénom"]}'}
+                for _, row in df.iterrows()]
+    tex = template.render(students=students, **kwargs)
+    pdf = latex.build_pdf(tex)
+    filename = kwargs['group'] + '.pdf'
+    filepath = os.path.join(temp_dir, filename)
+    pdf.save_to(filepath)
+    return filepath
+
+
+def task_pdf_attendance_full():
+    """Feuilles de présence pour toutes les séances"""
+
+    def pdf_attendance_full(xls_merge, target, **kwargs):
+        df = pd.read_excel(xls_merge)
+        template = 'attendance_name_full.tex.jinja2'
+        pdfs = []
+        ctype = kwargs['ctype']
+        for gn, group in df.groupby(ctype):
+            group = group.sort_values(['Nom', 'Prénom'])
+            pdf = pdf_attendance_full_render(group, template, group=gn, **kwargs)
+            pdfs.append(pdf)
+
+        with Output(target) as target0:
+            with zipfile.ZipFile(target0(), 'w') as z:
+                for filepath in pdfs:
+                    z.write(filepath, os.path.basename(filepath))
+
+    uvs = list(selected_uv())
+    if len(uvs) == 1:
+        planning, uv, info = uvs[0]
+        ctype = get_var('ctype')
+        nslot = int(get_var('nslot', 14))
+
+        if ctype:
+            xls_merge = generated(task_xls_student_data_merge.target, **info)
+            target = generated(f'attendance_{ctype}_full.zip', **info)
+            kwargs = {**info, 'nslot': nslot, 'ctype': ctype}
+            return {
+                'file_dep': [xls_merge],
+                'targets': [target],
+                'actions': [(pdf_attendance_full, [xls_merge, target], kwargs)],
+                'verbosity': 2
+            }
+        else:
+            return action_msg('Il faut fournir un nom de colonne de `*_student_data_merge.xlsx` pour grouper.')
+    else:
+        return action_msg("Une seule UV doit être sélectionnée")
+
+
 def task_xls_assignment_grade():
     """Création d'un fichier Excel pour remplissage des notes par les intervenants"""
 
