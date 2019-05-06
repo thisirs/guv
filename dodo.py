@@ -196,7 +196,7 @@ class Output():
                     else:
                         break
             else:
-                print('Écrasement du fichier `%s''' % self.target)
+                print('Écrasement du fichier `%s\'' % self.target)
         else:
             dirname = os.path.dirname(self.target)
             if not os.path.exists(dirname):
