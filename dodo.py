@@ -2286,6 +2286,91 @@ def task_xls_assignment_grade():
         return action_msg("Une seule UV doit être sélectionnée")
 
 
+def task_attendance_sheet_room():
+    def attendance_sheet_room(csv, target):
+        groupby = {}
+        while True:
+            room = input('Salle: ')
+            num = input('Nombre: ')
+            if not room:
+                if not num:
+                    if groupby:
+                        print('Liste des salles: \n%s' % groupby)
+                        break
+                    else:
+                        raise
+            elif re.fullmatch('[0-9]+', num):
+                groupby[room] = int(num)
+
+        def breaks(total, rooms):
+            assert(sum(rooms) >= total)
+            rest = sum(rooms) - total
+            n = len(rooms)
+            q = rest // n
+            r = rest % n
+            index = sorted(range(len(rooms)), key=lambda k: rooms[k])
+            roomss = sorted(rooms)
+            nrooms = [0] * n
+            for i in range(n):
+                eps = 1 if i+1 <= r else 0
+                nrooms[index[i]] = rooms[index[i]] - (q + eps)
+
+            breaks = []
+            nrooms0 = [0] + nrooms + [total-1]
+            curr = 0
+            for i in range(len(nrooms0)-2):
+                breaks.append((curr + nrooms0[i], curr + nrooms0[i] + nrooms0[i+1]-1))
+                curr += nrooms0[i]
+
+            return breaks
+
+        df = pd.read_excel(xls_merge)
+        if 'Tiers-temps' in df.columns:
+            df0 = df.loc[df['Tiers-temps'] == 0]
+            dftt = df.loc[df['Tiers-temps'] != 0]
+            if len(df.index) == 0:
+                dftt = None
+        else:
+            df0 = df
+            dftt = None
+
+        total = len(df0.index)
+        rooms_nums = [n for _, n in groupby.items()]
+        rooms_name = [n for n, _ in groupby.items()]
+
+        breaks = breaks(total, rooms_nums)
+        pdfs = []
+        for n, (i, j) in enumerate(breaks):
+            stu1 = df0.iloc[i]["Nom"]
+            stu2 = df0.iloc[j]["Nom"]
+            filename = f'{rooms_name[n]}.pdf'
+            pdf = pdf_attendance_list_render(df0.iloc[i:(j+1)], 'attendance_list.tex.jinja2', filename=filename)
+            pdfs.append(pdf)
+            print(f'{stu1}--{stu2}')
+
+        if dftt is not None:
+            filename = 'tiers-temps.pdf'
+            pdf = pdf_attendance_list_render(dftt, 'attendance_list.tex.jinja2', filename=filename)
+            pdfs.append(pdf)
+
+        with Output(target) as target0:
+            with zipfile.ZipFile(target0(), 'w') as z:
+                for filepath in pdfs:
+                    z.write(filepath, os.path.basename(filepath))
+
+    uvs = list(selected_uv())
+    if len(uvs) != 1:
+        return action_msg("Une seule UV doit être sélectionnée")
+
+    pl, uv, info = uvs[0]
+    xls_merge = generated(task_xls_student_data_merge.target, **info)
+    target = generated(f'attendance_rooms.zip', **info)
+    return {
+        'actions': [(attendance_sheet_room, [xls_merge, target])],
+        'verbosity': 2
+    }
+
+
 def task_attendance_sheet():
     """Fichiers pdf de feuilles de présence sans les noms des étudiants."""
 
