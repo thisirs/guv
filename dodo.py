@@ -2122,42 +2122,46 @@ def task_pdf_trombinoscope():
             yield action_msg("Argument manquant: `group=<colname>'", name=f'{planning}_{uv}')
 
 
+def pdf_attendance_list_render(df, template, **kwargs):
+    jinja_dir = os.path.join(os.path.dirname(__file__), 'templates')
+    latex_jinja_env = jinja2.Environment(
+        block_start_string='((*',
+        block_end_string='*))',
+        variable_start_string='(((',
+        variable_end_string=')))',
+        comment_start_string='((=',
+        comment_end_string='=))',
+        loader=jinja2.FileSystemLoader(jinja_dir))
+    template = latex_jinja_env.get_template(template)
+
+    temp_dir = tempfile.mkdtemp()
+    df = df.sort_values(['Nom', 'Prénom'])
+    students = [{'name': f'{row["Nom"]} {row["Prénom"]}'}
+                for _, row in df.iterrows()]
+    tex = template.render(students=students, **kwargs)
+    pdf = latex.build_pdf(tex)
+    filename = kwargs['filename']
+    filepath = os.path.join(temp_dir, filename)
+    pdf.save_to(filepath)
+    return filepath
+
 
 def task_pdf_attendance_list():
     """Fichier pdf de fiches de présence"""
 
     def pdf_attendance_list(xls_merge, group, target):
         df = pd.read_excel(xls_merge)
+        template = 'attendance_list.tex.jinja2'
 
-        jinja_dir = os.path.join(os.path.dirname(__file__), 'templates')
-        latex_jinja_env = jinja2.Environment(
-            block_start_string='((*',
-            block_end_string='*))',
-            variable_start_string='(((',
-            variable_end_string=')))',
-            comment_start_string='((=',
-            comment_end_string='=))',
-            loader=jinja2.FileSystemLoader(jinja_dir))
-
-        template = latex_jinja_env.get_template('attendance_list.tex.jinja2')
-
-        temp_dir = tempfile.mkdtemp()
+        pdfs = []
         for gn, group in df.groupby(group):
             group = group.sort_values(['Nom', 'Prénom'])
-
-            students = [{'name': f'{row["Nom"]} {row["Prénom"]}'}
-                        for _, row in group.iterrows()]
-            tex = template.render(students=students, group=f'Groupe: {gn}')
-
-            # with open(target0+'.tex', 'w') as fd:
-            #     fd.write(tex)
-
-            pdf = latex.build_pdf(tex)
-            pdf.save_to(os.path.join(temp_dir, gn + ".pdf"))
+            pdf = pdf_attendance_list_render(group, template, group=f'Groupe: {gn}')
+            pdfs.append(pdf)
 
         with Output(target) as target0:
             with zipfile.ZipFile(target0(), 'w') as z:
-                for filepath in glob.glob(os.path.join(temp_dir, '*.pdf')):
+                for filepath in pdfs:
                     z.write(filepath, os.path.basename(filepath))
 
     uvs = list(selected_uv())
