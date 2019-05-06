@@ -2471,10 +2471,10 @@ def task_xls_grades_sheet():
             'file_dep': [data_file] if data_file else [],
             'params': ([{'name': arg,
                          'long': arg,
-                         'default': 'dummy'} for arg in ['type', 'name', 'uv', 'planning', 'data', 'output-file', 'struct', 'group', 'config']] +
+                         'default': 'dummy'} for arg in ['type', 'name', 'uv', 'planning', 'data', 'output-file', 'struct', 'group', 'config', 'insts']] +
                        [{'name': arg,
                          'short': arg,
-                         'default': 'dummy'} for arg in ['d', 'o', 's', 'g', 'c']] +
+                         'default': 'dummy'} for arg in ['d', 'o', 's', 'g', 'c', 'i']] +
                        [{'name': arg,
                          'short': arg,
                          'type': bool,
