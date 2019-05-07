@@ -1,6 +1,2 @@
-documents/
-old/
-
+doit_utc.egg-info
 __pycache__/
-generated/
-*.db
