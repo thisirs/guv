@@ -367,7 +367,7 @@ def task_ical_inst():
     """Create iCal file for each instructor"""
 
     def create_ical_inst(insts, plannings, csv):
-        tables = [compute_slots(ptype, csv) for ptype in plannings]
+        tables = [compute_slots(csv, ptype, empty_instructor=False) for ptype in plannings]
         dfm = pd.concat(tables)
 
         all_insts = dfm['Intervenants'].unique()

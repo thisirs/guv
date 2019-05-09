@@ -195,37 +195,10 @@ def task_csv_all_courses():
 
         tables = []
         for planning_type in plannings:
-            uv = (settings.PLANNINGS[planning_type].get('UVS') or
-                  settings.PLANNINGS[planning_type].get('UES'))
-            df_planning = df.loc[df['Code enseig.'].isin(uv)]
-            planning = create_plannings(planning_type)
-
-            planning_C = planning['C']
-            pl_C = pd.DataFrame(planning_C)
-            pl_C.columns = ['date', 'dayname', 'semaine', 'num', 'numAB', 'nweek']
-
-            df_C = df_planning.loc[df_planning['Lib. créneau'].str.startswith('C'), :]
-            df_Cm = pd.merge(df_C, pl_C, how='left', left_on='Jour', right_on='dayname')
-
-            planning_D = planning['D']
-            pl_D = pd.DataFrame(planning_D)
-            pl_D.columns = ['date', 'dayname', 'semaine', 'num', 'numAB', 'nweek']
-
-            df_D = df_planning.loc[df_planning['Lib. créneau'].str.startswith('D'), :]
-            df_Dm = pd.merge(df_D, pl_D, how='left', left_on='Jour', right_on='dayname')
-
-            planning_T = planning['T']
-            pl_T = pd.DataFrame(planning_T)
-            pl_T.columns = ['date', 'dayname', 'semaine', 'num', 'numAB', 'nweek']
-
-            df_T = df_planning.loc[df_planning['Lib. créneau'].str.startswith('T'), :]
-            if df_T['Semaine'].hasnans:
-                df_Tm = pd.merge(df_T, pl_T, how='left', left_on='Jour', right_on='dayname')
-            else:
-                df_Tm = pd.merge(df_T, pl_T, how='left', left_on=['Jour', 'Semaine'], right_on=['dayname', 'semaine'])
-
-            dfm = pd.concat([df_Cm, df_Dm, df_Tm], ignore_index=True)
-            tables.append(dfm)
+            uvs = (settings.PLANNINGS[planning_type].get('UVS') or
+                   settings.PLANNINGS[planning_type].get('UES'))
+            df = compute_slots(csv, planning_type, filter_uvs=uvs)
+            tables.append(df)
 
         dfm = pd.concat(tables)
         with Output(target) as target:
@@ -249,8 +222,7 @@ def task_html_table():
 
     def html_table(planning, csv_inst_list, uv, course, target):
         # Select wanted slots
-        slots = compute_slots(planning, csv_inst_list)
-        slots = slots.loc[slots['Code enseig.'] == uv, :]
+        slots = compute_slots(csv_inst_list, planning, filter_uvs=[uv])
         slots = slots.loc[slots['Activité'] == course, :]
 
         # Fail if no slot

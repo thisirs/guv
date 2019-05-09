@@ -404,33 +404,37 @@ def ical_events(dataframe):
 
     return cal.to_ical(sorted=True)
 
-def compute_slots(planning_type, csv_inst_list):
-    """Renvoie la liste des créneaux sur tout le semestre"""
 
+def compute_slots(csv_inst_list, planning_type, empty_instructor=True, filter_uvs=None):
     df = pd.read_csv(csv_inst_list)
-    df_planning = df.loc[(~pd.isnull(df['Intervenants'])) &
-                         (df['Planning'] == planning_type), :]
+    df = df.loc[df['Planning'] == planning_type]
+
+    if not empty_instructor:
+        df = df.loc[(~pd.isnull(df['Intervenants']))]
+    if filter_uvs:
+        df = df.loc[df['Code enseig.'].isin(filter_uvs)]
+
     planning = create_plannings(planning_type)
 
     planning_C = planning['C']
     pl_C = pd.DataFrame(planning_C)
     pl_C.columns = ['date', 'dayname', 'semaine', 'num', 'numAB', 'nweek']
 
-    df_C = df_planning.loc[df_planning['Lib. créneau'].str.startswith('C'), :]
+    df_C = df.loc[df['Lib. créneau'].str.startswith('C'), :]
     df_Cm = pd.merge(df_C, pl_C, how='left', left_on='Jour', right_on='dayname')
 
     planning_D = planning['D']
     pl_D = pd.DataFrame(planning_D)
     pl_D.columns = ['date', 'dayname', 'semaine', 'num', 'numAB', 'nweek']
 
-    df_D = df_planning.loc[df_planning['Lib. créneau'].str.startswith('D'), :]
+    df_D = df.loc[df['Lib. créneau'].str.startswith('D'), :]
     df_Dm = pd.merge(df_D, pl_D, how='left', left_on='Jour', right_on='dayname')
 
     planning_T = planning['T']
     pl_T = pd.DataFrame(planning_T)
     pl_T.columns = ['date', 'dayname', 'semaine', 'num', 'numAB', 'nweek']
 
-    df_T = df_planning.loc[df_planning['Lib. créneau'].str.startswith('T'), :]
+    df_T = df.loc[df['Lib. créneau'].str.startswith('T'), :]
     if df_T['Semaine'].hasnans:
         df_Tm = pd.merge(df_T, pl_T, how='left', left_on='Jour', right_on='dayname')
     else:
@@ -438,7 +442,3 @@ def compute_slots(planning_type, csv_inst_list):
 
     dfm = pd.concat([df_Cm, df_Dm, df_Tm], ignore_index=True)
     return dfm
-
-
-
-
