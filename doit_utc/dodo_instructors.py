@@ -1,10 +1,10 @@
 import os
 import re
-import jinja2
 import glob
-import markdown
 import tempfile
 import zipfile
+import jinja2
+import markdown
 
 import pandas as pd
 from pandas.api.types import CategoricalDtype
@@ -126,7 +126,7 @@ def create_insts_list(df):
             crs = {'C': 0, 'D': 1, 'T': 2}[m.group(1)]
             no = int('0' + m.group(2))
             sem = 0 if m.group(3) == 'A' else 1
-            return (crs, no, sem)
+            return crs, no, sem
 
         return ', '.join(sorted(e, key=lib_list))
 

@@ -1,6 +1,6 @@
+import re
 import unidecode
 import pandas as pd
-import re
 
 
 def add_moodle_data(df, fn):

@@ -62,7 +62,7 @@ class Cond:
     def to_PHP(self):
         return CondAnd(sts=[self]).to_PHP()
 
-    def to_PHP_inner():
+    def to_PHP_inner(self):
         raise NotImplementedError('Abstract method')
 
     def __and__(self, other):

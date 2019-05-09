@@ -7,7 +7,6 @@ from openpyxl.cell import Cell
 from openpyxl import utils
 from openpyxl.styles import PatternFill
 
-import pandas as pd
 import numpy as np
 
 # Custom navigation functions
@@ -69,15 +68,14 @@ def create_double_entry_table(ws, reference, df, title):
 
     # En-tête ligne et colonne
     ws.column_dimensions[utils.get_column_letter(ref[1])].width = 20
-    for i in range(len(instructors)):
+    for i, instructor in enumerate(instructors):
         ws.column_dimensions[utils.get_column_letter(ref[1]+1+i)].width = 20
-        ws.cell(row=ref[0]+1+i, column=ref[1]).value = instructors[i]
-        ws.cell(row=ref[0], column=ref[1]+1+i).value = instructors[i]
+        ws.cell(row=ref[0]+1+i, column=ref[1]).value = instructor
+        ws.cell(row=ref[0], column=ref[1]+1+i).value = instructor
 
     inst_to_cellsm = {}
     inst_to_cellsp = {}
-    for k in range(len(instructors)):
-        inst = instructors[k]
+    for k, inst in enumerate(instructors):
         cellsp = []
         cellsm = []
         for i in range(len(instructors)):
@@ -117,7 +115,7 @@ def create_double_entry_table(ws, reference, df, title):
         formule = '={}+{}'.format(inst_to_cellsp[inst], inst_to_cellsm[inst])
         ws.cell(row=ref[0]+i+1, column=total_col).value = formule
 
-    return(inst_to_total)
+    return inst_to_total
 
 
 def create_summary_table(ws, reference, df, ws_remp, C_total, TD_total, TP_total):

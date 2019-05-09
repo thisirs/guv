@@ -1,13 +1,12 @@
 import os
 import re
+from datetime import timedelta, datetime
+import json
 import numpy as np
 import pandas as pd
 from PyPDF2 import PdfFileReader
 from tabula import read_pdf
-from datetime import timedelta, datetime
 import pynliner
-import json
-import oyaml as yaml            # Ordered yaml
 
 from doit import get_var
 from doit.exceptions import TaskFailed
@@ -169,7 +168,7 @@ SELECTED_UVS.
         df_uv_real['Code enseig.'] = uv
 
         text = r'{name} \\ {room} \\ {author}'
-        return(create_cal_from_dataframe(df_uv_real, text, target))
+        return create_cal_from_dataframe(df_uv_real, text, target)
 
     jinja_dir = os.path.join(os.path.dirname(__file__), 'templates')
     template = os.path.join(jinja_dir, 'calendar_template.tex.jinja2')

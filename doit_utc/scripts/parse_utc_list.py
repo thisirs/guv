@@ -6,9 +6,9 @@ fournie par l'UTC et le convertit en fichier CSV.
 """
 
 import os
-import pandas as pd
 import re
 import math
+import pandas as pd
 
 
 def parse_UTC_listing(filename):

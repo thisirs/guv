@@ -5,17 +5,15 @@ Create an Excel file to compute grades
 import os
 import sys
 import math
-from copy import copy
 import argparse
 
+from collections import OrderedDict
 from openpyxl import Workbook
-from openpyxl import load_workbook
 from openpyxl import utils
 from openpyxl.cell import Cell
 from openpyxl.worksheet import Worksheet
-from collections import OrderedDict
-from openpyxl.styles import Alignment, Color, PatternFill, Font, Border
-from openpyxl.formatting.rule import CellIsRule, Rule
+from openpyxl.styles import Alignment, PatternFill
+from openpyxl.formatting.rule import CellIsRule
 from openpyxl.utils.cell import absolute_coordinate
 
 import pandas as pd
@@ -269,9 +267,6 @@ class GradeSheetWriter:
 
 
 class GradeSheetSimpleWriter(GradeSheetWriter):
-    def __init__(self, argv):
-        super(GradeSheetSimpleWriter, self).__init__(argv)
-
     def write(self, ref=None):
         # Write new gradesheet
         self.gradesheet = self.wb.create_sheet(title=self.name)
@@ -876,4 +871,4 @@ if __name__ == '__main__':
     # run("--type assignment --group TPE -s median.yaml --name bar -d ../generated --uv SY02 --planning P2018".split())
     # run("--type simple --name bar -d ../generated --uv SY02 --planning P2018".split())
     # run("--type jury --name bar -c config.yaml -d ../generated --uv SY02 --planning P2018".split())
-    run ('-h')
+    run('-h')

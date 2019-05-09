@@ -5,9 +5,6 @@ import pandas as pd
 import oyaml as yaml            # Ordered yaml
 
 from doit import get_var
-from doit.exceptions import TaskFailed
-
-from .config import settings
 
 from .utils import (
     Output,
@@ -18,7 +15,7 @@ from .utils import (
 )
 from .dodo_students import task_xls_student_data_merge
 from .dodo_instructors import task_xls_affectation
-from .scripts.xls_gradebook import run, arg
+from .scripts.xls_gradebook import run
 
 
 def task_csv_for_upload():

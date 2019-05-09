@@ -2,11 +2,11 @@ import os
 import sys
 import re
 import time
+from datetime import datetime, timedelta
 import numpy as np
 import pandas as pd
 from icalendar import Event, Calendar
 import latex
-from datetime import datetime, timedelta
 import jinja2
 
 from .config import settings
@@ -103,11 +103,11 @@ def aggregate(left_on, right_on, subset=None, drop=None, rename=None, read_metho
 
 
 def skip_range(d1, d2):
-    return([d1 + timedelta(days=x) for x in range((d2 - d1).days + 1)])
+    return [d1 + timedelta(days=x) for x in range((d2 - d1).days + 1)]
 
 
 def skip_week(d1, weeks=1):
-    return([d1 + timedelta(days=x) for x in range(7*weeks-1)])
+    return [d1 + timedelta(days=x) for x in range(7*weeks-1)]
 
 
 def action_msg(msg, name=None):
@@ -194,7 +194,7 @@ def create_cal_from_dataframe(df, text, target):
     # 08:15 should be 8_15
     def convert_time(time):
         time = time.replace(':', '_')
-        return(re.sub('^0', '', time))
+        return re.sub('^0', '', time)
 
     def convert_day(day):
         mapping = {'Lundi': 'Lun',
@@ -204,11 +204,11 @@ def create_cal_from_dataframe(df, text, target):
                    'Vendredi': 'Ven',
                    'Samedi': 'Sam',
                    'Dimanche': 'Dim'}
-        return(mapping[day])
+        return mapping[day]
 
     def convert_author(author):
         parts = re.split('[ -]', author)
-        return(''.join(e[0].upper() for e in parts))
+        return ''.join(e[0].upper() for e in parts)
 
     # Returns blocks like \node[2hours, full, {course}] at ({day}-{bh}) {{{text}}};
     def build_block(row, text, half=False):
@@ -251,7 +251,7 @@ def create_cal_from_dataframe(df, text, target):
 
         if not half:
             half = 'full'
-        return(rf'\node[2hours, {half}, {ctype}] at ({day}-{bh}) {{{text}}};')
+        return rf'\node[2hours, {half}, {ctype}] at ({day}-{bh}) {{{text}}};'
 
     blocks = []
     for hour, group in df.groupby(['Jour', 'Heure début', 'Heure fin']):
@@ -262,7 +262,6 @@ def create_cal_from_dataframe(df, text, target):
             block1 = build_block(group.iloc[0], text, half='atleft')
             block2 = build_block(group.iloc[1], text, half='atright')
             blocks += [block1, block2]
-            pass
         elif len(group) == 1:
             block = build_block(group.iloc[0], text)
             blocks.append(block)
@@ -342,7 +341,7 @@ def create_plannings(planning_type):
             else:
                 days.append((d, daynames[d.weekday()], sem, num, numAB, nweek))
 
-        return(days)
+        return days
 
     beg = settings.PLANNINGS[planning_type]['PL_BEG']
     end = settings.PLANNINGS[planning_type]['PL_END']
@@ -351,11 +350,11 @@ def create_plannings(planning_type):
     planning_D = generate_days(beg, end, settings.SKIP_DAYS_D, settings.TURN, 'D')
     planning_T = generate_days(beg, end, settings.SKIP_DAYS_T, settings.TURN, 'T')
 
-    return({
+    return {
         'C': planning_C,
         'D': planning_D,
         'T': planning_T
-    })
+    }
 
 
 def ical_events(dataframe):
@@ -369,7 +368,7 @@ def ical_events(dataframe):
         hm = row['Heure début'].split(':')
         h = int(hm[0])
         m = int(hm[1])
-        return(datetime(year=d.year, month=d.month, day=d.day, hour=h, minute=m))
+        return datetime(year=d.year, month=d.month, day=d.day, hour=h, minute=m)
 
     ts = dataframe.apply(timestamp, axis=1)
     dataframe = dataframe.assign(timestamp=ts.values)

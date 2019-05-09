@@ -2,17 +2,17 @@ import os
 import re
 import math
 import random
+import hashlib
+import shutil
+import glob
+import zipfile
+import tempfile
+import asyncio
+import aiohttp
 import numpy as np
 import pandas as pd
 import jinja2
-import hashlib
-import asyncio
-import aiohttp
-import tempfile
-import zipfile
 import latex
-import glob
-import shutil
 
 from doit.exceptions import TaskFailed
 from doit import get_var
