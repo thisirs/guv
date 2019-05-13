@@ -133,14 +133,21 @@ manuelle."""
 def task_xls_grades_sheet():
     """Génère un fichier Excel pour faciliter la correction des examens/projets/jury"""
 
+    def xls_grades_sheet(data_file, docs):
+        cmd_args = sys.argv[2:] + ['-o', docs, '-d', data_file]
+        try:
+            run(cmd_args)
+        except Exception as e:
+            return TaskFailed(e.args)
+
     uvs = list(selected_uv())
     if len(uvs) == 1:
         pl, uv, info = uvs[0]
         data_file = generated(task_xls_student_data_merge.target, **info)
-        cmd_args = sys.argv[2:] + ['-o', f'{uv}/documents/', '-d', data_file]
+        docs = documents("", **info)
 
         return {
-            'actions': [(run, [cmd_args])],
+            'actions': [(xls_grades_sheet, [data_file, docs])],
             'file_dep': [data_file] if data_file else [],
             'params': ([{'name': arg,
                          'long': arg,
