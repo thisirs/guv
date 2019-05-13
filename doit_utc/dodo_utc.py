@@ -22,7 +22,6 @@ from .utils import (
     selected_uv,
     action_msg,
     create_cal_from_dataframe,
-    create_plannings,
     compute_slots,
     DATE_FORMAT
 )
