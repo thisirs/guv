@@ -13,6 +13,9 @@ import numpy as np
 import pandas as pd
 import jinja2
 import latex
+from openpyxl import Workbook
+from openpyxl import utils
+from openpyxl.utils.dataframe import dataframe_to_rows
 
 from doit.exceptions import TaskFailed
 from doit import get_var
@@ -175,13 +178,28 @@ def task_xls_student_data_merge():
         df = pd.read_excel(source)
 
         for path, agregater in data.items():
-            print("Agregating %s" % path)
+            print("Aggregating %s" % path)
             df = agregater(df, path)
 
         dff = df.sort_values(["Nom", "Prénom"])
 
+        wb = Workbook()
+        ws = wb.active
+
+        for r in dataframe_to_rows(dff, index=False, header=True):
+            ws.append(r)
+
+        for cell in ws[1]:
+            cell.style = 'Pandas'
+
+        max_column = ws.max_column
+        max_row = ws.max_row
+        ws.auto_filter.ref = 'A1:{}{}'.format(
+            utils.get_column_letter(max_column),
+            max_row)
+
         with Output(target) as target0:
-            dff.to_excel(target0(), index=False)
+            wb.save(target0())
 
         target = os.path.splitext(target)[0] + ".csv"
         with Output(target) as target:
