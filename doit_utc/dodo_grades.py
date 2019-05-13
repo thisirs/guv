@@ -58,7 +58,7 @@ COMMENT_COLNAME.
         comment_colname = get_var('comment_colname')
         if grade_colname:
             planning, uv, info = uvs[0]
-            csv_fname = generated('{grade_colname}_ENT.csv', **info)
+            csv_fname = generated(f'{grade_colname}_ENT.csv', **info)
             xls_merge = generated(task_xls_student_data_merge.target, **info)
             deps = [generated(task_xls_student_data_merge.target, **info)]
             return {
