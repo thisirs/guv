@@ -204,6 +204,7 @@ def add_switches(df, fn, ctype):
     fullnames = df['Prénom'] + ' ' + df['Nom']
     fullnames = fullnames.apply(slug)
     df['fullname_slug'] = fullnames
+    df[f'{ctype}_orig'] = df[ctype]
 
     with open(fn, 'r') as fd:
         for line in fd:
