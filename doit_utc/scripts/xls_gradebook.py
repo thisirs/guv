@@ -137,23 +137,11 @@ class GradeSheetWriter:
         self.df = pd.DataFrame()
         columns = self.get_columns(**self.args.__dict__)
 
-        try:
-            from pandas.io.formats.excel import header_style
-        except ImportError:
-            from pandas.io.formats.excel import ExcelFormatter
-            header_style = ExcelFormatter(pd.DataFrame()).header_style
-
-        from pandas.io.excel import _OpenpyxlWriter
-        style_kwargs = _OpenpyxlWriter._convert_to_style_kwargs(header_style)
-
         for i, (name, type) in enumerate(columns.items()):
             idx = i + 1
-            # Write header of column
+            # Write header of column with Pandas style
             self.ws_data.cell(1, idx).value = name
-
-            # Steal style from first header column
-            for k, v in style_kwargs.items():
-                setattr(self.ws_data.cell(1, idx), k, v)
+            self.ws_data.cell(1, idx).style = "Pandas"
 
             # Copy data from DATA_DF if existing
             if name in self.data_df.columns:
