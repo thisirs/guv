@@ -18,7 +18,6 @@ from openpyxl import utils
 from openpyxl.utils.dataframe import dataframe_to_rows
 
 from doit.exceptions import TaskFailed
-from doit import get_var
 
 from .config import settings
 from .utils import (
@@ -29,6 +28,10 @@ from .utils import (
     selected_uv,
     action_msg,
     escape_tex,
+    argument,
+    parse_args,
+    get_unique_uv,
+    actionfailed_on_exception,
     URL,
 )
 from .scripts.parse_utc_list import parse_UTC_listing
@@ -299,16 +302,9 @@ def task_csv_groups():
             }
 
 
+@actionfailed_on_exception
 def task_csv_binomes():
-    """Fichier csv des groupes + binômes
-
-Variables à fournir:
-    planning: (default)
-    uv: (default)
-    course: Name of column to group by
-    project: Identifier of grouping
-    other_groups: Other column defining a grouping
-"""
+    """Fichier csv des groupes + binômes"""
 
     def csv_binomes(target, target_moodle, xls_merge, ctype, project, other_groups):
         df = pd.read_excel(xls_merge)
@@ -464,33 +460,33 @@ Variables à fournir:
         with Output(target_moodle) as target:
             df.to_csv(target(), index=False, header=False)
 
-    uvs = list(selected_uv())
-    if len(uvs) == 1:
-        planning, uv, info = uvs[0]
-        deps = [generated(task_xls_student_data_merge.target, **info)]
-        course = get_var("course")
-        project = get_var("project")
-        other_groups = get_var("other_groups")
+    args = parse_args(
+        task_csv_binomes,
+        argument('-c', '--course', required=True),
+        argument('-p', '--project', required=True),
+        argument('-o', '--other_group', required=False, default=None),
+    )
 
-        target = generated(f"{course}_{project}_binomes.csv", **info)
-        target_moodle = generated(f"{course}_{project}_binomes_moodle.csv", **info)
+    planning, uv, info = get_unique_uv()
+    xls_merge = generated(task_xls_student_data_merge.target, **info)
+    target = generated(f"{args.course}_{args.project}_binomes.csv", **info)
+    target_moodle = generated(f"{args.course}_{args.project}_binomes_moodle.csv", **info)
+    deps = [xls_merge]
 
-        return {
-            "actions": [
-                (
-                    csv_binomes,
-                    [target, target_moodle, deps[0], course, project, other_groups],
-                )
-            ],
-            "file_dep": deps,
-            "targets": [target_moodle],  # target_moodle only to
-            # avoid circular dep
-            "verbosity": 2,
-        }
-    else:
-        return action_msg("Une seule UV doit être sélectionnée")
+    return {
+        "actions": [
+            (
+                csv_binomes,
+                [target, target_moodle, xls_merge, args.course, args.project, args.other_group],
+            )
+        ],
+        "file_dep": deps,
+        "targets": [target_moodle],  # target_moodle only to
+        # avoid circular dep
+    }
 
 
+@actionfailed_on_exception
 def task_pdf_trombinoscope():
     """Fichier PDF des trombinoscopes par groupes et/ou sous-groupes"""
 
@@ -607,29 +603,27 @@ def task_pdf_trombinoscope():
                 for filepath in glob.glob(os.path.join(temp_dir, "*.pdf")):
                     z.write(filepath, os.path.basename(filepath))
 
-    group = get_var("group")
-    subgroup = get_var("subgroup")
+    args = parse_args(
+        task_pdf_trombinoscope,
+        argument('-g', '--group', required=True),
+        argument('-s', '--subgroup', required=False, default=None)
+    )
 
     for planning, uv, info in selected_uv():
         dep = generated(task_xls_student_data_merge.target, **info)
-        if group:
-            if subgroup:
-                target = generated(f"trombi_{group}_{subgroup}.zip", **info)
-            else:
-                target = generated(f"trombi_{group}.zip", **info)
-
-            yield {
-                "name": f"{planning}_{uv}",
-                "file_dep": [dep],
-                "targets": [target],
-                "actions": [(pdf_trombinoscope, [dep, target, group, subgroup, 5])],
-                "uptodate": [False],
-                "verbosity": 2,
-            }
+        if args.subgroup is not None:
+            target = generated(f"trombi_{args.group}_{args.subgroup}.zip", **info)
         else:
-            yield action_msg(
-                "Argument manquant: `group=<colname>'", name=f"{planning}_{uv}"
-            )
+            target = generated(f"trombi_{args.group}.zip", **info)
+
+        yield {
+            "name": f"{planning}_{uv}",
+            "file_dep": [dep],
+            "targets": [target],
+            "actions": [(pdf_trombinoscope, [dep, target, args.group, args.subgroup, 5])],
+            "uptodate": [False],
+            "verbosity": 2,
+        }
 
 
 def pdf_attendance_list_render(df, template, **kwargs):
@@ -656,6 +650,7 @@ def pdf_attendance_list_render(df, template, **kwargs):
     return filepath
 
 
+@actionfailed_on_exception
 def task_pdf_attendance_list():
     """Fichier pdf de fiches de présence"""
 
@@ -671,7 +666,11 @@ def task_pdf_attendance_list():
         pdfs = []
         for gn, group in df.groupby(group):
             group = group.sort_values(["Nom", "Prénom"])
-            pdf = pdf_attendance_list_render(group, template, group=f"Groupe: {gn}")
+            kwargs = {
+                "group": f"Groupe: {gn}",
+                "filename": f"{gn}.pdf"
+            }
+            pdf = pdf_attendance_list_render(group, template, **kwargs)
             pdfs.append(pdf)
 
         with Output(target) as target0:
@@ -679,25 +678,20 @@ def task_pdf_attendance_list():
                 for filepath in pdfs:
                     z.write(filepath, os.path.basename(filepath))
 
-    uvs = list(selected_uv())
-    if len(uvs) == 1:
-        planning, uv, info = uvs[0]
-        group = get_var("group")
-        if group:
-            xls_merge = generated(task_xls_student_data_merge.target, **info)
-            target = generated(f"attendance_{group}.zip", **info)
-            return {
-                "file_dep": [xls_merge],
-                "targets": [target],
-                "actions": [(pdf_attendance_list, [xls_merge, group, target])],
-                "verbosity": 2,
-            }
-        else:
-            return action_msg(
-                "Il faut fournir un nom de colonne de `*_student_data_merge.xlsx` pour grouper: group=<colname>"
-            )
-    else:
-        return action_msg("Une seule UV doit être sélectionnée")
+    args = parse_args(
+        task_pdf_attendance_list,
+        argument('-g', '--group', required=True)
+    )
+
+    planning, uv, info = get_unique_uv()
+    xls_merge = generated(task_xls_student_data_merge.target, **info)
+    target = generated(f"attendance_{args.group}.zip", **info)
+
+    return {
+        "file_dep": [xls_merge],
+        "targets": [target],
+        "actions": [(pdf_attendance_list, [xls_merge, args.group, target])],
+    }
 
 
 def pdf_attendance_full_render(df, template, **kwargs):
@@ -724,6 +718,7 @@ def pdf_attendance_full_render(df, template, **kwargs):
     return filepath
 
 
+@actionfailed_on_exception
 def task_pdf_attendance_full():
     """Feuilles de présence pour toutes les séances"""
 
@@ -746,28 +741,21 @@ def task_pdf_attendance_full():
                 for filepath in pdfs:
                     z.write(filepath, os.path.basename(filepath))
 
-    uvs = list(selected_uv())
-    if len(uvs) == 1:
-        planning, uv, info = uvs[0]
-        ctype = get_var("ctype")
-        nslot = int(get_var("nslot", 14))
+    args = parse_args(
+        task_pdf_attendance_full,
+        argument('-c', '--course', required=True),
+        argument('-n', '--slots', default=14)
+    )
 
-        if ctype:
-            xls_merge = generated(task_xls_student_data_merge.target, **info)
-            target = generated(f"attendance_{ctype}_full.zip", **info)
-            kwargs = {**info, "nslot": nslot, "ctype": ctype}
-            return {
-                "file_dep": [xls_merge],
-                "targets": [target],
-                "actions": [(pdf_attendance_full, [xls_merge, target], kwargs)],
-                "verbosity": 2,
-            }
-        else:
-            return action_msg(
-                "Il faut fournir un nom de colonne de `*_student_data_merge.xlsx` pour grouper: ctype=<colname>"
-            )
-    else:
-        return action_msg("Une seule UV doit être sélectionnée")
+    planning, uv, info = get_unique_uv()
+    xls_merge = generated(task_xls_student_data_merge.target, **info)
+    target = generated(f"attendance_{args.course}_full.zip", **info)
+    kwargs = {**info, "nslot": args.slots, "ctype": args.course}
+    return {
+        "file_dep": [xls_merge],
+        "targets": [target],
+        "actions": [(pdf_attendance_full, [xls_merge, target], kwargs)],
+    }
 
 
 def task_attendance_sheet_room():
@@ -850,16 +838,17 @@ def task_attendance_sheet_room():
                 for filepath in pdfs:
                     z.write(filepath, os.path.basename(filepath))
 
-    uvs = list(selected_uv())
-    if len(uvs) != 1:
-        return action_msg("Une seule UV doit être sélectionnée")
-
-    pl, uv, info = uvs[0]
+    planning, uv, info = get_unique_uv()
     xls_merge = generated(task_xls_student_data_merge.target, **info)
     target = generated(f"attendance_rooms.zip", **info)
-    return {"actions": [(attendance_sheet_room, [xls_merge, target])], "verbosity": 2}
+    return {
+        'file_dep': [xls_merge],
+        'targets': [target],
+        "actions": [(attendance_sheet_room, [xls_merge, target])],
+    }
 
 
+@actionfailed_on_exception
 def task_attendance_sheet():
     """Fichiers pdf de feuilles de présence sans les noms des étudiants."""
 
@@ -901,17 +890,15 @@ def task_attendance_sheet():
             pdf = latex.build_pdf(tex)
             pdf.save_to(target0)
 
-    uvs = list(selected_uv())
-    if len(uvs) != 1:
-        return action_msg("Une seule UV doit être sélectionnée")
-    exam = get_var("exam")
-    if not exam:
-        return action_msg("Il faut spécifier le nom de l'examen")
+    args = parse_args(
+        task_pdf_attendance_full,
+        argument('-e', '--exam', required=True),
+    )
 
-    pl, uv, info = uvs[0]
-    target = generated(f"{exam}_présence_%s.pdf", **info)
+    planning, uv, info = get_unique_uv()
+    target = generated(f"{args.exam}_présence_%s.pdf", **info)
+
     return {
         "targets": [target],
         "actions": [(generate_attendance_sheets, [target])],
-        "verbosity": 2,
     }

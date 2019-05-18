@@ -8,7 +8,6 @@ from PyPDF2 import PdfFileReader
 from tabula import read_pdf
 import pynliner
 
-from doit import get_var
 from doit.exceptions import TaskFailed
 
 from .config import settings
@@ -22,6 +21,9 @@ from .utils import (
     action_msg,
     create_cal_from_dataframe,
     compute_slots,
+    actionfailed_on_exception,
+    parse_args,
+    argument,
     DATE_FORMAT
 )
 
@@ -185,6 +187,7 @@ SELECTED_UVS.
 
 
 @add_templates(target='UTC_UV_list_créneau.csv')
+@actionfailed_on_exception
 def task_csv_all_courses():
     "Fichier csv de tous les créneaux du semestre"
 
@@ -206,9 +209,12 @@ def task_csv_all_courses():
     dep = generated(task_add_instructors.target)
     target = generated(task_csv_all_courses.target)
 
-    plannings = get_var('plannings') or settings.SELECTED_PLANNINGS
+    args = parse_args(
+        task_csv_all_courses,
+        argument('-p', '--plannings', nargs='*', default=settings.SELECTED_PLANNINGS)    )
+
     return {
-        'actions': [(csv_all_courses, [plannings, dep, target])],
+        'actions': [(csv_all_courses, [args.plannings, dep, target])],
         'file_dep': [dep],
         'targets': [target],
         'verbosity': 2
