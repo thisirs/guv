@@ -160,10 +160,7 @@ class GradeSheetWriter:
     @staticmethod
     def get_parser():
         parser = argparse.ArgumentParser()
-        parser.add_argument('--type', dest='type', required=True)
         parser.add_argument('--name', dest='name', required=True)
-        parser.add_argument('--uv', dest='uv')
-        parser.add_argument('--planning', dest='planning')
         parser.add_argument('-d', '--data', dest='data_file')
         parser.add_argument('-o', '--output-file', dest='output_file')
         return parser
