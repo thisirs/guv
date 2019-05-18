@@ -36,6 +36,12 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
             raise Exception('Missing grade_colname')
 
         df = pd.read_excel(xls_merge)
+
+        if grade_colname not in df.columns:
+            return TaskFailed(
+                f"Pas de colonne `{grade_colname}'; les colonnes sont : {', '.join(df.columns)}"
+            )
+
         cols = {
             'Nom': df.Nom,
             'Prénom': df['Prénom'],
@@ -44,6 +50,10 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
         }
         col_names = ['Nom', 'Prénom', 'Login', 'Note']
         if comment_colname is not None:
+            if comment_colname not in df.columns:
+                return TaskFailed(
+                    f"Pas de colonne `{comment_colname}'; les colonnes sont : {', '.join(df.columns)}"
+                )
             col_names.append('Commentaire')
             cols['Commentaire'] = np.where(df[comment_colname].isnull(),
                                            np.nan,
