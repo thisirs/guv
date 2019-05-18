@@ -95,25 +95,22 @@ def walk_tree(tree, depth=None, start_at=0):
 
 
 class GradeSheetWriter:
-    def __init__(self, argv):
-        self.init_parser()
-        self.parse_args(argv)
-
+    def __init__(self, args):
         # Store name of gradesheet
-        if self.args.name:
-            self.name = self.args.name
+        if args.name:
+            self.name = args.name
 
         # Setting source of grades
-        if self.args.data_file:
-            if os.path.isdir(self.args.data_file):
-                if self.args.planning is None or self.args.uv is None:
+        if args.data_file:
+            if os.path.isdir(args.data_file):
+                if args.planning is None or args.uv is None:
                     raise Exception('Need uv and planning')
-                fn = f'{self.args.planning}_{self.args.uv}_student_data_merge.xlsx'
-                self.data_file = os.path.join(self.args.data_file, fn)
+                fn = f'{args.planning}_{args.uv}_student_data_merge.xlsx'
+                self.data_file = os.path.join(args.data_file, fn)
             else:
-                self.data_file = self.args.data_file
+                self.data_file = args.data_file
         else:
-            self.data_file = f'{self.args.planning}_{self.args.uv}_student_data_merge.xlsx'
+            self.data_file = f'{args.planning}_{args.uv}_student_data_merge.xlsx'
 
         # Reading source of grades
         if not os.path.exists(self.data_file):
@@ -121,21 +118,21 @@ class GradeSheetWriter:
         self.data_df = pd.read_excel(self.data_file)
 
         # Setting path of current gradebook
-        if self.args.output_file:
-            if os.path.isdir(self.args.output_file):
-                fn = f'{self.args.name}_gradebook.xlsx'
-                self.output_file = os.path.join(self.args.output_file, fn)
+        if args.output_file:
+            if os.path.isdir(args.output_file):
+                fn = f'{args.name}_gradebook.xlsx'
+                self.output_file = os.path.join(args.output_file, fn)
             else:
-                self.output_file = self.args.output_file
+                self.output_file = args.output_file
         else:
-            self.output_file = f'{self.args.name}_gradebook.xlsx'
+            self.output_file = f'{args.name}_gradebook.xlsx'
 
         # Write workbook with columns from data
         self.wb = Workbook()
         self.ws_data = self.wb.active
         self.ws_data.title = "data"
         self.df = pd.DataFrame()
-        columns = self.get_columns(**self.args.__dict__)
+        columns = self.get_columns(**args.__dict__)
 
         for i, (name, type) in enumerate(columns.items()):
             idx = i + 1
@@ -160,17 +157,16 @@ class GradeSheetWriter:
             else:
                 raise Exception("Unsupported type: {}".format(type))
 
-    def parse_args(self, argv):
-        self.args = self.parser.parse_args(argv)
-
-    def init_parser(self):
-        self.parser = argparse.ArgumentParser()
-        self.parser.add_argument('--type', dest='type', required=True)
-        self.parser.add_argument('--name', dest='name', required=True)
-        self.parser.add_argument('--uv', dest='uv')
-        self.parser.add_argument('--planning', dest='planning')
-        self.parser.add_argument('-d', '--data', dest='data_file')
-        self.parser.add_argument('-o', '--output-file', dest='output_file')
+    @staticmethod
+    def get_parser():
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--type', dest='type', required=True)
+        parser.add_argument('--name', dest='name', required=True)
+        parser.add_argument('--uv', dest='uv')
+        parser.add_argument('--planning', dest='planning')
+        parser.add_argument('-d', '--data', dest='data_file')
+        parser.add_argument('-o', '--output-file', dest='output_file')
+        return parser
 
     def get_columns(self, **kwargs):
         return {
@@ -186,7 +182,7 @@ class GradeSheetWriter:
 
 # class GradeSheetWriter:
 #     def __init__(self, argv):
-#         self._init_parser()
+#         self._get_parser()
 #         self.args = self.parser.parse_args(argv)
 
 #         if self.args.name:
@@ -238,7 +234,7 @@ class GradeSheetWriter:
 #         cells = ws_data[utils.get_column_letter(newcol_idx)][1:]
 #         self.filtered_df[self.name] = cells
 
-#     def _init_parser(self):
+#     def _get_parser(self):
 #         self.parser = argparse.ArgumentParser()
 #         self.parser.add_argument('--type', dest='type', required=True)
 #         self.parser.add_argument('--name', dest='name', required=True)
@@ -255,6 +251,8 @@ class GradeSheetWriter:
 
 
 class GradeSheetSimpleWriter(GradeSheetWriter):
+    name = 'simple'
+
     def write(self, ref=None):
         # Write new gradesheet
         self.gradesheet = self.wb.create_sheet(title=self.name)
@@ -278,13 +276,17 @@ class GradeSheetExamWriter(GradeSheetWriter):
     """Feuille de notes pour un examen type médian/final avec des
 questions structurées."""
 
-    def __init__(self, argv):
-        super(GradeSheetExamWriter, self).__init__(argv)
-        self.tree = self.read_structure(self.args.struct)
+    name = 'exam'
 
-    def init_parser(self):
-        super(GradeSheetExamWriter, self).init_parser()
-        self.parser.add_argument('-s', '--struct', required=True, dest='struct')
+    def __init__(self, args):
+        super(GradeSheetExamWriter, self).__init__(args)
+        self.tree = self.read_structure(args.struct)
+
+    @staticmethod
+    def get_parser():
+        parser = super(GradeSheetExamWriter, GradeSheetExamWriter).get_parser()
+        parser.add_argument('-s', '--struct', required=True, dest='struct')
+        return parser
 
     def read_structure(self, structure):
         "On cherche dans STRUCTURE et dans le sous-dossier documents/."
@@ -355,10 +357,12 @@ questions structurées."""
 class GradeSheetExamMultipleWriter(GradeSheetExamWriter):
     """Feuille de notes avec barème et liste des correcteurs."""
 
-    def __init__(self, argv):
-        super().__init__(argv)
-        self.tree = self.read_structure(self.args.struct)
-        insts_file = self.args.insts
+    name = 'exammult'
+
+    def __init__(self, args):
+        super().__init__(args)
+        self.tree = self.read_structure(args.struct)
+        insts_file = args.insts
         df = pd.read_excel(insts_file)
         insts = df['Intervenants'].unique()
 
@@ -381,9 +385,11 @@ class GradeSheetExamMultipleWriter(GradeSheetExamWriter):
 
         self.insts = [i for i in insts if select_inst(i)]
 
-    def init_parser(self):
-        super().init_parser()
-        self.parser.add_argument('-i', '--instructors', required=True, dest='insts')
+    @staticmethod
+    def get_parser():
+        parser = super(GradeSheetExamMultipleWriter, GradeSheetExamMultipleWriter).get_parser()
+        parser.add_argument('-i', '--instructors', required=True, dest='insts')
+        return parser
 
     def get_columns(self, **kwargs):
         return {
@@ -470,9 +476,11 @@ class GradeSheetExamMultipleWriter(GradeSheetExamWriter):
 class GradeSheetSimpleGroup(GradeSheetSimpleWriter):
     """Simple gradesheet per groups, no subgrading"""
 
-    def __init__(self, argv):
-        super(GradeSheetSimpleGroup, self).__init__(argv)
-        self.group = self.args.group
+    name = 'group'
+
+    def __init__(self, args):
+        super(GradeSheetSimpleGroup, self).__init__(args)
+        self.group = args.group
 
     def get_columns(self, **kwargs):
         return {
@@ -483,9 +491,11 @@ class GradeSheetSimpleGroup(GradeSheetSimpleWriter):
             self.name: 'cell'
         }
 
-    def init_parser(self):
-        super(GradeSheetSimpleGroup, self).init_parser()
-        self.parser.add_argument('-g', '--group', required=True, dest='group')
+    @staticmethod
+    def get_parser():
+        parser = super(GradeSheetSimpleGroup, GradeSheetSimpleGroup).get_parser()
+        parser.add_argument('-g', '--group', required=True, dest='group')
+        return parser
 
     def write(self, ref=None):
         # Write new gradesheet
@@ -520,9 +530,12 @@ class GradeSheetSimpleGroup(GradeSheetSimpleWriter):
 
 
 class GradeSheetAssignmentWriter(GradeSheetExamWriter):
-    def __init__(self, argv):
-        super(GradeSheetAssignmentWriter, self).__init__(argv)
-        self.group = self.args.group
+
+    name = 'assignment'
+
+    def __init__(self, args):
+        super(GradeSheetAssignmentWriter, self).__init__(args)
+        self.group = args.group
 
     def get_columns(self, **kwargs):
         return {
@@ -533,9 +546,11 @@ class GradeSheetAssignmentWriter(GradeSheetExamWriter):
             self.name: 'cell'
         }
 
-    def init_parser(self):
-        super(GradeSheetAssignmentWriter, self).init_parser()
-        self.parser.add_argument('-g', '--group', required=True, dest='group')
+    @staticmethod
+    def get_parser():
+        parser = super(GradeSheetAssignmentWriter, GradeSheetAssignmentWriter).get_parser()
+        parser.add_argument('-g', '--group', required=True, dest='group')
+        return parser
 
     def write(self, ref=None):
         # Write new gradesheet
@@ -569,12 +584,11 @@ class GradeSheetAssignmentWriter(GradeSheetExamWriter):
 
 
 class GradeSheetJuryWriter(GradeSheetWriter):
-    def __init__(self, argv):
-        super(GradeSheetJuryWriter, self).__init__(argv)
 
-    def parse_args(self, argv):
-        self.args = self.parser.parse_args(argv)
-        self.config = self.parse_config(self.args.config)
+    name = "jury"
+
+    def __init__(self, args):
+        super(GradeSheetJuryWriter, self).__init__(args)
 
     def get_columns(self, **kwargs):
         columns = {
@@ -594,9 +608,11 @@ class GradeSheetJuryWriter(GradeSheetWriter):
         columns['Note ECTS'] = 'cell'
         return columns
 
-    def init_parser(self):
-        super(GradeSheetJuryWriter, self).init_parser()
-        self.parser.add_argument('-c', '--config', required=True, dest='config')
+    @staticmethod
+    def get_parser():
+        parser = super(GradeSheetJuryWriter, GradeSheetJuryWriter).get_parser()
+        parser.add_argument('-c', '--config', required=True, dest='config')
+        return parser
 
     def parse_config(self, config):
         if not os.path.exists(config):
@@ -813,14 +829,14 @@ class GradeSheetJuryWriter(GradeSheetWriter):
         self.wb.save(self.output_file)
 
 
-WRITERS = {
-    'exam': GradeSheetExamWriter,
-    'exammult': GradeSheetExamMultipleWriter,
-    'assignment': GradeSheetAssignmentWriter,
-    'simple': GradeSheetSimpleWriter,
-    'jury': GradeSheetJuryWriter,
-    'group': GradeSheetSimpleGroup
-}
+WRITERS = [
+    GradeSheetExamWriter,
+    GradeSheetExamMultipleWriter,
+    GradeSheetAssignmentWriter,
+    GradeSheetSimpleWriter,
+    GradeSheetJuryWriter,
+    GradeSheetSimpleGroup
+]
 
 
 def arg(argv):
@@ -842,21 +858,16 @@ def arg(argv):
 
 
 def run(argv=sys.argv[1:]):
-    if '--type' in argv:
-        type = argv[argv.index('--type') + 1]
-    else:
-        raise Exception(f'No assignment type provided, allowed types: {", ".join(WRITERS.keys())}')
-
-    if type not in WRITERS.keys():
-        raise Exception(f'Type `{type}` not recognized, allowed types: {", ".join(WRITERS.keys())}')
-
-    writerklass = WRITERS[type]
-    writer = writerklass(argv)
-    writer.write()
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(dest="sub_command")
+    for type in WRITERS:
+        base_parser = type.get_parser()
+        subparsers.add_parser(type.name, add_help=False, parents=[base_parser])
+    args = parser.parse_args(argv)
 
 
 if __name__ == '__main__':
     # run("--type assignment --group TPE -s median.yaml --name bar -d ../generated --uv SY02 --planning P2018".split())
     # run("--type simple --name bar -d ../generated --uv SY02 --planning P2018".split())
     # run("--type jury --name bar -c config.yaml -d ../generated --uv SY02 --planning P2018".split())
-    run('-h')
+    run()
