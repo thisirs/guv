@@ -413,7 +413,7 @@ def task_ical_inst():
 
     args = parse_args(
         task_ical_inst,
-        argument('-p', '--plannings', nargs='+', default=[settings.SELECTED_PLANNINGS]),
+        argument('-p', '--plannings', nargs='+', default=settings.SELECTED_PLANNINGS),
         argument('-i', '--insts', nargs='+', default=[settings.DEFAULT_INSTRUCTOR])
     )
 
