@@ -834,24 +834,6 @@ WRITERS = [
 ]
 
 
-def arg(argv):
-    "Get path of data file from command line"
-    try:
-        if '--type' in argv:
-            type = argv[argv.index('--type') + 1]
-        else:
-            raise Exception(f'No assignment type provided, allowed types: {", ".join(WRITERS.keys())}')
-
-        if type not in WRITERS.keys():
-            raise Exception(f'Type `{type}` not recognized, allowed types: {", ".join(WRITERS.keys())}')
-
-        writerklass = WRITERS[type]
-        writer = writerklass(argv)
-        return writer.data_file
-    except:
-        return []
-
-
 def run(argv=sys.argv[1:]):
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="sub_command")
