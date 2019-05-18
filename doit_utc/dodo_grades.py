@@ -63,7 +63,7 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
         df0 = df0[col_names]
         df0 = df0.sort_values(['Nom', 'Prénom'])
 
-        with Output(csv_fname) as csv_fname:
+        with Output(csv_fname, protected=True) as csv_fname:
             df0.to_csv(csv_fname(), index=False, sep=';')
 
     args = parse_args(
