@@ -9,7 +9,6 @@ import markdown
 import pandas as pd
 from pandas.api.types import CategoricalDtype
 
-from doit import get_var
 from doit.exceptions import TaskFailed
 
 from .config import settings
@@ -17,20 +16,22 @@ from .dodo_utc import task_utc_uv_list_to_csv
 from .utils import (
     Output,
     add_templates,
-    common_doc,
     documents,
     generated,
     selected_uv,
     compute_slots,
     ical_events,
     create_cal_from_dataframe,
+    parse_args,
+    argument,
+    actionfailed_on_exception
 )
 from .scripts.excel_hours import create_excel_file
 
 
 @add_templates(target='intervenants.xlsx')
 def task_xls_instructors():
-    doc = common_doc(task_xls_instructors.target)
+    doc = documents(task_xls_instructors.target)
 
     def xls_instructors(doc):
         if not os.path.exists(doc):
@@ -59,7 +60,7 @@ def task_add_instructors():
             df_merge.to_csv(target(), index=False)
 
     target = generated(task_add_instructors.target)
-    uv_list = common_doc(task_utc_uv_list_to_csv.target)
+    uv_list = documents(task_utc_uv_list_to_csv.target)
     insts = []
     for planning, uv, info in selected_uv('all'):
         insts.append(documents(task_xls_affectation.target, **info))
@@ -102,7 +103,7 @@ def task_xls_inst_details():
         with Output(target) as target:
             df.to_excel(target(), index=False)
 
-    insts_details = common_doc(task_xls_instructors.target)
+    insts_details = documents(task_xls_instructors.target)
 
     for planning, uv, info in selected_uv():
         inst_uv = documents(task_xls_affectation.target, **info)
@@ -200,7 +201,7 @@ def task_xls_UTP():
         with Output(target, protected=True) as target:
             create_excel_file(target(), dfs)
 
-    insts = common_doc(task_xls_instructors.target)
+    insts = documents(task_xls_instructors.target)
     for planning, uv, info in selected_uv():
         xls = documents(task_xls_affectation.target, **info)
         target = generated(task_xls_UTP.target, **info)
@@ -212,6 +213,7 @@ def task_xls_UTP():
             'actions': [(xls_UTP, [xls, insts, target])],
             'verbosity': 2
         }
+
 
 @add_templates(target='intervenants.xlsx')
 def task_xls_affectation():
@@ -231,8 +233,8 @@ def task_xls_affectation():
         with Output(target, protected=True) as target:
             df_uv.to_excel(target(), sheet_name='Intervenants', index=False)
 
+    uvlist_csv = documents(task_utc_uv_list_to_csv.target)
     for planning, uv, info in selected_uv():
-        uvlist_csv = common_doc(task_utc_uv_list_to_csv.target)
         target = documents(task_xls_affectation.target, **info)
 
         yield {
@@ -333,10 +335,9 @@ def task_html_inst():
         }
 
 
+@actionfailed_on_exception
 def task_cal_inst():
     """Calendrier PDF d'une semaine de toutes les UV/UE d'un intervenant."""
-
-    uv_list = generated(task_add_instructors.target)
 
     def create_cal_from_list(inst, plannings, uv_list_filename, target):
         df = pd.read_csv(uv_list_filename)
@@ -348,21 +349,28 @@ def task_cal_inst():
         text = r'{uv} \\ {name} \\ {room}'
         create_cal_from_dataframe(df_inst, text, target)
 
-    plannings = get_var('planning', '').split() or settings.SELECTED_PLANNINGS
-    insts = get_var('insts', '').split() or [settings.DEFAULT_INSTRUCTOR]
-    for inst in insts:
-        target = generated(f'{inst.replace(" ", "_")}_{"_".join(plannings)}_calendrier.pdf')
-        jinja_dir = os.path.join(os.path.dirname(__file__), 'templates')
+    args = parse_args(
+        task_cal_inst,
+        argument('-p', '--plannings', nargs='*', default=settings.SELECTED_PLANNINGS),
+        argument('-i', '--insts', nargs='*', default=[settings.DEFAULT_INSTRUCTOR])
+    )
+
+    uv_list = generated(task_add_instructors.target)
+    jinja_dir = os.path.join(os.path.dirname(__file__), 'templates')
+    template = os.path.join(jinja_dir, 'calendar_template.tex.jinja2')
+
+    for inst in args.insts:
+        target = generated(f'{inst.replace(" ", "_")}_{"_".join(args.plannings)}_calendrier.pdf')
 
         yield {
-            'name': '_'.join(plannings) + '_' + inst,
+            'name': '_'.join(args.plannings) + '_' + inst,
             'targets': [target],
-            'file_dep': [uv_list, os.path.join(jinja_dir, 'calendar_template.tex.jinja2')],
-            'actions': [(create_cal_from_list, [inst, plannings, uv_list, target])],
-            'verbosity': 2
+            'file_dep': [uv_list, template],
+            'actions': [(create_cal_from_list, [inst, args.plannings, uv_list, target])],
         }
 
 
+@actionfailed_on_exception
 def task_ical_inst():
     """Create iCal file for each instructor"""
 
@@ -403,23 +411,17 @@ def task_ical_inst():
             unknown = set(insts).difference(all_insts)
             return TaskFailed(f"Intervenant(s) inconnu(s): {', '.join(unknown)}")
 
+    args = parse_args(
+        task_ical_inst,
+        argument('-p', '--plannings', nargs='+', default=[settings.SELECTED_PLANNINGS]),
+        argument('-i', '--insts', nargs='+', default=[settings.DEFAULT_INSTRUCTOR])
+    )
+
     deps = [generated(task_add_instructors.target)]
 
-    plannings = get_var('planning', '')
-    if plannings:
-        plannings = plannings.split()
-    else:
-        plannings = settings.SELECTED_PLANNINGS
-
-    insts = get_var('insts', '')
-    if insts:
-        insts = insts.split()
-    else:
-        insts = settings.DEFAULT_INSTRUCTOR
-
     return {
+        'actions': [(create_ical_inst, [args.insts, args.plannings, deps[0]])],
         'file_dep': deps,
-        'actions': [(create_ical_inst, [insts, plannings, deps[0]])],
         'uptodate': [False],
         'verbosity': 2
     }

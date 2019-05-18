@@ -24,7 +24,6 @@ from .config import settings
 from .utils import (
     Output,
     add_templates,
-    common_doc,
     documents,
     generated,
     selected_uv,
@@ -503,10 +502,10 @@ def task_pdf_trombinoscope():
                 if len(content) < 100:
                     shutil.copyfile(
                         os.path.join(os.path.dirname(__file__), "images/inconnu.jpg"),
-                        common_doc(f"images/{login}.jpg"),
+                        documents(f"images/{login}.jpg"),
                     )
                 else:
-                    with open(common_doc(f"images/{login}.jpg"), "wb") as handler:
+                    with open(documents(f"images/{login}.jpg"), "wb") as handler:
                         handler.write(content)
 
         def md5(fname):
@@ -582,7 +581,7 @@ def task_pdf_trombinoscope():
                 for _, df_row in dfs.groupby(np.arange(len(df_group.index)) // width):
                     cells = []
                     for _, row in df_row.iterrows():
-                        path = os.path.abspath(common_doc(f'images/{row["Login"]}.jpg'))
+                        path = os.path.abspath(documents(f'images/{row["Login"]}.jpg'))
                         cell = {
                             "name": row["Prénom"],
                             "lastname": row["Nom"],

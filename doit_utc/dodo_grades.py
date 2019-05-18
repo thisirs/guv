@@ -4,27 +4,31 @@ import numpy as np
 import pandas as pd
 import oyaml as yaml            # Ordered yaml
 
-from doit import get_var
+from doit.exceptions import TaskFailed
 
 from .utils import (
     Output,
     documents,
     generated,
-    selected_uv,
-    action_msg,
+    taskfailed_on_exception,
+    actionfailed_on_exception,
+    get_unique_uv,
+    parse_args,
+    argument
 )
 from .dodo_students import task_xls_student_data_merge
 from .dodo_instructors import task_xls_affectation
 from .scripts.xls_gradebook import run
 
 
+@actionfailed_on_exception
 def task_csv_for_upload():
     """Fichier csv de notes prêtes à être chargées sur l'ENT.
 
-Prend les informations dans le fichier
-'generated/{planning}_{uv}_student_data_merge.xlsx' grâce aux
-variables fournies en arguments: PLANNING, UV, GRADE_COLNAME,
-COMMENT_COLNAME.
+Crée un fichier csv de notes prêtes à être chargées sur l'ENT. La
+colonne des notes est fixée par l'argument `grade_colname' et est
+prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
+`comment_colname' permet d'ajouter des commentaires.
     """
 
     def csv_for_upload(csv_fname, xls_merge, grade_colname, comment_colname):
@@ -52,26 +56,24 @@ COMMENT_COLNAME.
         with Output(csv_fname) as csv_fname:
             df0.to_csv(csv_fname(), index=False, sep=';')
 
-    uvs = list(selected_uv())
-    if len(uvs) == 1:
-        grade_colname = get_var('grade_colname')
-        comment_colname = get_var('comment_colname')
-        if grade_colname:
-            planning, uv, info = uvs[0]
-            csv_fname = generated(f'{grade_colname}_ENT.csv', **info)
-            xls_merge = generated(task_xls_student_data_merge.target, **info)
-            deps = [generated(task_xls_student_data_merge.target, **info)]
-            return {
-                'actions': [(csv_for_upload, [csv_fname, xls_merge, grade_colname, comment_colname])],
-                'targets': [csv_fname],
-                'file_dep': deps
-            }
-        else:
-            return action_msg("Il faut spécifier le nom de la colonne")
-    else:
-        return action_msg("Une seule UV doit être sélectionnée")
+    args = parse_args(
+        task_csv_for_upload,
+        argument('-g', '--grade-colname', required=True),
+        argument('-c', '--comment-colname', required=False)
+    )
+
+    planning, uv, info = get_unique_uv()
+    csv_fname = generated(f'{args.grade_colname}_ENT.csv', **info)
+    xls_merge = generated(task_xls_student_data_merge.target, **info)
+    deps = [generated(task_xls_student_data_merge.target, **info)]
+    return {
+        'actions': [(csv_for_upload, [csv_fname, xls_merge, args.grade_colname, args.comment_colname])],
+        'targets': [csv_fname],
+        'file_dep': deps
+    }
 
 
+@actionfailed_on_exception
 def task_xls_merge_final_grade():
     """Fichier Excel des notes finales attribuées
 
@@ -90,6 +92,7 @@ manuelle."""
             df = df.loc[~df.Note.isnull()]
             df['Correcteur médian'] = sheet
             dfs.append(df)
+
         # Concaténation de tous les devoirs qui ont une note
         df = pd.concat(dfs, axis=0)
 
@@ -110,60 +113,38 @@ manuelle."""
         # dff = df.groupby(['Nom', 'Prénom'], group_keys=False).apply(max_grade)
         # dff.to_excel(xls_grades, index=False)
 
-    uvs = list(selected_uv())
-    if len(uvs) == 1:
-        pl, uv, info = uvs[0]
-        exam = get_var('exam')
-        if exam:
-            xls_sheets = documents(f'{exam}.xlsx', **info)
-            xls_grades = documents(f'{exam}_notes.xlsx', **info)
+    args = parse_args(
+        task_xls_merge_final_grade,
+        argument('-e', '--exam', required=True),
+    )
 
-            return {
-                'actions': [(xls_merge_final_grade, [xls_sheets, xls_grades])],
-                'targets': [xls_grades],
-                'file_dep': [xls_sheets],
-                'verbosity': 2
-            }
-        else:
-            return action_msg("Il faut spécifier le nom de l'examen")
-    else:
-        return action_msg("Une seule UV doit être sélectionnée")
+    planning, uv, info = get_unique_uv()
+    xls_sheets = documents(f'{args.exam}.xlsx', **info)
+    xls_grades = documents(f'{args.exam}_notes.xlsx', **info)
+    deps = [xls_sheets]
+    return {
+        'actions': [(xls_merge_final_grade, [xls_sheets, xls_grades])],
+        'targets': [xls_grades],
+        'file_dep': deps,
+    }
 
 
 def task_xls_grades_sheet():
     """Génère un fichier Excel pour faciliter la correction des examens/projets/jury"""
 
+    @taskfailed_on_exception
     def xls_grades_sheet(data_file, docs):
         cmd_args = sys.argv[2:] + ['-o', docs, '-d', data_file]
-        try:
-            run(cmd_args)
-        except Exception as e:
-            return TaskFailed(e.args)
+        run(cmd_args)
 
-    uvs = list(selected_uv())
-    if len(uvs) == 1:
-        pl, uv, info = uvs[0]
-        data_file = generated(task_xls_student_data_merge.target, **info)
-        docs = documents("", **info)
-
-        return {
-            'actions': [(xls_grades_sheet, [data_file, docs])],
-            'file_dep': [data_file] if data_file else [],
-            'params': ([{'name': arg,
-                         'long': arg,
-                         'default': 'dummy'} for arg in ['type', 'name', 'uv', 'planning', 'data', 'output-file', 'struct', 'group', 'config', 'insts']] +
-                       [{'name': arg,
-                         'short': arg,
-                         'default': 'dummy'} for arg in ['d', 'o', 's', 'g', 'c', 'i']] +
-                       [{'name': arg,
-                         'short': arg,
-                         'type': bool,
-                         'default': 'dummy'} for arg in ['h']]),
-            'verbosity': 2,
-            'uptodate': [False]
-        }
-    else:
-        return action_msg("Une seule UV doit être sélectionnée")
+    planning, uv, info = get_unique_uv()
+    data_file = generated(task_xls_student_data_merge.target, **info)
+    docs = documents("", **info)
+    deps = [data_file]
+    return {
+        'actions': [(xls_grades_sheet, [data_file, docs])],
+        'file_dep': deps,
+    }
 
 
 def task_yaml_QCM():
@@ -183,21 +164,18 @@ def task_yaml_QCM():
             with open(yaml_fname(), 'w') as fd:
                 yaml.dump(rec, fd, default_flow_style=False)
 
-    uvs = list(selected_uv())
-    if len(uvs) == 1:
-        planning, uv, info = uvs[0]
-        xls_merge = generated(task_xls_student_data_merge.target, **info)
-        yaml_fname = generated('QCM.yaml', **info)
-        return {
-            'actions': [(yaml_QCM, [yaml_fname, xls_merge])],
-            'targets': [yaml_fname],
-            'file_dep': [xls_merge],
-            'verbosity': 2
-        }
-    else:
-        return action_msg("Une seule UV doit être sélectionnée")
+    planning, uv, info = get_unique_uv()
+    xls_merge = generated(task_xls_student_data_merge.target, **info)
+    yaml_fname = generated('QCM.yaml', **info)
+    deps = [xls_merge]
+    return {
+        'actions': [(yaml_QCM, [yaml_fname, xls_merge])],
+        'targets': [yaml_fname],
+        'file_dep': deps,
+    }
 
 
+@actionfailed_on_exception
 def task_xls_assignment_grade():
     """Création d'un fichier Excel pour remplissage des notes par les intervenants"""
 
@@ -217,21 +195,18 @@ def task_xls_assignment_grade():
                 df.to_excel(writer, sheet_name=inst, index=False)
             writer.save()
 
-    uvs = list(selected_uv())
-    if len(uvs) == 1:
-        exam = get_var('exam')
-        if exam:
-            planning, uv, info = uvs[0]
-            xls_merge = generated(task_xls_student_data_merge.target, **info)
-            inst_uv = documents(task_xls_affectation.target, **info)
-            target = generated(f'{exam}.xlsx', **info)
-            return {
-                'file_dep': [xls_merge, inst_uv],
-                'targets': [target],
-                'actions': [(xls_assignment_grade, [inst_uv, xls_merge, target])],
-                'verbosity': 2
-            }
-        else:
-            return action_msg("Il faut spécifier le nom de l'examen")
-    else:
-        return action_msg("Une seule UV doit être sélectionnée")
+    args = parse_args(
+        task_xls_assignment_grade,
+        argument('-e', '--exam', required=True),
+    )
+
+    planning, uv, info = get_unique_uv()
+    xls_merge = generated(task_xls_student_data_merge.target, **info)
+    inst_uv = documents(task_xls_affectation.target, **info)
+    target = generated(f'{args.exam}.xlsx', **info)
+
+    return {
+        'actions': [(xls_assignment_grade, [inst_uv, xls_merge, target])],
+        'file_dep': [xls_merge, inst_uv],
+        'targets': [target],
+    }

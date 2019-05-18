@@ -2,14 +2,62 @@ import os
 import sys
 import re
 import time
+import argparse
 from datetime import datetime, timedelta
 import numpy as np
 import pandas as pd
 from icalendar import Event, Calendar
 import latex
 import jinja2
+from functools import wraps
+from types import SimpleNamespace, GeneratorType
 
 from .config import settings
+
+
+def actionfailed_on_exception(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            ret = func(*args, **kwargs)
+            if isinstance(ret, GeneratorType):
+                ret = (t for t in list(ret))
+            return ret
+        except Exception as e:
+            tf = TaskFailed(e.args)
+            action = {
+                'actions': [lambda: tf],
+            }
+            return action
+    return wrapper
+
+
+def taskfailed_on_exception(func):
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            return TaskFailed(e.args)
+    return wrapper
+
+
+def parse_args(task, *args):
+    name = task.__name__.split("_", maxsplit=1)[1]
+
+    parser = argparse.ArgumentParser(description=task.__doc__)
+    for arg in args:
+        parser.add_argument(*arg.args, **arg.kwargs)
+
+    if sys.argv[1] == name:
+        argv = sys.argv[2:]
+        args = parser.parse_args(argv)
+    else:
+        return None
+    return args
+
+
+def argument(*args, **kwargs):
+    return SimpleNamespace(args=args, kwargs=kwargs)
 
 
 def selected_uv(all=False):
@@ -25,32 +73,33 @@ def selected_uv(all=False):
                 yield planning, uv, {'planning': planning, 'uv': uv}
 
 
+def get_unique_uv():
+    uvs = list(selected_uv())
+    if len(uvs) != 1:
+        uvs = [uv for _, uv, _ in uvs]
+        raise Exception(f"Une seule UV doit être sélectionnée. Les UVs sélectionnées sont: {', '.join(uvs)}")
+    return uvs[0]
+
+
 def effify(non_f_str: str, locals=None):
     return eval(f'f"""{non_f_str}"""', None, locals)
 
 
-def common_doc(template, **info):
-    fn = effify(template, **info)
-    dn = effify(settings.COMMON_DOC, **info)
-    return os.path.join(dn, fn)
-
-
-def generated(template, **info):
+def documents(fn, **info):
     if 'uv' in info or 'ue' in info:
-        dn = os.path.join(settings.GENERATED, template)
+        uv = info.get('uv', info.get('ue'))
+        return os.path.join(settings.BASE_DIR, uv, 'documents', fn)
     else:
-        dn = os.path.join(settings.COMMON_DOC, template)
-
-    return effify(dn, locals=info)
+        return os.path.join(settings.BASE_DIR, 'documents', fn)
 
 
-def documents(template, **info):
+def generated(fn, **info):
     if 'uv' in info or 'ue' in info:
-        dn = os.path.join(settings.DOCUMENTS, template)
+        uv = info.get('uv', info.get('ue'))
+        return os.path.join(settings.BASE_DIR, uv, 'generated', fn)
     else:
-        dn = os.path.join(settings.COMMON_DOC, template)
+        return os.path.join(settings.BASE_DIR, 'generated', fn)
 
-    return effify(dn, locals=info)
 
 def fast(func):
     if '--quiet' in sys.argv:

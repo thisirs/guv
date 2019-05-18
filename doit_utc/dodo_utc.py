@@ -16,7 +16,6 @@ from .config import settings
 from .utils import (
     Output,
     add_templates,
-    common_doc,
     documents,
     generated,
     selected_uv,
@@ -121,9 +120,9 @@ def task_utc_uv_list_to_csv():
         with Output(target) as target:
             df.to_csv(target(), index=False)
 
-    uv_list_filename = common_doc(task_UTC_UV_list.target)
-    ue_list_filename = common_doc('UTC_UE_list.xlsx')
-    target = common_doc(task_utc_uv_list_to_csv.target)
+    uv_list_filename = documents(task_UTC_UV_list.target)
+    ue_list_filename = documents('UTC_UE_list.xlsx')
+    target = documents(task_utc_uv_list_to_csv.target)
 
     deps = [uv_list_filename]
     if os.path.exists(ue_list_filename):
@@ -140,7 +139,7 @@ def task_utc_uv_list_to_csv():
 
 @add_templates(target='creneaux-UV-prov_P19.pdf')
 def task_UTC_UV_list():
-    doc = common_doc(task_UTC_UV_list.target)
+    doc = documents(task_UTC_UV_list.target)
 
     def UTC_UV_list(doc):
         if not os.path.exists(doc):
