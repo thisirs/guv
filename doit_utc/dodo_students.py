@@ -327,9 +327,7 @@ def task_csv_binomes():
                     return False
 
                 # 2 GB == catastrophe
-                if re.search("^GB", row1["Spécialité 1"]) and re.search(
-                    "^GB", row2["Spécialité 1"]
-                ):
+                if row1["Branche"] == 'GB' and row2["Branche"] == 'GB':
                     return False
 
             # Binomes précédents
