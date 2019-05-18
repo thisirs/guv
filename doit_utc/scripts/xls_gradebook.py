@@ -834,8 +834,8 @@ WRITERS = [
 ]
 
 
-def run(argv=sys.argv[1:]):
-    parser = argparse.ArgumentParser()
+def run(argv=sys.argv[1:], prog=os.path.basename(__file__)):
+    parser = argparse.ArgumentParser(prog=prog)
     subparsers = parser.add_subparsers(dest="sub_command")
     name_to_writer = {}
     for type in WRITERS:
