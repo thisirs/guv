@@ -103,14 +103,12 @@ class GradeSheetWriter:
         # Setting source of grades
         if args.data_file:
             if os.path.isdir(args.data_file):
-                if args.planning is None or args.uv is None:
-                    raise Exception('Need uv and planning')
-                fn = f'{args.planning}_{args.uv}_student_data_merge.xlsx'
+                fn = 'student_data_merge.xlsx'
                 self.data_file = os.path.join(args.data_file, fn)
             else:
                 self.data_file = args.data_file
         else:
-            self.data_file = f'{args.planning}_{args.uv}_student_data_merge.xlsx'
+            self.data_file = 'student_data_merge.xlsx'
 
         # Reading source of grades
         if not os.path.exists(self.data_file):
