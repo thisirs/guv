@@ -837,10 +837,16 @@ WRITERS = [
 def run(argv=sys.argv[1:]):
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="sub_command")
+    name_to_writer = {}
     for type in WRITERS:
+        name_to_writer[type.name] = type
         base_parser = type.get_parser()
         subparsers.add_parser(type.name, add_help=False, parents=[base_parser])
     args = parser.parse_args(argv)
+
+    writer_class = name_to_writer[args.sub_command]
+    writer = writer_class(args)
+    writer.write()
 
 
 if __name__ == '__main__':
