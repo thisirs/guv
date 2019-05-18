@@ -26,4 +26,4 @@ def main():
         del sys.argv[1]
         sys.exit(DoitMain(ModuleTaskLoader(globals())).run(sys.argv[1:]))
     else:
-        sys.exit(DoitMain(ModuleTaskLoader(globals())).run([sys.argv[1]]))
+        sys.exit(DoitMain(ModuleTaskLoader(globals())).run(sys.argv[1:2]))
