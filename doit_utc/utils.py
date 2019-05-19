@@ -97,15 +97,6 @@ def generated(fn, **info):
         return os.path.join(settings.BASE_DIR, 'generated', fn)
 
 
-def fast(func):
-    if '--quiet' in sys.argv:
-        def fastfunc():
-            pass
-        return fastfunc
-    else:
-        return func
-
-
 def add_templates(**templates):
     def decorator(func):
         for key, value in templates.items():
