@@ -510,15 +510,15 @@ def task_pdf_trombinoscope():
             return hash_md5.hexdigest()
 
         async def download_session(loop):
-            os.makedirs(generated("images"), exist_ok=True)
+            os.makedirs(documents("images"), exist_ok=True)
             async with aiohttp.ClientSession(loop=loop) as session:
                 md5_inconnu = md5(
                     os.path.join(os.path.dirname(__file__), "images/inconnu.jpg")
                 )
                 for login in df.Login:
-                    md5_curr = md5(generated(f"images/{login}.jpg"))
+                    md5_curr = md5(documents(f"images/{login}.jpg"))
                     if (
-                        not os.path.exists(generated(f"images/{login}.jpg"))
+                        not os.path.exists(documents(f"images/{login}.jpg"))
                         or md5_curr == md5_inconnu
                     ):
                         await download_image(session, login)
