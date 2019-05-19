@@ -81,10 +81,6 @@ def get_unique_uv():
     return uvs[0]
 
 
-def effify(non_f_str: str, locals=None):
-    return eval(f'f"""{non_f_str}"""', None, locals)
-
-
 def documents(fn, **info):
     if 'uv' in info or 'ue' in info:
         uv = info.get('uv', info.get('ue'))
