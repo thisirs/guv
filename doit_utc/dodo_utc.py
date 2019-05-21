@@ -18,12 +18,12 @@ from .utils import (
     documents,
     generated,
     selected_uv,
-    action_msg,
     create_cal_from_dataframe,
     compute_slots,
     actionfailed_on_exception,
     parse_args,
     argument,
+    get_unique_uv,
     DATE_FORMAT
 )
 
@@ -357,16 +357,11 @@ def task_json_restriction():
             with open(target(), 'w') as fd:
                 json.dump(moodle_date, fd, indent=4)
 
+    planning, uv, info = get_unique_uv()
+    target = generated('moodle_date.json', **info)
     dep = generated(task_csv_all_courses.target)
 
-    uvs = list(selected_uv())
-    if len(uvs) == 1:
-        planning, uv, info = uvs[0]
-        target = generated('moodle_date.json', **info)
-        return {
-            'actions': [(restriction_list, [uv, dep, target])],
-            'file_dep': [dep],
-            'verbosity': 2
-        }
-    else:
-        return action_msg("Une seule UV doit être sélectionnée")
+    return {
+        'actions': [(restriction_list, [uv, dep, target])],
+        'file_dep': [dep],
+    }
