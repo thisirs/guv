@@ -597,9 +597,13 @@ def task_pdf_trombinoscope():
         # with Output(fn) as target0:
         #     pdf.save_to(target0())
         with Output(target) as target0:
-            with zipfile.ZipFile(target0(), "w") as z:
-                for filepath in glob.glob(os.path.join(temp_dir, "*.pdf")):
-                    z.write(filepath, os.path.basename(filepath))
+            files = glob.glob(os.path.join(temp_dir, "*.pdf"))
+            if len(files) == 1:
+                shutil.move(files[0], target0())
+            else:
+                with zipfile.ZipFile(target0(), "w") as z:
+                    for filepath in files:
+                        z.write(filepath, os.path.basename(filepath))
 
     args = parse_args(
         task_pdf_trombinoscope,
@@ -609,10 +613,16 @@ def task_pdf_trombinoscope():
 
     for planning, uv, info in selected_uv():
         dep = generated(task_xls_student_data_merge.target, **info)
-        if args.subgroup is not None:
-            target = generated(f"trombi_{args.group}_{args.subgroup}.zip", **info)
+        if args.group == 'all':
+            if args.subgroup is not None:
+                target = generated(f"trombi_all_{args.subgroup}.pdf", **info)
+            else:
+                target = generated(f"trombi_all.pdf", **info)
         else:
-            target = generated(f"trombi_{args.group}.zip", **info)
+            if args.subgroup is not None:
+                target = generated(f"trombi_{args.group}_{args.subgroup}.zip", **info)
+            else:
+                target = generated(f"trombi_{args.group}.zip", **info)
 
         yield {
             "name": f"{planning}_{uv}",
