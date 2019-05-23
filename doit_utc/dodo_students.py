@@ -780,7 +780,7 @@ def task_attendance_sheet_room():
                         print("Liste des salles: \n%s" % groupby)
                         break
                     else:
-                        raise Exception("Pas de salles")
+                        return TaskFailed("Il faut au moins une salle")
             elif re.fullmatch("[0-9]+", num):
                 groupby[room] = int(num)
 
@@ -871,7 +871,7 @@ def task_attendance_sheet():
                         print("Liste des salles: \n%s" % groupby)
                         break
                     else:
-                        raise Exception("Pas de salles")
+                        return TaskFailed("Il faut au moins une salle")
             elif re.fullmatch("[0-9]+", num):
                 groupby[room] = int(num)
 
