@@ -14,7 +14,8 @@ from .utils import (
     actionfailed_on_exception,
     get_unique_uv,
     parse_args,
-    argument
+    argument,
+    check_columns
 )
 from .dodo_students import task_xls_student_data_merge
 from .dodo_instructors import task_xls_affectation
@@ -31,16 +32,14 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
 `comment_colname' permet d'ajouter des commentaires.
     """
 
+    @taskfailed_on_exception
     def csv_for_upload(csv_fname, xls_merge, grade_colname, comment_colname):
         if grade_colname is None:
             return TaskFailed('Missing grade_colname')
 
         df = pd.read_excel(xls_merge)
 
-        if grade_colname not in df.columns:
-            return TaskFailed(
-                f"Pas de colonne `{grade_colname}'; les colonnes sont : {', '.join(df.columns)}"
-            )
+        check_columns(df, grade_colname, file=xls_merge)
 
         cols = {
             'Nom': df.Nom,
@@ -50,10 +49,7 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
         }
         col_names = ['Nom', 'Prénom', 'Login', 'Note']
         if comment_colname is not None:
-            if comment_colname not in df.columns:
-                return TaskFailed(
-                    f"Pas de colonne `{comment_colname}'; les colonnes sont : {', '.join(df.columns)}"
-                )
+            check_columns(df, comment_colname, file=xls_merge)
             col_names.append('Commentaire')
             cols['Commentaire'] = np.where(df[comment_colname].isnull(),
                                            np.nan,

@@ -32,6 +32,8 @@ from .utils import (
     parse_args,
     get_unique_uv,
     actionfailed_on_exception,
+    taskfailed_on_exception,
+    check_columns,
     URL,
 )
 from .scripts.parse_utc_list import parse_UTC_listing
@@ -230,6 +232,7 @@ def task_xls_student_data_merge():
 def task_csv_exam_groups():
     """Fichier csv des demi-groupe de TP pour le passage des examens de TP."""
 
+    @taskfailed_on_exception
     def csv_exam_groups(target, target_moodle, xls_merge):
         df = pd.read_excel(xls_merge)
 
@@ -245,10 +248,7 @@ def task_csv_exam_groups():
             dff["TPE"] = pd.concat([sg1, sg2])
             return dff
 
-        if "TP" not in df.columns:
-            return TaskFailed(
-                f"Pas de colonne `TP'; les colonnes sont : {', '.join(df.columns)}"
-            )
+        check_columns(df, "TP", file=xls_merge)
 
         dff = df.groupby("TP", group_keys=False).apply(exam_split)
         dff = dff[["Adresse de courriel", "TPE"]]
@@ -276,12 +276,11 @@ def task_csv_exam_groups():
 def task_csv_groups():
     """Fichiers csv des groupes de Cours/TD/TP pour Moodle"""
 
+    @taskfailed_on_exception
     def csv_groups(target, xls_merge, ctype):
         df = pd.read_excel(xls_merge)
-        if ctype not in df.columns:
-            return TaskFailed(
-                f"Pas de colonne `{ctype}'; les colonnes sont : {', '.join(df.columns)}"
-            )
+
+        check_columns(df, ctype, file=xls_merge)
         dff = df[["Courriel", ctype]]
 
         with Output(target) as target:
@@ -425,10 +424,7 @@ def task_csv_binomes():
 
             return gb
 
-        if ctype not in df.columns:
-            return TaskFailed(
-                f"Pas de colonne `{ctype}'; les colonnes sont : {', '.join(df.columns)}"
-            )
+        check_columns(df, ctype, file=xls_merge)
 
         gdf = df.groupby(ctype)
 
@@ -488,6 +484,7 @@ def task_csv_binomes():
 def task_pdf_trombinoscope():
     """Fichier PDF des trombinoscopes par groupes et/ou sous-groupes"""
 
+    @taskfailed_on_exception
     def pdf_trombinoscope(xls_merge, target, groupby, subgroupby, width):
         async def download_image(session, login):
             url = URL + login
@@ -544,12 +541,13 @@ def task_pdf_trombinoscope():
         tmpl = latex_jinja_env.get_template("trombinoscope_template_2.tex.jinja2")
 
         # On vérifie que GROUPBY et SUBGROUPBY sont licites
-        if groupby != "all" and groupby not in df.columns:
-            return TaskFailed(f"No column `{groupby}' to group by")
         if groupby == "all":
             groupby = None
-        if subgroupby is not None and subgroupby not in df.columns:
-            return TaskFailed(f"No column `{subgroupby}' to subgroup by")
+        else:
+            check_columns(df, groupby, file=xls_merge)
+
+        if subgroupby is not None:
+            check_columns(df, subgroupby, file=xls_merge)
 
         # Diviser par groupe de TP/TP
         for title, group in df.groupby(groupby or (lambda x: "all")):
@@ -662,12 +660,10 @@ def pdf_attendance_list_render(df, template, **kwargs):
 def task_pdf_attendance_list():
     """Fichier pdf de fiches de présence"""
 
+    @taskfailed_on_exception
     def pdf_attendance_list(xls_merge, group, target):
         df = pd.read_excel(xls_merge)
-        if group not in df.columns:
-            return TaskFailed(
-                f"Pas de colonne `{group}'; les colonnes sont : {', '.join(df.columns)}"
-            )
+        check_columns(df, group, file=xls_merge)
 
         template = "attendance_list.tex.jinja2"
 
@@ -730,15 +726,14 @@ def pdf_attendance_full_render(df, template, **kwargs):
 def task_pdf_attendance_full():
     """Feuilles de présence pour toutes les séances"""
 
+    @taskfailed_on_exception
     def pdf_attendance_full(xls_merge, target, **kwargs):
         df = pd.read_excel(xls_merge)
         template = "attendance_name_full.tex.jinja2"
         pdfs = []
         ctype = kwargs["ctype"]
-        if ctype not in df.columns:
-            return TaskFailed(
-                f"Pas de colonne `{ctype}'; les colonnes sont : {', '.join(df.columns)}"
-            )
+
+        check_columns(df, ctype, file=xls_merge)
         for gn, group in df.groupby(ctype):
             group = group.sort_values(["Nom", "Prénom"])
             pdf = pdf_attendance_full_render(group, template, group=gn, **kwargs)

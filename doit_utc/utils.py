@@ -41,6 +41,17 @@ def taskfailed_on_exception(func):
     return wrapper
 
 
+def check_columns(dataframe, columns, **kwargs):
+    if isinstance(columns, str):
+        columns = [columns]
+    for c in columns:
+        if c not in dataframe.columns:
+            if 'file' in kwargs:
+                raise Exception(f"Pas de colonne `{c}' dans le dataframe issu du fichier {kwargs['file']}")
+            else:
+                raise Exception(f"Pas de colonne `{c}' dans le dataframe")
+
+
 def parse_args(task, *args):
     name = task.__name__.split("_", maxsplit=1)[1]
 
@@ -133,9 +144,7 @@ def aggregate(left_on, right_on, preprossessing=None, sanitizer=None, subset=Non
     def aggregate0(df, path):
         nonlocal left_on, right_on, sanitizer
 
-        if left_on not in df.columns:
-            s = f"Pas de colonne `{left_on}'; les colonnes sont : {', '.join(df.columns)}"
-            raise Exception(s)
+        check_columns(df, left_on)
 
         if read_method is None:
             if path.endswith('.csv'):
@@ -150,10 +159,7 @@ def aggregate(left_on, right_on, preprossessing=None, sanitizer=None, subset=Non
         if preprossessing is not None:
             dff = preprossessing(dff)
 
-        if right_on not in dff.columns:
-            columns = ", ".join(['_'.join(sub_cols) for sub_cols in dff.columns])
-            s = f"Pas de colonne `{right_on}'; les colonnes sont : {columns}"
-            raise Exception(s)
+        check_columns(dff, right_on)
 
         if subset is not None:
             dff = dff[list(set([right_on] + subset))]
