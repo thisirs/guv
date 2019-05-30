@@ -105,10 +105,38 @@ def add_templates(**templates):
     return decorator
 
 
-def aggregate(left_on, right_on, subset=None, drop=None, rename=None, read_method=None, kw_read={}):
-    def agregate0(df, path):
+def hexxor(a, b):  # xor two hex strings of the same length
+    return "".join(["%x" % (int(x, 16) ^ int(y, 16)) for (x, y) in zip(a, b)])
+
+
+def md5(fname):
+    hash_md5 = hashlib.md5()
+    hash_md5.update(fname.encode('utf8'))
+    return hash_md5.hexdigest()
+
+
+def hash_rot_md5(a):
+    def substring():
+        b = a + a
+        for i in range(len(a)):
+            yield b[i : (i + len(a))]
+
+    s0 = "0" * len(a)
+    s0 = md5(s0)
+    for s in substring():
+        s0 = hexxor(s0, md5(s))
+
+    return s0
+
+
+def aggregate(left_on, right_on, preprossessing=None, sanitizer=None, subset=None, drop=None, rename=None, read_method=None, kw_read={}):
+    def aggregate0(df, path):
+        nonlocal left_on, right_on, sanitizer
+
         if left_on not in df.columns:
-            raise Exception("Pas de colonne %s dans le dataframe", left_on)
+            s = f"Pas de colonne `{left_on}'; les colonnes sont : {', '.join(df.columns)}"
+            raise Exception(s)
+
         if read_method is None:
             if path.endswith('.csv'):
                 dff = pd.read_csv(path, **kw_read)
@@ -119,23 +147,57 @@ def aggregate(left_on, right_on, subset=None, drop=None, rename=None, read_metho
         else:
             dff = read_method(path, **kw_read)
 
+        if preprossessing is not None:
+            dff = preprossessing(dff)
+
+        if right_on not in dff.columns:
+            columns = ", ".join(['_'.join(sub_cols) for sub_cols in dff.columns])
+            s = f"Pas de colonne `{right_on}'; les colonnes sont : {columns}"
+            raise Exception(s)
+
         if subset is not None:
             dff = dff[list(set([right_on] + subset))]
+
         if drop is not None:
             if right_on in drop:
                 raise Exception('On enlève pas la clé')
             dff = dff.drop(drop, axis=1, errors='ignore')
+
         if rename is not None:
             if right_on in rename:
                 raise Exception('Pas de renommage de la clé possible')
             dff = dff.rename(columns=rename)
-        if right_on not in dff.columns:
-            raise Exception("Pas de colonne %s dans le dataframe", right_on)
-        df = df.merge(dff, left_on=left_on, right_on=right_on, suffixes=('', '_y'))
-        drop_cols = [right_on + '_y']
+
+        drop_cols = []
+        if sanitizer is not None:
+            if sanitizer == "slug_rot":
+                def slug_rot_sanitizer(s):
+                    s0 = unidecode.unidecode(s).lower()
+                    s0 = ''.join(s0.split())
+                    return hash_rot_md5(s0)
+                sanitizer = slug_rot_sanitizer
+
+            col_right_on = df[right_on]
+            col_right_on_sanitized = col_right_on.apply(sanitizer)
+            right_on_sanitized = right_on + "_sanitized"
+            df[right_on_sanitized] = col_right_on_sanitized
+
+            col_left_on = dff[left_on]
+            col_left_on_sanitized = col_left_on.apply(sanitizer)
+            left_on_sanitized = left_on + "_sanitized"
+            dff[left_on_sanitized] = col_left_on_sanitized
+
+            drop_cols += [left_on_sanitized, right_on_sanitized]
+            left_on = left_on_sanitized
+            right_on = right_on_sanitized
+        else:
+            drop_cols += [right_on + '_y']
+
+        df = df.merge(dff, left_on=left_on, right_on=right_on, how='left', suffixes=('', '_y'))
         df = df.drop(drop_cols, axis=1, errors='ignore')
         return df
-    return agregate0
+    
+    return aggregate0
 
 
 def skip_range(d1, d2):
