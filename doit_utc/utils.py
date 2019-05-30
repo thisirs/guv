@@ -3,6 +3,8 @@ import sys
 import re
 import time
 import argparse
+import hashlib
+import unidecode
 from datetime import datetime, timedelta
 import numpy as np
 import pandas as pd
