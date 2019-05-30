@@ -894,7 +894,7 @@ def task_attendance_sheet():
             pdf.save_to(target0)
 
     args = parse_args(
-        task_pdf_attendance_full,
+        task_attendance_sheet,
         argument('-e', '--exam', required=True),
     )
 
