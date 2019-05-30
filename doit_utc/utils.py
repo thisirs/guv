@@ -57,7 +57,7 @@ def check_columns(dataframe, columns, **kwargs):
 def parse_args(task, *args):
     name = task.__name__.split("_", maxsplit=1)[1]
 
-    parser = argparse.ArgumentParser(description=task.__doc__, prog=f"doit {name}")
+    parser = argparse.ArgumentParser(description=task.__doc__, prog=f"doit-utc {name}")
     for arg in args:
         parser.add_argument(*arg.args, **arg.kwargs)
 
