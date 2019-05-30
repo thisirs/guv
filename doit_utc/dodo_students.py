@@ -179,9 +179,9 @@ def task_xls_student_data_merge():
     def merge_student_data(source, target, data):
         df = pd.read_excel(source)
 
-        for path, agregater in data.items():
+        for path, aggregater in data.items():
             print("Aggregating %s" % path)
-            df = agregater(df, path)
+            df = aggregater(df, path)
 
         dff = df.sort_values(["Nom", "Prénom"])
 
@@ -213,10 +213,10 @@ def task_xls_student_data_merge():
         deps = [source]
         data_exist = {}
 
-        for path, agregater in settings.AGGREGATE_DOCUMENTS.items():
+        for path, aggregater in settings.AGGREGATE_DOCUMENTS.items():
             if os.path.exists(path):
                 deps.append(path)
-                data_exist[path] = agregater
+                data_exist[path] = aggregater
 
         yield {
             "name": f"{planning}_{uv}",
