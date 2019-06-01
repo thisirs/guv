@@ -274,7 +274,9 @@ def task_csv_exam_groups():
 
 
 def task_csv_groups():
-    """Fichiers csv des groupes de Cours/TD/TP pour Moodle"""
+    """Fichiers csv des groupes de Cours/TD/TP pour Moodle
+
+Crée des fichiers csv pour chaque UV sélectionnées"""
 
     @taskfailed_on_exception
     def csv_groups(target, xls_merge, ctype):

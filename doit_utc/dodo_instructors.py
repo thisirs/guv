@@ -31,6 +31,8 @@ from .scripts.excel_hours import create_excel_file
 
 @add_templates(target='intervenants.xlsx')
 def task_xls_instructors():
+    """Fichier de détails global des intervenants toutes UV confondues"""
+
     doc = documents(task_xls_instructors.target)
 
     def xls_instructors(doc):
@@ -89,7 +91,11 @@ def read_xls_details(fn):
 
 @add_templates(target='intervenants_details.xlsx')
 def task_xls_inst_details():
-    """Fichier Excel des intervenants par UV avec détails"""
+    """Fichier Excel des intervenants par UV avec détails
+
+Les détails sont pris dans le fichiers de détails global. Les
+affectations sont prises pour chaque UV.
+    """
 
     def xls_inst_details(inst_uv, inst_details, target):
         inst_uv = pd.read_excel(inst_uv)
@@ -337,10 +343,9 @@ def task_html_inst():
 
 @add_templates(target='calendrier.pdf')
 def task_cal_uv():
-    """Calendrier PDF global de l'UV.
+    """Calendrier PDF de la semaine globale des UV sélectionnées
 
-Crée le calendrier des Cours/TD/TP de toutes les UV listées dans
-SELECTED_UVS.
+Crée le calendrier des Cours/TD/TP pour chaque UV sélectionnées.
     """
 
     def create_cal_from_list(uv, uv_list_filename, target):
@@ -404,7 +409,11 @@ def task_cal_inst():
 
 @actionfailed_on_exception
 def task_ical_inst():
-    """Create iCal file for each instructor"""
+    """Fichier iCal de tous les créneaux des intervenants
+
+    Crée un fichier iCal de tous les créneaux de Cours/TP/TD du ou des
+    plannings renseignés pour les intervenants renseignés.
+    """
 
     def create_ical_inst(insts, plannings, csv):
         tables = [compute_slots(csv, ptype, empty_instructor=False) for ptype in plannings]
