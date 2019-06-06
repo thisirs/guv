@@ -144,7 +144,7 @@ def hash_rot_md5(a):
 
 def aggregate(left_on, right_on, preprossessing=None, sanitizer=None, subset=None, drop=None, rename=None, read_method=None, kw_read={}):
     def aggregate0(df, path):
-        nonlocal left_on, right_on, sanitizer
+        nonlocal sanitizer
 
         check_columns(df, left_on)
 
@@ -196,15 +196,29 @@ def aggregate(left_on, right_on, preprossessing=None, sanitizer=None, subset=Non
             dff[left_on_sanitized] = col_left_on_sanitized
 
             drop_cols += [left_on_sanitized, right_on_sanitized]
-            left_on = left_on_sanitized
-            right_on = right_on_sanitized
         else:
+            left_on_sanitized = left_on
+            right_on_sanitized = right_on
             drop_cols += [right_on + '_y']
 
-        df = df.merge(dff, left_on=left_on, right_on=right_on, how='left', suffixes=('', '_y'))
-        df = df.drop(drop_cols, axis=1, errors='ignore')
+        df = df.merge(dff, left_on=left_on_sanitized,
+                      right_on=right_on_sanitized,
+                      how='outer',
+                      suffixes=('', '_y'),
+                      indicator=True)
+
+        # Select like how='left'
+        df_left = df[df["_merge"].isin(['left_only', 'both'])]
+
+        df_ro = df[df["_merge"] == 'right_only']
+        for index, row in df_ro.iterrows():
+            print("WARNING:", row[right_on + '_y'])
+
+        drop_cols += ['_merge']
+
+        df = df_left.drop(drop_cols, axis=1, errors='ignore')
         return df
-    
+
     return aggregate0
 
 
