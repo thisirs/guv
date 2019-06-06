@@ -93,11 +93,15 @@ l'UTC."""
     def merge_student_data(target, **kw):
         if "extraction_ENT" in kw:
             df = pd.read_excel(kw["extraction_ENT"])
+
             # Split information in 2 columns
             df[["Branche", "Semestre"]] = df.pop('Spécialité 1').str.extract(
                 '(?P<Branche>[a-zA-Z]+) *(?P<Semestre>[0-9]+)',
                 expand=True
             )
+
+            # Drop unrelevant columns
+            df = df.drop(['Inscription', 'Spécialité 2', 'Résultat ECTS', 'UTC', 'Réussite', 'Statut'], axis=1)
 
             if "csv_moodle" in kw:
                 df = add_moodle_data(df, kw["csv_moodle"])

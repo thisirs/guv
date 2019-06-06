@@ -7,6 +7,7 @@ def add_moodle_data(df, fn):
     """Incorpore les données du fichier extrait de Moodle"""
 
     dfm = pd.read_csv(fn)
+    dfm = dfm.drop(['Institution', 'Département', 'Dernier téléchargement depuis ce cours'], axis=1)
 
     if 'Courriel' in df.columns:
         dfr = pd.merge(df, dfm,
