@@ -46,12 +46,17 @@ def taskfailed_on_exception(func):
 def check_columns(dataframe, columns, **kwargs):
     if isinstance(columns, str):
         columns = [columns]
-    for c in columns:
-        if c not in dataframe.columns:
-            if 'file' in kwargs:
-                raise Exception(f"Pas de colonne `{c}' dans le dataframe issu du fichier {kwargs['file']}")
-            else:
-                raise Exception(f"Pas de colonne `{c}' dans le dataframe")
+    missing_cols = [c for c in dataframe.columns if c not in dataframe.columns]
+
+    if missing_cols:
+        s = "s" if len(missing_cols) > 1 else ""
+        missing_cols = ", ".join(f"`{e}'" for e in missing_cols)
+        avail_cols = ", ".join(f"`{e}'" for e in dataframe.columns)
+        if 'file' in kwargs:
+            msg = f"Colonne{s} manquante{s}: {missing_cols} dans le dataframe issu du fichier {kwargs['file']}. Colonnes disponibles: {avail_cols}"
+        else:
+            msg = f"Colonne{s} manquante{s}: {missing_cols}. Colonnes disponibles: {avail_cols}"
+        raise Exception(msg)
 
 
 def parse_args(task, *args):
