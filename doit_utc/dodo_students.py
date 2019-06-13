@@ -286,16 +286,21 @@ Crée des fichiers csv pour chaque UV sélectionnées"""
     def csv_groups(target, xls_merge, ctype):
         df = pd.read_excel(xls_merge)
 
-        if ctype in df.columns:
-            dff = df[["Courriel", ctype]]
+        check_columns(df, ctype, file=task_xls_student_data_merge.target)
+        dff = df[["Courriel", ctype]]
 
-            with Output(target) as target:
-                dff.to_csv(target(), index=False, header=False)
+        with Output(target) as target:
+            dff.to_csv(target(), index=False, header=False)
+
+    args = parse_args(
+        task_csv_groups,
+        argument('-g', '--groups', nargs='*', default=["Cours", "TD", "TP"])
+    )
 
     for planning, uv, info in selected_uv():
         deps = [generated(task_xls_student_data_merge.target, **info)]
 
-        for ctype in ["Cours", "TD", "TP"]:
+        for ctype in args.groups:
             target = generated(f"{ctype}_group_moodle.csv", **info)
 
             yield {
