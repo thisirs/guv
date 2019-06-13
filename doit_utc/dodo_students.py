@@ -277,6 +277,7 @@ def task_csv_exam_groups():
         }
 
 
+@actionfailed_on_exception
 def task_csv_groups():
     """Fichiers csv des groupes de Cours/TD/TP pour Moodle
 
