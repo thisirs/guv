@@ -147,7 +147,7 @@ def hash_rot_md5(a):
     return s0
 
 
-def aggregate(left_on, right_on, preprossessing=None, sanitizer=None, subset=None, drop=None, rename=None, read_method=None, kw_read={}):
+def aggregate(left_on, right_on, preprossessing=None, postprocessing=None, sanitizer=None, subset=None, drop=None, rename=None, read_method=None, kw_read={}):
     def aggregate0(df, path):
         nonlocal sanitizer
 
@@ -222,6 +222,10 @@ def aggregate(left_on, right_on, preprossessing=None, sanitizer=None, subset=Non
         drop_cols += ['_merge']
 
         df = df_left.drop(drop_cols, axis=1, errors='ignore')
+
+        if postprocessing is not None:
+            df = postprocessing(df)
+
         return df
 
     return aggregate0
