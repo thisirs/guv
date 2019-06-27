@@ -651,14 +651,7 @@ class GradeSheetJuryWriter(GradeSheetWriter):
         cells = self.df[colname]
         first, last = cells.iloc[0], cells.iloc[-1]
 
-        if first.parent == self.wb.active:
-            return '{}:{}'.format(first.coordinate, last.coordinate)
-        else:
-            return "'{}'!{}:'{}'!{}".format(
-                first.parent.title,
-                first.coordinate,
-                first.parent.title,
-                last.coordinate)
+        return self.get_address_of_cell(first) + ":" + self.get_address_of_cell(last)
 
     def write(self, ref=None):
         # Write new gradesheet
