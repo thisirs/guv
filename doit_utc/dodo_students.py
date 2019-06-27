@@ -215,6 +215,9 @@ def task_xls_student_data_merge():
             utils.get_column_letter(max_column),
             max_row)
 
+        # On fige la première ligne
+        ws.freeze_panes = "A2"
+
         with Output(target) as target0:
             wb.save(target0())
 
