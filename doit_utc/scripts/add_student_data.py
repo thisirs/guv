@@ -245,3 +245,35 @@ def add_switches(df, fn, ctype):
 
     df = df.drop('fullname_slug', axis=1)
     return df
+
+
+def add_student_info(df, fn):
+    df['Info'] = ""
+
+    def slug(e):
+        return unidecode.unidecode(e.upper().strip())
+
+    fullnames = df['Prénom'] + ' ' + df['Nom']
+    fullnames = fullnames.apply(slug)
+    df['fullname_slug'] = fullnames
+
+    infos = open(fn, 'r').read()
+    if infos:
+        for chunk in re.split("^\\* *", infos, flags=re.MULTILINE):
+            if not chunk:
+                continue
+
+            etu, *text = chunk.split("\n", maxsplit=2)
+            text = "\n".join(text).strip("\n")
+            slugname = slug(etu)
+
+            res = df.loc[df.fullname_slug == slugname]
+            if len(res) == 0:
+                raise Exception('Pas de correspondance pour `{:s}`'.format(etu))
+            elif len(res) > 1:
+                raise Exception('Plusieurs correspondances pour `{:s}`'.format(etu))
+
+            df.loc[res.index[0], 'Info'] = text
+
+    df = df.drop('fullname_slug', axis=1)
+    return df

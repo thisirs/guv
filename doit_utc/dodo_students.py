@@ -42,6 +42,7 @@ from .scripts.add_student_data import (
     add_UTC_data,
     add_tiers_temps,
     add_switches,
+    add_student_info
 )
 
 
@@ -124,6 +125,9 @@ l'UTC."""
         if "TP_switches" in kw:
             df = add_switches(df, kw["TP_switches"], "TP")
 
+        if "info_étudiants" in kw:
+            df = add_student_info(df, kw["info_étudiants"])
+
         dff = df.sort_values(["Nom", "Prénom"])
 
         with Output(target) as target:
@@ -163,6 +167,11 @@ l'UTC."""
         if os.path.exists(TP_switches):
             kw["TP_switches"] = TP_switches
             deps.append(TP_switches)
+
+        info_etu = documents("info_étudiants.org", **info)
+        if os.path.exists(info_etu):
+            kw['info_étudiants'] = info_etu
+            deps.append(info_etu)
 
         target = generated(task_xls_student_data.target, **info)
 
