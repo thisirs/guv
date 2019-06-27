@@ -158,9 +158,9 @@ class GradeSheetWriter:
             else:
                 raise Exception("Unsupported type: {}".format(type))
 
-    @staticmethod
-    def get_parser():
-        parser = argparse.ArgumentParser()
+    @classmethod
+    def get_parser(cls):
+        parser = argparse.ArgumentParser(description=cls.__doc__, add_help=False)
         parser.add_argument('--name', dest='name', required=True)
         parser.add_argument('-d', '--data', dest='data_file')
         parser.add_argument('-o', '--output-file', dest='output_file')
@@ -280,8 +280,8 @@ questions structurées."""
         super(GradeSheetExamWriter, self).__init__(args)
         self.tree = self.read_structure(args.struct)
 
-    @staticmethod
-    def get_parser():
+    @classmethod
+    def get_parser(cls):
         parser = super(GradeSheetExamWriter, GradeSheetExamWriter).get_parser()
         parser.add_argument('-s', '--struct', required=True, dest='struct')
         return parser
@@ -383,8 +383,8 @@ class GradeSheetExamMultipleWriter(GradeSheetExamWriter):
 
         self.insts = [i for i in insts if select_inst(i)]
 
-    @staticmethod
-    def get_parser():
+    @classmethod
+    def get_parser(cls):
         parser = super(GradeSheetExamMultipleWriter, GradeSheetExamMultipleWriter).get_parser()
         parser.add_argument('-i', '--instructors', required=True, dest='insts')
         return parser
@@ -489,8 +489,8 @@ class GradeSheetSimpleGroup(GradeSheetSimpleWriter):
             self.name: 'cell'
         }
 
-    @staticmethod
-    def get_parser():
+    @classmethod
+    def get_parser(cls):
         parser = super(GradeSheetSimpleGroup, GradeSheetSimpleGroup).get_parser()
         parser.add_argument('-g', '--group', required=True, dest='group')
         return parser
@@ -544,8 +544,8 @@ class GradeSheetAssignmentWriter(GradeSheetExamWriter):
             self.name: 'cell'
         }
 
-    @staticmethod
-    def get_parser():
+    @classmethod
+    def get_parser(cls):
         parser = super(GradeSheetAssignmentWriter, GradeSheetAssignmentWriter).get_parser()
         parser.add_argument('-g', '--group', required=True, dest='group')
         return parser
@@ -606,8 +606,8 @@ class GradeSheetJuryWriter(GradeSheetWriter):
         columns['Note ECTS'] = 'cell'
         return columns
 
-    @staticmethod
-    def get_parser():
+    @classmethod
+    def get_parser(cls):
         parser = super(GradeSheetJuryWriter, GradeSheetJuryWriter).get_parser()
         parser.add_argument('-c', '--config', required=True, dest='config')
         return parser
