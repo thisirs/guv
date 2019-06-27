@@ -621,6 +621,10 @@ class GradeSheetJuryWriter(GradeSheetWriter):
             return list(yaml.load_all(stream))[0]
 
     def get_address_of_cell(self, cell, absolute=False, force=False, compat=False):
+        """Renvoie l'adresse d'un object Cell en prenant en compte la feuille
+        courante.
+        """
+
         parent = cell.parent
         current = self.wb.active
         if parent == current and not force:
@@ -633,12 +637,14 @@ class GradeSheetJuryWriter(GradeSheetWriter):
                 coordinate = absolute_coordinate(cell.coordinate)
             else:
                 coordinate = cell.coordinate
-            if compat:
+            if compat:          # GoogleSheet compatibility
                 return "INDIRECT(\"'{}'!{}\")".format(parent.title, coordinate)
             else:
                 return "'{}'!{}".format(parent.title, coordinate)
 
     def get_range_of_cells(self, colname):
+        "Renvoie la place de cellule de la colonne COLNAME."
+
         if colname not in self.df.columns:
             raise Exception('Unknown column name: {}'.format(colname))
 
