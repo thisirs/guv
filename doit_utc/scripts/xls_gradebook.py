@@ -764,9 +764,9 @@ class GradeSheetJuryWriter(GradeSheetWriter):
         range = self.get_range_of_cells('Note ECTS')
         for ects, color in zip('ABCDEF', [
                 '00FF00',
-                '58FF00',
                 'C2FF00',
-                'FFD300',
+                'F7FF00',
+                'FFC100',
                 'FF6900',
                 'FF0000'
         ]):
