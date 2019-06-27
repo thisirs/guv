@@ -97,6 +97,7 @@ def walk_tree(tree, depth=None, start_at=0):
 
 
 class GradeSheetWriter:
+    """Base class"""
     def __init__(self, args):
         # Store name of gradesheet
         if args.name:
@@ -152,7 +153,7 @@ class GradeSheetWriter:
                 self.df[name] = cells
             elif type == 'value':
                 if name not in self.data_df.columns:
-                    raise Exception('No data to copy from and type is data')
+                    raise Exception('No data to copy from and type is data', name, self.data_df.columns)
                 self.df[name] = self.data_df[name]
             else:
                 raise Exception("Unsupported type: {}".format(type))
