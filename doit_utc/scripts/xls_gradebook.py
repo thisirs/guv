@@ -586,6 +586,7 @@ class GradeSheetJuryWriter(GradeSheetWriter):
     name = "jury"
 
     def __init__(self, args):
+        self.config = self.parse_config(args.config)
         super(GradeSheetJuryWriter, self).__init__(args)
 
     def get_columns(self, **kwargs):
