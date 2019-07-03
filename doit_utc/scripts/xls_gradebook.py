@@ -229,7 +229,7 @@ questions structurées."""
                 raise Exception(f'Path to {structure} or {struct_path} not existing')
 
         with open(struct_path, "r") as stream:
-            return list(yaml.load_all(stream))[0]
+            return list(yaml.load_all(stream, Loader=yaml.SafeLoader))[0]
 
     def write_structure(self, upper_left):
         "Write structure at UPPER_LEFT and return lower right cell."
