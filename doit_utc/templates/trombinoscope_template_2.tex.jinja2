@@ -8,6 +8,8 @@
 \usepackage{geometry}
 \geometry{hmargin=1cm,vmargin=1cm}
 \usepackage{graphicx}
+\usepackage{hyperref}
+
 \pagestyle{empty}
 \begin{document}
 
@@ -28,8 +30,8 @@
     ((* for cell in row *))
     \begin{minipage}{.15\textwidth}
       \centering
-      ((( cell['lastname'] ))) \\
-      ((( cell['name'] )))
+      \href{((( cell['link'] | format(moodle_id=cell['moodle_id']) )))}{((( cell['lastname'] )))} \\
+      \href{((( cell['link'] | format(moodle_id=cell['moodle_id']) )))}{((( cell['name'] )))}
     \end{minipage}
     ((* if loop.last *))\\((* else *)) & ((* endif *))
     ((* endfor *))
