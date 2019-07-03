@@ -54,6 +54,9 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
             cols['Commentaire'] = np.where(df[comment_colname].isnull(),
                                            np.nan,
                                            'Corrigé par ' + df[comment_colname])
+        else:
+            col_names.append('Commentaire')
+            cols['Commentaire'] = ""
 
         df0 = pd.DataFrame(cols, columns=col_names)
         df0 = df0[col_names]
