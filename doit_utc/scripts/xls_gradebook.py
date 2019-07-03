@@ -98,6 +98,7 @@ def walk_tree(tree, depth=None, start_at=0):
 
 class GradeSheetWriter:
     """Base class"""
+
     def __init__(self, args):
         # Store name of gradesheet
         if args.name:
@@ -179,6 +180,8 @@ class GradeSheetWriter:
 
 
 class GradeSheetSimpleWriter(GradeSheetWriter):
+    """Feuille de notes simple sans structure."""
+
     name = 'simple'
 
     def write(self, ref=None):
@@ -458,6 +461,8 @@ class GradeSheetSimpleGroup(GradeSheetSimpleWriter):
 
 
 class GradeSheetAssignmentWriter(GradeSheetExamWriter):
+    """Feuille pour attribution d'une note par groupe.
+    """
 
     name = 'assignment'
 
@@ -512,6 +517,9 @@ class GradeSheetAssignmentWriter(GradeSheetExamWriter):
 
 
 class GradeSheetJuryWriter(GradeSheetWriter):
+    """Feuille Excel pour jury avec les notes, une colonne des notes
+    agrégées, des percentiles pour les notes ECTS.
+    """
 
     name = "jury"
 
@@ -548,11 +556,12 @@ class GradeSheetJuryWriter(GradeSheetWriter):
             raise Exception("Configuration file not found")
 
         with open(config, "r") as stream:
-            return list(yaml.load_all(stream))[0]
+            return list(yaml.load_all(stream, Loader=yaml.SafeLoader))[0]
 
     def get_address_of_cell(self, cell, absolute=False, force=False, compat=False):
-        """Renvoie l'adresse d'un object Cell en prenant en compte la feuille
-        courante.
+        """Renvoie l'adresse d'un objet Cell sous forme "A1" en prenant en
+        compte la feuille courante si la cellule se trouve sur une
+        autre feuille.
         """
 
         parent = cell.parent
@@ -573,7 +582,7 @@ class GradeSheetJuryWriter(GradeSheetWriter):
                 return "'{}'!{}".format(parent.title, coordinate)
 
     def get_range_of_cells(self, colname):
-        "Renvoie la place de cellule de la colonne COLNAME."
+        "Renvoie la plage de cellule de la colonne COLNAME sans l'en-tête."
 
         if colname not in self.df.columns:
             raise Exception('Unknown column name: {}'.format(colname))
