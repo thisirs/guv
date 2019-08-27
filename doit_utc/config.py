@@ -14,6 +14,8 @@ class Settings:
 
     def _setup(self):
         for settings_file in self.settings_files.split(","):
+            if not os.path.exists(settings_file):
+                continue
             module_name = os.path.splitext(os.path.basename(settings_file))[0]
             spec = importlib.util.spec_from_file_location(module_name, settings_file)
             module = importlib.util.module_from_spec(spec)
