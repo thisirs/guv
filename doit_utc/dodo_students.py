@@ -184,7 +184,9 @@ l'UTC."""
                 "verbosity": 2,
             }
         else:
-            yield action_msg("Pas de données étudiants", name=f"{planning}_{uv}")
+            f = generated(task_xls_student_data.target, **info, **{'local': True})
+            msg = f"Pas de données étudiants pour construire le fichier {f}"
+            yield action_msg(msg, name=f"{planning}_{uv}", targets=[target])
 
 
 @add_templates(target="student_data_merge.xlsx")
