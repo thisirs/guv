@@ -188,6 +188,7 @@ l'UTC."""
 
 
 @add_templates(target="student_data_merge.xlsx")
+@actionfailed_on_exception
 def task_xls_student_data_merge():
     """Ajoute toutes les autres informations étudiants"""
 
@@ -787,6 +788,7 @@ def task_pdf_attendance_full():
     }
 
 
+@actionfailed_on_exception
 def task_attendance_sheet_room():
     """Feuille de présence par taille des salles"""
 

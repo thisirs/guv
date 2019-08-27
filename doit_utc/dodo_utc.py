@@ -286,6 +286,7 @@ def task_html_table():
             }
 
 
+@actionfailed_on_exception
 def task_json_restriction():
     """Ficher json des restrictions d'accès des TP"""
 

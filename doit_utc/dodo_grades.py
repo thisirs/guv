@@ -138,6 +138,7 @@ manuelle."""
     }
 
 
+@actionfailed_on_exception
 def task_xls_grades_sheet():
     """Génère un fichier Excel pour faciliter la correction des examens/projets/jury"""
 
@@ -156,6 +157,7 @@ def task_xls_grades_sheet():
     }
 
 
+@actionfailed_on_exception
 def task_yaml_QCM():
     """Génère un fichier yaml prérempli pour noter un QCM"""
 
