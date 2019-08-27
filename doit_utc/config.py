@@ -36,7 +36,7 @@ class Settings:
         if name in self.__dict__:
             return self.__dict__[name]
         else:
-            raise AttributeError
+            raise AttributeError(f"Setting variable {name} not set in config.py file")
 
 
 settings = Settings()
