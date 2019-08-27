@@ -11,8 +11,11 @@ import pandas as pd
 from icalendar import Event, Calendar
 import latex
 import jinja2
+import textwrap
 from functools import wraps
 from types import SimpleNamespace, GeneratorType
+
+from doit.exceptions import TaskFailed
 
 from .config import settings
 
@@ -249,14 +252,20 @@ def skip_week(d1, weeks=1):
     return [d1 + timedelta(days=x) for x in range(7*weeks-1)]
 
 
-def action_msg(msg, name=None):
+def action_msg(obj, **kwargs):
+    if isinstance(obj, str):
+        msg = obj
+    else:
+        msg = obj.__doc__
+        msg = textwrap.fill(" ".join(msg.splitlines()[1:]).strip())
+
     action = {
-        'actions': [lambda: print(msg)],
+        'actions': [lambda: TaskFailed(msg)],
         'verbosity': 2,
         'uptodate': [False]
     }
-    if name:
-        action['name'] = name
+
+    action.update(**kwargs)
 
     return action
 
