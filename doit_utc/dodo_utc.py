@@ -18,7 +18,6 @@ from .utils import (
     documents,
     generated,
     selected_uv,
-    create_cal_from_dataframe,
     compute_slots,
     actionfailed_on_exception,
     parse_args,
