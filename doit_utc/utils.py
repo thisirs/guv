@@ -100,19 +100,29 @@ def get_unique_uv():
 
 
 def documents(fn, **info):
+    if "local" in info:
+        base_dir = os.path.basename(settings.BASE_DIR)
+    else:
+        base_dir = settings.BASE_DIR
+
     if 'uv' in info or 'ue' in info:
         uv = info.get('uv', info.get('ue'))
-        return os.path.join(settings.BASE_DIR, uv, 'documents', fn)
+        return os.path.join(base_dir, uv, 'documents', fn)
     else:
-        return os.path.join(settings.BASE_DIR, 'documents', fn)
+        return os.path.join(base_dir, 'documents', fn)
 
 
 def generated(fn, **info):
+    if "local" in info:
+        base_dir = ""
+    else:
+        base_dir = settings.BASE_DIR
+
     if 'uv' in info or 'ue' in info:
         uv = info.get('uv', info.get('ue'))
-        return os.path.join(settings.BASE_DIR, uv, 'generated', fn)
+        return os.path.join(base_dir, uv, 'generated', fn)
     else:
-        return os.path.join(settings.BASE_DIR, 'generated', fn)
+        return os.path.join(base_dir, 'generated', fn)
 
 
 def add_templates(**templates):
