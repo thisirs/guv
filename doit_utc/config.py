@@ -24,6 +24,9 @@ class Settings:
                     setting_value = getattr(module, setting)
                     setattr(self, setting, setting_value)
 
+    def __contains__(self, e):
+        return e in self.__dict__
+
     def __getattr__(self, name):
         if not self._loaded:
             self._setup()
