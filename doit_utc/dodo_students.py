@@ -226,24 +226,25 @@ def task_xls_student_data_merge():
         with Output(target) as target:
             dff.to_csv(target(), index=False)
 
-    for planning, uv, info in selected_uv():
-        source = generated(task_xls_student_data.target, **info)
-        target = generated(task_xls_student_data_merge.target, **info)
-        deps = [source]
-        data_exist = {}
+    planning, uv, info = get_unique_uv()
+    source = generated(task_xls_student_data.target, **info)
+    target = generated(task_xls_student_data_merge.target, **info)
+    deps = [source]
+    data_exist = {}
 
-        for path, aggregater in settings.AGGREGATE_DOCUMENTS.items():
-            if os.path.exists(path):
-                deps.append(path)
-                data_exist[path] = aggregater
+    docs = settings.AGGREGATE_DOCUMENTS if "AGGREGATE_DOCUMENTS" in settings else {}
 
-        yield {
-            "name": f"{planning}_{uv}",
-            "file_dep": deps,
-            "targets": [target],
-            "actions": [(merge_student_data, [source, target, data_exist])],
-            "verbosity": 2,
-        }
+    for path, aggregater in docs.items():
+        if os.path.exists(path):
+            deps.append(path)
+            data_exist[path] = aggregater
+
+    return {
+        "file_dep": deps,
+        "targets": [target],
+        "actions": [(merge_student_data, [source, target, data_exist])],
+        "verbosity": 2,
+    }
 
 
 def task_csv_exam_groups():
