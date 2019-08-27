@@ -23,6 +23,7 @@ from .utils import (
     parse_args,
     argument,
     get_unique_uv,
+    action_msg,
     DATE_FORMAT
 )
 
@@ -125,17 +126,25 @@ def task_utc_uv_list_to_csv():
     ue_list_filename = documents('UTC_UE_list.xlsx')
     target = documents(task_utc_uv_list_to_csv.target)
 
-    deps = [uv_list_filename]
+    deps = []
+    if os.path.exists(uv_list_filename):
+        deps.append(uv_list_filename)
     if os.path.exists(ue_list_filename):
         deps.append(ue_list_filename)
 
-    semester = settings.SEMESTER
-    return {
-        'file_dep': deps,
-        'targets': [target],
-        'actions': [(utc_uv_list_to_csv, [semester, uv_list_filename, ue_list_filename, target])],
-        'verbosity': 2
-    }
+    if deps:
+        semester = settings.SEMESTER
+        return {
+            'file_dep': deps,
+            'targets': [target],
+            'actions': [(utc_uv_list_to_csv, [semester, uv_list_filename, ue_list_filename, target])],
+            'verbosity': 2
+        }
+    else:
+        uv_fn = documents(task_UTC_UV_list.target, local=True)
+        ue_fn = documents('UTC_UE_list.xlsx', local=True)
+        msg = f"Au moins un des fichiers {uv_fn} ou {ue_fn} doit être disponible."
+        return action_msg(msg, targets=[target])
 
 
 @add_templates(target='creneaux-UV-prov_P19.pdf')
