@@ -145,7 +145,9 @@ def task_xls_grades_sheet():
     @taskfailed_on_exception
     def xls_grades_sheet(data_file, docs):
         cmd_args = sys.argv[2:] + ['-o', docs, '-d', data_file]
-        run(cmd_args, prog="doit_utc xls_grades_sheet")
+        run(cmd_args,
+            prog="doit_utc xls_grades_sheet",
+            description=task_xls_grades_sheet.__doc__)
 
     planning, uv, info = get_unique_uv()
     data_file = generated(task_xls_student_data_merge.target, **info)
