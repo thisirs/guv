@@ -46,26 +46,41 @@ def task_utc_uv_list_to_csv():
                              'Heure fin', 'Semaine', 'Locaux', 'Type créneau',
                              'Lib. créneau', 'Responsable enseig.']
 
+            pdo = {'header': None}
             for i in range(npages):
                 print(f'Processing page ({i+1}/{npages})')
                 page = i + 1
                 tabula_args = {'pages': page}
-                if page == 1:
-                    pdo = {}
-                else:
-                    pdo = {'header': None}
-
-                df = read_pdf(uv_list_filename, pandas_options=pdo, **tabula_args)
+                df = read_pdf(uv_list_filename, **tabula_args, pandas_options=pdo)
 
                 if page == 1:
-                    df = df.rename(columns={'Activit': 'Activité',
-                                            'Heure d': 'Heure début',
-                                            'Type cr neau': 'Type créneau',
-                                            'Lib. cr': 'Lib. créneau'})
+                    # Detect possible multiline header
+                    header_height = ((re.match('[A-Z]{,3}[0-9]+', str(df.iloc[0, 0])) is None) +
+                                     (re.match('[A-Z]{,3}[0-9]+', str(df.iloc[1, 0])) is None))
+                    print(f'Header has {header_height} lines')
+                    header = df.iloc[:header_height].fillna('').agg(['sum']).iloc[0]
+                    df = df.iloc[header_height:]
+                    df = df.rename(columns=header)
+                    df = df.rename(columns={
+                        'Activit': 'Activité',
+                        'Type cr neau': 'Type créneau',
+                        'Lib. cr': 'Lib. créneau',
+                        'Lib.créneau': 'Lib. créneau',
+                        'Heuredébut': 'Heure début',
+                        'Heure d': 'Heure début',
+                        'Heurefin': 'Heure fin'
+                    })
+
+                    print(f'Found {len(df.columns)} header column :')
+                    print("\n".join(df.columns.values))
                     unordered_cols = list(set(df.columns).intersection(set(possible_cols)))
                     cols_order = {k: i for i, k in enumerate(df.columns)}
                     cols = sorted(unordered_cols, key=lambda x: cols_order[x])
-                    week_idx = cols.index('Semaine')
+                    if "Semaine" in cols:
+                        week_idx = cols.index('Semaine')
+                    else:
+                        week_idx = cols.index('Heure fin') + 1
+
                     df = df[cols]
                     print('%d columns found' % len(df.columns))
                 else:
