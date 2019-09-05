@@ -62,19 +62,32 @@ def check_columns(dataframe, columns, **kwargs):
         raise Exception(msg)
 
 
-def parse_args(task, *args):
+def parse_args(task, *args, **kwargs):
     name = task.__name__.split("_", maxsplit=1)[1]
 
-    parser = argparse.ArgumentParser(description=task.__doc__, prog=f"doit-utc {name}")
+    parser = argparse.ArgumentParser(
+        description=task.__doc__,
+        prog=f"doit-utc {name}"
+    )
+
+    argv = sys.argv if 'argv' not in kwargs else kwargs['argv']
+
     for arg in args:
         parser.add_argument(*arg.args, **arg.kwargs)
 
-    if sys.argv[1] == name:
-        argv = sys.argv[2:]
-        args = parser.parse_args(argv)
+    if len(argv) >= 2:          # doit_utc a_task [args]
+        if argv[1] == name:
+            sargv = argv[2:]
+            return parser.parse_args(sargv)
+        else:
+            sargv = argv[2:]
+            try:
+                args = parser.parser_args(sargv)
+                return args
+            except BaseException as e:
+                raise Exception(e.args)
     else:
-        return None
-    return args
+        raise Exception("Wrong number of arguments in sys.argv")
 
 
 def argument(*args, **kwargs):
