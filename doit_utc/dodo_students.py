@@ -544,12 +544,12 @@ def task_pdf_trombinoscope():
                     os.path.join(os.path.dirname(__file__), "images/inconnu.jpg")
                 )
                 for login in df.Login:
-                    md5_curr = md5(documents(f"images/{login}.jpg"))
-                    if (
-                        not os.path.exists(documents(f"images/{login}.jpg"))
-                        or md5_curr == md5_inconnu
-                    ):
+                    if not os.path.exists(documents(f"images/{login}.jpg")):
                         await download_image(session, login)
+                    else:
+                        md5_curr = md5(documents(f"images/{login}.jpg"))
+                        if(md5_curr == md5_inconnu):
+                            await download_image(session, login)
 
         # Getting images
         df = pd.read_excel(xls_merge)
