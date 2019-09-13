@@ -93,7 +93,7 @@ l'UTC."""
 
     def merge_student_data(target, **kw):
         if "extraction_ENT" in kw:
-            df = pd.read_excel(kw["extraction_ENT"])
+            df = pd.read_csv(kw["extraction_ENT"], sep="\t", encoding='ISO_8859_1')
 
             # Split information in 2 columns
             df[["Branche", "Semestre"]] = df.pop('Spécialité 1').str.extract(
@@ -103,6 +103,9 @@ l'UTC."""
 
             # Drop unrelevant columns
             df = df.drop(['Inscription', 'Spécialité 2', 'Résultat ECTS', 'UTC', 'Réussite', 'Statut'], axis=1)
+
+            # Drop unamed columns
+            df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
 
             if "csv_moodle" in kw:
                 df = add_moodle_data(df, kw["csv_moodle"])
@@ -137,7 +140,7 @@ l'UTC."""
         kw = {}
         deps = []
 
-        extraction_ENT = documents("extraction_enseig_note.xlsx", **info)
+        extraction_ENT = documents("extraction_enseig_note.csv", **info)
         if os.path.exists(extraction_ENT):
             kw["extraction_ENT"] = extraction_ENT
             deps.append(extraction_ENT)
