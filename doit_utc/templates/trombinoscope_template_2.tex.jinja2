@@ -30,8 +30,13 @@
     ((* for cell in row *))
     \begin{minipage}{.15\textwidth}
       \centering
-      \href{((( cell['link'] | format(moodle_id=cell['moodle_id']) )))}{((( cell['lastname'] )))} \\
-      \href{((( cell['link'] | format(moodle_id=cell['moodle_id']) )))}{((( cell['name'] )))}
+      ((* if 'moodle_id' in cell *))
+      \href{((( cell['link'] | format(moodle_id=cell['moodle_id']) )))}{((( cell['lastname']  | escape_tex )))} \\
+      \href{((( cell['link'] | format(moodle_id=cell['moodle_id']) )))}{((( cell['name']  | escape_tex )))}
+      ((* else *))
+      ((( cell['lastname'] | escape_tex )))\\
+      ((( cell['name'] | escape_tex )))
+      ((* endif *))
     \end{minipage}
     ((* if loop.last *))\\((* else *)) & ((* endif *))
     ((* endfor *))
