@@ -608,10 +608,15 @@ def task_pdf_trombinoscope():
                         cell = {
                             "name": row["Prénom"],
                             "lastname": row["Nom"],
-                            "photograph": path,
-                            "moodle_id": row["Numéro d'identification"],
-                            "link": "https://demeter.utc.fr/portal/pls/portal30/etudiants.CONSULT_DODDIER_ETU_ETU_DYN.show?p_arg_names=p_etudiant_cle&p_arg_values=%(moodle_id)s"
+                            "photograph": path
                         }
+
+                        if "Numéro d'identification" in row:
+                            cell.update({
+                                "moodle_id": row["Numéro d'identification"],
+                                "link": "https://demeter.utc.fr/portal/pls/portal30/etudiants.CONSULT_DODDIER_ETU_ETU_DYN.show?p_arg_names=p_etudiant_cle&p_arg_values=%(moodle_id)s"
+                            })
+
                         cells.append(cell)
                     rows.append(cells)
 
