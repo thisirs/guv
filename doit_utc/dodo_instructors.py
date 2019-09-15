@@ -232,6 +232,8 @@ def task_xls_affectation():
         selected_columns = ['Jour', 'Heure début', 'Heure fin', 'Locaux',
                             'Semaine', 'Lib. créneau']
         df_uv = df_uv[selected_columns]
+        df_uv = df_uv.sort_values(['Lib. créneau', 'Semaine'])
+
         df_uv['Intervenants'] = ''
         df_uv['Responsable'] = ''
 
