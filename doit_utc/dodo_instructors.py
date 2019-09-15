@@ -24,7 +24,8 @@ from .utils import (
     create_cal_from_dataframe,
     parse_args,
     argument,
-    actionfailed_on_exception
+    actionfailed_on_exception,
+    lib_list
 )
 from .scripts.excel_hours import create_excel_file
 
@@ -127,14 +128,6 @@ def create_insts_list(df):
 
     def course_list(e):
         "Return course list like C1, D2, T1A"
-
-        def lib_list(lib):
-            m = re.match('([CDT])([0-9]*)([AB]*)', lib)
-            crs = {'C': 0, 'D': 1, 'T': 2}[m.group(1)]
-            no = int('0' + m.group(2))
-            sem = 0 if m.group(3) == 'A' else 1
-            return crs, no, sem
-
         return ', '.join(sorted(e, key=lib_list))
 
     def score(libs):

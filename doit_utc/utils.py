@@ -603,3 +603,12 @@ def compute_slots(csv_inst_list, planning_type, empty_instructor=True, filter_uv
 
     dfm = pd.concat([df_Cm, df_Dm, df_Tm], ignore_index=True)
     return dfm
+
+
+def lib_list(lib):
+    m = re.match('([CDT])([0-9]*)([AB]*)', lib)
+    crs = {'C': 0, 'D': 1, 'T': 2}[m.group(1)]
+    no = int('0' + m.group(2))
+    sem = 0 if m.group(3) == 'A' else 1
+    return crs, no, sem
+

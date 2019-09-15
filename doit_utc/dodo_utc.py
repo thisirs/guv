@@ -24,7 +24,8 @@ from .utils import (
     argument,
     get_unique_uv,
     action_msg,
-    DATE_FORMAT
+    DATE_FORMAT,
+    lib_list
 )
 
 from .scripts.moodle_date import CondDate, CondGroup, CondOr
@@ -211,37 +212,43 @@ def task_csv_all_courses():
     }
 
 
+@actionfailed_on_exception
 def task_html_table():
     """Table HTML des TD/TP"""
 
-    def html_table(planning, csv_inst_list, uv, course, target):
+    def html_table(planning, csv_inst_list, uv, courses, target, no_AB):
         # Select wanted slots
         slots = compute_slots(csv_inst_list, planning, filter_uvs=[uv])
-        slots = slots.loc[slots['Activité'] == course, :]
+        slots = slots[slots['Activité'].isin(courses)]
 
         # Fail if no slot
         if len(slots) == 0:
-            return TaskFailed(f"Pas de créneau pour le planning `{planning}', l'uv `{uv}' et le cours `{course}'")
-
-        # Merge when multiple slots on same week
-        if course == 'TP':
-            lb = lambda df: ', '.join(df.semaine + df.numAB.apply(str))
-        elif course == 'TD':
-            lb = lambda df: ', '.join(df.num.apply(str))
-        elif course == 'Cours':
-            lb = lambda df: ', '.join(df.num.apply(str))
-            # def lb(df):
-            #     if len(df.index) > 1:
-            #         raise Exception('Plusieurs cours en une semaine')
-            #     else:
-        else:
-            raise Exception("Unknown course")
+            if len(courses) > 1:
+                return TaskFailed(f"Pas de créneau pour le planning `{planning}', l'uv `{uv}' et les cours `{', '.join(courses)}'")
+            else:
+                print(f"Pas de créneaux pour l'activité {courses[0]}")
+                return
 
         def mondays(beg, end):
             while beg <= end:
                 nbeg = beg + timedelta(days=7)
                 yield (beg, nbeg)
                 beg = nbeg
+
+        def merge_slots(df):
+            activity = df.iloc[0]["Activité"]
+
+            if activity == 'Cours':
+                return ', '.join(df.num.apply(str))
+            elif activity == 'TD':
+                return ', '.join(df.num.apply(str))
+            elif activity == 'TP':
+                if no_AB:
+                    return ', '.join(df.num.apply(str))
+                else:
+                    return ', '.join(df.semaine + df.numAB.apply(str))
+            else:
+                raise Exception("Unrecognized activity", activity)
 
         # Iterate on each week of semester
         rows = []
@@ -251,10 +258,10 @@ def task_html_table():
             weeks.append('{}-{}'.format(mon.strftime('%d/%m'),
                                         (nmon-timedelta(days=1)).strftime('%d/%m')))
 
-            # Select
+            # Select slots on current week
             cr_week = slots.loc[(slots.date >= mon) & (slots.date < nmon)]
             if len(cr_week) > 0:
-                e = cr_week.groupby('Lib. créneau').apply(lb)
+                e = cr_week.groupby('Lib. créneau').apply(merge_slots)
                 rows.append(e)
             else:
                 rows.append(pd.Series())
@@ -264,7 +271,7 @@ def task_html_table():
 
         # Reorder columns
         if len(df.columns) > 1:
-            cols = sorted(df.columns.tolist(), key=lambda x: int(re.search('[0-9]+', x).group()))
+            cols = sorted(df.columns.tolist(), key=lib_list)
             df = df[cols]
 
         # Give name to indexes
@@ -295,18 +302,41 @@ def task_html_table():
             with open(target(), 'w') as fd:
                 fd.write(output)
 
+    args = parse_args(
+        task_html_table,
+        argument('-c', '--courses', nargs='*', default=["Cours", "TD", "TP"]),
+        argument('-g', '--grouped', action='store_true'),
+        argument('-a', '--no-AB', action='store_true')
+    )
+
     from .dodo_instructors import task_add_instructors
     dep = generated(task_add_instructors.target)
     for planning, uv, info in selected_uv():
-        for course, short in [('TD', 'D'), ('TP', 'T'), ('Cours', 'C')]:
-            target = generated(f'{course}_table.html', **info)
+        if args.grouped:
+            name = "_".join(args.courses)
+            if args.grouped:
+                name += "_grouped"
+            if args.no_AB:
+                name += "_no_AB"
+            target = generated(f'{name}_table.html', **info)
             yield {
-                'name': f'{planning}_{uv}_{course}',
+                'name': f'{planning}_{uv}_{name}',
                 'file_dep': [dep],
-                'actions': [(html_table, [planning, dep, uv, course, target])],
+                'actions': [(html_table, [
+                    planning, dep, uv, args.courses, target, args.no_AB])],
                 'targets': [target],
-                'verbosity': 2
             }
+        else:
+            for course in args.courses:
+                target = generated(f'{course}_table.html', **info)
+                yield {
+                    'name': f'{planning}_{uv}_{course}',
+                    'file_dep': [dep],
+                    'actions': [(html_table, [
+                        planning, dep, uv, [course], target, args.no_AB])],
+                    'targets': [target],
+                    'verbosity': 2
+                }
 
 
 @actionfailed_on_exception
