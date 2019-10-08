@@ -177,8 +177,10 @@ def aggregate(left_on, right_on, preprossessing=None, postprocessing=None, sanit
     def aggregate0(df, path):
         nonlocal sanitizer
 
+        # Check that left_on column exists
         check_columns(df, left_on)
 
+        # Infer a read method if not provided
         if read_method is None:
             if path.endswith('.csv'):
                 dff = pd.read_csv(path, **kw_read)
@@ -189,19 +191,24 @@ def aggregate(left_on, right_on, preprossessing=None, postprocessing=None, sanit
         else:
             dff = read_method(path, **kw_read)
 
+        # Preprocessing on data to be merged
         if preprossessing is not None:
             dff = preprossessing(dff)
 
+        # Check that right_on column exists in data to be merged
         check_columns(dff, right_on)
 
+        # Extract subset of columns, right_on included
         if subset is not None:
             dff = dff[list(set([right_on] + subset))]
 
+        # Allow to drop columns, right_on not allowed
         if drop is not None:
             if right_on in drop:
                 raise Exception('On enlève pas la clé')
             dff = dff.drop(drop, axis=1, errors='ignore')
 
+        # Rename columns in data to be merged
         if rename is not None:
             if right_on in rename:
                 raise Exception('Pas de renommage de la clé possible')
