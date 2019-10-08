@@ -946,3 +946,63 @@ def task_attendance_sheet():
         "targets": [target],
         "actions": [(generate_attendance_sheets, [target])],
     }
+
+
+@actionfailed_on_exception
+def task_csv_groups_groupings():
+    """Fichier csv de noms de groupes et groupements à charger sur Moodle.
+
+    Il faut spécifier le nombre de groupes dans chaque groupement et le
+    nombre de groupements.
+    """
+
+    def csv_groups_groupings(target, ngroups, ngroupings, ngroupsf, ngroupingsf):
+        letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        ngroupings = min(26, ngroupings)
+        ngroups = min(26, ngroups)
+
+        groups = []
+        groupings = []
+        for G in range(ngroupings):
+            grouping_letter = letters[G]
+            grouping_number = str(G + 1)
+            grouping = (ngroupingsf
+                        .replace("@@", grouping_letter)
+                        .replace("##", grouping_number))
+            for g in range(ngroups):
+                group_letter = letters[g]
+                group_number = str(g + 1)
+                group = (ngroupsf
+                         .replace("@@", grouping_letter)
+                         .replace("##", grouping_number)
+                         .replace("@", group_letter)
+                         .replace("#", group_number))
+
+                groups.append(group)
+                groupings.append(grouping)
+
+        df_groups = pd.DataFrame({"groupname": groups, 'groupingname': groupings})
+        with Output(target, protected=True) as target:
+            df_groups.to_csv(target(), index=False)
+
+    args = parse_args(
+        task_csv_groups_groupings,
+        argument('-g', type=int, required=True),
+        argument('-f',
+                 default="D##_P1_@",
+                 help="Format du nom de groupe (defaut: %(default)s)"),
+        argument('-G', type=int, required=True),
+        argument('-F',
+                 default="D##_P1",
+                 help="Format du nom de groupement (defaut: %(default)s)")
+    )
+
+    planning, uv, info = get_unique_uv()
+    target = generated(f"groups_groupings.csv", **info)
+
+    return {
+        "targets": [target],
+        "actions": [(csv_groups_groupings,
+                     [target, args.g, args.G, args.f, args.F])],
+    }
+
