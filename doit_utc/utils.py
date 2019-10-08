@@ -49,7 +49,7 @@ def taskfailed_on_exception(func):
 def check_columns(dataframe, columns, **kwargs):
     if isinstance(columns, str):
         columns = [columns]
-    missing_cols = [c for c in dataframe.columns if c not in dataframe.columns]
+    missing_cols = [c for c in columns if c not in dataframe.columns]
 
     if missing_cols:
         s = "s" if len(missing_cols) > 1 else ""
