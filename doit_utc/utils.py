@@ -245,8 +245,12 @@ def aggregate(left_on, right_on, preprossessing=None, postprocessing=None, sanit
         df_left = df[df["_merge"].isin(['left_only', 'both'])]
 
         df_ro = df[df["_merge"] == 'right_only']
-        for index, row in df_ro.iterrows():
-            print("WARNING:", row[right_on + '_y'])
+        if right_on in df_ro.columns:
+            for index, row in df_ro.iterrows():
+                print("WARNING:", row[right_on])
+        elif right_on + "_y" in df_ro.columns:
+            for index, row in df_ro.iterrows():
+                print("WARNING:", row[right_on + '_y'])
 
         drop_cols += ['_merge']
 
