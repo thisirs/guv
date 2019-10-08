@@ -235,6 +235,7 @@ def task_xls_student_data_merge():
     source = generated(task_xls_student_data.target, **info)
     target = generated(task_xls_student_data_merge.target, **info)
     deps = [source]
+    deps += settings.settings_files
     data_exist = {}
 
     docs = settings.AGGREGATE_DOCUMENTS if "AGGREGATE_DOCUMENTS" in settings else {}

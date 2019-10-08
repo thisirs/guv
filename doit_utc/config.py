@@ -9,11 +9,14 @@ class Settings:
         settings_files = os.environ.get(CONFIG_VARIABLE)
         if not settings_files:
             raise Exception(f"Pas de fichier de configuration dans {CONFIG_VARIABLE}")
-        self.settings_files = settings_files
+        self.settings_files = [
+            e for e in settings_files.split(',')
+            if os.path.exists(e)
+        ]
         self._loaded = False
 
     def _setup(self):
-        for settings_file in self.settings_files.split(","):
+        for settings_file in self.settings_files:
             if not os.path.exists(settings_file):
                 continue
             module_name = os.path.splitext(os.path.basename(settings_file))[0]
