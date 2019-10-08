@@ -230,7 +230,10 @@ def aggregate(left_on, right_on, preprossessing=None, postprocessing=None, sanit
         else:
             left_on_sanitized = left_on
             right_on_sanitized = right_on
-            drop_cols += [right_on + '_y']
+            if left_on != right_on:
+                drop_cols += [right_on]
+            else:
+                drop_cols += [right_on + '_y']
 
         df = df.merge(dff, left_on=left_on_sanitized,
                       right_on=right_on_sanitized,
