@@ -519,6 +519,16 @@ def task_pdf_trombinoscope():
 
     @taskfailed_on_exception
     def pdf_trombinoscope(xls_merge, target, groupby, subgroupby, width):
+        # On vérifie que GROUPBY et SUBGROUPBY sont licites
+        df = pd.read_excel(xls_merge)
+        if groupby == "all":
+            groupby = None
+        else:
+            check_columns(df, groupby, file=xls_merge)
+
+        if subgroupby is not None:
+            check_columns(df, subgroupby, file=xls_merge)
+
         async def download_image(session, login):
             url = URL + login
             async with session.get(url) as response:
@@ -554,7 +564,6 @@ def task_pdf_trombinoscope():
                             await download_image(session, login)
 
         # Getting images
-        df = pd.read_excel(xls_merge)
         loop = asyncio.get_event_loop()
         loop.run_until_complete(download_session(loop))
 
@@ -572,15 +581,6 @@ def task_pdf_trombinoscope():
 
         temp_dir = tempfile.mkdtemp()
         tmpl = latex_jinja_env.get_template("trombinoscope_template_2.tex.jinja2")
-
-        # On vérifie que GROUPBY et SUBGROUPBY sont licites
-        if groupby == "all":
-            groupby = None
-        else:
-            check_columns(df, groupby, file=xls_merge)
-
-        if subgroupby is not None:
-            check_columns(df, subgroupby, file=xls_merge)
 
         # Diviser par groupe de TP/TP
         for title, group in df.groupby(groupby or (lambda x: "all")):
