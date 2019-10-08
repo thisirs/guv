@@ -286,6 +286,12 @@ def action_msg(obj, **kwargs):
 class KeepError(Exception):
     pass
 
+
+def rel_to_dir(path, root):
+    common_prefix = os.path.commonprefix([path, root])
+    return os.path.relpath(path, common_prefix)
+
+
 class Output():
     def __init__(self, target, protected=False):
         self.target = target
@@ -296,7 +302,7 @@ class Output():
             if self.protected:
                 while True:
                     try:
-                        choice = input('Le fichier `%s'' existe déjà. Écraser (d), garder (g), sauvegarder (s), annuler (a) ? ' % self.target)
+                        choice = input('Le fichier `%s'' existe déjà. Écraser (d), garder (g), sauvegarder (s), annuler (a) ? ' % rel_to_dir(self.target, settings.BASE_DIR))
                         if choice == 'd':
                             os.remove(self.target)
                         elif choice == 's':
@@ -315,7 +321,8 @@ class Output():
                     else:
                         break
             else:
-                print('Écrasement du fichier `%s\'' % self.target)
+                print('Écrasement du fichier `%s\'' %
+                      rel_to_dir(self.target, settings.BASE_DIR))
         else:
             dirname = os.path.dirname(self.target)
             if not os.path.exists(dirname):
@@ -327,7 +334,7 @@ class Output():
         if type is ZeroDivisionError:
             return True
         if type is None:
-            print(f"Wrote `{self.target}'")
+            print(f"Wrote `{rel_to_dir(self.target, settings.BASE_DIR)}'")
 
 
 DATE_FORMAT = "%Y-%m-%d"

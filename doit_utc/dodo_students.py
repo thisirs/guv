@@ -35,6 +35,7 @@ from .utils import (
     taskfailed_on_exception,
     check_columns,
     URL,
+    rel_to_dir
 )
 from .scripts.parse_utc_list import parse_UTC_listing
 from .scripts.add_student_data import (
@@ -201,7 +202,7 @@ def task_xls_student_data_merge():
         df = pd.read_excel(source)
 
         for path, aggregater in data.items():
-            print("Aggregating %s" % path)
+            print("Aggregating %s" % rel_to_dir(path, settings.BASE_DIR))
             df = aggregater(df, path)
 
         dff = df.sort_values(["Nom", "Prénom"])
