@@ -233,7 +233,10 @@ def aggregate(left_on, right_on, preprossessing=None, postprocessing=None, sanit
             left_on_sanitized = left_on + "_sanitized"
             dff[left_on_sanitized] = col_left_on_sanitized
 
-            drop_cols += [left_on_sanitized, right_on_sanitized]
+            if left_on == right_on:
+                drop_cols += [left_on_sanitized, right_on_sanitized + '_y']
+            else:
+                drop_cols += [left_on_sanitized, right_on_sanitized]
         else:
             left_on_sanitized = left_on
             right_on_sanitized = right_on
