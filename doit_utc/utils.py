@@ -245,11 +245,18 @@ def aggregate(left_on, right_on, preprossessing=None, postprocessing=None, sanit
             else:
                 drop_cols += [right_on + '_y']
 
+        # Record duplicated columns to be eventually merged later
+        duplicated_columns = set(df.columns).intersection(set(dff.columns))
+        duplicated_columns = duplicated_columns.difference(
+            set([left_on_sanitized, right_on_sanitized, left_on, right_on]))
+
         df = df.merge(dff, left_on=left_on_sanitized,
                       right_on=right_on_sanitized,
                       how='outer',
                       suffixes=('', '_y'),
                       indicator=True)
+
+        drop_cols += ['_merge']
 
         # Select like how='left'
         df_left = df[df["_merge"].isin(['left_only', 'both'])]
@@ -262,7 +269,17 @@ def aggregate(left_on, right_on, preprossessing=None, postprocessing=None, sanit
             for index, row in df_ro.iterrows():
                 print("WARNING:", row[right_on + '_y'])
 
-        drop_cols += ['_merge']
+        # Try to merge columns
+        for c in duplicated_columns:
+            c_y = c + '_y'
+            print('Trying to merge columns %s and %s...' % (c, c_y), end='')
+            if any(df_left[c_y].notna() & df_left[c].notna()):
+                print('failed')
+                continue
+            else:
+                df_left.loc[:, c] = df_left.loc[:, c].fillna(df_left.loc[:, c_y])
+                drop_cols.append(c_y)
+                print('done')
 
         df = df_left.drop(drop_cols, axis=1, errors='ignore')
 
