@@ -703,12 +703,16 @@ def task_pdf_attendance_list():
     @taskfailed_on_exception
     def pdf_attendance_list(xls_merge, group, target):
         df = pd.read_excel(xls_merge)
-        check_columns(df, group, file=xls_merge)
+
+        if group == "all":
+            group = None
+        else:
+            check_columns(df, group, file=xls_merge)
 
         template = "attendance_list.tex.jinja2"
 
         pdfs = []
-        for gn, group in df.groupby(group):
+        for gn, group in df.groupby(group or (lambda x: "all")):
             group = group.sort_values(["Nom", "Prénom"])
             kwargs = {
                 "group": f"Groupe: {gn}",
