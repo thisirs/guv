@@ -260,9 +260,10 @@ questions structurées."""
         return maxi + upper_left[0] - 1, maxj + upper_left[1] - 1
 
     def write(self, ref=None):
-        # Write new gradesheet
+        # Create new gradesheet
         self.gradesheet = self.wb.create_sheet(title=self.name)
 
+        # Write structure at ref
         if ref is None:
             ref = (3, 1)
         row, col = self.write_structure(upper_left=ref)
