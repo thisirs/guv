@@ -211,7 +211,7 @@ questions structurées."""
 
     def __init__(self, args):
         super(GradeSheetExamWriter, self).__init__(args)
-        self.tree = self.read_structure(args.struct)
+        self.config = self.read_config(args.struct)
 
     @classmethod
     def get_parser(cls):
@@ -219,17 +219,23 @@ questions structurées."""
         parser.add_argument('-s', '--struct', required=True, dest='struct')
         return parser
 
-    def read_structure(self, structure):
-        "On cherche dans STRUCTURE et dans le sous-dossier documents/."
-        if os.path.exists(structure):
-            struct_path = structure
+    def read_config(self, filename):
+        """On cherche le fichier dans le dossier courant et dans le sous-dossier
+        documents/."""
+
+        if os.path.exists(filename):
+            struct_path = filename
         else:
-            struct_path = os.path.join('documents', structure)
+            struct_path = os.path.join('documents', filename)
             if not os.path.exists(struct_path):
-                raise Exception(f'Path to {structure} or {struct_path} not existing')
+                raise Exception(f'Path to {filename} or {struct_path} not existing')
 
         with open(struct_path, "r") as stream:
             return list(yaml.load_all(stream, Loader=yaml.SafeLoader))[0]
+
+    @property
+    def tree(self):
+        return self.config
 
     def write_structure(self, upper_left):
         "Write structure at UPPER_LEFT and return lower right cell."
@@ -292,7 +298,7 @@ class GradeSheetExamMultipleWriter(GradeSheetExamWriter):
 
     def __init__(self, args):
         super().__init__(args)
-        self.tree = self.read_structure(args.struct)
+        self.config = self.read_config(args.struct)
         insts_file = args.insts
         df = pd.read_excel(insts_file)
         insts = df['Intervenants'].unique()
