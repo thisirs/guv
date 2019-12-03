@@ -97,10 +97,12 @@ def walk_tree(tree, depth=None, start_at=0):
 
 
 class GradeSheetWriter:
-    """Base class"""
+    """Base class to build and write a workbook. It consists in only one
+    worksheet."""
 
-    def __init__(self, args):
-        # Store name of gradesheet
+    def __init__(self, args):  # args argument comes from parser returned by get_parser
+
+        # args always has a name, store it
         if args.name:
             self.name = args.name
 
@@ -114,12 +116,12 @@ class GradeSheetWriter:
         else:
             self.data_file = 'student_data_merge.xlsx'
 
-        # Reading source of grades
+        # Reading source of information into a Pandas dataframe
         if not os.path.exists(self.data_file):
             raise Exception(f'Data file `{self.data_file}` does not exist')
         self.data_df = pd.read_excel(self.data_file)
 
-        # Setting path of current gradebook
+        # Setting path of gradebook file to be written
         if args.output_file:
             if os.path.isdir(args.output_file):
                 fn = f'{args.name}_gradebook.xlsx'
@@ -129,25 +131,30 @@ class GradeSheetWriter:
         else:
             self.output_file = f'{args.name}_gradebook.xlsx'
 
-        # Write workbook with columns from data
+        # Create workbook and first worksheet named "data"
         self.wb = Workbook()
         self.ws_data = self.wb.active
         self.ws_data.title = "data"
-        self.df = pd.DataFrame()
-        columns = self.get_columns(**args.__dict__)
 
+        # Pandas dataframe that mirrors the first worksheet
+        self.df = pd.DataFrame()
+
+        # Get columns to be copied from source of information DATA_DF
+        # to first worksheet
+        columns = self.get_columns(**args.__dict__)
         for i, (name, type) in enumerate(columns.items()):
             idx = i + 1
+
             # Write header of column with Pandas style
             self.ws_data.cell(1, idx).value = name
             self.ws_data.cell(1, idx).style = "Pandas"
 
-            # Copy data from DATA_DF if existing
+            # Copy data from DATA_DF if existing into first worksheet
             if name in self.data_df.columns:
                 for i, value in enumerate(self.data_df[name]):
                     self.ws_data.cell(i + 2, idx, value)
 
-            # Copy data or cells in DF
+            # Copy data or cells in DF to be able to refer back to them
             N = len(self.data_df.index)
             if type == 'cell':
                 cells = self.ws_data[utils.get_column_letter(idx)][1:(N+1)]
@@ -159,6 +166,7 @@ class GradeSheetWriter:
             else:
                 raise Exception("Unsupported type: {}".format(type))
 
+    # Create parser whose arguments will be available to the constructor
     @classmethod
     def get_parser(cls):
         parser = argparse.ArgumentParser(description=cls.__doc__, add_help=False)
@@ -167,6 +175,9 @@ class GradeSheetWriter:
         parser.add_argument('-o', '--output-file', dest='output_file')
         return parser
 
+    # Return columns to create in first worksheet. `value' columns are
+    # copied directly from source of information, `cell` columns are
+    # created to be referenced later in the workbook.
     def get_columns(self, **kwargs):
         return {
             'Nom': 'value',
