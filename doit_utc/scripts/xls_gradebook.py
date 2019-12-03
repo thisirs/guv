@@ -191,26 +191,31 @@ class GradeSheetWriter:
 
 
 class GradeSheetSimpleWriter(GradeSheetWriter):
-    """Feuille de notes simple sans structure."""
+    """Feuille de notes simple par étudiant et sans barème."""
 
+    # Name used to identify the class to use in the sub_command
+    # parser.
     name = 'simple'
 
     def write(self, ref=None):
-        # Write new gradesheet
+        # Create a second worksheet
         self.gradesheet = self.wb.create_sheet(title=self.name)
 
-        if ref is None:
-            ref = (3, 1)
-        row, col = ref
+        row, col = ref if ref is not None else (3, 1)
 
         for i, (index, record) in enumerate(self.df.iterrows()):
             self.gradesheet.cell(ref[0]-2, col+i+1, record['Nom'])
             self.gradesheet.cell(ref[0]-1, col+i+1, record['Prénom'])
-            record[self.gradesheet.title].value = "='{}'!{}{}".format(
+
+            # Get cell to be filled in first worksheet and make it
+            # point to current cell in second worksheet.
+            cell = record[self.gradesheet.title]
+            cell.value = "='{}'!{}{}".format(
                 self.gradesheet.title,
                 utils.get_column_letter(col+i+1).upper(),
                 row+1)
 
+        # Write workbook
         self.wb.save(self.output_file)
 
 
