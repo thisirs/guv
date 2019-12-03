@@ -13,7 +13,7 @@ from collections import OrderedDict
 from openpyxl import Workbook
 from openpyxl import utils
 from openpyxl.cell import Cell
-from openpyxl.worksheet import Worksheet
+from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.styles import Alignment, PatternFill
 from openpyxl.formatting.rule import CellIsRule
 from openpyxl.utils.cell import absolute_coordinate
