@@ -342,26 +342,28 @@ questions structurées."""
             ref = (3, 1)
         row, col = self.write_structure(upper_left=ref)
 
-        for i, (index, record) in enumerate(self.df.iterrows()):
-            self.gradesheet.cell(ref[0]-2, col+i+1, record['Nom'])
-            self.gradesheet.cell(ref[0]-1, col+i+1, record['Prénom'])
+        # Width of structure
+        n_questions = row - ref[0] + 1
 
-            # On lie le total des points à la cellule note dans la
-            # feuille récapitulative
-            record[self.gradesheet.title].value = "='{}'!{}{}".format(
-                self.gradesheet.title,
-                utils.get_column_letter(col+i+1).upper(),
-                row+1)
+        # Freeze the structure
+        self.gradesheet.freeze_panes = self.gradesheet.cell(1, col+1)
 
-            # On écrit le total des points pour former la note globale
-            range = (
-                utils.get_column_letter(col+i+1) + str(ref[0]) +
-                ':' +
-                utils.get_column_letter(col+i+1) + str(row)
-            )
+        def insert_record(ref_cell, record):
+            first_grade = ref_cell.text(record['Nom']).below().text(record['Prénom']).below()
+            last_grade = first_grade.below(n_questions - 1)
+            total = last_grade.below()
+
+            range = get_range_from_cells(first_grade, last_grade)
             formula = f'=IF(COUNTBLANK({range})>0, "", SUM({range}))'
+            total.value = formula
 
-            self.gradesheet.cell(row+1, col+i+1, formula)
+            # Cell in first worksheet
+            cell = record[self.gradesheet.title]
+            cell.value = "=" + get_address_of_cell(total)
+
+        for j, (index, record) in enumerate(self.df.iterrows()):
+            ref_cell = self.gradesheet.cell(ref[0]-2, col+j+1)
+            insert_record(ref_cell, record)
 
         self.wb.save(self.output_file)
 
