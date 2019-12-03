@@ -193,6 +193,7 @@ class GradeSheetWriter:
         # Get columns to be copied from source of information DATA_DF
         # to first worksheet
         columns = self.get_columns(**args.__dict__)
+        N = len(self.data_df.index)
         for i, (name, type) in enumerate(columns.items()):
             idx = i + 1
 
@@ -206,7 +207,6 @@ class GradeSheetWriter:
                     self.ws_data.cell(i + 2, idx, value)
 
             # Copy data or cells in DF to be able to refer back to them
-            N = len(self.data_df.index)
             if type == 'cell':
                 cells = self.ws_data[utils.get_column_letter(idx)][1:(N+1)]
                 self.df[name] = cells
@@ -216,6 +216,10 @@ class GradeSheetWriter:
                 self.df[name] = self.data_df[name]
             else:
                 raise Exception("Unsupported type: {}".format(type))
+
+        self.ws_data.auto_filter.ref = 'A1:{}{}'.format(
+            utils.get_column_letter(idx),
+            N + 1)
 
     # Create parser whose arguments will be available to the constructor
     @classmethod
