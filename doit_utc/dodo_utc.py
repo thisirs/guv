@@ -202,7 +202,8 @@ def task_csv_all_courses():
 
     args = parse_args(
         task_csv_all_courses,
-        argument('-p', '--plannings', nargs='*', default=settings.SELECTED_PLANNINGS)    )
+        argument('-p', '--plannings', nargs='+', default=settings.SELECTED_PLANNINGS)
+    )
 
     return {
         'actions': [(csv_all_courses, [args.plannings, dep, target])],
