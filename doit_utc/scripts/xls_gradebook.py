@@ -221,6 +221,9 @@ class GradeSheetWriter:
             utils.get_column_letter(idx),
             N + 1)
 
+        # On fige la première ligne
+        self.ws_data.freeze_panes = "A2"
+
     # Create parser whose arguments will be available to the constructor
     @classmethod
     def get_parser(cls):
