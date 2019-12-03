@@ -47,6 +47,8 @@ Cell.text = text
 
 
 def merge_cells2(self, cell1, cell2):
+    """Merge rectangle defined by upper left and lower right cells"""
+
     return self.merge_cells(
         start_row=cell1.row,
         start_column=cell1.col_idx,
@@ -281,12 +283,15 @@ class GradeSheetExamWriter(GradeSheetWriter):
     """Feuille de notes pour un examen type médian/final avec des
 questions structurées."""
 
+    # Name used to identify the class to use in the sub_command
+    # parser.
     name = 'exam'
 
     def __init__(self, args):
         super(GradeSheetExamWriter, self).__init__(args)
         self.config = self.read_config(args.struct)
 
+    # Add a structure argument
     @classmethod
     def get_parser(cls):
         parser = super(GradeSheetExamWriter, GradeSheetExamWriter).get_parser()
@@ -331,6 +336,7 @@ questions structurées."""
                 row=upper_left[0]+i,
                 column=upper_left[1]+j).alignment = al
 
+        # Return lower right cell of structure
         return maxi + upper_left[0] - 1, maxj + upper_left[1] - 1
 
     def write(self, ref=None):
