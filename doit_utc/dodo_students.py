@@ -338,6 +338,7 @@ Crée des fichiers csv pour chaque UV sélectionnées"""
 def task_csv_binomes():
     """Fichier csv des groupes + binômes"""
 
+    @taskfailed_on_exception
     def csv_binomes(target, target_moodle, xls_merge, ctype, project, other_groups):
         df = pd.read_excel(xls_merge)
 
