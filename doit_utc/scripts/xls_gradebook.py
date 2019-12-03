@@ -842,8 +842,6 @@ class GradeSheetJuryWriter(GradeSheetWriter):
         range = self.get_range_of_cells('Note ECTS')
         self.ws_data.auto_filter.add_sort_condition(range)
 
-        # On fige la première ligne
-        self.ws_data.freeze_panes = "A2"
 
         # On sauve le classeur
         self.wb.save(self.output_file)
