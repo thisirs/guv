@@ -9,4 +9,22 @@ setup(name='doit_utc',
       },
       license='MIT',
       packages=['doit_utc'],
-      zip_safe=False)
+      zip_safe=False,
+      install_requires=[
+          "datetime",
+          "doit",
+          "icalendar",
+          "jinja2",
+          "latex",
+          "markdown",
+          "numpy",
+          "openpyxl",
+          "pandas",
+          "pynliner",
+          "PyPDF2",
+          "tabula-py",
+          "unidecode",
+          "oyaml",
+          "aiohttp"
+      ]
+)
