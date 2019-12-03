@@ -58,6 +58,57 @@ def merge_cells2(self, cell1, cell2):
 Worksheet.merge_cells2 = merge_cells2
 
 
+def get_address_of_cell(cell, absolute=False, add_worksheet_name=None, compat=False):
+    """Renvoie l'adresse d'un objet Cell sous forme "A1" en prenant en
+    compte la feuille courante si la cellule se trouve sur une
+    autre feuille.
+    """
+
+    cell_worksheet = cell.parent
+    workbook = cell.parent.parent
+    active_worksheet = workbook.active
+
+    if absolute:
+        coordinate = absolute_coordinate(cell.coordinate)
+    else:
+        coordinate = cell.coordinate
+
+    if add_worksheet_name == False or (add_worksheet_name is None and cell_worksheet == active_worksheet):
+        return coordinate
+    else:
+        if compat:          # GoogleSheet compatibility
+            return "INDIRECT(\"'{}'!{}\")".format(cell_worksheet.title, coordinate)
+        else:
+            return "'{}'!{}".format(cell_worksheet.title, coordinate)
+
+
+def get_range_from_cells(cell1, cell2, absolute=False, add_worksheet_name=None, compat=False):
+    cell_worksheet = cell1.parent
+    workbook = cell1.parent.parent
+    active_worksheet = workbook.active
+
+    # Upper-left and lower right cells
+    cell1_row, cell2_row = (cell1.row, cell2.row) if cell1.row < cell2.row else (cell2.row, cell1.row)
+    cell1_col, cell2_col = (cell1.column, cell2.column) if cell1.column < cell2.column else (cell2.column, cell1.column)
+
+    # Excel-like coordinates
+    cell1_addr = utils.get_column_letter(cell1_col) + str(cell1_row)
+    cell2_addr = utils.get_column_letter(cell2_col) + str(cell2_row)
+
+    if absolute:
+        range = absolute_coordinate(cell1_addr) + ":" + absolute_coordinate(cell2_addr)
+    else:
+        range = cell1_addr + ":" + cell2_addr
+
+    if add_worksheet_name == False or (add_worksheet_name is None and cell_worksheet == active_worksheet):
+        return range
+    else:
+        if compat:          # GoogleSheet compatibility
+            return "INDIRECT(\"'{}'!{}\")".format(cell_worksheet.title, range)
+        else:
+            return "'{}'!{}".format(cell_worksheet.title, range)
+
+
 def walk_tree(tree, depth=None, start_at=0):
     def compute_depth(tree):
         if isinstance(tree, (OrderedDict, dict)):
