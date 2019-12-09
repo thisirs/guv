@@ -647,30 +647,7 @@ class GradeSheetJuryWriter(GradeSheetWriter):
         with open(config, "r") as stream:
             return list(yaml.load_all(stream, Loader=yaml.SafeLoader))[0]
 
-    def get_address_of_cell(self, cell, absolute=False, force=False, compat=False):
-        """Renvoie l'adresse d'un objet Cell sous forme "A1" en prenant en
-        compte la feuille courante si la cellule se trouve sur une
-        autre feuille.
-        """
-
-        parent = cell.parent
-        current = self.wb.active
-        if parent == current and not force:
-            if absolute:
-                return absolute_coordinate(cell.coordinate)
-            else:
-                return cell.coordinate
-        else:
-            if absolute:
-                coordinate = absolute_coordinate(cell.coordinate)
-            else:
-                coordinate = cell.coordinate
-            if compat:          # GoogleSheet compatibility
-                return "INDIRECT(\"'{}'!{}\")".format(parent.title, coordinate)
-            else:
-                return "'{}'!{}".format(parent.title, coordinate)
-
-    def get_range_of_cells(self, colname):
+    def get_column_range(self, colname):
         "Renvoie la plage de cellule de la colonne COLNAME sans l'en-tête."
 
         if colname not in self.df.columns:
@@ -679,7 +656,7 @@ class GradeSheetJuryWriter(GradeSheetWriter):
         cells = self.df[colname]
         first, last = cells.iloc[0], cells.iloc[-1]
 
-        return self.get_address_of_cell(first) + ":" + self.get_address_of_cell(last)
+        return get_range_from_cells(first, last)
 
     def write(self, ref=None):
         # Write new gradesheet
@@ -706,9 +683,9 @@ class GradeSheetJuryWriter(GradeSheetWriter):
         # for i, (index, record) in enumerate(self.df.iterrows()):
         #     record['Note agrégée'].value = (
         #         '=IFERROR({}/6+{}/2+{}/3, ""'.format(
-        #             self.get_address_of_cell(record['Note_TP']),
-        #             self.get_address_of_cell(record['Note final']),
-        #             self.get_address_of_cell(record['Note médian'])
+        #             get_address_of_cell(record['Note_TP']),
+        #             get_address_of_cell(record['Note final']),
+        #             get_address_of_cell(record['Note médian'])
         #         )
         #     )
 
@@ -718,8 +695,8 @@ class GradeSheetJuryWriter(GradeSheetWriter):
         for i, (index, record) in enumerate(self.df.iterrows()):
             record['Note admis'].value = (
                 '=IF({}=1, {}, "")'.format(
-                    self.get_address_of_cell(record['Admis']),
-                    self.get_address_of_cell(record['Note agrégée'])
+                    get_address_of_cell(record['Admis']),
+                    get_address_of_cell(record['Note agrégée'])
                 )
             )
 
@@ -733,8 +710,8 @@ class GradeSheetJuryWriter(GradeSheetWriter):
             self.gradesheet.cell(ref[0] + i, ref[1], ects + " si >=")
             self.gradesheet.cell(ref[0] + i, ref[1] + 1).value = (
                 '=PERCENTILE({}, {})'.format(
-                    self.get_range_of_cells('Note admis'),
-                    self.get_address_of_cell(percentile_cell, absolute=True)
+                    self.get_column_range('Note admis'),
+                    get_address_of_cell(percentile_cell, absolute=True)
                 )
             )
             keytocell['barre_' + ects] = self.gradesheet.cell(ref[0] + i, ref[1] + 1)
@@ -746,8 +723,8 @@ class GradeSheetJuryWriter(GradeSheetWriter):
             for name, settings in self.config['columns'].items():
                 key = name + '_note_éliminatoire'
                 ifs.append("IF({}+0>={}, 1)".format(
-                    self.get_address_of_cell(record[name]),
-                    self.get_address_of_cell(keytocell[key], absolute=True)))
+                    get_address_of_cell(record[name]),
+                    get_address_of_cell(keytocell[key], absolute=True)))
             record['Admis'].value = f"=IFERROR({'*'.join(ifs)}, 0)"
 
         # On écrit un bloc détaillant le nombre d'admis et le ratio en
@@ -758,13 +735,13 @@ class GradeSheetJuryWriter(GradeSheetWriter):
         self.gradesheet.cell(ref[0]+1, ref[1], 'Nombre d\'admis')
         self.gradesheet.cell(ref[0]+1, ref[1]+1,).value = (
             "=SUM({})".format(
-                self.get_range_of_cells('Admis')
+                self.get_column_range('Admis')
             )
         )
         self.gradesheet.cell(ref[0]+2, ref[1], 'Ratio')
         self.gradesheet.cell(ref[0]+2, ref[1]+1,).value = (
             "=AVERAGE({})".format(
-                self.get_range_of_cells('Admis')
+                self.get_column_range('Admis')
             )
         )
 
@@ -773,23 +750,23 @@ class GradeSheetJuryWriter(GradeSheetWriter):
         for i, (index, record) in enumerate(self.df.iterrows()):
             record['Note ECTS'].value = (
                 '=IF({}="RESERVE", "RESERVE", IF({}="ABS", "ABS", IF({}=0, "F", IF({}>={}, "A", IF({}>={}, "B", IF({}>={}, "C", IF({}>={}, "D", "E")))))))'.format(
-                    self.get_address_of_cell(record['Note agrégée']),
-                    self.get_address_of_cell(record['Note agrégée']),
-                    self.get_address_of_cell(record['Admis']),
-                    self.get_address_of_cell(record['Note agrégée']),
-                    self.get_address_of_cell(keytocell['barre_A'], absolute=True),
-                    self.get_address_of_cell(record['Note agrégée']),
-                    self.get_address_of_cell(keytocell['barre_B'], absolute=True),
-                    self.get_address_of_cell(record['Note agrégée']),
-                    self.get_address_of_cell(keytocell['barre_C'], absolute=True),
-                    self.get_address_of_cell(record['Note agrégée']),
-                    self.get_address_of_cell(keytocell['barre_D'], absolute=True)
+                    get_address_of_cell(record['Note agrégée']),
+                    get_address_of_cell(record['Note agrégée']),
+                    get_address_of_cell(record['Admis']),
+                    get_address_of_cell(record['Note agrégée']),
+                    get_address_of_cell(keytocell['barre_A'], absolute=True),
+                    get_address_of_cell(record['Note agrégée']),
+                    get_address_of_cell(keytocell['barre_B'], absolute=True),
+                    get_address_of_cell(record['Note agrégée']),
+                    get_address_of_cell(keytocell['barre_C'], absolute=True),
+                    get_address_of_cell(record['Note agrégée']),
+                    get_address_of_cell(keytocell['barre_D'], absolute=True)
                 )
             )
         for cell in self.df["Note ECTS"]:
             cell.alignment = Alignment(horizontal='center')
 
-        range = self.get_range_of_cells('Note ECTS')
+        range = self.get_column_range('Note ECTS')
         for ects, color in zip('ABCDEF', [
                 '00FF00',
                 'C2FF00',
@@ -812,7 +789,7 @@ class GradeSheetJuryWriter(GradeSheetWriter):
             self.gradesheet.cell(ref[0] + i + 1, ref[1] + 1).value = (
                 '=COUNTIF({}, "{}")'
             ).format(
-                self.get_range_of_cells('Note ECTS'),
+                self.get_column_range('Note ECTS'),
                 ects
             )
 
@@ -827,13 +804,13 @@ class GradeSheetJuryWriter(GradeSheetWriter):
                 id = name + '_note_éliminatoire'
                 if id in keytocell:
                     threshold_cell = keytocell[id]
-                    threshold_addr = self.get_address_of_cell(
+                    threshold_addr = get_address_of_cell(
                         threshold_cell,
                         absolute=True,
                         force=True,
                         compat=True)
                     self.ws_data.conditional_formatting.add(
-                        self.get_range_of_cells(name),
+                        self.get_column_range(name),
                         CellIsRule(operator='lessThan',
                                    formula=[threshold_addr],
                                    fill=redFill))
@@ -845,7 +822,7 @@ class GradeSheetJuryWriter(GradeSheetWriter):
         self.ws_data.auto_filter.ref = 'A1:{}{}'.format(
             utils.get_column_letter(max_column),
             max_row)
-        range = self.get_range_of_cells('Note ECTS')
+        range = self.get_column_range('Note ECTS')
         self.ws_data.auto_filter.add_sort_condition(range)
 
 
