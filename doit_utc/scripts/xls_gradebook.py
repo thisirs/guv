@@ -209,10 +209,10 @@ class GradeSheetWriter:
                     self.ws_data.cell(i + 2, idx, value)
 
             # Copy data or cells in DF to be able to refer back to them
-            if type == 'cell':
+            if type == 'new':
                 cells = self.ws_data[utils.get_column_letter(idx)][1:(N+1)]
                 self.df[name] = cells
-            elif type == 'value':
+            elif type == 'copy':
                 if name not in self.data_df.columns:
                     raise Exception('No data to copy from and type is data', name, self.data_df.columns)
                 self.df[name] = self.data_df[name]
@@ -240,10 +240,10 @@ class GradeSheetWriter:
     # created to be referenced later in the workbook.
     def get_columns(self, **kwargs):
         return {
-            'Nom': 'value',
-            'Prénom': 'value',
-            'Courriel': 'value',
-            self.name: 'cell'
+            'Nom': 'copy',
+            'Prénom': 'copy',
+            'Courriel': 'copy',
+            self.name: 'new'
         }
 
     def write(self):
@@ -413,11 +413,11 @@ class GradeSheetExamMultipleWriter(GradeSheetExamWriter):
 
     def get_columns(self, **kwargs):
         return {
-            'Nom': 'value',
-            'Prénom': 'value',
-            'Courriel': 'value',
-            'Note': 'cell',
-            "Correcteur": 'cell',
+            'Nom': 'copy',
+            'Prénom': 'copy',
+            'Courriel': 'copy',
+            'Note': 'new',
+            "Correcteur": 'new',
         }
 
     def write(self, ref=None):
@@ -504,11 +504,11 @@ class GradeSheetSimpleGroup(GradeSheetSimpleWriter):
 
     def get_columns(self, **kwargs):
         return {
-            'Nom': 'value',
-            'Prénom': 'value',
-            'Courriel': 'value',
-            kwargs['group']: 'value',
-            self.name: 'cell'
+            'Nom': 'copy',
+            'Prénom': 'copy',
+            'Courriel': 'copy',
+            kwargs['group']: 'copy',
+            self.name: 'new'
         }
 
     @classmethod
@@ -561,11 +561,11 @@ class GradeSheetAssignmentWriter(GradeSheetExamWriter):
 
     def get_columns(self, **kwargs):
         return {
-            'Nom': 'value',
-            'Prénom': 'value',
-            'Courriel': 'value',
-            kwargs['group']: 'value',
-            self.name: 'cell'
+            'Nom': 'copy',
+            'Prénom': 'copy',
+            'Courriel': 'copy',
+            kwargs['group']: 'copy',
+            self.name: 'new'
         }
 
     @classmethod
@@ -618,20 +618,20 @@ class GradeSheetJuryWriter(GradeSheetWriter):
 
     def get_columns(self, **kwargs):
         columns = {
-            'Nom': 'value',
-            'Prénom': 'value',
-            'Courriel': 'value',
-            'Admis': 'cell',
-            'Note admis': 'cell'
+            'Nom': 'copy',
+            'Prénom': 'copy',
+            'Courriel': 'copy',
+            'Admis': 'new',
+            'Note admis': 'new'
         }
 
         for name, opts in self.config['columns'].items():
-            if opts.get('cell'):
-                columns[name] = 'cell'
+            if opts is not None and opts.get('new'):
+                columns[name] = 'new'
             else:
-                columns[name] = 'value'
+                columns[name] = 'copy'
 
-        columns['Note ECTS'] = 'cell'
+        columns['Note ECTS'] = 'new'
         return columns
 
     @classmethod
