@@ -14,7 +14,7 @@ import pandas as pd
 def parse_UTC_listing(filename):
     """Parse FILENAME into DataFrame"""
 
-    RX_STU = re.compile(r'^\s*\d{3}\s{3}(.{23})\s{3}(.{4})$')
+    RX_STU = re.compile(r'^\s*\d{3}\s{3}(.{23})\s{3}([A-Z]{2})([0-9]{2})$')
     RX_UV = re.compile(r'^\s*(?P<uv>\w+)\s+(?P<course>[CTD])\s*(?P<number>[0-9]+)\s*(?P<week>[AB])?')
 
     with open(filename, 'r') as fd:
@@ -32,10 +32,27 @@ def parse_UTC_listing(filename):
                 m = RX_STU.match(line)
                 if m:
                     name = m.group(1).strip()
-                    rows.append({"Name": name, course_type: course_name})
+                    spe = m.group(2)
+                    sem = int(m.group(3))
+                    if spe == 'HU':
+                        spe = 'HuTech'
+                    elif spe == 'GU':
+                        spe = 'GSU'
+                    elif spe == 'MT':
+                        spe = 'ISC'
+                    rows.append({"Name": name, course_type: course_name, "Branche": spe, 'Semestre': sem})
 
     df = pd.DataFrame(rows)
-    df = df.groupby('Name', as_index=False).agg(lambda s: s.loc[s.first_valid_index()])
+
+    def agg_func(s):
+        idx = s.first_valid_index()
+        if idx is None:
+            print("WARNING: Un étudiant n'est inscrit dans aucun cours, aucun TD ou aucun TP")
+            return None
+        else:
+            return s.loc[idx]
+
+    df = df.groupby(['Name', 'Branche', 'Semestre'], as_index=False).agg(agg_func)
 
     if 'TP' in df.columns:
         gr = [i for i in df.TP.unique() if re.match('^T[0-9]{,2}$', i)]

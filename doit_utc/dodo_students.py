@@ -101,6 +101,7 @@ l'UTC."""
                 '(?P<Branche>[a-zA-Z]+) *(?P<Semestre>[0-9]+)',
                 expand=True
             )
+            df["Semestre"] = pd.to_numeric(df['Semestre'])
 
             # Drop unrelevant columns
             df = df.drop(['Inscription', 'Spécialité 2', 'Résultat ECTS', 'UTC', 'Réussite', 'Statut'], axis=1)

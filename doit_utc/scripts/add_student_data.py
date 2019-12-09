@@ -93,20 +93,20 @@ def add_moodle_data(df, fn):
 def add_UTC_data(df, fn):
     'Incorpore les données Cours/TD/TP des inscrits UTC'
 
+    # Données issues du fichier inscrits.raw
     dfu = pd.read_csv(fn)
 
     if 'Nom' in df.columns and 'Prénom' in df.columns:
         fullnames = df['Nom'] + ' ' + df['Prénom']
         def slug(e):
             return unidecode.unidecode(e.upper()[:23].strip())
-        fullnames = fullnames.apply(slug)
-        df['fullname_slug'] = fullnames
+        df['fullname_slug'] = fullnames.apply(slug)
 
         dfr = pd.merge(df, dfu,
                        suffixes=('', '_utc'),
                        how='outer',
-                       left_on='fullname_slug',
-                       right_on='Name',
+                       left_on=['fullname_slug', 'Branche', 'Semestre'],
+                       right_on=['Name', 'Branche', 'Semestre'],
                        indicator=True)
 
     else:
