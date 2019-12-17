@@ -199,12 +199,15 @@ l'UTC."""
 def task_xls_student_data_merge():
     """Ajoute toutes les autres informations étudiants"""
 
-    def merge_student_data(source, target, data):
+    def merge_student_data(source, target, docs):
         df = pd.read_excel(source)
 
-        for path, aggregater in data.items():
-            print("Aggregating %s" % rel_to_dir(path, settings.BASE_DIR))
-            df = aggregater(df, path)
+        for path, aggregater in docs.items():
+            if os.path.exists(path):
+                print("Aggregating %s" % rel_to_dir(path, settings.BASE_DIR))
+                df = aggregater(df, path)
+            else:
+                print("WARNING: File %s not found!" % rel_to_dir(path, settings.BASE_DIR))
 
         dff = df.sort_values(["Nom", "Prénom"])
 
@@ -236,21 +239,16 @@ def task_xls_student_data_merge():
     planning, uv, info = get_unique_uv()
     source = generated(task_xls_student_data.target, **info)
     target = generated(task_xls_student_data_merge.target, **info)
-    deps = [source]
-    deps += settings.settings_files
-    data_exist = {}
-
     docs = settings.AGGREGATE_DOCUMENTS if "AGGREGATE_DOCUMENTS" in settings else {}
-
-    for path, aggregater in docs.items():
+    deps = [source]
+    for path, _ in docs.items():
         if os.path.exists(path):
             deps.append(path)
-            data_exist[path] = aggregater
 
     return {
         "file_dep": deps,
         "targets": [target],
-        "actions": [(merge_student_data, [source, target, data_exist])],
+        "actions": [(merge_student_data, [source, target, docs])],
         "verbosity": 2,
     }
 
