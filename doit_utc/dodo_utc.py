@@ -25,6 +25,7 @@ from .utils import (
     get_unique_uv,
     action_msg,
     DATE_FORMAT,
+    TIME_FORMAT,
     lib_list
 )
 
@@ -357,9 +358,16 @@ def task_json_restriction():
                 dt_min = pd.to_datetime(df['date']).min().date()
                 for _, row in df.iterrows():
                     group = row['Lib. créneau'] + row['semaine']
-                    dt = (datetime.strptime(row['date'], DATE_FORMAT).date() +
-                          timedelta(days=1))
-                    sts.append((CondGroup() == group) & (CondDate() >= dt))
+                    hf = row['Heure fin']
+                    date = row['date']
+
+                    dt = datetime.strptime(date + "_" + hf, DATE_FORMAT + "_" + TIME_FORMAT)
+                    # dt += timedelta(days=1)
+
+                    # sts.append((CondGroup() == group) & (CondDate() >= dt))
+                    groupi = group + 'i'
+                    groupii = group + 'ii'
+                    sts.append(((CondGroup() == groupi) | (CondGroup() == groupii)) & (CondDate() >= dt))
 
                 return (num, {'enonce': (CondDate() >= dt_min).to_PHP(),
                               'corrige': CondOr(sts=sts).to_PHP()})

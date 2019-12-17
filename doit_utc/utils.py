@@ -372,7 +372,7 @@ class Output():
 
 
 DATE_FORMAT = "%Y-%m-%d"
-TIME_FORMAT = "%H:%M:%S"
+TIME_FORMAT = "%H:%M"
 URL = 'https://demeter.utc.fr/portal/pls/portal30/portal30.get_photo_utilisateur?username='
 
 LATEX_SUBS = (
