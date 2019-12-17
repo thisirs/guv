@@ -66,24 +66,28 @@ class Cond:
         raise NotImplementedError('Abstract method')
 
     def __and__(self, other):
-        if type(self) == CondAnd and type(other) == CondAnd:
-            return CondAnd(sts=self.sts+other.sts)
-        elif type(self) == CondAnd:
-            return CondAnd(sts=self.sts+[other])
-        elif type(other) == CondAnd:
-            return CondAnd(sts=[self]+other.sts)
+        if isinstance(self, CondCompound):
+            if isinstance(other, CondCompound):
+                return CondAnd(sts=self.sts+other.sts)
+            else:
+                return CondAnd(sts=self.sts+[other])
         else:
-            return CondAnd(sts=[self, other])
+            if isinstance(other, CondCompound):
+                return CondAnd(sts=[self]+other.sts)
+            else:
+                return CondAnd(sts=[self]+[other])
 
     def __or__(self, other):
-        if type(self) == CondOr or type(other) == CondOr:
-            return CondOr(sts=self.sts+other.sts)
-        elif type(self) == CondOr:
-            return CondOr(sts=self.sts+[other.sts])
-        elif type(other) == CondOr:
-            return CondOr(sts=[self.sts]+other.sts)
+        if isinstance(self, CondCompound):
+            if isinstance(other, CondCompound):
+                return CondOr(sts=self.sts+other.sts)
+            else:
+                return CondOr(sts=self.sts+[other])
         else:
-            return CondOr(sts=[self.sts, other.sts])
+            if isinstance(other, CondCompound):
+                return CondOr(sts=[self]+other.sts)
+            else:
+                return CondOr(sts=[self]+[other])
 
 
 class CondDate(Cond):
