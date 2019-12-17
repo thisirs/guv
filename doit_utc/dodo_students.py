@@ -253,29 +253,33 @@ def task_xls_student_data_merge():
     }
 
 
+@actionfailed_on_exception
 def task_csv_exam_groups():
     """Fichier csv des demi-groupe de TP pour le passage des examens de TP."""
 
     @taskfailed_on_exception
-    def csv_exam_groups(target, target_moodle, xls_merge):
+    def csv_exam_groups(target, target_moodle, xls_merge, tp_col, tiers_temps_col):
         df = pd.read_excel(xls_merge)
 
         def exam_split(df):
-            if "Tiers-temps" in df.columns:
-                dff = df.sort_values("Tiers-temps", ascending=False)
+            if tiers_temps_col in df.columns:
+                dff = df.sort_values(tiers_temps_col, ascending=False)
             else:
                 dff = df
             n = len(df.index)
             m = math.ceil(n / 2)
-            sg1 = dff.iloc[:m, :]["TP"] + "i"
-            sg2 = dff.iloc[m:, :]["TP"] + "ii"
+            sg1 = dff.iloc[:m, :][tp_col] + "i"
+            sg2 = dff.iloc[m:, :][tp_col] + "ii"
             dff["TPE"] = pd.concat([sg1, sg2])
             return dff
 
-        check_columns(df, "TP", file=xls_merge)
+        check_columns(df, [tp_col, tiers_temps_col], file=xls_merge)
 
-        dff = df.groupby("TP", group_keys=False).apply(exam_split)
-        dff = dff[["Adresse de courriel", "TPE"]]
+        dff = df.groupby(tp_col, group_keys=False).apply(exam_split)
+        if 'Adresse de courriel' in dff.columns:
+            dff = dff[["Adresse de courriel", "TPE"]]  # Prefer moodle email
+        else:
+            dff = dff[["Courriel", "TPE"]]
 
         with Output(target) as target0:
             dff.to_csv(target0(), index=False)
@@ -283,18 +287,23 @@ def task_csv_exam_groups():
         with Output(target_moodle) as target:
             dff.to_csv(target(), index=False, header=False)
 
-    for planning, uv, info in selected_uv():
-        deps = [generated(task_xls_student_data_merge.target, **info)]
-        target = generated("exam_groups.csv", **info)
-        target_moodle = generated("exam_groups_moodle.csv", **info)
+    args = parse_args(
+        task_csv_exam_groups,
+        argument('-t', '--tiers-temps', required=False, default='Tiers-temps'),
+        argument('-p', '--tp', required=False, default='TP'),
+    )
 
-        yield {
-            "name": f"{planning}_{uv}",
-            "actions": [(csv_exam_groups, [target, target_moodle, deps[0]])],
-            "file_dep": deps,
-            "targets": [target_moodle],
-            "verbosity": 2,
-        }
+    planning, uv, info = get_unique_uv()
+    deps = [generated(task_xls_student_data_merge.target, **info)]
+    target = generated("exam_groups.csv", **info)
+    target_moodle = generated("exam_groups_moodle.csv", **info)
+
+    return {
+        "actions": [(csv_exam_groups, [target, target_moodle, deps[0], args.tp, args.tiers_temps])],
+        "file_dep": deps,
+        "targets": [target_moodle],
+        "verbosity": 2,
+    }
 
 
 @actionfailed_on_exception
