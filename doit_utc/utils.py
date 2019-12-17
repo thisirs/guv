@@ -56,7 +56,8 @@ def check_columns(dataframe, columns, **kwargs):
         missing_cols = ", ".join(f"`{e}'" for e in missing_cols)
         avail_cols = ", ".join(f"`{e}'" for e in dataframe.columns)
         if 'file' in kwargs:
-            msg = f"Colonne{s} manquante{s}: {missing_cols} dans le dataframe issu du fichier {kwargs['file']}. Colonnes disponibles: {avail_cols}"
+            fn = rel_to_dir(kwargs['file'], settings.BASE_DIR)
+            msg = f"Colonne{s} manquante{s}: {missing_cols} dans le dataframe issu du fichier {fn}. Colonnes disponibles: {avail_cols}"
         else:
             msg = f"Colonne{s} manquante{s}: {missing_cols}. Colonnes disponibles: {avail_cols}"
         raise Exception(msg)
