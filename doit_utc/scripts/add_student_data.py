@@ -39,8 +39,6 @@ def add_moodle_data(df, fn):
         fullnames = fullnames.apply(slug)
         dfm['fullname_slug'] = fullnames
 
-        dfr_clean = dfr.loc[dfr['_merge'] == 'both']
-
         dfr = pd.merge(df, dfm,
                        how='outer',
                        left_on='Name',
@@ -84,8 +82,6 @@ def add_moodle_data(df, fn):
             dfr_clean = dfr_clean.append(row_merge)
 
     dfr_clean = dfr_clean.drop('_merge', axis=1)
-
-        # dfr = dfr.loc[~pd.isnull(dfr.Nom)]
 
     return dfr_clean
 
