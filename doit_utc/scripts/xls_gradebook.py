@@ -501,6 +501,7 @@ class GradeSheetSimpleGroup(GradeSheetSimpleWriter):
     def __init__(self, args):
         super(GradeSheetSimpleGroup, self).__init__(args)
         self.group = args.group
+        self.grade_type = args.grade_type
 
     def get_columns(self, **kwargs):
         return {
@@ -515,6 +516,7 @@ class GradeSheetSimpleGroup(GradeSheetSimpleWriter):
     def get_parser(cls):
         parser = super(GradeSheetSimpleGroup, GradeSheetSimpleGroup).get_parser()
         parser.add_argument('-g', '--group', required=True, dest='group')
+        parser.add_argument('-t', '--grade-type', default='num', required=False, choices=['num', 'sym'], dest='grade_type')
         return parser
 
     def write(self, ref=None):
@@ -533,18 +535,28 @@ class GradeSheetSimpleGroup(GradeSheetSimpleWriter):
 
             # Note
             self.gradesheet.merge_cells2(
-                header_ref_cell.right(2*i).below(),
-                header_ref_cell.right(2*i+1).below())
+                header_ref_cell.below().right(2*i),
+                header_ref_cell.below().right(2*i+1))
 
             for j, (index, record) in enumerate(group.iterrows()):
                 name = record['Nom'] + ' ' + record['Prénom']
                 header_ref_cell.right(2*i).below(2+j).value = name
 
-                record[self.name].value = "='{}'!{}+'{}'!{}".format(
-                    self.gradesheet.title,
-                    header_ref_cell.right(2*i).below().coordinate,
-                    self.gradesheet.title,
-                    header_ref_cell.right(2*i+1).below(2+j).coordinate)
+                grade_addr = get_address_of_cell(header_ref_cell.below().right(2*i))
+                grademod_addr = get_address_of_cell(header_ref_cell.below(2+j).right(2*i+1))
+                if self.grade_type == "num":
+                    formula = "=%s+%s" % (grade_addr, grademod_addr)
+                    record[self.name].value = formula
+                elif self.grade_type == "sym":
+                    formula = "=IF(ISBLANK(%s),IF(ISBLANK(%s),\"\", %s),%s)" % (
+                        grademod_addr,
+                        grade_addr,
+                        grade_addr,
+                        grademod_addr
+                    )
+                    record[self.name].value = formula
+                else:
+                    raise Exception("Unknown grade type")
 
         self.wb.save(self.output_file)
 
