@@ -599,20 +599,23 @@ class GradeSheetAssignmentWriter(GradeSheetExamWriter):
             self.gradesheet.cell(ref[0]-2, col+i+1, key)
             self.gradesheet.cell(ref[0]-1, col+i+1, group_names)
 
-            formula = (
-                '=SUM(' +
-                utils.get_column_letter(col+i+1) + str(ref[0]) +
-                ':' +
-                utils.get_column_letter(col+i+1) + str(row) +
-                ')'
-            )
-            self.gradesheet.cell(row+1, col+i+1, formula)
+            first = self.gradesheet.cell(ref[0], col+i+1)
+            last = self.gradesheet.cell(row, col+i+1)
+            grade = self.gradesheet.cell(row+1, col+i+1)
 
+            formula = "=SUM(%s)" % get_range_from_cells(
+                first,
+                last,
+                add_worksheet_name=False
+            )
+            grade.value = formula
+
+            # Write link to grade for each member of group
             for index, record in group.iterrows():
-                record[self.name].value = "='{}'!{}{}".format(
-                    self.gradesheet.title,
-                    utils.get_column_letter(col+i+1).upper(),
-                    str(row+1))
+                record[self.name].value = "=" + get_address_of_cell(
+                    grade,
+                    add_worksheet_name=True
+                )
 
         self.wb.save(self.output_file)
 
