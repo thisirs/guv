@@ -263,6 +263,20 @@ class GradeSheetWriter:
         raise NotImplementedError
 
 
+class GradeSheetWriterConfig(GradeSheetWriter):
+    def __init__(self, args):
+        super(GradeSheetExamWriter, self).__init__(args)
+        self.config = self.parse_config(args.config)
+
+    def parse_config(self, config):
+        if not os.path.exists(config):
+            raise Exception("Configuration file not found")
+
+        with open(config, "r") as stream:
+            return list(yaml.load_all(stream, Loader=yaml.SafeLoader))[0]
+
+
+
 class GradeSheetSimpleWriter(GradeSheetWriter):
     """Feuille de notes simple par étudiant et sans barème."""
 
@@ -292,7 +306,7 @@ class GradeSheetSimpleWriter(GradeSheetWriter):
         self.wb.save(self.output_file)
 
 
-class GradeSheetExamWriter(GradeSheetWriter):
+class GradeSheetExamWriter(GradeSheetWriterConfig):
     """Feuille de notes pour un examen type médian/final avec des
 questions structurées."""
 
@@ -300,30 +314,12 @@ questions structurées."""
     # parser.
     name = 'exam'
 
-    def __init__(self, args):
-        super(GradeSheetExamWriter, self).__init__(args)
-        self.config = self.read_config(args.struct)
-
     # Add a structure argument
     @classmethod
     def get_parser(cls):
         parser = super(GradeSheetExamWriter, GradeSheetExamWriter).get_parser()
-        parser.add_argument('-s', '--struct', required=True, dest='struct')
+        parser.add_argument('-s', '--struct', required=True, dest='config')
         return parser
-
-    def read_config(self, filename):
-        """On cherche le fichier dans le dossier courant et dans le sous-dossier
-        documents/."""
-
-        if os.path.exists(filename):
-            struct_path = filename
-        else:
-            struct_path = os.path.join('documents', filename)
-            if not os.path.exists(struct_path):
-                raise Exception(f'Path to {filename} or {struct_path} not existing')
-
-        with open(struct_path, "r") as stream:
-            return list(yaml.load_all(stream, Loader=yaml.SafeLoader))[0]
 
     @property
     def tree(self):
@@ -394,7 +390,6 @@ class GradeSheetExamMultipleWriter(GradeSheetExamWriter):
 
     def __init__(self, args):
         super().__init__(args)
-        self.config = self.read_config(args.struct)
         insts_file = args.insts
         df = pd.read_excel(insts_file)
         insts = df['Intervenants'].unique()
@@ -633,16 +628,12 @@ class GradeSheetAssignmentWriter(GradeSheetExamWriter):
         self.wb.save(self.output_file)
 
 
-class GradeSheetJuryWriter(GradeSheetWriter):
+class GradeSheetJuryWriter(GradeSheetWriterConfig):
     """Feuille Excel pour jury avec les notes, une colonne des notes
     agrégées, des percentiles pour les notes ECTS.
     """
 
     name = "jury"
-
-    def __init__(self, args):
-        self.config = self.parse_config(args.config)
-        super(GradeSheetJuryWriter, self).__init__(args)
 
     def get_columns(self, **kwargs):
         columns = {
@@ -667,13 +658,6 @@ class GradeSheetJuryWriter(GradeSheetWriter):
         parser = super(GradeSheetJuryWriter, GradeSheetJuryWriter).get_parser()
         parser.add_argument('-c', '--config', required=True, dest='config')
         return parser
-
-    def parse_config(self, config):
-        if not os.path.exists(config):
-            raise Exception("Configuration file not found")
-
-        with open(config, "r") as stream:
-            return list(yaml.load_all(stream, Loader=yaml.SafeLoader))[0]
 
     def get_column_range(self, colname):
         "Renvoie la plage de cellule de la colonne COLNAME sans l'en-tête."
