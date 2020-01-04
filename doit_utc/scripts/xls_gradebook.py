@@ -34,6 +34,9 @@ def above(self, step=1):
 def below(self, step=1):
     return self.offset(step, 0)
 
+def top(self):
+    return self.parent.cell(column=self.column, row=1)
+
 def text(self, value):
     self.value = value
     return self
@@ -51,11 +54,13 @@ Cell.left = left
 Cell.right = right
 Cell.above = above
 Cell.below = below
+Cell.top = top
 Cell.text = text
 MergedCell.left = left
 MergedCell.right = right
 MergedCell.above = above
 MergedCell.below = below
+MergedCell.top = top
 MergedCell.text = text
 
 
