@@ -129,6 +129,17 @@ def get_range_from_cells(cell1, cell2, absolute=False, add_worksheet_name=None, 
             return "'{}'!{}".format(cell_worksheet.title, range)
 
 
+def if_empty_formula(formula, blank_value=""):
+    if formula.startswith("="):
+        formula = formula[1:]
+
+    return "=IF(ISBLANK(%s),\"%s\",%s)" % (
+        formula,
+        blank_value,
+        formula
+    )
+
+
 def walk_tree(tree, depth=None, start_at=0):
     def compute_depth(tree):
         if isinstance(tree, (OrderedDict, dict)):
@@ -316,7 +327,10 @@ class GradeSheetSimpleWriter(GradeSheetWriter):
             # Get cell to be filled in first worksheet and make it
             # point to current cell in second worksheet.
             cell = record[self.gradesheet.title]
-            cell.value = "=" + get_address_of_cell(grade, add_worksheet_name=True)
+
+            cell.value = if_empty_formula(
+                get_address_of_cell(grade, add_worksheet_name=True)
+            )
 
         for i in range(len(self.df)):
             self.gradesheet.column_dimensions[utils.get_column_letter(col+i+1)].width = max_len
