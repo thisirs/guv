@@ -293,19 +293,36 @@ class GradeSheetSimpleWriter(GradeSheetWriter):
         # Create a second worksheet
         self.gradesheet = self.wb.create_sheet(title=self.name)
 
-        row, col = ref if ref is not None else (3, 1)
+        if ref is None:
+            ref = (3, 1)
+        row, col = ref
 
+        lastname = self.gradesheet.cell(*ref).text("Nom")
+        name = lastname.below().text("Prénom")
+        grade = name.below().text("Note")
+
+        ref_list = lastname.right()
+        max_len = 0
         for i, (index, record) in enumerate(self.df.iterrows()):
-            self.gradesheet.cell(ref[0]-2, col+i+1, record['Nom'])
-            self.gradesheet.cell(ref[0]-1, col+i+1, record['Prénom'])
+            max_len = max(max_len, len(record['Nom']), len(record['Prénom']))
+
+            lastname = ref_list.right(i)
+            name = lastname.below()
+            grade = name.below()
+
+            lastname.value = record['Nom']
+            name.value = record['Prénom']
 
             # Get cell to be filled in first worksheet and make it
             # point to current cell in second worksheet.
             cell = record[self.gradesheet.title]
-            cell.value = "='{}'!{}{}".format(
-                self.gradesheet.title,
-                utils.get_column_letter(col+i+1).upper(),
-                row+1)
+            cell.value = "=" + get_address_of_cell(grade, add_worksheet_name=True)
+
+        for i in range(len(self.df)):
+            self.gradesheet.column_dimensions[utils.get_column_letter(col+i+1)].width = max_len
+
+        # On fige la première ligne
+        self.gradesheet.freeze_panes = ref_list.top()
 
         # Write workbook
         self.wb.save(self.output_file)
