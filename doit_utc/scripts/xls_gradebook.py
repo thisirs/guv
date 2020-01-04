@@ -12,7 +12,7 @@ import argparse
 from collections import OrderedDict
 from openpyxl import Workbook
 from openpyxl import utils
-from openpyxl.cell import Cell
+from openpyxl.cell import Cell, MergedCell
 from openpyxl.worksheet.worksheet import Worksheet
 from openpyxl.styles import Alignment, PatternFill
 from openpyxl.formatting.rule import CellIsRule
@@ -39,11 +39,24 @@ def text(self, value):
     return self
 
 
+# Add offset function to MergedCell
+def offset(self, row=0, column=0):
+    offset_column = self.column + column
+    offset_row = self.row + row
+    return self.parent.cell(column=offset_column, row=offset_row)
+
+MergedCell.offset = offset
+
 Cell.left = left
 Cell.right = right
 Cell.above = above
 Cell.below = below
 Cell.text = text
+MergedCell.left = left
+MergedCell.right = right
+MergedCell.above = above
+MergedCell.below = below
+MergedCell.text = text
 
 
 def merge_cells2(self, cell1, cell2):
