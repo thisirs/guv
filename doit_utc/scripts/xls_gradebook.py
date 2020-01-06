@@ -184,7 +184,7 @@ def walk_tree(tree, depth=None, start_at=0):
             if current_depth != 0:
                 yield name, nleaves, sdepth, current_leaves, x_span
                 raise RunOut(current_leaves, sdepth)
-        else:                   # Leave
+        else:                   # Leaf
             x_span = math.ceil((depth + 1) // (current_depth + 1))
             sdepth = depth - x_span
             yield name, nleaves, sdepth, 1, x_span
