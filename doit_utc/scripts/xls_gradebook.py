@@ -673,10 +673,11 @@ class GradeSheetAssignmentWriter(GradeSheetExamWriter):
 
             # Write link to grade for each member of group
             for index, record in group.iterrows():
-                record[self.name].value = "=" + get_address_of_cell(
-                    grade,
-                    add_worksheet_name=True
-                )
+                record[self.name].value = if_empty_formula(
+                    get_address_of_cell(
+                        grade,
+                        add_worksheet_name=True
+                ))
 
         self.wb.save(self.output_file)
 
