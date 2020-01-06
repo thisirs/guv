@@ -410,27 +410,72 @@ questions structurées."""
             ref = (3, 1)
         row, col = self.write_structure(upper_left=ref)
 
+        # Write header for grade row
+        self.gradesheet.cell(row=row, column=col).below().value = "Grade"
+        self.gradesheet.cell(row=row, column=col).below(2).value = "Grade /20"
+
+        # Write total of points
+        ref_points = self.gradesheet.cell(row=ref[0], column=col+1)
+
+        def get_points(struct):
+            if isinstance(struct, (OrderedDict, dict)):
+                return [
+                    j for i in struct.values() for j in get_points(i)
+                ]
+            else:
+                a = {}
+                for s in struct:
+                    a.update(s)
+                return [a["points"]]
+
+        ref_points.above().text("Points")
+        points_list = get_points(self.tree)
+        for i, points in enumerate(points_list):
+            ref_points.below(i).text(points)
+        ref_points_last = ref_points.below(len(points_list)-1)
+
+        global_total = ref_points_last.below().text(
+            "=SUM(%s)" % get_range_from_cells(ref_points, ref_points_last)
+        )
+
+        ref_points_last.below(2).text(20)
+
         # Width of structure
         n_questions = row - ref[0] + 1
 
+        ref_names = ref_points.right()
+
         # Freeze the structure
-        self.gradesheet.freeze_panes = self.gradesheet.cell(1, col+1)
+        self.gradesheet.freeze_panes = ref_names.top()
 
         def insert_record(ref_cell, record):
-            first_grade = ref_cell.text(record['Nom']).below().text(record['Prénom']).below()
+            last_name = ref_cell.text(record['Nom'])
+            first_name = last_name.below().text(record['Prénom'])
+            first_grade = first_name.below()
             last_grade = first_grade.below(n_questions - 1)
             total = last_grade.below()
+            total_20 = total.below()
 
             range = get_range_from_cells(first_grade, last_grade)
             formula = f'=IF(COUNTBLANK({range})>0, "", SUM({range}))'
             total.value = formula
 
+            total_20.text(
+                "=IF(ISTEXT(%s),\"\",%s/%s*20)" % (
+                    get_address_of_cell(total),
+                    get_address_of_cell(total),
+                    get_address_of_cell(global_total, absolute=True)
+                )
+            )
+
             # Cell in first worksheet
             cell = record[self.gradesheet.title]
-            cell.value = "=" + get_address_of_cell(total)
+            cell.value = "=" + get_address_of_cell(total_20, add_worksheet_name=True)
+
+            fit_cells_at_col(last_name, first_name)
 
         for j, (index, record) in enumerate(self.df.iterrows()):
-            ref_cell = self.gradesheet.cell(ref[0]-2, col+j+1)
+            ref_cell = ref_names.right(j).above(2)
             insert_record(ref_cell, record)
 
         self.wb.save(self.output_file)
