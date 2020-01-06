@@ -599,9 +599,12 @@ class GradeSheetSimpleGroup(GradeSheetSimpleWriter):
                 header_ref_cell.below().right(2*i),
                 header_ref_cell.below().right(2*i+1))
 
+            name_cells = []
             for j, (index, record) in enumerate(group.iterrows()):
                 name = record['Nom'] + ' ' + record['Prénom']
-                header_ref_cell.right(2*i).below(2+j).value = name
+                name_cell = header_ref_cell.right(2*i).below(2+j)
+                name_cell.value = name
+                name_cells.append(name_cell)
 
                 grade_addr = get_address_of_cell(header_ref_cell.below().right(2*i))
                 grademod_addr = get_address_of_cell(header_ref_cell.below(2+j).right(2*i+1))
@@ -618,6 +621,8 @@ class GradeSheetSimpleGroup(GradeSheetSimpleWriter):
                     record[self.name].value = formula
                 else:
                     raise Exception("Unknown grade type")
+
+            fit_cells_at_col(*name_cells)
 
         self.wb.save(self.output_file)
 
