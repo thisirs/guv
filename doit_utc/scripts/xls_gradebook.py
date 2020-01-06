@@ -140,6 +140,21 @@ def if_empty_formula(formula, blank_value=""):
     )
 
 
+from operator import attrgetter
+from itertools import groupby
+
+def fit_cells_at_col(*cells):
+    worksheet = cells[0].parent
+    assert all(c.parent == worksheet for c in cells)
+    cells = list(cells)
+    cells.sort(key=attrgetter("column"))
+    for k, g in groupby(cells, key=attrgetter("column")):
+        lengths = [len(l) for c in g if c.value is not None for l in c.value.splitlines()]
+        if lengths:
+            max_len = max(lengths)
+            worksheet.column_dimensions[utils.get_column_letter(k)].width = 1.3*max_len
+
+
 def walk_tree(tree, depth=None, start_at=0):
     def compute_depth(tree):
         if isinstance(tree, (OrderedDict, dict)):
