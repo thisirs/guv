@@ -251,6 +251,8 @@ class GradeSheetWriter:
             if name in self.data_df.columns:
                 for i, value in enumerate(self.data_df[name]):
                     self.ws_data.cell(i + 2, idx, value)
+                cells = self.ws_data[utils.get_column_letter(idx)][1:(N+1)]
+                fit_cells_at_col(*cells)
 
             # Copy data or cells in DF to be able to refer back to them
             if type == 'new':
