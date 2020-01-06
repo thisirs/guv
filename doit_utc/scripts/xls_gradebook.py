@@ -298,7 +298,7 @@ class GradeSheetWriter:
 
 class GradeSheetWriterConfig(GradeSheetWriter):
     def __init__(self, args):
-        super(GradeSheetExamWriter, self).__init__(args)
+        super().__init__(args)
         self.config = self.parse_config(args.config)
 
     def parse_config(self, config):
@@ -679,7 +679,7 @@ class GradeSheetAssignmentWriter(GradeSheetExamWriter):
     name = 'assignment'
 
     def __init__(self, args):
-        super(GradeSheetAssignmentWriter, self).__init__(args)
+        super().__init__(args)
         self.group = args.group
 
     def get_columns(self, **kwargs):
