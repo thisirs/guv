@@ -149,7 +149,7 @@ def fit_cells_at_col(*cells):
     cells = list(cells)
     cells.sort(key=attrgetter("column"))
     for k, g in groupby(cells, key=attrgetter("column")):
-        lengths = [len(l) for c in g if c.value is not None for l in c.value.splitlines()]
+        lengths = [len(l) for c in g if c.value is not None for l in str(c.value).splitlines()]
         if lengths:
             max_len = max(lengths)
             worksheet.column_dimensions[utils.get_column_letter(k)].width = 1.3*max_len
