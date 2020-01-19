@@ -323,24 +323,34 @@ class GradeSheetWriter:
             self.ws_data.cell(1, idx).value = name
             self.ws_data.cell(1, idx).style = "Pandas"
 
-            # Copy data from DATA_DF if existing into first worksheet
             if name in self.data_df.columns:
+                # Copy data from DATA_DF if existing into first worksheet
                 for i, value in enumerate(self.data_df[name]):
-                    self.ws_data.cell(i + 2, idx, value)
+                    self.ws_data.cell(i + 2, idx).value = value
                 cells = self.ws_data[utils.get_column_letter(idx)][1:(N+1)]
+
+                # Fit width of column to actual content
                 fit_cells_at_col(*cells)
 
-            # Copy data or cells in DF to be able to refer back to them
-            if type == 'new':
-                cells = self.ws_data[utils.get_column_letter(idx)][1:(N+1)]
-                self.df[name] = cells
-            elif type == 'copy':
-                if name not in self.data_df.columns:
-                    raise Exception('No data to copy from and type is data', name, self.data_df.columns)
-                self.df[name] = self.data_df[name]
-            else:
-                raise Exception("Unsupported type: {}".format(type))
+                # Add values or cells to DF
+                if type == "raw":
+                    self.df[name] = self.data_df[name]
+                elif type == "cell" or type is None:
+                    self.df[name] = cells
+                else:
+                    raise Exception("Unkown type of column ", type)
 
+            else:
+                # Non-existent column
+                if type == 'cell' or type is None:
+                    cells = self.ws_data[utils.get_column_letter(idx)][1:(N+1)]
+                    self.df[name] = cells
+                elif type == 'raw':
+                    raise Exception('No data to copy from and type is data', name, self.data_df.columns)
+                else:
+                    raise Exception("Unkown type of column ", type)
+
+        # Sort all columns
         self.ws_data.auto_filter.ref = 'A1:{}{}'.format(
             utils.get_column_letter(idx),
             N + 1)
