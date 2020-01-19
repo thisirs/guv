@@ -93,13 +93,14 @@ MergedCell.set_border = set_border
 def merge_cells2(self, cell1, cell2):
     """Merge rectangle defined by upper left and lower right cells"""
 
-    return self.merge_cells(
+    self.merge_cells(
         start_row=cell1.row,
         start_column=cell1.col_idx,
         end_row=cell2.row,
         end_column=cell2.col_idx
     )
 
+    return self.cell(row=cell1.row, column=cell1.col_idx)
 
 Worksheet.merge_cells2 = merge_cells2
 
