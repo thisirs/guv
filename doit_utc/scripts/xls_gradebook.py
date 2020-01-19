@@ -57,6 +57,18 @@ def offset(self, row=0, column=0):
     offset_row = self.row + row
     return self.parent.cell(column=offset_column, row=offset_row)
 
+def merge(self, cell):
+    assert self.parent == cell.parent
+
+    self.parent.merge_cells(
+        start_row=self.row,
+        start_column=self.column,
+        end_row=cell.row,
+        end_column=cell.column
+    )
+    return self
+
+
 MergedCell.offset = offset
 
 Cell.left = left
@@ -67,6 +79,7 @@ Cell.top = top
 Cell.text = text
 Cell.center = center
 Cell.set_border = set_border
+Cell.merge = merge
 MergedCell.left = left
 MergedCell.right = right
 MergedCell.above = above
