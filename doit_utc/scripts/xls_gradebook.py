@@ -388,8 +388,8 @@ class GradeSheetWriter:
 
 class GradeSheetWriterConfig(GradeSheetWriter):
     def __init__(self, args):
-        super().__init__(args)
         self.config = self.parse_config(args.config)
+        super().__init__(args)
 
     def parse_config(self, config):
         if not os.path.exists(config):
