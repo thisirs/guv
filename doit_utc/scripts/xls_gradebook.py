@@ -376,10 +376,10 @@ class GradeSheetWriter:
     # created to be referenced later in the workbook.
     def get_columns(self, **kwargs):
         return {
-            'Nom': 'copy',
-            'Prénom': 'copy',
-            'Courriel': 'copy',
-            self.name: 'new'
+            'Nom': 'raw',
+            'Prénom': 'raw',
+            'Courriel': 'raw',
+            self.name: 'cell'
         }
 
     def write(self):
@@ -609,11 +609,11 @@ class GradeSheetExamMultipleWriter(GradeSheetExamWriter):
 
     def get_columns(self, **kwargs):
         return {
-            'Nom': 'copy',
-            'Prénom': 'copy',
-            'Courriel': 'copy',
-            'Note': 'new',
-            "Correcteur": 'new',
+            'Nom': 'raw',
+            'Prénom': 'raw',
+            'Courriel': 'raw',
+            'Note': 'cell',
+            "Correcteur": 'cell',
         }
 
     def write(self, ref=None):
@@ -701,11 +701,11 @@ class GradeSheetSimpleGroup(GradeSheetSimpleWriter):
 
     def get_columns(self, **kwargs):
         return {
-            'Nom': 'copy',
-            'Prénom': 'copy',
-            'Courriel': 'copy',
-            kwargs['group']: 'copy',
-            self.name: 'new'
+            'Nom': 'raw',
+            'Prénom': 'raw',
+            'Courriel': 'raw',
+            kwargs['group']: 'raw',
+            self.name: 'cell'
         }
 
     @classmethod
@@ -774,11 +774,11 @@ class GradeSheetAssignmentWriter(GradeSheetExamWriter):
 
     def get_columns(self, **kwargs):
         return {
-            'Nom': 'copy',
-            'Prénom': 'copy',
-            'Courriel': 'copy',
-            kwargs['group']: 'copy',
-            self.name: 'new'
+            'Nom': 'raw',
+            'Prénom': 'raw',
+            'Courriel': 'raw',
+            kwargs['group']: 'raw',
+            self.name: 'cell'
         }
 
     @classmethod
@@ -826,25 +826,25 @@ class GradeSheetJuryWriter(GradeSheetWriterConfig):
     """Feuille Excel pour jury avec les notes, une colonne des notes
     agrégées, des percentiles pour les notes ECTS.
     """
-
     name = "jury"
 
     def get_columns(self, **kwargs):
         columns = {
-            'Nom': 'copy',
-            'Prénom': 'copy',
-            'Courriel': 'copy',
-            'Admis': 'new',
-            'Note admis': 'new'
+            'Nom': 'raw',
+            'Prénom': 'raw',
+            'Courriel': 'raw',
+            'Admis': 'cell',
+            'Note admis': 'cell'
         }
 
-        for name, opts in self.config['columns'].items():
-            if opts is not None and opts.get('new'):
-                columns[name] = 'new'
+        for name, props in self.config['columns'].items():
+            if props is not None:
+                columns[name] = props.get('type')
             else:
-                columns[name] = 'copy'
+                columns[name] = None
 
-        columns['Note ECTS'] = 'new'
+        columns['Note agrégée'] = 'cell'
+        columns['Note ECTS'] = 'cell'
         return columns
 
     @classmethod
