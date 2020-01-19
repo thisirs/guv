@@ -105,6 +105,27 @@ def merge_cells2(self, cell1, cell2):
 Worksheet.merge_cells2 = merge_cells2
 
 
+def frame_range(cell1, cell2):
+    cell_range = cell1.coordinate + ":" + cell2.coordinate
+    thin = Side(border_style="thin", color="000000")
+    top = Border(top=thin)
+    left = Border(left=thin)
+    right = Border(right=thin)
+    bottom = Border(bottom=thin)
+
+    rows = cell1.parent[cell_range]
+    for cell in rows[0]:
+        cell.border = cell.border + top
+    for cell in rows[-1]:
+        cell.border = cell.border + bottom
+
+    for row in rows:
+        l = row[0]
+        r = row[-1]
+        l.border = l.border + left
+        r.border = r.border + right
+
+
 def get_address_of_cell(cell, absolute=False, add_worksheet_name=None, compat=False):
     """Renvoie l'adresse d'un objet Cell sous forme "A1" en prenant en
     compte la feuille courante si la cellule se trouve sur une
