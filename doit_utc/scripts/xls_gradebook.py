@@ -1036,13 +1036,100 @@ class GradeSheetJuryWriter(GradeSheetWriterConfig):
         self.wb.save(self.output_file)
 
 
+class GradeSheetGroupStruct(GradeSheetExamWriter):
+    """Feuille de notes avec grille, par groupes avec modifications par étudiants"""
+
+    name = 'group-struct'
+
+    def __init__(self, args):
+        super().__init__(args)
+        self.group = args.group
+
+    def get_columns(self, **kwargs):
+        return {
+            'Nom': 'raw',
+            'Prénom': 'raw',
+            'Courriel': 'raw',
+            kwargs['group']: 'raw',
+            self.name: 'cell'
+        }
+
+    @classmethod
+    def get_parser(cls):
+        parser = super(GradeSheetAssignmentWriter, GradeSheetAssignmentWriter).get_parser()
+        parser.add_argument('-g', '--group', required=True, dest='group')
+        return parser
+
+    def write(self, ref=None):
+        # Write new gradesheet
+        self.gradesheet = self.wb.create_sheet(title=self.name)
+        self.wb.active = self.gradesheet
+
+        if ref is None:
+            ref = (4, 1)
+        row, col = self.write_structure(upper_left=ref)
+
+        # First, last and total grade for column "all"
+        first_all = self.gradesheet.cell(row=ref[0], column=col+1)
+        total_all = self.gradesheet.cell(row=row+1, column=col+1)
+        last_all = total_all.above()
+
+        for i, (key, group) in enumerate(self.df.groupby(self.group)):
+            # Name of column common to all members of group
+            first_all.above(2).value = "Group"
+            self.gradesheet.merge_cells2(first_all.above(2).set_border(), first_all.above(1)).center()
+
+            # Write all names
+            for j, (index, record) in enumerate(group.iterrows()):
+                first_all.above(2).right(j+1).value = record['Nom']
+                first_all.above().right(j+1).value = record['Prénom']
+                fit_cells_at_col(first_all.above(2).right(j+1), first_all.above().right(j+1))
+                frame_range(first_all.above(2).right(j+1), first_all.above().right(j+1))
+
+            # Name of current group
+            first_all.above(3).value = key
+            self.gradesheet.merge_cells2(first_all.above(3).set_border(), first_all.above(3).right(len(group))).center()
+
+            for j, (index, record) in enumerate(group.iterrows()):
+                first_stu_grade = first_all.right(j+1)
+                last_stu_grade = last_all.right(j+1)
+                total_stu_grade = total_all.right(j+1)
+
+                formula = "=" + "+".join(
+                    "IF(ISBLANK(%s),%s,%s)" % (
+                        get_address_of_cell(stu_g),
+                        get_address_of_cell(all_g, absolute=True),
+                        get_address_of_cell(stu_g)
+                    )
+                    for all_g, stu_g in zip(
+                            get_segment(first_all, last_all),
+                            get_segment(first_stu_grade, last_stu_grade)
+                    )
+                )
+
+                total_stu_grade.value = formula
+
+                record[self.name].value = "=" + get_address_of_cell(
+                    total_stu_grade,
+                    add_worksheet_name=True
+                )
+
+            frame_range(first_all, last_all.right(len(group)))
+            total_all = total_all.right(len(group)+1)
+            first_all = first_all.right(len(group)+1)
+            last_all = total_all.above()
+
+        self.wb.save(self.output_file)
+
+
 WRITERS = [
     GradeSheetExamWriter,
     GradeSheetExamMultipleWriter,
     GradeSheetAssignmentWriter,
     GradeSheetSimpleWriter,
     GradeSheetJuryWriter,
-    GradeSheetSimpleGroup
+    GradeSheetSimpleGroup,
+    GradeSheetGroupStruct
 ]
 
 
