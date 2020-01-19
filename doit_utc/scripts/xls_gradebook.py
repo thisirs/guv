@@ -195,6 +195,16 @@ def get_segment(cell1, cell2):
         raise Exception('Must have same row or column')
 
 
+def row_and_col(cell1, cell2):
+    assert cell1.parent == cell2.parent
+    parent = cell1.parent
+    return parent.cell(row=cell1.row, column=cell2.column)
+
+
+def col_and_row(cell1, cell2):
+    return row_and_col(cell2, cell1)
+
+
 def if_empty_formula(formula, blank_value=""):
     if formula.startswith("="):
         formula = formula[1:]
