@@ -177,6 +177,24 @@ def get_range_from_cells(cell1, cell2, absolute=False, add_worksheet_name=None, 
             return "'{}'!{}".format(cell_worksheet.title, range)
 
 
+def get_segment(cell1, cell2):
+    """Return a generator giving cells from cell1 to cell2"""
+    if cell1.row == cell2.row:
+        if cell1.column > cell2.column:
+            cell1, cell2 = cell2, cell1
+
+        for i in range(cell1.column, cell2.column+1):
+            yield cell1.parent.cell(row=cell1.row, column=i)
+    elif cell1.column == cell2.column:
+        if cell1.row > cell2.row:
+            cell1, cell2 = cell2, cell1
+
+        for i in range(cell1.row, cell2.row+1):
+            yield cell1.parent.cell(column=cell1.column, row=i)
+    else:
+        raise Exception('Must have same row or column')
+
+
 def if_empty_formula(formula, blank_value=""):
     if formula.startswith("="):
         formula = formula[1:]
