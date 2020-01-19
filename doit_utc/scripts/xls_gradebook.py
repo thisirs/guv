@@ -14,7 +14,7 @@ from openpyxl import Workbook
 from openpyxl import utils
 from openpyxl.cell import Cell, MergedCell
 from openpyxl.worksheet.worksheet import Worksheet
-from openpyxl.styles import Alignment, PatternFill
+from openpyxl.styles import Alignment, PatternFill, Side, Border
 from openpyxl.formatting.rule import CellIsRule
 from openpyxl.utils.cell import absolute_coordinate
 
@@ -41,6 +41,15 @@ def text(self, value):
     self.value = value
     return self
 
+def center(self):
+    self.alignment = Alignment(horizontal='center', vertical='center')
+    return self
+
+def set_border(self):
+    thin = Side(border_style="thin", color="000000")
+    border = Border(top=thin, left=thin, right=thin, bottom=thin)
+    self.border += border
+    return self
 
 # Add offset function to MergedCell
 def offset(self, row=0, column=0):
@@ -56,12 +65,16 @@ Cell.above = above
 Cell.below = below
 Cell.top = top
 Cell.text = text
+Cell.center = center
+Cell.set_border = set_border
 MergedCell.left = left
 MergedCell.right = right
 MergedCell.above = above
 MergedCell.below = below
 MergedCell.top = top
 MergedCell.text = text
+MergedCell.center = center
+MergedCell.set_border = set_border
 
 
 def merge_cells2(self, cell1, cell2):
