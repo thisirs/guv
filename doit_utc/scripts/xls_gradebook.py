@@ -399,7 +399,6 @@ class GradeSheetWriterConfig(GradeSheetWriter):
             return list(yaml.load_all(stream, Loader=yaml.SafeLoader))[0]
 
 
-
 class GradeSheetSimpleWriter(GradeSheetWriter):
     """Feuille de notes simple par étudiant et sans barème."""
 
