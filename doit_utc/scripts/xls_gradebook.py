@@ -355,8 +355,12 @@ class GradeSheetWriter:
             utils.get_column_letter(idx),
             N + 1)
 
-        # On fige la première ligne
-        self.ws_data.freeze_panes = "A2"
+        if N >= 10:
+            # Freeze header row and first two columns if more than 10 columns
+            self.ws_data.freeze_panes = "C2"
+        else:
+            # Freeze header row
+            self.ws_data.freeze_panes = "A2"
 
     # Create parser whose arguments will be available to the constructor
     @classmethod
