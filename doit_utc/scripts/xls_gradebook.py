@@ -868,105 +868,176 @@ class GradeSheetJuryWriter(GradeSheetWriterConfig):
         # Write new gradesheet
         self.gradesheet = self.wb.create_sheet(title=self.name)
 
-        # On écrit les grandeurs utiles pour les différents calculs
-        ref = (1, 1)
-        keytocell = {}
-        for i, (name, settings) in enumerate(self.config['columns'].items()):
-            self.gradesheet.cell(ref[0] + i, ref[1], name)
-            ne = settings.get('note_éliminatoire', -1)
-            self.gradesheet.cell(ref[0] + i, ref[1] + 1, ne)
-            key = name + '_note_éliminatoire'
-            keytocell[key] = self.gradesheet.cell(ref[0] + i, ref[1] + 1)
+        current_cell = self.gradesheet.cell(row=1, column=1)
 
-        for name, value in self.config['options'].items():
-            i += 1
-            self.gradesheet.cell(ref[0] + i, ref[1], name)
-            self.gradesheet.cell(ref[0] + i, ref[1] + 1, value)
-            keytocell[name] = self.gradesheet.cell(ref[0] + i, ref[1] + 1)
+        # Helper function to write key-value table
+        def write_key_value_props(ref_cell, title, props):
+            keytocell = {}
+            ref_cell.text(title).merge(ref_cell.right()).style = "Pandas"
+            for key, value in props.items():
+                ref_cell = ref_cell.below()
+                ref_cell.value = key
+                ref_cell.right().value = value
+                keytocell[key] = ref_cell.right()
+            return ref_cell.right(), keytocell
 
-        # On écrit la note agrégée
-        self.wb.active = self.ws_data
-        # for i, (index, record) in enumerate(self.df.iterrows()):
-        #     record['Note agrégée'].value = (
-        #         '=IFERROR({}/6+{}/2+{}/3, ""'.format(
-        #             get_address_of_cell(record['Note_TP']),
-        #             get_address_of_cell(record['Note final']),
-        #             get_address_of_cell(record['Note médian'])
-        #         )
-        #     )
+        # Write options for all "columns" items in configuration file
+        grades_options = {}
+        if "Note agrégée" not in self.config['columns']:
+            self.config['columns']['Note agrégée'] = {
+                'note_éliminatoire': -1
+            }
+        for name, props in self.config['columns'].items():
+            # Add default options
+            if props is None:
+                opts = {'note_éliminatoire': -1}
+            if 'options' not in props:
+                opts = {'note_éliminatoire': -1}
+            elif 'note_éliminatoire' not in props['options']:
+                opts = props['options']
+                opts['note_éliminatoire'] = -1
+
+            # Write key-value table
+            lower_right, keytocell = write_key_value_props(
+                current_cell,
+                name,
+                opts
+            )
+            grades_options[name] = keytocell
+            current_cell = lower_right.below(2).left(1)
+
+        # Add default global options
+        options = self.config['options']
+        for ects, grade in zip('ABCD', [0.9, 0.65, 0.35, 0.1]):
+            if ('Percentile note ' + ects) not in options:
+                options['Percentile note ' + ects] = grade
+
+        lower_right, global_options = write_key_value_props(
+            current_cell,
+            "Options globales",
+            options
+        )
+        current_cell = lower_right.below(2).left(1)
+
+        # On écrit les seuils des notes correspondants aux percentiles choisis
+        props = {}
+        self.wb.active = self.gradesheet
+        for i, ects in enumerate('ABCD'):
+            percentile_cell = global_options['Percentile note ' + ects]
+            props[ects + " si >="] = (
+                '=IF(ISERROR(PERCENTILE({}, {})), NA(), PERCENTILE({}, {}))'.format(
+                    self.get_column_range('Note admis'),
+                    get_address_of_cell(percentile_cell),
+                    self.get_column_range('Note admis'),
+                    get_address_of_cell(percentile_cell)
+                )
+            )
+
+        lower_right, percentiles_theo = write_key_value_props(
+            current_cell,
+            "Percentiles théoriques",
+            props
+        )
+        current_cell = lower_right.below(2).left(1)
+
+        # Percentiles effectifs
+        props = {}
+        self.wb.active = self.gradesheet
+        for i, ects in enumerate('ABCD'):
+            props[ects + " si >="] = (
+                "=" + get_address_of_cell(percentiles_theo[ects + " si >="])
+            )
+
+        lower_right, percentiles_used = write_key_value_props(
+            current_cell,
+            "Percentiles utilisés",
+            props
+        )
+        current_cell = lower_right.below(2).left(1)
+
+        # On écrit les proportions de notes ECTS en fonction de la
+        # colonne `Admis`
+        ref_cell = self.gradesheet.cell(row=1, column=4)
+        props = {}
+        for ects in 'ABCEDEF':
+            props["Nombre de " + ects] = (
+                '=COUNTIF({}, "{}")'
+            ).format(
+                self.get_column_range('Note ECTS'),
+                ects
+            )
+        props["Nombre d'admis"] = (
+            "=SUM({})".format(
+                self.get_column_range('Admis')
+            )
+        )
+        props["Effectif total"] = (
+            "=COUNTA({})".format(
+                self.get_column_range('Admis')
+            )
+        )
+        props["Ratio"] = (
+            "=AVERAGE({})".format(
+                self.get_column_range('Admis')
+            )
+        )
+        lower_right, statistiques = write_key_value_props(
+            ref_cell,
+            "Statistiques",
+            props
+        )
 
         # On écrit la note des admis uniquement pour le calcul des
         # percentiles
         self.wb.active = self.ws_data
         for i, (index, record) in enumerate(self.df.iterrows()):
             record['Note admis'].value = (
-                '=IF({}=1, {}, "")'.format(
+                '=IFERROR(IF({}=1, {}, ""), "")'.format(
                     get_address_of_cell(record['Admis']),
                     get_address_of_cell(record['Note agrégée'])
                 )
             )
 
-        # On écrit les seuils des notes correspondants aux percentiles choisis
-        self.wb.active = self.gradesheet
-        ref = (20, 1)           # En dessous des infos
-        self.gradesheet.cell(ref[0], ref[1], "Barres")
-        for i, ects in enumerate('ABCD'):
-            key = 'Percentile note ' + ects
-            percentile_cell = keytocell[key]
-            self.gradesheet.cell(ref[0] + i, ref[1], ects + " si >=")
-            self.gradesheet.cell(ref[0] + i, ref[1] + 1).value = (
-                '=PERCENTILE({}, {})'.format(
-                    self.get_column_range('Note admis'),
-                    get_address_of_cell(percentile_cell, absolute=True)
-                )
-            )
-            keytocell['barre_' + ects] = self.gradesheet.cell(ref[0] + i, ref[1] + 1)
-
         # On écrit la colonnes des admis/refusés
         self.wb.active = self.ws_data
         for i, (index, record) in enumerate(self.df.iterrows()):
-            ifs = []
-            for name, settings in self.config['columns'].items():
-                key = name + '_note_éliminatoire'
-                ifs.append("IF({}+0>={}, 1)".format(
-                    get_address_of_cell(record[name]),
-                    get_address_of_cell(keytocell[key], absolute=True)))
-            record['Admis'].value = f"=IFERROR({'*'.join(ifs)}, 0)"
-
-        # On écrit un bloc détaillant le nombre d'admis et le ratio en
-        # fonction de la colonne `Admis`
-        self.wb.active = self.gradesheet
-        ref = (1, 4)
-        self.gradesheet.cell(ref[0], ref[1], 'Proportions')
-        self.gradesheet.cell(ref[0]+1, ref[1], 'Nombre d\'admis')
-        self.gradesheet.cell(ref[0]+1, ref[1]+1,).value = (
-            "=SUM({})".format(
-                self.get_column_range('Admis')
+            record["Admis"].value = (
+                '=IFERROR(IF(OR({}), NA(), IF(AND({}), 1, 0)), NA())'.format(
+                    ", ".join(
+                        "ISBLANK({})".format(
+                            get_address_of_cell(record[name])
+                        )
+                        for name, _ in self.config['columns'].items()
+                    ),
+                    ", ".join(
+                        "{}+0>={}".format(
+                            get_address_of_cell(record[name]),
+                            get_address_of_cell(
+                                grades_options[name]['note_éliminatoire']
+                            )
+                        )
+                        for name, _ in self.config['columns'].items()
+                    )
+                )
             )
-        )
-        self.gradesheet.cell(ref[0]+2, ref[1], 'Ratio')
-        self.gradesheet.cell(ref[0]+2, ref[1]+1,).value = (
-            "=AVERAGE({})".format(
-                self.get_column_range('Admis')
-            )
-        )
 
         # On écrit la note ECTS en fonction des autres notes
         self.wb.active = self.ws_data
         for i, (index, record) in enumerate(self.df.iterrows()):
             record['Note ECTS'].value = (
-                '=IF({}="RESERVE", "RESERVE", IF({}="ABS", "ABS", IF({}=0, "F", IF({}>={}, "A", IF({}>={}, "B", IF({}>={}, "C", IF({}>={}, "D", "E")))))))'.format(
+                '=IF(ISNA({}), NA(), IF({}="RESERVE", "RESERVE", IF({}="ABS", "ABS", IF({}=0, "F", IF({}>={}, "A", IF({}>={}, "B", IF({}>={}, "C", IF({}>={}, "D", "E"))))))))'.format(
+                    get_address_of_cell(record['Admis']),
                     get_address_of_cell(record['Note agrégée']),
                     get_address_of_cell(record['Note agrégée']),
                     get_address_of_cell(record['Admis']),
                     get_address_of_cell(record['Note agrégée']),
-                    get_address_of_cell(keytocell['barre_A'], absolute=True),
+                    get_address_of_cell(percentiles_used["A si >="]),
                     get_address_of_cell(record['Note agrégée']),
-                    get_address_of_cell(keytocell['barre_B'], absolute=True),
+                    get_address_of_cell(percentiles_used["B si >="]),
                     get_address_of_cell(record['Note agrégée']),
-                    get_address_of_cell(keytocell['barre_C'], absolute=True),
+                    get_address_of_cell(percentiles_used["C si >="]),
                     get_address_of_cell(record['Note agrégée']),
-                    get_address_of_cell(keytocell['barre_D'], absolute=True)
+                    get_address_of_cell(percentiles_used["D si >="])
                 )
             )
         for cell in self.df["Note ECTS"]:
@@ -985,41 +1056,23 @@ class GradeSheetJuryWriter(GradeSheetWriterConfig):
             rule = CellIsRule(operator='equal', formula=[f'"{ects}"'], fill=fill)
             self.ws_data.conditional_formatting.add(range, rule)
 
-        # On écrit les proportions de notes ECTS en fonction de la
-        # colonne `Admis`
-        self.wb.active = self.gradesheet
-        ref = (1, 7)
-        self.gradesheet.cell(ref[0], ref[1], 'Proportions')
-        for i, ects in enumerate('ABCDEF'):
-            self.gradesheet.cell(ref[0] + i + 1, ref[1], ects)
-            self.gradesheet.cell(ref[0] + i + 1, ref[1] + 1).value = (
-                '=COUNTIF({}, "{}")'
-            ).format(
-                self.get_column_range('Note ECTS'),
-                ects
-            )
-
         # Formattage conditionnel pour les notes éliminatoires
         self.wb.active = self.ws_data
         redFill = PatternFill(start_color='EE1111',
                               end_color='EE1111',
                               fill_type='solid')
 
-        for name, opts in self.config['columns'].items():
-            if opts.get('note_éliminatoire'):
-                id = name + '_note_éliminatoire'
-                if id in keytocell:
-                    threshold_cell = keytocell[id]
-                    threshold_addr = get_address_of_cell(
-                        threshold_cell,
-                        absolute=True,
-                        force=True,
-                        compat=True)
-                    self.ws_data.conditional_formatting.add(
-                        self.get_column_range(name),
-                        CellIsRule(operator='lessThan',
-                                   formula=[threshold_addr],
-                                   fill=redFill))
+        for name, opts in grades_options.items():
+            threshold_cell = opts["note_éliminatoire"]
+            threshold_addr = get_address_of_cell(
+                threshold_cell,
+                compat=True
+            )
+            self.ws_data.conditional_formatting.add(
+                self.get_column_range(name),
+                CellIsRule(operator='lessThan',
+                           formula=[threshold_addr],
+                           fill=redFill))
 
         # On offre la possibilité de trier
         self.wb.active = self.ws_data
@@ -1030,7 +1083,6 @@ class GradeSheetJuryWriter(GradeSheetWriterConfig):
             max_row)
         range = self.get_column_range('Note ECTS')
         self.ws_data.auto_filter.add_sort_condition(range)
-
 
         # On sauve le classeur
         self.wb.save(self.output_file)
