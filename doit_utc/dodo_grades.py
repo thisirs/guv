@@ -33,9 +33,12 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
     """
 
     @taskfailed_on_exception
-    def csv_for_upload(csv_fname, xls_merge, grade_colname, comment_colname):
+    def csv_for_upload(csv_fname, xls_merge, grade_colname, comment_colname, ects):
         if grade_colname is None:
             return TaskFailed('Missing grade_colname')
+
+        if ects and comment_colname:
+            raise Exception("No comment column required when uploading ECTS")
 
         df = pd.read_excel(xls_merge)
 
@@ -48,15 +51,17 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
             'Note': df[grade_colname],
         }
         col_names = ['Nom', 'Prénom', 'Login', 'Note']
-        if comment_colname is not None:
-            check_columns(df, comment_colname, file=xls_merge)
-            col_names.append('Commentaire')
-            cols['Commentaire'] = np.where(df[comment_colname].isnull(),
-                                           np.nan,
-                                           'Corrigé par ' + df[comment_colname])
-        else:
-            col_names.append('Commentaire')
-            cols['Commentaire'] = ""
+
+        if not ects:
+            if comment_colname is None:
+                col_names.append('Commentaire')
+                cols['Commentaire'] = ""
+            else:
+                check_columns(df, comment_colname, file=xls_merge)
+                col_names.append('Commentaire')
+                cols['Commentaire'] = np.where(df[comment_colname].isnull(),
+                                               np.nan,
+                                               'Corrigé par ' + df[comment_colname])
 
         df0 = pd.DataFrame(cols, columns=col_names)
         df0 = df0[col_names]
@@ -68,6 +73,7 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
     args = parse_args(
         task_csv_for_upload,
         argument('-g', '--grade-colname', required=True),
+        argument('--ects', action='store_true'),
         argument('-c', '--comment-colname', required=False)
     )
 
@@ -76,7 +82,7 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
     xls_merge = generated(task_xls_student_data_merge.target, **info)
     deps = [generated(task_xls_student_data_merge.target, **info)]
     return {
-        'actions': [(csv_for_upload, [csv_fname, xls_merge, args.grade_colname, args.comment_colname])],
+        'actions': [(csv_for_upload, [csv_fname, xls_merge, args.grade_colname, args.comment_colname, args.ects])],
         'targets': [csv_fname],
         'file_dep': deps
     }
