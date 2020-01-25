@@ -559,7 +559,11 @@ questions structurées."""
 
             # Cell in first worksheet
             cell = record[self.gradesheet.title]
-            cell.value = "=" + get_address_of_cell(total_20, add_worksheet_name=True)
+            cell.value = "=" + get_address_of_cell(
+                total_20,
+                add_worksheet_name=True,
+                absolute=True
+            )
 
             fit_cells_at_col(last_name, first_name)
 
