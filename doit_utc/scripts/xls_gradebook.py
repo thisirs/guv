@@ -958,7 +958,7 @@ class GradeSheetJuryWriter(GradeSheetWriterConfig):
         # colonne `Admis`
         ref_cell = self.gradesheet.cell(row=1, column=4)
         props = {}
-        for ects in 'ABCEDEF':
+        for ects in 'ABCDEF':
             props["Nombre de " + ects] = (
                 '=COUNTIF({}, "{}")'
             ).format(
