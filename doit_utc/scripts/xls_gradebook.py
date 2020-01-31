@@ -719,8 +719,9 @@ class GradeSheetSimpleGroup(GradeSheetSimpleWriter):
         return parser
 
     def write(self, ref=None):
-        # Write new gradesheet
+        # Write new gradesheet and make it default
         self.gradesheet = self.wb.create_sheet(title=self.name)
+        self.wb.active = self.gradesheet
 
         header_ref_cell = self.gradesheet['B1']
         header_ref_cell.below().left().text("Note").below().text("Correction")
@@ -744,8 +745,16 @@ class GradeSheetSimpleGroup(GradeSheetSimpleWriter):
                 name_cell.value = name
                 name_cells.append(name_cell)
 
-                grade_addr = get_address_of_cell(header_ref_cell.below().right(2*i))
-                grademod_addr = get_address_of_cell(header_ref_cell.below(2+j).right(2*i+1))
+                grade_addr = get_address_of_cell(
+                    header_ref_cell.below().right(2*i),
+                    absolute=True,
+                    add_worksheet_name=True
+                )
+                grademod_addr = get_address_of_cell(
+                    header_ref_cell.below(2+j).right(2*i+1),
+                    absolute=True,
+                    add_worksheet_name=True
+                )
                 if self.grade_type == "num":
                     formula = "=%s+%s" % (grade_addr, grademod_addr)
                     record[self.name].value = formula
