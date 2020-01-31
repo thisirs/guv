@@ -970,7 +970,7 @@ class GradeSheetJuryWriter(GradeSheetWriterConfig):
                 ects
             )
         props["Nombre d'admis"] = (
-            "=SUM({})".format(
+            '=SUMIF({}, "<>#N/A")'.format(
                 self.get_column_range('Admis')
             )
         )
@@ -980,7 +980,7 @@ class GradeSheetJuryWriter(GradeSheetWriterConfig):
             )
         )
         props["Ratio"] = (
-            "=AVERAGE({})".format(
+            '=AVERAGEIF({}, "<>#N/A")'.format(
                 self.get_column_range('Admis')
             )
         )
