@@ -1013,7 +1013,8 @@ class GradeSheetJuryWriter(GradeSheetWriterConfig):
                         for name, _ in self.config['columns'].items()
                     ),
                     ", ".join(
-                        "{}+0>={}".format(
+                        "IF(ISNUMBER({}), {}>={}, 1)".format(
+                            get_address_of_cell(record[name]),
                             get_address_of_cell(record[name]),
                             get_address_of_cell(
                                 grades_options[name]['note_éliminatoire']
