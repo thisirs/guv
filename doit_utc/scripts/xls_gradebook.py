@@ -894,7 +894,7 @@ class GradeSheetJuryWriter(GradeSheetWriterConfig):
             # Add default options
             if props is None:
                 opts = {'note_éliminatoire': -1}
-            if 'options' not in props:
+            elif 'options' not in props:
                 opts = {'note_éliminatoire': -1}
             elif 'note_éliminatoire' not in props['options']:
                 opts = props['options']
@@ -910,7 +910,7 @@ class GradeSheetJuryWriter(GradeSheetWriterConfig):
             current_cell = lower_right.below(2).left(1)
 
         # Add default global options
-        options = self.config['options']
+        options = self.config.get('options', {})
         for ects, grade in zip('ABCD', [0.9, 0.65, 0.35, 0.1]):
             if ('Percentile note ' + ects) not in options:
                 options['Percentile note ' + ects] = grade
