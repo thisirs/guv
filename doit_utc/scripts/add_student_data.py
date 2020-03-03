@@ -112,13 +112,17 @@ def add_UTC_data(df, fn):
 
     lo = dfr.loc[dfr['_merge'] == 'left_only']
     for index, row in lo.iterrows():
-        fullname = row['Nom'] + ' ' + row['Prénom']
-        print(f'add_UTC_data: {fullname} not in UTC data')
+        key = row["fullname_slug"]
+        branch = row["Branche"]
+        semester = row["Semestre"]
+        print(f'(`{key}`, `{branch}`, `{semester}`) not in UTC data')
 
     ro = dfr.loc[dfr['_merge'] == 'right_only']
     for index, row in ro.iterrows():
-        fullname = row['Name']
-        print(f'add_UTC_data: {fullname} only in UTC data')
+        key = row["Name"]
+        branch = row["Branche"]
+        semester = row["Semestre"]
+        print(f'(`{key}`, `{branch}`, `{semester}`) only in UTC data')
 
     # Trying to merge manually lo and ro
     for index, row in lo.iterrows():
