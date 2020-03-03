@@ -810,7 +810,7 @@ def task_pdf_attendance_full():
     args = parse_args(
         task_pdf_attendance_full,
         argument('-c', '--course', required=True),
-        argument('-n', '--slots', default=14)
+        argument('-n', '--slots', type=int, default=14)
     )
 
     planning, uv, info = get_unique_uv()
