@@ -286,7 +286,7 @@ def task_html_inst():
                          left_on='Intervenants',
                          right_on='Intervenants')
 
-        dfs = df.sort_values(['Responsable', 'Statut', 'SortCourseList'],
+        dfs = df.sort_values(['Responsable', 'SortCourseList', 'Statut'],
                              ascending=False)
         dfs = dfs.reset_index()
 
