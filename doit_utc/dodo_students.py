@@ -16,6 +16,7 @@ import latex
 from openpyxl import Workbook
 from openpyxl import utils
 from openpyxl.utils.dataframe import dataframe_to_rows
+import browser_cookie3
 
 from doit.exceptions import TaskFailed
 
@@ -560,7 +561,12 @@ def task_pdf_trombinoscope():
 
         async def download_session(loop):
             os.makedirs(documents("images"), exist_ok=True)
-            async with aiohttp.ClientSession(loop=loop) as session:
+            cj = browser_cookie3.firefox()
+            cookies = {c.name: c.value for c in cj if "demeter.utc.fr" in c.domain}
+            async with aiohttp.ClientSession(
+                    loop=loop,
+                    cookies=cookies
+            ) as session:
                 md5_inconnu = md5(
                     os.path.join(os.path.dirname(__file__), "images/inconnu.jpg")
                 )
