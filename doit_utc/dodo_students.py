@@ -48,7 +48,7 @@ from .scripts.add_student_data import (
 )
 
 
-@add_templates(target="inscrits.raw")
+@add_templates(target=settings.AFFECTATION_LISTING)
 def task_inscrits():
     def inscrits(doc):
         if not os.path.exists(doc):
@@ -143,12 +143,12 @@ l'UTC."""
         kw = {}
         deps = []
 
-        extraction_ENT = documents("extraction_enseig_note.csv", **info)
+        extraction_ENT = documents(settings.ENT_LISTING, **info)
         if os.path.exists(extraction_ENT):
             kw["extraction_ENT"] = extraction_ENT
             deps.append(extraction_ENT)
 
-        csv_moodle = documents("inscrits_moodle.csv", **info)
+        csv_moodle = documents(settings.MOODLE_LISTING, **info)
         if os.path.exists(csv_moodle):
             kw["csv_moodle"] = csv_moodle
             deps.append(csv_moodle)
