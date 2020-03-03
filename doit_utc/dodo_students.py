@@ -120,7 +120,11 @@ l'UTC."""
             if "csv_moodle" in kw:
                 df = add_moodle_data(df, kw["csv_moodle"])
         elif "csv_moodle" in kw:
-            df = pd.read_csv(kw["csv_moodle"])
+            fn = kw["csv_moodle"]
+            if fn.endswith('.csv'):
+                df = pd.read_csv(fn)
+            elif fn.endswith('.xlsx') or fn.endswith('.xls'):
+                df = pd.read_excel(fn)
 
         if "tiers_temps" in kw:
             df = add_tiers_temps(df, kw["tiers_temps"])
