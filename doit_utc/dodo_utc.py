@@ -1,6 +1,6 @@
 import os
 import re
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, time
 import json
 import numpy as np
 import pandas as pd
@@ -343,55 +343,99 @@ def task_html_table():
 
 @actionfailed_on_exception
 def task_json_restriction():
-    """Ficher json des restrictions d'accès des TP"""
+    """Ficher json des restrictions d'accès aux ressources sur Moodle
+basées sur le début/fin des séances."""
 
-    def restriction_list(uv, csv, target):
+    def restriction_list(csv, uv, course, AB, target):
         df = pd.read_csv(csv)
         df = df.loc[df['Code enseig.'] == uv]
-        df = df.loc[df['Activité'] == 'TP']
+        df = df.loc[df['Activité'] == course]
+        gb = df.groupby(AB)
 
         def get_beg_end_date_each(num, df):
-            sts = []
-            if num == 7:        # Exam
-                return None
-            if num == 6:        # Dispo juste après la séance
-                dt_min = pd.to_datetime(df['date']).min().date()
-                for _, row in df.iterrows():
+            def group_beg_end(row):
+                if AB == "numAB":
                     group = row['Lib. créneau'] + row['semaine']
-                    hf = row['Heure fin']
-                    date = row['date']
+                else:
+                    group = row['Lib. créneau']
 
-                    dt = datetime.strptime(date + "_" + hf, DATE_FORMAT + "_" + TIME_FORMAT)
-                    # dt += timedelta(days=1)
+                date = row['date']
+                hd = row['Heure début']
+                hf = row['Heure fin']
+                dtd = datetime.strptime(date + "_" + hd, DATE_FORMAT + "_" + TIME_FORMAT)
+                dtf = datetime.strptime(date + "_" + hf, DATE_FORMAT + "_" + TIME_FORMAT)
 
-                    # sts.append((CondGroup() == group) & (CondDate() >= dt))
-                    groupi = group + 'i'
-                    groupii = group + 'ii'
-                    sts.append(((CondGroup() == groupi) | (CondGroup() == groupii)) & (CondDate() >= dt))
+                return group, dtd, dtf
 
-                return (num, {'enonce': (CondDate() >= dt_min).to_PHP(),
-                              'corrige': CondOr(sts=sts).to_PHP()})
+            gbe = [group_beg_end(row) for index, row in df.iterrows()]
+            dt_min = min(b for g, b, e in gbe)
+            dt_max = max(e for g, b, e in gbe)
 
-            else:               # Dispo après la dernière séance
-                dt_min = pd.to_datetime(df['date']).min().date()
-                dt_max = (pd.to_datetime(df['date']).max().date() +
-                          timedelta(days=1))
-                return (num, {'enonce': (CondDate() >= dt_min).to_PHP(),
-                              'corrige': (CondDate() >= dt_max).to_PHP()})
+            dt_min_monday = dt_min - timedelta(days=dt_min.weekday())
+            dt_min_monday = datetime.combine(dt_min_monday, time.min)
+            dt_min_midnight = datetime.combine(dt_min, time.min)
+            beg_group = [(CondGroup() == g) & (CondDate() >= b) for g, b, e in gbe]
 
-        gb = df.groupby('numAB')
-        moodle_date = dict([get_beg_end_date_each(name, g) for name, g in gb
-                            if get_beg_end_date_each(name, g) is not None])
+            dt_max_friday = dt_max + timedelta(days=6 - dt_max.weekday())
+            dt_max_friday = datetime.combine(dt_max_friday, time.max)
+            dt_max_midnight = datetime.combine(dt_max, time.max)
+            end_group = [(CondGroup() == g) & (CondDate() >= e) for g, b, e in gbe]
 
-        with Output(target) as target:
+            group_id = settings.GROUP_ID
+            return ("Séance " + str(num), {
+                "début minuit": (CondDate() >= dt_min_midnight).to_PHP(group_id),
+                "début": (CondDate() >= dt_min).to_PHP(group_id),
+                "début lundi": (CondDate() >= dt_min_monday).to_PHP(group_id),
+                "début par groupe": CondOr(beg_group).to_PHP(group_id),
+                "fin minuit": (CondDate() >= dt_max_midnight).to_PHP(group_id),
+                "fin": (CondDate() >= dt_max).to_PHP(group_id),
+                "fin vendredi": (CondDate() >= dt_max_friday).to_PHP(group_id),
+                "fin par groupe": CondOr(end_group).to_PHP(group_id)
+            })
+
+        moodle_date = dict(get_beg_end_date_each(name, g) for name, g in gb)
+
+        with Output(target, protected=True) as target:
             with open(target(), 'w') as fd:
-                json.dump(moodle_date, fd, indent=4)
+                s = (
+                    "{\n" +
+                    ",\n".join(
+                        (
+                            f'  "{slot}": {"{"}\n' +
+                            ',\n'.join(
+                                (
+                                    f'    "{name}": {" " * (16 - len(name))}'
+                                    + json.dumps(moodle_json, ensure_ascii=False)
+                                )
+                                for name, moodle_json in dates.items()
+                            ) + "\n  }"
+                            for slot, dates in moodle_date.items()
+                        )
+                    ) + "\n}"
+                )
+                print(s, file=fd)
+
+    args = parse_args(
+        task_json_restriction,
+        argument('-c', '--course', default="TP", choices=["Cours", "TD", "TP"],
+                 help="Type de séances considérées"),
+        argument('-a', '--AB', action='store_true', help="Prise en compte des semaines A/B")
+    )
 
     planning, uv, info = get_unique_uv()
-    target = generated('moodle_date.json', **info)
+    AB = "numAB" if args.AB else "num"
+    course = args.course
+    if AB == "numAB":
+        target_fn = f"moodle_restrictions_{course}_AB.json"
+    else:
+        target_fn = f"moodle_restrictions_{course}.json"
+
+    target = generated(target_fn, **info)
     dep = generated(task_csv_all_courses.target)
 
     return {
-        'actions': [(restriction_list, [uv, dep, target])],
+        'actions': [(restriction_list, [dep, uv, course, AB, target])],
         'file_dep': [dep],
+        'targets': [target],
+         'uptodate': [False]
     }
