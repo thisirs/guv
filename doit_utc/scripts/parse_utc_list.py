@@ -36,8 +36,6 @@ def parse_UTC_listing(filename):
                     sem = int(m.group(3))
                     if spe == 'HU':
                         spe = 'HuTech'
-                    elif spe == 'GU':
-                        spe = 'GSU'
                     elif spe == 'MT':
                         spe = 'ISC'
                     rows.append({"Name": name, course_type: course_name, "Branche": spe, 'Semestre': sem})
