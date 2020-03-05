@@ -229,15 +229,15 @@ def aggregate(left_on, right_on, preprossessing=None, postprocessing=None, sanit
                     return hash_rot_md5(s0)
                 sanitizer = slug_rot_sanitizer
 
-            col_right_on = df[right_on]
+            col_right_on = dff[right_on]
             col_right_on_sanitized = col_right_on.apply(sanitizer)
             right_on_sanitized = right_on + "_sanitized"
-            df[right_on_sanitized] = col_right_on_sanitized
+            dff[right_on_sanitized] = col_right_on_sanitized
 
-            col_left_on = dff[left_on]
+            col_left_on = df[left_on]
             col_left_on_sanitized = col_left_on.apply(sanitizer)
             left_on_sanitized = left_on + "_sanitized"
-            dff[left_on_sanitized] = col_left_on_sanitized
+            df[left_on_sanitized] = col_left_on_sanitized
 
             if left_on == right_on:
                 drop_cols += [left_on_sanitized, right_on_sanitized + '_y']
