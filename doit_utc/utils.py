@@ -64,31 +64,36 @@ def check_columns(dataframe, columns, **kwargs):
 
 
 def parse_args(task, *args, **kwargs):
-    name = task.__name__.split("_", maxsplit=1)[1]
+    # Command-line arguments
+    argv = kwargs.get("argv", sys.argv)
+    if len(argv) < 2:          # doit_utc a_task [args]
+        raise Exception("Wrong number of arguments in sys.argv")
 
+    # Argument parser for task
+    task_name = task.__name__.split("_", maxsplit=1)[1]
     parser = argparse.ArgumentParser(
         description=task.__doc__,
-        prog=f"doit-utc {name}"
+        prog=f"doit-utc {task_name}"
     )
-
-    argv = sys.argv if 'argv' not in kwargs else kwargs['argv']
-
     for arg in args:
         parser.add_argument(*arg.args, **arg.kwargs)
 
-    if len(argv) >= 2:          # doit_utc a_task [args]
-        if argv[1] == name:
-            sargv = argv[2:]
-            return parser.parse_args(sargv)
-        else:
-            sargv = argv[2:]
-            try:
-                args = parser.parser_args(sargv)
-                return args
-            except BaseException as e:
-                raise Exception(e.args)
+    # Base task specified in command line
+    base_task = argv[1]
+
+    if task_name == base_task:  # Args are relevant
+        sargv = argv[2:]
+        return parser.parse_args(sargv)
     else:
-        raise Exception("Wrong number of arguments in sys.argv")
+        # Test if dependant task needs arguments; current ones are not
+        # relevant
+
+        # If parse_args fails, don't show error message and don't sys.exit()
+        def dummy(msg):
+            raise Exception(msg)
+        parser.error = dummy
+
+        return parser.parse_args(args=[])
 
 
 def argument(*args, **kwargs):
