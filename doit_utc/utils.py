@@ -179,120 +179,145 @@ def hash_rot_md5(a):
     return s0
 
 
-def aggregate(left_on, right_on, preprossessing=None, postprocessing=None, sanitizer=None, subset=None, drop=None, rename=None, read_method=None, kw_read={}):
-    def aggregate0(df, path):
-        nonlocal sanitizer
+def slug_rot(*columns):
+    def func(df):
+        check_columns(df, columns)
+        s = df[list(columns)].apply(
+            lambda x: "".join(x.astype(str)),
+            axis=1
+        )
+        def slug_rot_transform(e):
+            e0 = unidecode.unidecode(e).lower()
+            e0 = ''.join(e0.split())
+            return hash_rot_md5(e0)
+        s = s.apply(slug_rot_transform)
+        s.name = "_".join(columns)
+        return s
 
-        # Check that left_on column exists
-        check_columns(df, left_on)
+    return func
+
+
+def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset=None, drop=None, rename=None, read_method=None, kw_read={}):
+    def aggregate0(left_df, path):
+        nonlocal left_on, right_on, subset, drop
+
+        # Columns that will be removed after merging
+        drop_cols = []
+        left_on_is_added = False
+
+        # Add column if callable, check if it exists
+        if callable(left_on):
+            left_on = left_on(left_df)
+            left_df = left_df.assign(**{left_on.name: left_on.values})
+            left_on = left_on.name
+            left_on_is_added = True
+
+        if isinstance(left_on, str):
+            # Check that left_on column exists
+            check_columns(left_df, left_on)
+        else:
+            raise Exception("Unsupported type for left_on")
 
         # Infer a read method if not provided
         if read_method is None:
             if path.endswith('.csv'):
-                dff = pd.read_csv(path, **kw_read)
+                right_df = pd.read_csv(path, **kw_read)
             elif path.endswith('.xlsx') or path.endswith('.xls'):
-                dff = pd.read_excel(path, **kw_read)
+                right_df = pd.read_excel(path, **kw_read)
             else:
                 raise Exception('No read method and unsupported file extension')
         else:
-            dff = read_method(path, **kw_read)
+            right_df = read_method(path, **kw_read)
 
-        # Preprocessing on data to be merged
-        if preprossessing is not None:
-            dff = preprossessing(dff)
+        if preprocessing is not None:
+            right_df = preprocessing(right_df)
 
-        # Check that right_on column exists in data to be merged
-        check_columns(dff, right_on)
+        # Add column if callable, check if it exists
+        if callable(right_on):
+            right_on = right_on(right_df)
+            right_df = right_df.assign(**{right_on.name: right_on.values})
+            right_on = right_on.name
+
+        if isinstance(right_on, str):
+            # Check that right_on column exists
+            check_columns(right_df, right_on)
+        else:
+            raise Exception("Unsupported type for right_on")
 
         # Extract subset of columns, right_on included
         if subset is not None:
-            dff = dff[list(set([right_on] + subset))]
+            if isinstance(subset, str):
+                subset = [subset]
+            right_df = right_df[list(set([right_on] + subset))]
 
         # Allow to drop columns, right_on not allowed
         if drop is not None:
+            if isinstance(drop, str):
+                drop = [drop]
             if right_on in drop:
                 raise Exception('On enlève pas la clé')
-            dff = dff.drop(drop, axis=1, errors='ignore')
+            right_df = right_df.drop(drop, axis=1, errors='ignore')
 
         # Rename columns in data to be merged
         if rename is not None:
             if right_on in rename:
                 raise Exception('Pas de renommage de la clé possible')
-            dff = dff.rename(columns=rename)
+            right_df = right_df.rename(columns=rename)
 
-        drop_cols = []
-        if sanitizer is not None:
-            if sanitizer == "slug_rot":
-                def slug_rot_sanitizer(s):
-                    s0 = unidecode.unidecode(s).lower()
-                    s0 = ''.join(s0.split())
-                    return hash_rot_md5(s0)
-                sanitizer = slug_rot_sanitizer
-
-            col_right_on = dff[right_on]
-            col_right_on_sanitized = col_right_on.apply(sanitizer)
-            right_on_sanitized = right_on + "_sanitized"
-            dff[right_on_sanitized] = col_right_on_sanitized
-
-            col_left_on = df[left_on]
-            col_left_on_sanitized = col_left_on.apply(sanitizer)
-            left_on_sanitized = left_on + "_sanitized"
-            df[left_on_sanitized] = col_left_on_sanitized
-
-            if left_on == right_on:
-                drop_cols += [left_on_sanitized, right_on_sanitized + '_y']
-            else:
-                drop_cols += [left_on_sanitized, right_on_sanitized]
+        # Columns to drop after merge
+        drop_cols = ['_merge']
+        if right_on in left_df.columns:
+            drop_cols += [right_on + "_y"]
         else:
-            left_on_sanitized = left_on
-            right_on_sanitized = right_on
-            if left_on != right_on:
-                drop_cols += [right_on]
-            else:
-                drop_cols += [right_on + '_y']
+            drop_cols += [right_on]
+
+        if left_on_is_added:
+            drop_cols += [left_on]
 
         # Record duplicated columns to be eventually merged later
-        duplicated_columns = set(df.columns).intersection(set(dff.columns))
-        duplicated_columns = duplicated_columns.difference(
-            set([left_on_sanitized, right_on_sanitized, left_on, right_on]))
+        duplicated_columns = set(left_df.columns).intersection(set(right_df.columns))
+        duplicated_columns = duplicated_columns.difference(set([left_on, right_on]))
 
-        df = df.merge(dff, left_on=left_on_sanitized,
-                      right_on=right_on_sanitized,
-                      how='outer',
-                      suffixes=('', '_y'),
-                      indicator=True)
+        # Outer merge
+        merged_df = left_df.merge(right_df,
+                                  left_on=left_on,
+                                  right_on=right_on,
+                                  how='outer',
+                                  suffixes=('', '_y'),
+                                  indicator=True)
 
-        drop_cols += ['_merge']
+        # Select like how='left' as result
+        agg_df = merged_df[merged_df["_merge"].isin(['left_only', 'both'])]
 
-        # Select like how='left'
-        df_left = df[df["_merge"].isin(['left_only', 'both'])]
+        # Select right only and report
+        merged_df_ro = merged_df[merged_df["_merge"] == 'right_only']
+        if right_on in left_df.columns:
+            key = right_on + "_y"
+        else:
+            key = right_on
 
-        df_ro = df[df["_merge"] == 'right_only']
-        if right_on in df_ro.columns:
-            for index, row in df_ro.iterrows():
-                print("WARNING:", row[right_on])
-        elif right_on + "_y" in df_ro.columns:
-            for index, row in df_ro.iterrows():
-                print("WARNING:", row[right_on + '_y'])
+        for index, row in merged_df_ro.iterrows():
+            print("WARNING: key not found: ", row[key])
 
         # Try to merge columns
         for c in duplicated_columns:
             c_y = c + '_y'
             print('Trying to merge columns %s and %s...' % (c, c_y), end='')
-            if any(df_left[c_y].notna() & df_left[c].notna()):
+            if any(agg_df[c_y].notna() & agg_df[c].notna()):
                 print('failed')
                 continue
             else:
-                df_left.loc[:, c] = df_left.loc[:, c].fillna(df_left.loc[:, c_y])
+                agg_df.loc[:, c] = agg_df.loc[:, c].fillna(agg_df.loc[:, c_y])
                 drop_cols.append(c_y)
                 print('done')
 
-        df = df_left.drop(drop_cols, axis=1, errors='ignore')
+        # Drop useless columns
+        agg_df = agg_df.drop(drop_cols, axis=1, errors='ignore')
 
         if postprocessing is not None:
-            df = postprocessing(df)
+            agg_df = postprocessing(agg_df)
 
-        return df
+        return agg_df
 
     return aggregate0
 
