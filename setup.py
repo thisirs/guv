@@ -25,6 +25,7 @@ setup(name='doit_utc',
           "tabula-py",
           "unidecode",
           "oyaml",
-          "aiohttp"
+          "aiohttp",
+          "browser_cookie3"
       ]
 )
