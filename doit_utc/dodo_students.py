@@ -348,131 +348,12 @@ Crée des fichiers csv pour chaque UV sélectionnées"""
 
 
 @actionfailed_on_exception
-def task_csv_binomes():
-    """Fichier csv des groupes + binômes"""
+def task_csv_moodle_groups():
 
     @taskfailed_on_exception
-    def csv_binomes(target, target_moodle, xls_merge, ctype, project, other_groups):
+    def csv_moodle_groups(target, target_moodle, xls_merge, ctype, project, group_names, other_groups):
         df = pd.read_excel(xls_merge)
-
-        def binome_match(row1, row2, other_groups=None, foreign=True):
-            "Renvoie vrai si le binôme est bon"
-
-            if foreign:
-                e = [
-                    "DIPLOME ETAB ETRANGER SECONDAIRE",
-                    "DIPLOME ETAB ETRANGER SUPERIEUR",
-                    "AUTRE DIPLOME UNIVERSITAIRE DE 1ER CYCLE HORS DUT",
-                ]
-
-                # 2 étrangers == catastrophe
-                if (
-                    row1["Dernier diplôme obtenu"] in e
-                    and row2["Dernier diplôme obtenu"] in e
-                ):
-                    return False
-
-                # 2 GB == catastrophe
-                if row1["Branche"] == 'GB' and row2["Branche"] == 'GB':
-                    return False
-
-            # Binomes précédents
-            if other_groups is not None:
-                for gp in other_groups:
-                    if row1[gp] == row2[gp]:
-                        return False
-
-            return True
-
-        def trinome_match(row1, row2, row3, other_groups=None):
-            a = binome_match(row1, row2, other_groups=other_groups, foreign=False)
-            b = binome_match(row1, row3, other_groups=other_groups, foreign=False)
-            c = binome_match(row2, row3, other_groups=other_groups, foreign=False)
-            return a or b or c
-
-        class Ooops(Exception):
-            pass
-
-        def add_binome(group, other_groups=None, foreign=True):
-            gpn = group.name
-
-            while True:
-                try:
-                    # Création de GROUPS qui associe indice avec groupe
-                    index = list(group.index)
-                    letters = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")[::-1]
-                    l = letters[0]
-                    groups = {}
-                    maxiter = 1000
-                    it = 0
-                    while index:
-                        it += 1
-                        if it > maxiter:
-                            raise Ooops
-                        if len(index) == 4:
-                            stu1, stu2, stu3, stu4 = random.sample(index, 4)
-                            if not binome_match(
-                                group.loc[stu1], group.loc[stu2]
-                            ) or not binome_match(group.loc[stu3], group.loc[stu4]):
-                                raise Ooops
-                            l = letters.pop()
-                            groups[stu1] = l
-                            groups[stu2] = l
-                            l = letters.pop()
-                            groups[stu3] = l
-                            groups[stu4] = l
-                            index.remove(stu1)
-                            index.remove(stu2)
-                            index.remove(stu3)
-                            index.remove(stu4)
-                        elif len(index) == 2:
-                            stu1, stu2 = random.sample(index, 2)
-                            if not binome_match(group.loc[stu1], group.loc[stu2]):
-                                raise Ooops
-                            l = letters.pop()
-                            groups[stu1] = l
-                            groups[stu2] = l
-                            index.remove(stu1)
-                            index.remove(stu2)
-
-                        # if len(index) == 1:
-                        #     # Le binome du dernier groupe
-                        #     stu1, stu2 = [k for k, v in groups.items() if v == l]
-                        #     if trinome_match(group.loc[stu1], group.loc[stu2], group.loc[index[0]], other_groups=other_groups):
-                        #         raise Ooops
-                        #     groups[index[0]] = l
-                        #     index = []
-                        else:
-                            stu1, stu2, stu3 = random.sample(index, 3)
-                            if not trinome_match(
-                                group.loc[stu1],
-                                group.loc[stu2],
-                                group.loc[stu3],
-                                other_groups=other_groups,
-                            ):
-                                raise Ooops
-                            l = letters.pop()
-                            groups[stu1] = l
-                            groups[stu2] = l
-                            groups[stu3] = l
-                            index.remove(stu1)
-                            index.remove(stu2)
-                            index.remove(stu3)
-                    # do stuff
-                except Ooops:
-                    continue
-                break
-
-            def add_group(g):
-                g["binome"] = f"{gpn}_{project}_{g.name}"
-                return g
-
-            gb = group.groupby(pd.Series(groups)).apply(add_group)
-
-            return gb
-
         check_columns(df, ctype, file=xls_merge)
-
         gdf = df.groupby(ctype)
 
         if other_groups is not None:
@@ -486,13 +367,107 @@ def task_csv_binomes():
                     f"Colonne{s} inconnue{s} : `{', '.join(diff)}'; les colonnes sont : {', '.join(df.columns)}"
                 )
 
-        df = gdf.apply(add_binome, other_groups=other_groups)
-        df = df[["Courriel", ctype, "binome"]]
+        # Build list of group names
+        if group_names is not None and os.path.exists(group_names):
+            with open(group_names, "r") as fd:
+                group_names = [l.strip() for l in fd.readlines()]
+                shuffle = True
+                group_names = [f"%(gn)s_{e}" for e in group_names]
+        else:
+            shuffle = False
+            group_names = [f"%(gn)s_{project}_{e}" for e in list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")]
 
-        # dfa = df[['Adresse de courriel', ctype]].rename(columns={ctype: 'group'})
-        dfb = df[["Courriel", "binome"]].rename(columns={"binome": "group"})
-        # df = pd.concat([dfa, dfb])
-        df = dfb
+        def binome_match(df_group, idx1, idx2, other_groups=None, foreign=True):
+            "Renvoie vrai si le binôme est bon"
+
+            etu1 = df_group.loc[idx1]
+            etu2 = df_group.loc[idx2]
+
+            if foreign:
+                e = [
+                    "DIPLOME ETAB ETRANGER SECONDAIRE",
+                    "DIPLOME ETAB ETRANGER SUPERIEUR",
+                    "AUTRE DIPLOME UNIVERSITAIRE DE 1ER CYCLE HORS DUT",
+                ]
+
+                # 2 étrangers == catastrophe
+                if (
+                    etu1["Dernier diplôme obtenu"] in e
+                    and etu2["Dernier diplôme obtenu"] in e
+                ):
+                    return False
+
+                # 2 GB == catastrophe
+                if etu1["Branche"] == 'GB' and etu2["Branche"] == 'GB':
+                    return False
+
+            # Binomes précédents
+            if other_groups is not None:
+                for gp in other_groups:
+                    if etu1[gp] == etu2[gp]:
+                        return False
+
+            return True
+
+        def trinome_match(df_group, idx1, idx2, idx3, other_groups=None, foreign=True):
+            a = binome_match(df_group, idx1, idx2, other_groups=other_groups, foreign=foreign)
+            b = binome_match(df_group, idx1, idx3, other_groups=other_groups, foreign=foreign)
+            c = binome_match(df_group, idx2, idx3, other_groups=other_groups, foreign=foreign)
+            return a or b or c
+
+        class Ooops(Exception):
+            pass
+
+        def add_group(df_group, other_groups=None, foreign=True, group_names=None):
+            gpn = df_group.name
+            index = list(df_group.index)
+            if shuffle:
+                random.shuffle(group_names)
+
+            def make_random_groups(index, num=3):
+                random.shuffle(index)
+                num_groups = math.ceil(len(index) / num)
+                return np.array_split(index, num_groups)
+
+            def valid_groups(df_group, groups, other_groups=None, foreign=True):
+                def valid_group(group):
+                    if len(group) == 3:
+                        return trinome_match(df_group, *group, other_groups=other_groups, foreign=foreign)
+                    elif len(group) == 2:
+                        return binome_match(df_group, *group, other_groups=other_groups, foreign=foreign)
+                    elif len(group) == 1:
+                        return True
+                    else:
+                        raise Exception("Size of group not supported", len(group))
+
+                for group in groups:
+                    if not valid_group(group):
+                        return False
+                return True
+
+            while True:
+                try:
+                    groups = make_random_groups(index, num=3)
+
+                    # On vérifie que tous les groupes sont bons
+                    if not valid_groups(df_group, groups):
+                        raise Ooops
+
+                    if len(groups) > len(group_names):
+                        raise Exception("Not enough group names")
+
+                    groups_names = group_names[:len(groups)]
+                    final_groups = {etu: (gn % dict(gn=gpn)) for gn, group in zip(groups_names, groups) for etu in group}
+                except Ooops:
+                    continue
+                break
+
+            final_df_groups = pd.Series(final_groups, name="group")
+            df_group = df_group[["Courriel"]]
+            gb = pd.concat((df_group, final_df_groups), axis=1)
+            return gb
+
+        df = gdf.apply(add_group, other_groups=other_groups, group_names=group_names)
         df = df.sort_values("group")
 
         with Output(target) as target0:
@@ -502,10 +477,11 @@ def task_csv_binomes():
             df.to_csv(target(), index=False, header=False)
 
     args = parse_args(
-        task_csv_binomes,
+        task_csv_moodle_groups,
         argument('-c', '--course', required=True),
         argument('-p', '--project', required=True),
-        argument('-o', '--other_group', required=False, default=None),
+        argument('-g', '--group-names', required=False, default=None),
+        argument('-o', '--other-group', required=False, default=None),
     )
 
     planning, uv, info = get_unique_uv()
@@ -517,8 +493,8 @@ def task_csv_binomes():
     return {
         "actions": [
             (
-                csv_binomes,
-                [target, target_moodle, xls_merge, args.course, args.project, args.other_group],
+                csv_moodle_groups,
+                [target, target_moodle, xls_merge, args.course, args.project, args.group_names, args.other_group],
             )
         ],
         "file_dep": deps,
