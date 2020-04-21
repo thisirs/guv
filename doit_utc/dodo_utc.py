@@ -29,7 +29,7 @@ from .utils import (
     lib_list
 )
 
-from .scripts.moodle_date import CondDate, CondGroup, CondOr
+from .scripts.moodle_date import CondDate, CondGroup, CondOr, CondAnd
 
 
 @add_templates(target='UTC_UV_list.csv')
@@ -374,23 +374,29 @@ basées sur le début/fin des séances."""
             dt_min_monday = dt_min - timedelta(days=dt_min.weekday())
             dt_min_monday = datetime.combine(dt_min_monday, time.min)
             dt_min_midnight = datetime.combine(dt_min, time.min)
-            beg_group = [(CondGroup() == g) & (CondDate() >= b) for g, b, e in gbe]
+            after_beg_group = [(CondGroup() == g) & (CondDate() >= b) for g, b, e in gbe]
+            before_beg_group = [(CondGroup() == g) & (CondDate() < b) for g, b, e in gbe]
 
             dt_max_friday = dt_max + timedelta(days=6 - dt_max.weekday())
             dt_max_friday = datetime.combine(dt_max_friday, time.max)
             dt_max_midnight = datetime.combine(dt_max, time.max)
-            end_group = [(CondGroup() == g) & (CondDate() >= e) for g, b, e in gbe]
+            after_end_group = [(CondGroup() == g) & (CondDate() >= e) for g, b, e in gbe]
+            before_end_group = [(CondGroup() == g) & (CondDate() < e) for g, b, e in gbe]
 
             group_id = settings.GROUP_ID
             return ("Séance " + str(num), {
                 "début minuit": (CondDate() >= dt_min_midnight).to_PHP(group_id),
                 "début": (CondDate() >= dt_min).to_PHP(group_id),
                 "début lundi": (CondDate() >= dt_min_monday).to_PHP(group_id),
-                "début par groupe": CondOr(beg_group).to_PHP(group_id),
+                "début par groupe": CondOr(after_beg_group).to_PHP(group_id),
                 "fin minuit": (CondDate() >= dt_max_midnight).to_PHP(group_id),
                 "fin": (CondDate() >= dt_max).to_PHP(group_id),
                 "fin vendredi": (CondDate() >= dt_max_friday).to_PHP(group_id),
-                "fin par groupe": CondOr(end_group).to_PHP(group_id)
+                "fin par groupe": CondOr(after_end_group).to_PHP(group_id),
+                "créneaux par groupe": CondAnd([
+                    CondOr(after_beg_group),
+                    CondOr(before_end_group)
+                ]).to_PHP(group_id)
             })
 
         moodle_date = dict(get_beg_end_date_each(name, g) for name, g in gb)
