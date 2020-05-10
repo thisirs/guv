@@ -218,7 +218,7 @@ def task_csv_all_courses():
 def task_html_table():
     """Table HTML des TD/TP"""
 
-    def html_table(planning, csv_inst_list, uv, courses, target, no_AB):
+    def html_table(planning, csv_inst_list, uv, courses, target, no_AB, names):
         # Select wanted slots
         slots = compute_slots(csv_inst_list, planning, filter_uvs=[uv])
         slots = slots[slots['Activité'].isin(courses)]
@@ -240,15 +240,21 @@ def task_html_table():
         def merge_slots(df):
             activity = df.iloc[0]["Activité"]
 
+            def to_names(num):
+                if names is not None:
+                    return str(names[num-1])
+                else:
+                    return str(num)
+
             if activity == 'Cours':
-                return ', '.join(df.num.apply(str))
+                return ', '.join(df.num.apply(to_names))
             elif activity == 'TD':
-                return ', '.join(df.num.apply(str))
+                return ', '.join(df.num.apply(to_names))
             elif activity == 'TP':
                 if no_AB:
-                    return ', '.join(df.num.apply(str))
+                    return ', '.join(df.num.apply(to_names))
                 else:
-                    return ', '.join(df.semaine + df.numAB.apply(str))
+                    return ', '.join(df.semaine + df.numAB.apply(to_names))
             else:
                 raise Exception("Unrecognized activity", activity)
 
@@ -308,12 +314,30 @@ def task_html_table():
         task_html_table,
         argument('-c', '--courses', nargs='*', default=["Cours", "TD", "TP"]),
         argument('-g', '--grouped', action='store_true'),
-        argument('-a', '--no-AB', action='store_true')
+        argument('-a', '--no-AB', action='store_true'),
+        argument('-n', '--names', nargs="*")
     )
 
     from .dodo_instructors import task_add_instructors
     dep = generated(task_add_instructors.target)
-    for planning, uv, info in selected_uv():
+    uvs = list(selected_uv())
+
+    if args.names is not None:
+        if len(uvs) != 1:
+            raise Exception
+
+        if len(args.names) == 1:
+            if os.path.exists(args.names[0]):
+                with open(args.names[0], "r") as fd:
+                    names = fd.readlines()
+            else:
+                raise Exception
+        else:
+            names = args.names
+    else:
+        names = None
+
+    for planning, uv, info in uvs:
         if args.grouped:
             name = "_".join(args.courses)
             if args.grouped:
@@ -325,7 +349,7 @@ def task_html_table():
                 'name': f'{planning}_{uv}_{name}',
                 'file_dep': [dep],
                 'actions': [(html_table, [
-                    planning, dep, uv, args.courses, target, args.no_AB])],
+                    planning, dep, uv, args.courses, target, args.no_AB, names])],
                 'targets': [target],
             }
         else:
@@ -335,7 +359,7 @@ def task_html_table():
                     'name': f'{planning}_{uv}_{course}',
                     'file_dep': [dep],
                     'actions': [(html_table, [
-                        planning, dep, uv, [course], target, args.no_AB])],
+                        planning, dep, uv, [course], target, args.no_AB, names])],
                     'targets': [target],
                     'verbosity': 2
                 }
