@@ -20,16 +20,19 @@ from .utils import (
     selected_uv,
     compute_slots,
     actionfailed_on_exception,
+    taskfailed_on_exception,
     parse_args,
     argument,
+    check_columns,
     get_unique_uv,
     action_msg,
     DATE_FORMAT,
     TIME_FORMAT,
     lib_list
 )
+from .dodo_students import task_xls_student_data_merge
 
-from .scripts.moodle_date import CondDate, CondGroup, CondOr, CondAnd
+from .scripts.moodle_date import CondDate, CondGroup, CondOr, CondAnd, CondProfil
 
 
 @add_templates(target='UTC_UV_list.csv')
