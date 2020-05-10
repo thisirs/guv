@@ -72,9 +72,9 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
 
     args = parse_args(
         task_csv_for_upload,
-        argument('-g', '--grade-colname', required=True),
-        argument('--ects', action='store_true'),
-        argument('-c', '--comment-colname', required=False)
+        argument('-g', '--grade-colname', required=True, help="Nom de la colonne contenant la note à exporter"),
+        argument('--ects', action='store_true', help="Précise si la note est une note ECTS (pas de commentaire)"),
+        argument('-c', '--comment-colname', required=False, help="Nom de la colonne contenant un commentaire")
     )
 
     planning, uv, info = get_unique_uv()
@@ -130,7 +130,7 @@ manuelle."""
 
     args = parse_args(
         task_xls_merge_final_grade,
-        argument('-e', '--exam', required=True),
+        argument('-e', '--exam', required=True, help="Nom de l'examen"),
     )
 
     planning, uv, info = get_unique_uv()
@@ -216,7 +216,7 @@ def task_xls_assignment_grade():
 
     args = parse_args(
         task_xls_assignment_grade,
-        argument('-e', '--exam', required=True),
+        argument('-e', '--exam', required=True, help="Nom de l'examen"),
     )
 
     planning, uv, info = get_unique_uv()

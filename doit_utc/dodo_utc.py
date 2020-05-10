@@ -206,7 +206,7 @@ def task_csv_all_courses():
 
     args = parse_args(
         task_csv_all_courses,
-        argument('-p', '--plannings', nargs='+', default=settings.SELECTED_PLANNINGS)
+        argument('-p', '--plannings', nargs='+', default=settings.SELECTED_PLANNINGS, help="Liste des plannings à considérer")
     )
 
     return {
@@ -315,10 +315,10 @@ def task_html_table():
 
     args = parse_args(
         task_html_table,
-        argument('-c', '--courses', nargs='*', default=["Cours", "TD", "TP"]),
-        argument('-g', '--grouped', action='store_true'),
-        argument('-a', '--no-AB', action='store_true'),
-        argument('-n', '--names', nargs="*")
+        argument('-c', '--courses', nargs='*', default=["Cours", "TD", "TP"], help="Liste des cours à faire figurer dans le tableau"),
+        argument('-g', '--grouped', action='store_true', help="Grouper les cours dans le même tableau ou faire des fichiers distincts"),
+        argument('-a', '--no-AB', action='store_true', help="Faire apparaitre les semaines A/B"),
+        argument('-n', '--names', nargs="*", help="Liste ou fichier contenant les noms des lignes du tableau")
     )
 
     from .dodo_instructors import task_add_instructors
@@ -509,7 +509,7 @@ def task_json_group():
 
     args = parse_args(
         task_json_group,
-        argument('-g', '--group', required=True)
+        argument('-g', '--group', required=True, help="Nom de la colonne réalisant un groupement")
     )
 
     for planning, uv, info in selected_uv():

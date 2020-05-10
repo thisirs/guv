@@ -383,8 +383,8 @@ def task_cal_inst():
 
     args = parse_args(
         task_cal_inst,
-        argument('-p', '--plannings', nargs='*', default=settings.SELECTED_PLANNINGS),
-        argument('-i', '--insts', nargs='*', default=[settings.DEFAULT_INSTRUCTOR])
+        argument('-p', '--plannings', nargs='*', default=settings.SELECTED_PLANNINGS, help="Liste des plannings à considérer"),
+        argument('-i', '--insts', nargs='*', default=[settings.DEFAULT_INSTRUCTOR], help="Liste des intervenants à considérer")
     )
 
     uv_list = generated(task_add_instructors.target)
@@ -449,8 +449,8 @@ def task_ical_inst():
 
     args = parse_args(
         task_ical_inst,
-        argument('-p', '--plannings', nargs='+', default=settings.SELECTED_PLANNINGS),
-        argument('-i', '--insts', nargs='+', default=[settings.DEFAULT_INSTRUCTOR])
+        argument('-p', '--plannings', nargs='+', default=settings.SELECTED_PLANNINGS, help="Liste des plannings à considérer"),
+        argument('-i', '--insts', nargs='+', default=[settings.DEFAULT_INSTRUCTOR], help="Liste des intervenants à considérer")
     )
 
     deps = [generated(task_add_instructors.target)]

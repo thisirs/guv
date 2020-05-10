@@ -294,8 +294,8 @@ def task_csv_exam_groups():
 
     args = parse_args(
         task_csv_exam_groups,
-        argument('-t', '--tiers-temps', required=False, default='Tiers-temps'),
-        argument('-p', '--tp', required=False, default='TP'),
+        argument('-t', '--tiers-temps', required=False, default='Tiers-temps', help="Nom de la colonne des tiers-temps"),
+        argument('-p', '--tp', required=False, default='TP', help="Nom de la colonne pour réaliser un groupement"),
     )
 
     planning, uv, info = get_unique_uv()
@@ -329,7 +329,7 @@ Crée des fichiers csv pour chaque UV sélectionnées"""
 
     args = parse_args(
         task_csv_groups,
-        argument('-g', '--groups', nargs='*', default=["Cours", "TD", "TP"])
+        argument('-g', '--groups', nargs='*', default=["Cours", "TD", "TP"], help="Liste des groupements à considérer")
     )
 
     for planning, uv, info in selected_uv():
@@ -349,6 +349,7 @@ Crée des fichiers csv pour chaque UV sélectionnées"""
 
 @actionfailed_on_exception
 def task_csv_moodle_groups():
+    """Fichier csv de sous-groupes (binômes ou trinômes) aléatoires."""
 
     @taskfailed_on_exception
     def csv_moodle_groups(target, target_moodle, xls_merge, ctype, project, group_names, other_groups):
@@ -478,10 +479,10 @@ def task_csv_moodle_groups():
 
     args = parse_args(
         task_csv_moodle_groups,
-        argument('-c', '--course', required=True),
-        argument('-p', '--project', required=True),
-        argument('-g', '--group-names', required=False, default=None),
-        argument('-o', '--other-group', required=False, default=None),
+        argument('-c', '--course', required=True, help="Nom de colonne pour réaliser un groupement"),
+        argument('-p', '--project', required=True, help="Nom du groupement que sera réalisé"),
+        argument('-g', '--group-names', required=False, default=None, help="Fichier de noms de groupes"),
+        argument('-o', '--other-group', required=False, default=None, help="Nom de colonne d'un autre groupement"),
     )
 
     planning, uv, info = get_unique_uv()
@@ -640,8 +641,8 @@ def task_pdf_trombinoscope():
 
     args = parse_args(
         task_pdf_trombinoscope,
-        argument('-g', '--group', required=True),
-        argument('-s', '--subgroup', required=False, default=None)
+        argument('-g', '--group', required=True, help="Nom de colonne pour réaliser un groupement"),
+        argument('-s', '--subgroup', required=False, default=None, help="Nom de colonne des sous-groupes (binômes, trinômes)")
     )
 
     for planning, uv, info in selected_uv():
@@ -723,7 +724,7 @@ def task_pdf_attendance_list():
 
     args = parse_args(
         task_pdf_attendance_list,
-        argument('-g', '--group', required=True)
+        argument('-g', '--group', required=True, help="Nom de la colonne du groupement à considérer")
     )
 
     planning, uv, info = get_unique_uv()
@@ -785,8 +786,8 @@ def task_pdf_attendance_full():
 
     args = parse_args(
         task_pdf_attendance_full,
-        argument('-c', '--course', required=True),
-        argument('-n', '--slots', type=int, default=14)
+        argument('-c', '--course', required=True, help="Nom de la colonne du groupement à considérer"),
+        argument('-n', '--slots', type=int, default=14, help="Nombre de colonne dans la feuille de présence")
     )
 
     planning, uv, info = get_unique_uv()
@@ -935,7 +936,7 @@ def task_attendance_sheet():
 
     args = parse_args(
         task_attendance_sheet,
-        argument('-e', '--exam', required=True),
+        argument('-e', '--exam', required=True, help="Nom de la colonne du groupement à considérer"),
     )
 
     planning, uv, info = get_unique_uv()
@@ -986,11 +987,11 @@ def task_csv_groups_groupings():
 
     args = parse_args(
         task_csv_groups_groupings,
-        argument('-g', type=int, required=True),
+        argument('-g', type=int, required=True, help="Nombre de groupes dans chaque groupement"),
         argument('-f',
                  default="D##_P1_@",
                  help="Format du nom de groupe (defaut: %(default)s)"),
-        argument('-G', type=int, required=True),
+        argument('-G', type=int, required=True, help="Nombre de groupements"),
         argument('-F',
                  default="D##_P1",
                  help="Format du nom de groupement (defaut: %(default)s)")
