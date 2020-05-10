@@ -470,3 +470,53 @@ basées sur le début/fin des séances."""
         'targets': [target],
          'uptodate': [False]
     }
+
+
+@actionfailed_on_exception
+def task_json_group():
+    """Ficher json des restrictions d'accès aux ressources sur Moodle."""
+
+    @taskfailed_on_exception
+    def json_group(target, xls_merge, colname):
+        df = pd.read_excel(xls_merge)
+
+        check_columns(df, colname, file=task_xls_student_data_merge.target)
+        dff = df[["Adresse de courriel", colname]]
+
+        json_dict = {
+            group_name: CondOr([
+                CondProfil("email") == row["Adresse de courriel"]
+                for index, row in group.iterrows()
+            ]).to_PHP()
+            for group_name, group in dff.groupby(colname)
+        }
+
+        with Output(target, protected=True) as target:
+            with open(target(), 'w') as fd:
+                s = (
+                    "{\n" +
+                    ",\n".join(
+                        (
+                            f'  "{group_name}": ' + json.dumps(json_string, ensure_ascii=False)
+                            for group_name, json_string in json_dict.items()
+                        )
+                    ) + "\n}"
+                )
+                print(s, file=fd)
+
+    args = parse_args(
+        task_json_group,
+        argument('-g', '--group', required=True)
+    )
+
+    for planning, uv, info in selected_uv():
+        deps = [generated(task_xls_student_data_merge.target, **info)]
+        target = generated(f"{args.group}_group_moodle.json", **info)
+
+        yield {
+            "name": f"{planning}_{uv}_{args.group}",
+            "actions": [(json_group, [target, deps[0], args.group])],
+            "file_dep": deps,
+            "targets": [target],
+            "verbosity": 2,
+        }
