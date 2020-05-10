@@ -26,6 +26,7 @@ setup(name='doit_utc',
           "unidecode",
           "oyaml",
           "aiohttp",
-          "browser_cookie3"
+          "browser_cookie3",
+          "xlrd"
       ]
 )
