@@ -407,20 +407,21 @@ basées sur le début/fin des séances."""
             after_end_group = [(CondGroup() == g) & (CondDate() >= e) for g, b, e in gbe]
             before_end_group = [(CondGroup() == g) & (CondDate() < e) for g, b, e in gbe]
 
-            group_id = settings.GROUP_ID
+            window_group = [
+                (CondGroup() == g) & (CondDate() >= b) & (CondDate() < e) for g, b, e in gbe
+            ]
+
+            info = dict(group_id=settings.GROUP_ID)
             return ("Séance " + str(num), {
-                "début minuit": (CondDate() >= dt_min_midnight).to_PHP(group_id),
-                "début": (CondDate() >= dt_min).to_PHP(group_id),
-                "début lundi": (CondDate() >= dt_min_monday).to_PHP(group_id),
-                "début par groupe": CondOr(after_beg_group).to_PHP(group_id),
-                "fin minuit": (CondDate() >= dt_max_midnight).to_PHP(group_id),
-                "fin": (CondDate() >= dt_max).to_PHP(group_id),
-                "fin vendredi": (CondDate() >= dt_max_friday).to_PHP(group_id),
-                "fin par groupe": CondOr(after_end_group).to_PHP(group_id),
-                "créneaux par groupe": CondAnd([
-                    CondOr(after_beg_group),
-                    CondOr(before_end_group)
-                ]).to_PHP(group_id)
+                "début minuit": (CondDate() >= dt_min_midnight).to_PHP(**info),
+                "début": (CondDate() >= dt_min).to_PHP(**info),
+                "début lundi": (CondDate() >= dt_min_monday).to_PHP(**info),
+                "début par groupe": CondOr(after_beg_group).to_PHP(**info),
+                "fin minuit": (CondDate() >= dt_max_midnight).to_PHP(**info),
+                "fin": (CondDate() >= dt_max).to_PHP(**info),
+                "fin vendredi": (CondDate() >= dt_max_friday).to_PHP(**info),
+                "fin par groupe": CondOr(after_end_group).to_PHP(**info),
+                "créneaux par groupe": CondOr(window_group).to_PHP(**info)
             })
 
         moodle_date = dict(get_beg_end_date_each(name, g) for name, g in gb)
