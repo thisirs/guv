@@ -6,10 +6,10 @@ class Cond:
         self.visible = False
         self.sts = sts
 
-    def to_PHP(self, group_id):
-        return CondAnd(sts=[self]).to_PHP(group_id)
+    def to_PHP(self, **info):
+        return CondAnd(sts=[self]).to_PHP(**info)
 
-    def to_PHP_inner(self, group_id):
+    def to_PHP_inner(self, **info):
         raise NotImplementedError('Abstract method')
 
     def __and__(self, other):
@@ -55,7 +55,7 @@ class CondDate(Cond):
         else:
             raise Exception()
 
-    def to_PHP_inner(self, group_id):
+    def to_PHP_inner(self, **info):
         if type(self.dt) == date:
             dt = datetime.combine(self.dt, datetime.min.time())
         else:
@@ -76,9 +76,33 @@ class CondGroup(Cond):
         else:
             raise Exception()
 
-    def to_PHP_inner(self, group_id):
-        id = group_id[self.grp]
+    def to_PHP_inner(self, **info):
+        id = info["group_id"][self.grp]
         return {'type': 'group', 'id': id}
+
+
+class CondProfil(Cond):
+    def __init__(self, field, value=None, rel=None):
+        super().__init__()
+        self.field = field
+        self.value = value
+        self.rel = rel
+
+    def __eq__(self, value):
+        if isinstance(value, str):
+            self.value = value
+            self.rel = "isequalto"
+            return self
+        else:
+            raise Exception
+
+    def to_PHP_inner(self, **info):
+        return {
+            "type": "profile",
+            "sf": self.field,
+            "op": self.rel,
+            "v": self.value
+        }
 
 
 class CondCompound(Cond):
@@ -88,9 +112,10 @@ class CondCompound(Cond):
 
     def __not__(self):
         self.negate = not self.negate
+        return self
 
-    def to_PHP(self, group_id):
-        e = self.to_PHP_inner(group_id)
+    def to_PHP(self, **info):
+        e = self.to_PHP_inner(**info)
         if (isinstance(self, CondAnd) and not self.negate) or \
            (isinstance(self, CondOr) and self.negate):
             key = 'showc'
@@ -105,14 +130,14 @@ class CondCompound(Cond):
 
 
 class CondOr(CondCompound):
-    def to_PHP_inner(self, group_id):
-        sts_PHP = [e.to_PHP_inner(group_id) for e in self.sts]
+    def to_PHP_inner(self, **info):
+        sts_PHP = [e.to_PHP_inner(**info) for e in self.sts]
         op = '!|' if self.negate else '|'
         return {'op': op, 'c': sts_PHP}
 
 
 class CondAnd(CondCompound):
-    def to_PHP_inner(self, group_id):
+    def to_PHP_inner(self, **info):
         op = '!&' if self.negate else '&'
-        sts_PHP = [e.to_PHP_inner(group_id) for e in self.sts]
+        sts_PHP = [e.to_PHP_inner(**info) for e in self.sts]
         return {'op': op, 'c': sts_PHP}
