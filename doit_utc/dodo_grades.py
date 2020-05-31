@@ -162,6 +162,7 @@ def task_xls_grades_sheet():
     return {
         'actions': [(xls_grades_sheet, [data_file, docs])],
         'file_dep': deps,
+        'uptodate': [False]
     }
 
 
