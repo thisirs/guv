@@ -102,6 +102,12 @@ def task_utc_uv_list_to_csv():
                         df.insert(week_idx, 'Semaine', np.nan)
                     df.columns = cols
 
+                    # Detect possible multiline header
+                    header_height = ((re.match('[A-Z]{,3}[0-9]+', str(df.iloc[0, 0])) is None) +
+                                     (re.match('[A-Z]{,3}[0-9]+', str(df.iloc[1, 0])) is None))
+                    print(f'Header has {header_height} lines')
+                    df = df.iloc[header_height:]
+
                 df['Planning'] = semester
                 tables.append(df)
 
