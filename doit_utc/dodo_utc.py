@@ -181,7 +181,7 @@ def task_utc_uv_list_to_csv():
         return action_msg(msg, targets=[target])
 
 
-@add_templates(target='creneaux-UV-prov_P19.pdf')
+@add_templates(target=settings.CRENEAU_UV)
 def task_UTC_UV_list():
     """Dépendance vers le fichier CRENEAU_UV"""
 
