@@ -93,7 +93,7 @@ def add_moodle_data(df, fn):
 def add_UTC_data(df, fn):
     'Incorpore les données Cours/TD/TP des inscrits UTC'
 
-    # Données issues du fichier inscrits.raw
+    # Données issues du fichier des affectations au Cours/TD/TP
     dfu = pd.read_csv(fn)
 
     if 'Nom' in df.columns and 'Prénom' in df.columns:
