@@ -1188,10 +1188,10 @@ class GradeSheetGroupStruct(GradeSheetExamWriter):
 
 
 WRITERS = [
+    GradeSheetSimpleWriter,
     GradeSheetExamWriter,
     GradeSheetExamMultipleWriter,
     GradeSheetAssignmentWriter,
-    GradeSheetSimpleWriter,
     GradeSheetJuryWriter,
     GradeSheetSimpleGroup,
     GradeSheetGroupStruct
