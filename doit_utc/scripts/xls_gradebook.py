@@ -1198,14 +1198,14 @@ WRITERS = [
 ]
 
 
-def run(argv=sys.argv[1:], prog=os.path.basename(__file__)):
-    parser = argparse.ArgumentParser(prog=prog)
-    subparsers = parser.add_subparsers(dest="sub_command")
+def run(argv=sys.argv[1:], prog=os.path.basename(__file__), description=None):
+    parser = argparse.ArgumentParser(prog=prog, description=description)
+    subparsers = parser.add_subparsers(dest="sub_command", required=True)
     name_to_writer = {}
     for type in WRITERS:
         name_to_writer[type.name] = type
         base_parser = type.get_parser()
-        subparsers.add_parser(type.name, add_help=False, parents=[base_parser])
+        subparsers.add_parser(type.name, help=type.__doc__, parents=[base_parser])
     args = parser.parse_args(argv)
 
     writer_class = name_to_writer[args.sub_command]
@@ -1217,4 +1217,5 @@ if __name__ == '__main__':
     # run("--type assignment --group TPE -s median.yaml --name bar -d ../generated --uv SY02 --planning P2018".split())
     # run("--type simple --name bar -d ../generated --uv SY02 --planning P2018".split())
     # run("--type jury --name bar -c config.yaml -d ../generated --uv SY02 --planning P2018".split())
-    run()
+    # run()
+    pass
