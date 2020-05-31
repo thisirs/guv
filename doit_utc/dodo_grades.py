@@ -15,15 +15,16 @@ from .utils import (
     get_unique_uv,
     parse_args,
     argument,
-    check_columns
+    check_columns,
+    CliArgsMixin,
+    SingleUVTask
 )
 from .dodo_students import task_xls_student_data_merge
 from .dodo_instructors import task_xls_affectation
 from .scripts.xls_gradebook import run
 
 
-@actionfailed_on_exception
-def task_csv_for_upload():
+class TaskCsvForUpload(CliArgsMixin, SingleUVTask):
     """Fichier csv de notes prêtes à être chargées sur l'ENT.
 
 Crée un fichier csv de notes prêtes à être chargées sur l'ENT. La
@@ -32,60 +33,71 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
 `comment_colname' permet d'ajouter des commentaires.
     """
 
-    @taskfailed_on_exception
-    def csv_for_upload(csv_fname, xls_merge, grade_colname, comment_colname, ects):
-        if grade_colname is None:
+    cli_args = (
+        argument(
+            "-g",
+            "--grade-colname",
+            required=True,
+            help="Nom de la colonne contenant la note à exporter",
+        ),
+        argument(
+            "--ects",
+            action="store_true",
+            help="Précise si la note est une note ECTS (pas de commentaire)",
+        ),
+        argument(
+            "-c",
+            "--comment-colname",
+            required=False,
+            help="Nom de la colonne contenant un commentaire",
+        ),
+    )
+
+    def __init__(self):
+        super().__init__()
+
+        self.csv_fname = generated(f'{self.grade_colname}_ENT.csv', **self.info)
+        self.xls_merge = generated(task_xls_student_data_merge.target, **self.info)
+
+        self.targets = [self.csv_fname]
+        self.file_dep = [self.xls_merge]
+
+    def run(self):
+        if self.grade_colname is None:
             return TaskFailed('Missing grade_colname')
 
-        if ects and comment_colname:
+        if self.ects and self.comment_colname:
             raise Exception("No comment column required when uploading ECTS")
 
-        df = pd.read_excel(xls_merge)
+        df = pd.read_excel(self.xls_merge)
 
-        check_columns(df, grade_colname, file=xls_merge)
+        check_columns(df, self.grade_colname, file=self.xls_merge)
 
         cols = {
             'Nom': df.Nom,
             'Prénom': df['Prénom'],
             'Login': df.Login,
-            'Note': df[grade_colname],
+            'Note': df[self.grade_colname],
         }
         col_names = ['Nom', 'Prénom', 'Login', 'Note']
 
-        if not ects:
-            if comment_colname is None:
+        if not self.ects:
+            if self.comment_colname is None:
                 col_names.append('Commentaire')
                 cols['Commentaire'] = ""
             else:
-                check_columns(df, comment_colname, file=xls_merge)
+                check_columns(df, self.comment_colname, file=self.xls_merge)
                 col_names.append('Commentaire')
-                cols['Commentaire'] = np.where(df[comment_colname].isnull(),
+                cols['Commentaire'] = np.where(df[self.comment_colname].isnull(),
                                                np.nan,
-                                               'Corrigé par ' + df[comment_colname])
+                                               'Corrigé par ' + df[self.comment_colname])
 
         df0 = pd.DataFrame(cols, columns=col_names)
         df0 = df0[col_names]
         df0 = df0.sort_values(['Nom', 'Prénom'])
 
-        with Output(csv_fname, protected=True) as csv_fname:
+        with Output(self.csv_fname, protected=True) as csv_fname:
             df0.to_csv(csv_fname(), index=False, sep=';')
-
-    args = parse_args(
-        task_csv_for_upload,
-        argument('-g', '--grade-colname', required=True, help="Nom de la colonne contenant la note à exporter"),
-        argument('--ects', action='store_true', help="Précise si la note est une note ECTS (pas de commentaire)"),
-        argument('-c', '--comment-colname', required=False, help="Nom de la colonne contenant un commentaire")
-    )
-
-    planning, uv, info = get_unique_uv()
-    csv_fname = generated(f'{args.grade_colname}_ENT.csv', **info)
-    xls_merge = generated(task_xls_student_data_merge.target, **info)
-    deps = [generated(task_xls_student_data_merge.target, **info)]
-    return {
-        'actions': [(csv_for_upload, [csv_fname, xls_merge, args.grade_colname, args.comment_colname, args.ects])],
-        'targets': [csv_fname],
-        'file_dep': deps
-    }
 
 
 @actionfailed_on_exception
