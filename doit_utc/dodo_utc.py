@@ -59,13 +59,21 @@ def task_utc_uv_list_to_csv():
                 df = read_pdf(uv_list_filename, **tabula_args, pandas_options=pdo)
 
                 if page == 1:
-                    # Detect possible multiline header
+                    # Detect if header has not been properly detected
                     header_height = ((re.match('[A-Z]{,3}[0-9]+', str(df.iloc[0, 0])) is None) +
                                      (re.match('[A-Z]{,3}[0-9]+', str(df.iloc[1, 0])) is None))
                     print(f'Header has {header_height} lines')
+
+                    # Compute single line/multiline header
                     header = df.iloc[:header_height].fillna('').agg(['sum']).iloc[0]
+
+                    # Strip header
                     df = df.iloc[header_height:]
+
+                    # Set name of column from header
                     df = df.rename(columns=header)
+
+                    # Rename incorrectly parsed headers
                     df = df.rename(columns={
                         'Activit': 'Activité',
                         'Type cr neau': 'Type créneau',
