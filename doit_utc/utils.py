@@ -17,6 +17,8 @@ import unidecode
 
 from doit.exceptions import TaskFailed
 
+from .utils_noconfig import ParseArgsFailed, ParseArgAction
+
 from .config import settings
 
 
@@ -30,12 +32,17 @@ def actionfailed_on_exception(func):
             if isinstance(ret, GeneratorType):
                 ret = (t for t in list(ret))
             return ret
+        except ParseArgsFailed as e:  # Cli parser failed
+            kwargs = {
+                'actions': [ParseArgAction(e.parser, e.args)],
+            }
+            return kwargs
         except Exception as e:
             tf = TaskFailed(e.args)
-            action = {
+            kwargs = {
                 'actions': [lambda: tf],
             }
-            return action
+            return kwargs
     return wrapper
 
 
@@ -80,6 +87,9 @@ def parse_args(task, *args, **kwargs):
     for arg in args:
         parser.add_argument(*arg.args, **arg.kwargs)
 
+    if len(argv) == 2 and argv[1] == "parsearg":
+        raise ParseArgsFailed(parser)
+
     # Base task specified in command line
     base_task = argv[1]
 
@@ -92,7 +102,7 @@ def parse_args(task, *args, **kwargs):
 
         # If parse_args fails, don't show error message and don't sys.exit()
         def dummy(msg):
-            raise Exception(msg)
+            raise ParseArgsFailed(parser)
         parser.error = dummy
 
         return parser.parse_args(args=[])
