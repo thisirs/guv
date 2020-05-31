@@ -16,9 +16,8 @@ from .utils import (
     parse_args,
     argument,
     check_columns,
-    CliArgsMixin,
-    SingleUVTask
 )
+from .tasks import CliArgsMixin, SingleUVTask
 from .dodo_students import task_xls_student_data_merge
 from .dodo_instructors import task_xls_affectation
 from .scripts.xls_gradebook import run

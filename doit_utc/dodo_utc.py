@@ -31,9 +31,8 @@ from .utils import (
     DATE_FORMAT,
     TIME_FORMAT,
     lib_list,
-    CliArgsMixin,
-    SingleUVTask,
 )
+from .tasks import CliArgsMixin, SingleUVTask
 from .utils_noconfig import pformat, make_groups
 from .dodo_students import task_xls_student_data_merge
 
