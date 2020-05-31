@@ -797,6 +797,7 @@ def task_pdf_attendance_full():
         "file_dep": [xls_merge],
         "targets": [target],
         "actions": [(pdf_attendance_full, [xls_merge, target], kwargs)],
+        "uptodate": [False]
     }
 
 
