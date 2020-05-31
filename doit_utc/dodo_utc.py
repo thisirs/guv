@@ -32,7 +32,7 @@ from .utils import (
 )
 from .dodo_students import task_xls_student_data_merge
 
-from .scripts.moodle_date import CondDate, CondGroup, CondOr, CondAnd, CondProfil
+from .scripts.moodle_date import CondDate, CondGroup, CondOr, CondProfil
 
 
 @add_templates(target='UTC_UV_list.csv')
