@@ -85,11 +85,10 @@ def task_utc_uv_list_to_csv():
                         'Heurefin': 'Heure fin'
                     })
 
-                    print(f'Found {len(df.columns)} header column :')
-                    print("\n".join(df.columns.values))
                     unordered_cols = list(set(df.columns).intersection(set(possible_cols)))
                     cols_order = {k: i for i, k in enumerate(df.columns)}
                     cols = sorted(unordered_cols, key=lambda x: cols_order[x])
+
                     if "Semaine" in cols:
                         week_idx = cols.index('Semaine')
                     else:
