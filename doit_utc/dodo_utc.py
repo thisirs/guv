@@ -1,5 +1,7 @@
 import os
 import re
+import math
+import random
 from datetime import timedelta, datetime, time
 import json
 import numpy as np
@@ -28,8 +30,11 @@ from .utils import (
     action_msg,
     DATE_FORMAT,
     TIME_FORMAT,
-    lib_list
+    lib_list,
+    CliArgsMixin,
+    SingleUVTask,
 )
+from .utils_noconfig import pformat, make_groups
 from .dodo_students import task_xls_student_data_merge
 
 from .scripts.moodle_date import CondDate, CondGroup, CondOr, CondProfil
@@ -539,3 +544,188 @@ def task_json_group():
             "targets": [target],
             "verbosity": 2,
         }
+
+
+class CsvCreateGroups(CliArgsMixin, SingleUVTask):
+    "Création de groupes prêt à charger sous Moodle"
+
+    cli_args = (
+        argument(
+            "title",
+            help="Nom associé à l'ensemble des groupes créés"
+        ),
+        argument(
+            "-G",
+            "--grouping",
+            required=False,
+            help="Pré-groupes dans lesquels faire des sous-groupes",
+        ),
+        argument(
+            "-g",
+            "--global",
+            dest="global_",
+            action="store_true",
+            help="Utilisation des noms"
+        ),
+        argument(
+            "-r",
+            "--random",
+            dest="random",
+            action="store_true",
+            help="Permuter aléatoirement les noms de groupes"
+        ),
+        argument(
+            "-t",
+            "--template",
+            required=False,
+            help="Modèle pour donner des noms aux groupes"
+        ),
+        argument(
+            "-l",
+            "--names",
+            required=False,
+            help="Liste de mots clés pour construire les noms des groupes"
+        ),
+        argument(
+            "-n",
+            "--num-groups",
+            type=int,
+            required=False,
+            help="Nombre de groupe à créer (par sous-groupes si spécifié)"
+        ),
+        argument(
+            "-s",
+            "--group-size",
+            type=int,
+            required=False,
+            help="Taille des groupes, binomes, trinomes ou plus"
+        ),
+        argument(
+            "-p",
+            "--proportions",
+            nargs="+",
+            type=int,
+            required=False,
+            help="Nombre de groupes et proportions des ces groupes"
+        )
+    )
+
+    def __init__(self):
+        super().__init__()
+        # Set dependencies
+        self.xls_merge = generated(task_xls_student_data_merge.target, **self.info)
+        self.deps = [self.xls_merge]
+
+        # Set targets
+        self.targets = [generated(f"{self.title}_groups.csv", **self.info)]
+
+        if self.proportions is None and self.group_size is None and self.num_groups is None:
+            raise Exception("Spécifier au moins prop, num ou size")
+
+        # Set template used to generate group names
+        if self.template is None:
+            if self.names is None:
+                if self.grouping is None:
+                    self.template = "{title}_group_#"
+                else:
+                    self.template = "{title}_{grouping_name}_group_#"
+            else:
+                if self.grouping is None:
+                    self.template = "{title}_{group_name}"
+                else:
+                    self.template = "{title}_{grouping_name}_{group_name}"
+
+    def run(self):
+        df = pd.read_excel(self.xls_merge)
+
+        # Shuffle rows
+        df = df.sample(frac=1).reset_index(drop=True)
+
+        if self.grouping is not None:
+            check_columns(df, self.grouping, file=self.xls_merge)
+
+        # Ajouter le titre à la template
+        tmpl = self.template
+        tmpl = pformat(tmpl, title=self.title)
+
+        # Générateur de noms pour les groupes basé sur l'argument
+        # `names`
+        def create_name_gen():
+            "Générateur de noms pour les groupes"
+
+            if self.names is None:
+                if "@" in tmpl:
+                    for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+                        yield tmpl.replace("@", letter)
+                elif "#" in tmpl:
+                    i = 1
+                    while True:
+                        yield tmpl.replace("#", str(i))
+                        i += 1
+                else:
+                    raise Exception("Pas de # ou de @ pour générer des noms")
+            elif len(self.names) == 1:
+                path = self.names[0]
+                if os.path.exists(path):
+                    with open(path, "r") as fd:
+                        lines = [l.strip() for l in fd.readlines()]
+                    if self.random:
+                        random.shuffle(lines)
+                    for l in lines:
+                        yield pformat(tmpl, group_name=l.strip())
+                else:
+                    raise Exception("Le fichier de noms n'existe pas")
+            else:
+                for n in self.names:
+                    yield pformat(tmpl, group_name=n)
+
+        key = (lambda x: True) if self.grouping is None else self.grouping
+
+        # Diviser le dataframe en morceaux d'après `key` et faire des
+        # groupes dans chaque morceau
+        def df_gen():
+            name_gen = create_name_gen()
+            for name, df_group in df.groupby(key):
+                if not self.global_:
+                    name_gen = create_name_gen()
+                yield self.make_groups(name, df_group, name_gen)
+
+        s_groups = pd.concat(df_gen())
+        df = pd.concat((df["Courriel"], s_groups), axis=1)
+
+        with Output(self.targets[0]) as target:
+            df.to_csv(target(), index=False, header=False)
+
+    def make_groups(self, name, df, name_gen):
+        """Faire des groupes avec le dataframe `df` nommé `name`"""
+
+        n = df.shape[0]
+
+        def name_gen0():
+            for n in name_gen:
+                yield pformat(n, grouping_name=name)
+
+        if self.proportions is not None:
+            return pd.Series(
+                make_groups(n, self.proportions, name_gen0()),
+                index=df.index
+            )
+
+        elif self.group_size is not None:
+            size = self.group_size
+            if size > 3:
+                n_groups = math.ceil(n / size)
+                proportions = np.ones(n_groups)
+                return pd.Series(
+                    make_groups(n, proportions, name_gen0()),
+                    index=df.index
+                )
+
+        elif self.num_groups is not None:
+            proportions = np.ones(self.num_groups)
+            return pd.Series(
+                make_groups(n, proportions, name_gen0()),
+                index=df.index
+            )
+
+
