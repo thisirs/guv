@@ -79,6 +79,7 @@ def task_utc_uv_list_to_csv():
                         'Type cr neau': 'Type créneau',
                         'Lib. cr': 'Lib. créneau',
                         'Lib.créneau': 'Lib. créneau',
+                        'Lib.\rcréneau': 'Lib. créneau',
                         'Heuredébut': 'Heure début',
                         'Heure d': 'Heure début',
                         'Heurefin': 'Heure fin'
