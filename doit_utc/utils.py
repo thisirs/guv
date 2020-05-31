@@ -4,16 +4,16 @@ import re
 import time
 import argparse
 import hashlib
-import unidecode
 from datetime import datetime, timedelta
+import textwrap
+from types import SimpleNamespace, GeneratorType
+from functools import wraps
 import numpy as np
 import pandas as pd
 from icalendar import Event, Calendar
 import latex
 import jinja2
-import textwrap
-from functools import wraps
-from types import SimpleNamespace, GeneratorType
+import unidecode
 
 from doit.exceptions import TaskFailed
 
