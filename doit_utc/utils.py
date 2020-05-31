@@ -21,6 +21,8 @@ from .config import settings
 
 
 def actionfailed_on_exception(func):
+    """Decorator to allow a task function to raise an exception."""
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:
