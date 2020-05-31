@@ -247,8 +247,7 @@ def task_xls_student_data_merge():
     docs = settings.AGGREGATE_DOCUMENTS if "AGGREGATE_DOCUMENTS" in settings else {}
     deps = [source]
     for path, _ in docs.items():
-        if os.path.exists(path):
-            deps.append(path)
+        deps.append(path)
 
     return {
         "file_dep": deps,
