@@ -493,7 +493,7 @@ basées sur le début/fin des séances."""
 
 @actionfailed_on_exception
 def task_json_group():
-    """Ficher json des restrictions d'accès aux ressources sur Moodle."""
+    """Fichier json des restrictions d'accès aux ressources sur Moodle."""
 
     @taskfailed_on_exception
     def json_group(target, xls_merge, colname):
