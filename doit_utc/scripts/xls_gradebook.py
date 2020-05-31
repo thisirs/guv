@@ -493,6 +493,7 @@ questions structurées."""
     def write(self, ref=None):
         # Create new gradesheet
         self.gradesheet = self.wb.create_sheet(title=self.name)
+        self.wb.active = self.gradesheet
 
         # Write structure at ref
         if ref is None:
