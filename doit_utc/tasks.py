@@ -50,7 +50,15 @@ class TaskBase(object):
             if "targets" not in kw:
                 if hasattr(instance, "target"):
                     kwargs["targets"] = [instance.target]
-            kwargs["actions"] = [instance.run]
+
+            # Catch any exception an action might trigger
+            def wrapper(*args, **kwargs):
+                try:
+                    return instance.run(*args, **kwargs)
+                except Exception as e:
+                    return TaskFailed(e.args)
+
+            kwargs["actions"] = [wrapper]
 
             return kwargs
 
