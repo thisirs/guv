@@ -62,17 +62,16 @@ def task_html_inst():
         )
         dfs = dfs.reset_index()
 
-        insts = []
-        for _, row in dfs.iterrows():
-            insts.append(
-                {
-                    "inst": row["Intervenants"],
-                    "libss": row["CourseList"],
-                    "resp": row["Responsable"],
-                    "website": row["Website"],
-                    "email": row["Email"],
-                }
-            )
+        insts = [
+            {
+                "inst": row["Intervenants"],
+                "libss": row["CourseList"],
+                "resp": row["Responsable"],
+                "website": row["Website"],
+                "email": row["Email"],
+            }
+            for _, row in dfs.iterrows()
+        ]
 
         def contact(info):
             if not pd.isnull(info["website"]):
