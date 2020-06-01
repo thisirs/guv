@@ -24,8 +24,8 @@ from .dodo_grades import *
 from .dodo_students import *
 from .dodo_trombinoscope import *
 from .dodo_moodle import *
-
 from .dodo_ical import *
+from .dodo_calendar import *
 
 def main():
     if len(sys.argv) == 1:
