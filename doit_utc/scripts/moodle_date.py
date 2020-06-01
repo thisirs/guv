@@ -1,3 +1,7 @@
+"""
+DSL to express Moodle constraints
+"""
+
 from datetime import datetime, date
 
 
