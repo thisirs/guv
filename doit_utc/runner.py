@@ -26,6 +26,8 @@ from .dodo_trombinoscope import *
 from .dodo_moodle import *
 from .dodo_ical import *
 from .dodo_calendar import *
+from .dodo_attendance import *
+
 
 def main():
     if len(sys.argv) == 1:
