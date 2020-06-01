@@ -33,28 +33,37 @@ class TaskBase(object):
             "doc": cls.__doc__,
             "basename": task_name
         }
+
+        def build_task(obj, **kwargs):
+            kwargs.update(dict(
+                (a, getattr(obj, a))
+                for a in ["name", "targets", "file_dep", "uptodate", "verbosity"]
+                if a in dir(instance)
+            ))
+
+            # Allow always_make attr
+            if hasattr(instance, "always_make"):
+                kwargs["uptodate"] = [False]
+
+            # Allow targets attr specified as single
+            # target in target attr
+            if "targets" not in kw:
+                if hasattr(instance, "target"):
+                    kwargs["targets"] = [instance.target]
+            kwargs["actions"] = [instance.run]
+
+            return kwargs
+
         try:
             if cls is MultipleUVTask:
                 def generator():
                     for planning, uv, info in selected_uv():
                         instance = cls(planning, uv, info)
-                        kw.update(dict(
-                            (a, getattr(instance, a))
-                            for a in ["name", "targets", "file_dep", "uptodate", "verbosity"]
-                            if a in dir(instance)
-                        ))
-                        kw["actions"] = [instance.run]
-                        yield kw
+                        yield build_task(instance, **kw)
                 return generator()
             else:
                 instance = cls()
-                kw.update(dict(
-                    (a, getattr(instance, a))
-                    for a in ["name", "targets", "file_dep", "uptodate", "verbosity"]
-                    if a in dir(instance)
-                ))
-                kw["actions"] = [instance.run]
-                return kw
+                return build_task(instance, **kw)
 
         except ParseArgsFailed as e:  # Cli parser failed
             kw = {
