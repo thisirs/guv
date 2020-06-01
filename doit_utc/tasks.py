@@ -6,6 +6,7 @@ from doit.exceptions import TaskFailed
 
 from .utils import selected_uv, get_unique_uv
 from .utils_noconfig import ParseArgsFailed, ParseArgAction
+from .config import settings
 
 
 class TaskBase(object):
@@ -56,7 +57,10 @@ class TaskBase(object):
                 try:
                     return instance.run(*args, **kwargs)
                 except Exception as e:
-                    return TaskFailed(e.args)
+                    if settings.DEBUG > 0:
+                        raise e from e
+                    msg = " ".join(str(o) for o in e.args)
+                    return TaskFailed(msg)
 
             kwargs["actions"] = [wrapper]
 

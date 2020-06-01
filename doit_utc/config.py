@@ -15,6 +15,9 @@ class Settings:
         ]
         self._loaded = False
 
+        # Default settings
+        self.DEBUG = 0
+
     def _setup(self):
         for settings_file in self.settings_files:
             if not os.path.exists(settings_file):
