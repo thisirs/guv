@@ -3,8 +3,6 @@ import re
 import glob
 import tempfile
 import zipfile
-import jinja2
-import markdown
 
 import pandas as pd
 from pandas.api.types import CategoricalDtype
@@ -28,6 +26,49 @@ from .utils import (
     lib_list
 )
 from .scripts.excel_hours import create_excel_file
+
+
+def create_insts_list(df):
+    "Agrège les données d'affectation des Cours/TD/TP"
+
+    def course_list(e):
+        "Return course list like C1, D2, T1A"
+        return ', '.join(sorted(e, key=lib_list))
+
+    def score(libs):
+        "Renvoie un tuple comptant les types de cours Cours/TD/TP"
+        sc = [0, 0, 0]
+        mapping = {'C': 0, 'D': 1, 'T': 2}
+        for lib in libs:
+            m = re.search('([CDT])[0-9]*([AB]?)', lib)
+            if m:
+                ix = mapping[m.group(1)]
+                if m.group(2):
+                    sc[ix] += .5
+                else:
+                    sc[ix] += 1
+            else:
+                raise Exception(f"L'identifiant {lib} n'est pas matché")
+        return tuple(sc)
+
+    def myapply(df):
+        e = df['Lib. créneau'] + df['Semaine'].fillna('')
+        resp = int(df['Responsable'].sum())
+        s = score(e)
+        return pd.Series({
+            'CourseList': course_list(e),
+            'SortCourseList': s,
+            'Cours': s[0],
+            'TD': s[1],
+            'TP': s[2],
+            'Responsable': resp
+        })
+
+    df = df.groupby('Intervenants')
+    df = df.apply(myapply)
+    df = df.reset_index()
+
+    return(df)
 
 
 @add_templates(target='intervenants.xlsx')
@@ -121,49 +162,6 @@ affectations sont prises pour chaque UV.
             'targets': [target],
             'actions': [(xls_inst_details, [inst_uv, insts_details, target])]
         }
-
-
-def create_insts_list(df):
-    "Agrège les données d'affectation des Cours/TD/TP"
-
-    def course_list(e):
-        "Return course list like C1, D2, T1A"
-        return ', '.join(sorted(e, key=lib_list))
-
-    def score(libs):
-        "Renvoie un tuple comptant les types de cours Cours/TD/TP"
-        sc = [0, 0, 0]
-        mapping = {'C': 0, 'D': 1, 'T': 2}
-        for lib in libs:
-            m = re.search('([CDT])[0-9]*([AB]?)', lib)
-            if m:
-                ix = mapping[m.group(1)]
-                if m.group(2):
-                    sc[ix] += .5
-                else:
-                    sc[ix] += 1
-            else:
-                raise Exception(f"L'identifiant {lib} n'est pas matché")
-        return tuple(sc)
-
-    def myapply(df):
-        e = df['Lib. créneau'] + df['Semaine'].fillna('')
-        resp = int(df['Responsable'].sum())
-        s = score(e)
-        return pd.Series({
-            'CourseList': course_list(e),
-            'SortCourseList': s,
-            'Cours': s[0],
-            'TD': s[1],
-            'TP': s[2],
-            'Responsable': resp
-        })
-
-    df = df.groupby('Intervenants')
-    df = df.apply(myapply)
-    df = df.reset_index()
-
-    return(df)
 
 
 @add_templates(
@@ -271,69 +269,6 @@ def task_xls_emploi_du_temps():
             'verbosity': 2
         }
 
-
-@add_templates(target='intervenants.html')
-def task_html_inst():
-    "Génère la description des intervenants pour Moodle"
-
-    def html_inst(xls_uv, xls_details, target):
-        df_uv = pd.read_excel(xls_uv)
-        df_uv = create_insts_list(df_uv)
-        df_details = read_xls_details(xls_details)
-
-        # Add details from df_details
-        df = df_uv.merge(df_details, how='left',
-                         left_on='Intervenants',
-                         right_on='Intervenants')
-
-        dfs = df.sort_values(['Responsable', 'SortCourseList', 'Statut'],
-                             ascending=False)
-        dfs = dfs.reset_index()
-
-        insts = []
-        for _, row in dfs.iterrows():
-            insts.append({
-                'inst': row['Intervenants'],
-                'libss': row['CourseList'],
-                'resp': row['Responsable'],
-                'website': row['Website'],
-                'email': row['Email']
-            })
-
-        def contact(info):
-            if not pd.isnull(info['website']):
-                return f'[{info["inst"]}]({info["website"]})'
-            elif not pd.isnull(info['email']):
-                return f'[{info["inst"]}](mailto:{info["email"]})'
-            else:
-                return info['inst']
-
-        jinja_dir = os.path.join(os.path.dirname(__file__), 'templates')
-        env = jinja2.Environment(loader=jinja2.FileSystemLoader(jinja_dir))
-        # env.globals.update(contact=contact)
-        template = env.get_template('instructors.html.jinja2')
-        md = template.render(insts=insts, contact=contact)
-        html = markdown.markdown(md)
-
-        with Output(target) as target:
-            with open(target(), 'w') as fd:
-                fd.write(html)
-
-    insts_details = documents('intervenants.xlsx')
-    jinja_dir = os.path.join(os.path.dirname(__file__), 'templates')
-    template = os.path.join(jinja_dir, 'instructors.html.jinja2')
-
-    for planning, uv, info in selected_uv():
-        insts_uv = documents(task_xls_affectation.target, **info)
-        target = generated(task_html_inst.target, **info)
-
-        yield {
-            'name': f'{planning}_{uv}',
-            'file_dep': [insts_uv, insts_details, template],
-            'targets': [target],
-            'actions': [(html_inst, [insts_uv, insts_details, target])],
-            'verbosity': 2
-        }
 
 
 @add_templates(target='calendrier.pdf')

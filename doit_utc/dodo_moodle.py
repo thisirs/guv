@@ -6,12 +6,16 @@ import pandas as pd
 from datetime import timedelta, datetime, time
 import json
 import pynliner
+import jinja2
+import markdown
 
 from doit.exceptions import TaskFailed
 
 from .config import settings
 from .utils import (
     Output,
+    add_templates,
+    documents,
     generated,
     selected_uv,
     compute_slots,
@@ -29,8 +33,81 @@ from .tasks import CliArgsMixin, SingleUVTask
 from .utils_noconfig import pformat, make_groups
 from .dodo_students import task_xls_student_data_merge
 from .dodo_utc import task_csv_all_courses
+from .dodo_instructors import (
+    create_insts_list,
+    read_xls_details,
+    task_xls_affectation,
+    task_add_instructors,
+)
 
 from .scripts.moodle_date import CondDate, CondGroup, CondOr, CondProfil
+
+
+@add_templates(target="intervenants.html")
+def task_html_inst():
+    "Génère la description des intervenants pour Moodle"
+
+    def html_inst(xls_uv, xls_details, target):
+        df_uv = pd.read_excel(xls_uv)
+        df_uv = create_insts_list(df_uv)
+        df_details = read_xls_details(xls_details)
+
+        # Add details from df_details
+        df = df_uv.merge(
+            df_details, how="left", left_on="Intervenants", right_on="Intervenants"
+        )
+
+        dfs = df.sort_values(
+            ["Responsable", "SortCourseList", "Statut"], ascending=False
+        )
+        dfs = dfs.reset_index()
+
+        insts = []
+        for _, row in dfs.iterrows():
+            insts.append(
+                {
+                    "inst": row["Intervenants"],
+                    "libss": row["CourseList"],
+                    "resp": row["Responsable"],
+                    "website": row["Website"],
+                    "email": row["Email"],
+                }
+            )
+
+        def contact(info):
+            if not pd.isnull(info["website"]):
+                return f'[{info["inst"]}]({info["website"]})'
+            elif not pd.isnull(info["email"]):
+                return f'[{info["inst"]}](mailto:{info["email"]})'
+            else:
+                return info["inst"]
+
+        jinja_dir = os.path.join(os.path.dirname(__file__), "templates")
+        env = jinja2.Environment(loader=jinja2.FileSystemLoader(jinja_dir))
+        # env.globals.update(contact=contact)
+        template = env.get_template("instructors.html.jinja2")
+        md = template.render(insts=insts, contact=contact)
+        html = markdown.markdown(md)
+
+        with Output(target) as target:
+            with open(target(), "w") as fd:
+                fd.write(html)
+
+    insts_details = documents("intervenants.xlsx")
+    jinja_dir = os.path.join(os.path.dirname(__file__), "templates")
+    template = os.path.join(jinja_dir, "instructors.html.jinja2")
+
+    for planning, uv, info in selected_uv():
+        insts_uv = documents(task_xls_affectation.target, **info)
+        target = generated(task_html_inst.target, **info)
+
+        yield {
+            "name": f"{planning}_{uv}",
+            "file_dep": [insts_uv, insts_details, template],
+            "targets": [target],
+            "actions": [(html_inst, [insts_uv, insts_details, target])],
+            "verbosity": 2,
+        }
 
 
 @actionfailed_on_exception
@@ -170,8 +247,6 @@ def task_html_table():
             help="Liste ou fichier contenant les noms des lignes du tableau",
         ),
     )
-
-    from .dodo_instructors import task_add_instructors
 
     dep = generated(task_add_instructors.target)
     uvs = list(selected_uv())
