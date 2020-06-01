@@ -23,6 +23,8 @@ from .dodo_students import task_xls_student_data_merge
 
 
 def pdf_attendance_list_render(df, template, **kwargs):
+    """Render LaTeX template and compile it."""
+
     jinja_dir = os.path.join(os.path.dirname(__file__), "templates")
     latex_jinja_env = jinja2.Environment(
         block_start_string="((*",
@@ -94,30 +96,6 @@ def task_pdf_attendance_list():
     }
 
 
-def pdf_attendance_full_render(df, template, **kwargs):
-    jinja_dir = os.path.join(os.path.dirname(__file__), "templates")
-    latex_jinja_env = jinja2.Environment(
-        block_start_string="((*",
-        block_end_string="*))",
-        variable_start_string="(((",
-        variable_end_string=")))",
-        comment_start_string="((=",
-        comment_end_string="=))",
-        loader=jinja2.FileSystemLoader(jinja_dir),
-    )
-    template = latex_jinja_env.get_template(template)
-
-    temp_dir = tempfile.mkdtemp()
-    df = df.sort_values(["Nom", "Prénom"])
-    students = [{"name": f'{row["Nom"]} {row["Prénom"]}'} for _, row in df.iterrows()]
-    tex = template.render(students=students, **kwargs)
-    pdf = latex.build_pdf(tex)
-    filename = kwargs["group"] + ".pdf"
-    filepath = os.path.join(temp_dir, filename)
-    pdf.save_to(filepath)
-    return filepath
-
-
 @actionfailed_on_exception
 def task_pdf_attendance_full():
     """Feuilles de présence pour toutes les séances"""
@@ -132,7 +110,8 @@ def task_pdf_attendance_full():
         check_columns(df, ctype, file=xls_merge)
         for gn, group in df.groupby(ctype):
             group = group.sort_values(["Nom", "Prénom"])
-            pdf = pdf_attendance_full_render(group, template, group=gn, **kwargs)
+            kwargs["filename"] = group + ".pdf"
+            pdf = pdf_attendance_list_render(group, template, group=gn, **kwargs)
             pdfs.append(pdf)
 
         with Output(target) as target0:
