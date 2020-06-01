@@ -86,6 +86,7 @@ class MultipleUVTask(TaskBase):
     def __init__(self, planning, uv, info):
         super().__init__()
         self.planning, self.uv, self.info = planning, uv, info
+        self.name = f"{self.planning}_{self.uv}"
 
 
 class CliArgsMixin(TaskBase):
