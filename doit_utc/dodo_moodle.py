@@ -1,6 +1,7 @@
 import os
 import math
 import random
+import argparse
 import numpy as np
 import pandas as pd
 from datetime import timedelta, datetime, time
@@ -435,7 +436,10 @@ basées sur le début/fin des séances."""
 
 @actionfailed_on_exception
 def task_json_group():
-    """Fichier json des restrictions d'accès aux ressources sur Moodle."""
+    """Fichier json des restrictions d'accès aux ressources sur Moodle.
+
+Les restrictions se font par adresse email.
+"""
 
     @taskfailed_on_exception
     def json_group(target, xls_merge, colname):
@@ -444,6 +448,8 @@ def task_json_group():
         check_columns(df, colname, file=task_xls_student_data_merge.target)
         dff = df[["Adresse de courriel", colname]]
 
+        # Dictionnary of group in COLNAME and corresponding Cond
+        # object for that group.
         json_dict = {
             group_name: CondOr(
                 [
@@ -557,7 +563,7 @@ class CsvCreateGroups(CliArgsMixin, SingleUVTask):
         super().__init__()
         # Set dependencies
         self.xls_merge = generated(task_xls_student_data_merge.target, **self.info)
-        self.deps = [self.xls_merge]
+        self.file_dep = [self.xls_merge]
 
         # Set targets
         self.targets = [generated(f"{self.title}_groups.csv", **self.info)]
@@ -567,7 +573,7 @@ class CsvCreateGroups(CliArgsMixin, SingleUVTask):
             and self.group_size is None
             and self.num_groups is None
         ):
-            raise Exception("Spécifier au moins prop, num ou size")
+            raise argparse.ArgumentError(None, "Spécifier un argument parmi --proportions, --group-size, --num-groups")
 
         # Set template used to generate group names
         if self.template is None:
