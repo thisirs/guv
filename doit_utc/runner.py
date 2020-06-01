@@ -23,6 +23,8 @@ from .dodo_utc import *
 from .dodo_grades import *
 from .dodo_students import *
 from .dodo_trombinoscope import *
+from .dodo_moodle import *
+
 
 def main():
     if len(sys.argv) == 1:
