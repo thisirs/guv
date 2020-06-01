@@ -22,7 +22,7 @@ from .dodo_instructors import *
 from .dodo_utc import *
 from .dodo_grades import *
 from .dodo_students import *
-
+from .dodo_trombinoscope import *
 
 def main():
     if len(sys.argv) == 1:
