@@ -25,6 +25,7 @@ from .utils import (
     check_columns,
     rel_to_dir
 )
+from .tasks import MultipleUVTask
 from .scripts.parse_utc_list import parse_UTC_listing
 from .scripts.add_student_data import (
     add_moodle_data,
@@ -53,26 +54,21 @@ def task_inscrits():
         }
 
 
-@add_templates(target="inscrits.csv")
-def task_csv_inscrits():
+class TaskCsvInscrits(MultipleUVTask):
     """Construit un fichier CSV à partir des données brutes de la promo
     fournies par l'UTC."""
 
-    def csv_inscrits(fn, target):
-        df = parse_UTC_listing(fn)
-        with Output(target) as target:
-            df.to_csv(target(), index=False)
+    target = "inscrits.csv"
 
-    for planning, uv, info in selected_uv():
-        utc_listing = documents(task_inscrits.target, **info)
-        target = generated(task_csv_inscrits.target, **info)
-        yield {
-            "name": f"{planning}_{uv}",
-            "file_dep": [utc_listing],
-            "targets": [target],
-            "actions": [(csv_inscrits, [utc_listing, target])],
-            "verbosity": 2,
-        }
+    def __init__(self):
+        self.utc_listing = documents(task_inscrits.target, **self.info)
+        self.file_dep = [self.utc_listing]
+        self.target = generated(TaskCsvInscrits.target, **self.info)
+
+    def run(self):
+        df = parse_UTC_listing(self.utc_listing)
+        with Output(self.target) as target:
+            df.to_csv(target(), index=False)
 
 
 @add_templates(target="student_data.xlsx")
@@ -144,7 +140,7 @@ l'UTC."""
             kw["csv_moodle"] = csv_moodle
             deps.append(csv_moodle)
 
-        csv_UTC = generated(task_csv_inscrits.target, **info)
+        csv_UTC = generated(TaskCsvInscrits.target, **info)
         raw_UTC = documents(task_inscrits.target, **info)
         if os.path.exists(raw_UTC):
             kw["csv_UTC"] = csv_UTC
@@ -488,10 +484,6 @@ def task_csv_moodle_groups():
         "targets": [target_moodle],  # target_moodle only to
         # avoid circular dep
     }
-
-
-
-
 
 @actionfailed_on_exception
 def task_csv_groups_groupings():
