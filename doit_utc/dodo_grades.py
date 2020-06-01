@@ -206,38 +206,31 @@ def task_yaml_QCM():
     }
 
 
-@actionfailed_on_exception
-def task_xls_assignment_grade():
+class XlsAssignmentGrade(CliArgsMixin, SingleUVTask):
     """Création d'un fichier Excel pour remplissage des notes par les intervenants"""
 
-    def xls_assignment_grade(inst_uv, xls_merge, target):
-        inst_uv = pd.read_excel(inst_uv)
+    cli_args = (argument("-e", "--exam", required=True, help="Nom de l'examen"),)
+    always_make = True
+
+    def __init__(self):
+        super().__init__(self)
+        self.xls_merge = generated(task_xls_student_data_merge.target, **self.info)
+        self.inst_uv = documents(task_xls_affectation.target, **self.info)
+        self.target = generated(f'{self.exam}.xlsx', **self.info)
+        self.file_dep = [self.inst_uv, self.xls_merge]
+
+    def run(self):
+        inst_uv = pd.read_excel(self.inst_uv)
         TD = inst_uv['Lib. créneau'].str.contains('^D')
         inst_uv_TD = inst_uv.loc[TD]
         insts = inst_uv_TD['Intervenants'].unique()
 
-        df = pd.read_excel(xls_merge)
+        df = pd.read_excel(self.xls_merge)
         df = df[['Nom', 'Prénom', 'Courriel']].sort_values(['Nom', 'Prénom'])
         df = df.assign(Note=np.nan)
 
-        with Output(target) as target:
+        with Output(self.target, protected=True) as target:
             writer = pd.ExcelWriter(target())
             for inst in insts:
                 df.to_excel(writer, sheet_name=inst, index=False)
             writer.save()
-
-    args = parse_args(
-        task_xls_assignment_grade,
-        argument('-e', '--exam', required=True, help="Nom de l'examen"),
-    )
-
-    planning, uv, info = get_unique_uv()
-    xls_merge = generated(task_xls_student_data_merge.target, **info)
-    inst_uv = documents(task_xls_affectation.target, **info)
-    target = generated(f'{args.exam}.xlsx', **info)
-
-    return {
-        'actions': [(xls_assignment_grade, [inst_uv, xls_merge, target])],
-        'file_dep': [xls_merge, inst_uv],
-        'targets': [target],
-    }
