@@ -32,6 +32,7 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
 `comment_colname' permet d'ajouter des commentaires.
     """
 
+    always_make = True
     cli_args = (
         argument(
             "-g",
@@ -50,12 +51,19 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
             required=False,
             help="Nom de la colonne contenant un commentaire",
         ),
+        argument(
+            "-f",
+            "--format",
+            required=False,
+            default="{msg}",
+            help="Format pour créer un message dans le colonne commentaire",
+        ),
     )
 
     def __init__(self):
         super().__init__()
 
-        self.csv_fname = generated(f'{self.grade_colname}_ENT.csv', **self.info)
+        self.csv_fname = generated(f"{self.grade_colname}_ENT.csv", **self.info)
         self.xls_merge = generated(task_xls_student_data_merge.target, **self.info)
 
         self.targets = [self.csv_fname]
@@ -63,7 +71,7 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
 
     def run(self):
         if self.grade_colname is None:
-            return TaskFailed('Missing grade_colname')
+            return TaskFailed("Missing grade_colname")
 
         if self.ects and self.comment_colname:
             raise Exception("No comment column required when uploading ECTS")
@@ -73,30 +81,35 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
         check_columns(df, self.grade_colname, file=self.xls_merge)
 
         cols = {
-            'Nom': df.Nom,
-            'Prénom': df['Prénom'],
-            'Login': df.Login,
-            'Note': df[self.grade_colname],
+            "Nom": df.Nom,
+            "Prénom": df["Prénom"],
+            "Login": df.Login,
+            "Note": df[self.grade_colname],
         }
-        col_names = ['Nom', 'Prénom', 'Login', 'Note']
+        col_names = ["Nom", "Prénom", "Login", "Note"]
 
         if not self.ects:
             if self.comment_colname is None:
-                col_names.append('Commentaire')
-                cols['Commentaire'] = ""
+                col_names.append("Commentaire")
+                cols["Commentaire"] = ""
             else:
                 check_columns(df, self.comment_colname, file=self.xls_merge)
-                col_names.append('Commentaire')
-                cols['Commentaire'] = np.where(df[self.comment_colname].isnull(),
-                                               np.nan,
-                                               'Corrigé par ' + df[self.comment_colname])
+                col_names.append("Commentaire")
+
+                def format_msg(e):
+                    if pd.isna(e):
+                        return np.nan
+                    else:
+                        return self.format.format(msg=e)
+
+                cols["Commentaire"] = df[self.comment_colname].apply(format_msg)
 
         df0 = pd.DataFrame(cols, columns=col_names)
         df0 = df0[col_names]
-        df0 = df0.sort_values(['Nom', 'Prénom'])
+        df0 = df0.sort_values(["Nom", "Prénom"])
 
         with Output(self.csv_fname, protected=True) as csv_fname:
-            df0.to_csv(csv_fname(), index=False, sep=';')
+            df0.to_csv(csv_fname(), index=False, sep=";")
 
 
 @actionfailed_on_exception
