@@ -31,7 +31,7 @@ from .utils import (
 from .tasks import CliArgsMixin, SingleUVTask, MultipleUVTask
 from .utils_noconfig import pformat, make_groups
 from .dodo_students import task_xls_student_data_merge
-from .dodo_utc import task_csv_all_courses
+from .dodo_utc import CsvAllCourses
 from .dodo_instructors import (
     task_add_instructors,
     create_insts_list,
@@ -388,7 +388,7 @@ basées sur le début/fin des séances."""
         target_fn = f"moodle_restrictions_{course}.json"
 
     target = generated(target_fn, **info)
-    dep = generated(task_csv_all_courses.target)
+    dep = generated(CsvAllCourses.target)
 
     return {
         "actions": [(restriction_list, [dep, uv, course, AB, target])],
