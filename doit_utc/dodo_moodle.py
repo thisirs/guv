@@ -10,8 +10,6 @@ import pynliner
 import jinja2
 import markdown
 
-from doit.exceptions import TaskFailed
-
 from .config import settings
 from .utils import (
     Output,
@@ -30,15 +28,15 @@ from .utils import (
     TIME_FORMAT,
     lib_list,
 )
-from .tasks import CliArgsMixin, SingleUVTask
+from .tasks import CliArgsMixin, SingleUVTask, MultipleUVTask
 from .utils_noconfig import pformat, make_groups
 from .dodo_students import task_xls_student_data_merge
 from .dodo_utc import task_csv_all_courses
 from .dodo_instructors import (
+    task_add_instructors,
     create_insts_list,
     read_xls_details,
     task_xls_affectation,
-    task_add_instructors,
 )
 
 from .scripts.moodle_date import CondDate, CondGroup, CondOr, CondProfil
@@ -110,24 +108,106 @@ def task_html_inst():
         }
 
 
-@actionfailed_on_exception
-def task_html_table():
+class HtmlTable(MultipleUVTask, CliArgsMixin):
     """Table HTML des TD/TP"""
 
-    def html_table(planning, csv_inst_list, uv, courses, target, no_AB, names):
-        # Select wanted slots
-        slots = compute_slots(csv_inst_list, planning, filter_uvs=[uv])
-        slots = slots[slots["Activité"].isin(courses)]
+    cli_args = (
+        argument(
+            "-c",
+            "--courses",
+            nargs="*",
+            default=["Cours", "TD", "TP"],
+            help="Liste des cours à faire figurer dans le tableau",
+        ),
+        argument(
+            "-g",
+            "--grouped",
+            action="store_true",
+            help="Grouper les cours dans le même tableau ou faire des fichiers distincts",
+        ),
+        argument(
+            "-a",
+            "--no-AB",
+            action="store_true",
+            help="Faire apparaitre les semaines A/B",
+        ),
+        argument(
+            "-n",
+            "--names",
+            nargs="*",
+            help="Liste ou fichier contenant les noms des lignes du tableau",
+        ),
+    )
 
-        # Fail if no slot
-        if len(slots) == 0:
-            if len(courses) > 1:
-                return TaskFailed(
-                    f"Pas de créneau pour le planning `{planning}', l'uv `{uv}' et les cours `{', '.join(courses)}'"
-                )
-            else:
-                print(f"Pas de créneaux pour l'activité {courses[0]}")
-                return
+    def __init__(self, planning, uv, info):
+        super().__init__(planning, uv, info)
+
+        self.file_dep = [generated(task_add_instructors.target)]
+
+        if self.grouped:
+            name = "_".join(self.courses) + "_grouped"
+            if self.no_AB:
+                name += "_no_AB"
+            self.target = generated(f"{name}_table.html", **self.info)
+        else:
+            self.targets = [
+                generated(f"{course}_table.html", **self.info)
+                for course in self.courses
+            ]
+
+    def write_html_table(self, target, html):
+        # Inline style for Moodle
+        output = pynliner.fromString(html)
+
+        with Output(target) as target:
+            with open(target(), "w") as fd:
+                fd.write(output)
+
+    def run(self):
+        # Set names
+
+        if self.grouped:
+            html = self.get_html(self.courses)
+            self.write_html_table(self.target, html)
+        else:
+            for course, target in zip(self.courses, self.targets):
+                html = self.get_html([course])
+                self.write_html_table(target, html)
+
+    def get_html(self, courses):
+        """Return html-rendered tables of all COURSES"""
+
+        # Get Pandas dataframe
+        df = self.get_table(courses)
+
+        # Replace NaN
+        df = df.fillna("—")
+
+        dfs = df.style
+        dfs = (
+            dfs.set_table_styles(
+                [
+                    dict(selector="th.row_heading", props=[("width", "100px")]),
+                    dict(
+                        selector="th",
+                        props=[("font-size", "small"), ("text-align", "center")],
+                    ),
+                ]
+            )
+            .set_properties(
+                **{"width": "50px", "text-align": "center", "valign": "middle"}
+            )
+            .set_table_attributes('align="center" cellspacing="10" cellpadding="2"')
+        )
+
+        return dfs.render()
+
+    def get_table(self, courses):
+        """Get a Pandas DataFrame from all COURSES"""
+
+        # Select wanted slots
+        slots = compute_slots(self.csv_inst_list, self.planning, filter_uvs=[self.uv])
+        slots = slots[slots["Activité"].isin(courses)]
 
         def mondays(beg, end):
             while beg <= end:
@@ -139,29 +219,22 @@ def task_html_table():
             activity = df.iloc[0]["Activité"]
 
             def to_names(num):
-                if names is not None:
-                    return str(names[num - 1])
+                if self.names is not None:
+                    return str(self.names[num - 1])
                 else:
                     return str(num)
 
-            if activity == "Cours":
+            if activity in ["Cours", "TD"] or (activity == "TP" and self.no_AB):
                 return ", ".join(df.num.apply(to_names))
-            elif activity == "TD":
-                return ", ".join(df.num.apply(to_names))
-            elif activity == "TP":
-                if no_AB:
-                    return ", ".join(df.num.apply(to_names))
-                else:
-                    return ", ".join(df.semaine + df.numAB.apply(to_names))
             else:
-                raise Exception("Unrecognized activity", activity)
+                return ", ".join(df.semaine + df.numAB.apply(to_names))
 
         # Iterate on each week of semester
         rows = []
         weeks = []
         for (mon, nmon) in mondays(
-            settings.PLANNINGS[planning]["PL_BEG"],
-            settings.PLANNINGS[planning]["PL_END"],
+            settings.PLANNINGS[self.planning]["PL_BEG"],
+            settings.PLANNINGS[self.planning]["PL_END"],
         ):
             weeks.append(
                 "{}-{}".format(
@@ -190,116 +263,7 @@ def task_html_table():
         df.index = weeks
         df.index.name = "Semaine"
 
-        # Replace NaN
-        df = df.fillna("—")
-
-        dfs = df.style
-        dfs = (
-            dfs.set_table_styles(
-                [
-                    dict(selector="th.row_heading", props=[("width", "100px")]),
-                    dict(
-                        selector="th",
-                        props=[("font-size", "small"), ("text-align", "center")],
-                    ),
-                ]
-            )
-            .set_properties(
-                **{"width": "50px", "text-align": "center", "valign": "middle"}
-            )
-            .set_table_attributes('align="center" cellspacing="10" cellpadding="2"')
-        )
-
-        html = dfs.render()
-
-        # Inline style for Moodle
-        output = pynliner.fromString(html)
-
-        with Output(target) as target:
-            with open(target(), "w") as fd:
-                fd.write(output)
-
-    args = parse_args(
-        task_html_table,
-        argument(
-            "-c",
-            "--courses",
-            nargs="*",
-            default=["Cours", "TD", "TP"],
-            help="Liste des cours à faire figurer dans le tableau",
-        ),
-        argument(
-            "-g",
-            "--grouped",
-            action="store_true",
-            help="Grouper les cours dans le même tableau ou faire des fichiers distincts",
-        ),
-        argument(
-            "-a",
-            "--no-AB",
-            action="store_true",
-            help="Faire apparaitre les semaines A/B",
-        ),
-        argument(
-            "-n",
-            "--names",
-            nargs="*",
-            help="Liste ou fichier contenant les noms des lignes du tableau",
-        ),
-    )
-
-    dep = generated(task_add_instructors.target)
-    uvs = list(selected_uv())
-
-    if args.names is not None:
-        if len(uvs) != 1:
-            raise Exception
-
-        if len(args.names) == 1:
-            if os.path.exists(args.names[0]):
-                with open(args.names[0], "r") as fd:
-                    names = fd.readlines()
-            else:
-                raise Exception
-        else:
-            names = args.names
-    else:
-        names = None
-
-    for planning, uv, info in uvs:
-        if args.grouped:
-            name = "_".join(args.courses)
-            if args.grouped:
-                name += "_grouped"
-            if args.no_AB:
-                name += "_no_AB"
-            target = generated(f"{name}_table.html", **info)
-            yield {
-                "name": f"{planning}_{uv}_{name}",
-                "file_dep": [dep],
-                "actions": [
-                    (
-                        html_table,
-                        [planning, dep, uv, args.courses, target, args.no_AB, names],
-                    )
-                ],
-                "targets": [target],
-            }
-        else:
-            for course in args.courses:
-                target = generated(f"{course}_table.html", **info)
-                yield {
-                    "name": f"{planning}_{uv}_{course}",
-                    "file_dep": [dep],
-                    "actions": [
-                        (
-                            html_table,
-                            [planning, dep, uv, [course], target, args.no_AB, names],
-                        )
-                    ],
-                    "targets": [target],
-                    "verbosity": 2,
-                }
+        return df
 
 
 @actionfailed_on_exception
@@ -573,7 +537,10 @@ class CsvCreateGroups(CliArgsMixin, SingleUVTask):
             and self.group_size is None
             and self.num_groups is None
         ):
-            raise argparse.ArgumentError(None, "Spécifier un argument parmi --proportions, --group-size, --num-groups")
+            raise argparse.ArgumentError(
+                None,
+                "Spécifier un argument parmi --proportions, --group-size, --num-groups",
+            )
 
         # Set template used to generate group names
         if self.template is None:
