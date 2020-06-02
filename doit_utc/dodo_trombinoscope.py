@@ -4,6 +4,7 @@ import shutil
 import glob
 import browser_cookie3
 import pandas as pd
+import numpy as np
 import asyncio
 import aiohttp
 import jinja2
