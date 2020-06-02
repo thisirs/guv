@@ -21,6 +21,7 @@ from .utils import (
     argument,
     action_msg,
 )
+from .tasks import CliArgsMixin, TaskBase
 
 
 @add_templates(target='UTC_UV_list.csv')
@@ -116,6 +117,7 @@ def task_utc_uv_list_to_csv():
 
         # Semaine ni A ni B pour les TP: mettre à A
         uvs = [uv for _, uv, _ in selected_uv(all=True)]
+
         def fix_semaineAB(group):
             if group.name[1] == 'TP' and len(group.index) > 1:
                 nans = group.loc[(pd.isnull(group['Semaine']))]
@@ -185,37 +187,36 @@ def task_UTC_UV_list():
     }
 
 
-@add_templates(target='UTC_UV_list_créneau.csv')
-@actionfailed_on_exception
-def task_csv_all_courses():
+class CsvAllCourses(CliArgsMixin, TaskBase):
     "Fichier csv de tous les créneaux du semestre"
 
-    def csv_all_courses(plannings, csv, target):
-        df = pd.read_csv(csv)
+    target = "UTC_UV_list_créneau.csv"
+    cli_args = argument(
+        "-p",
+        "--plannings",
+        nargs="+",
+        default=settings.SELECTED_PLANNINGS,
+        help="Liste des plannings à considérer",
+    )
+
+    def __init__(self):
+        super().__init__()
+        from .dodo_instructors import task_add_instructors
+        self.csv = generated(task_add_instructors.target)
+
+        self.file_dep = [self.csv]
+        self.targets = [generated(self.target, **self.info)]
+
+    def run(self):
+        df = pd.read_csv(self.csv)
 
         tables = []
-        for planning_type in plannings:
+        for planning_type in self.plannings:
             uvs = (settings.PLANNINGS[planning_type].get('UVS') or
                    settings.PLANNINGS[planning_type].get('UES'))
-            df = compute_slots(csv, planning_type, filter_uvs=uvs)
+            df = compute_slots(self.csv, planning_type, filter_uvs=uvs)
             tables.append(df)
 
         dfm = pd.concat(tables)
-        with Output(target) as target:
+        with Output(self.target) as target:
             dfm.to_csv(target(), index=False)
-
-    from .dodo_instructors import task_add_instructors
-    dep = generated(task_add_instructors.target)
-    target = generated(task_csv_all_courses.target)
-
-    args = parse_args(
-        task_csv_all_courses,
-        argument('-p', '--plannings', nargs='+', default=settings.SELECTED_PLANNINGS, help="Liste des plannings à considérer")
-    )
-
-    return {
-        'actions': [(csv_all_courses, [args.plannings, dep, target])],
-        'file_dep': [dep],
-        'targets': [target],
-        'verbosity': 2
-    }
