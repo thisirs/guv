@@ -15,10 +15,9 @@ from .utils import (
     parse_args,
     get_unique_uv,
     actionfailed_on_exception,
-    taskfailed_on_exception,
     check_columns,
 )
-
+from .tasks import SingleUVTask
 from .dodo_students import task_xls_student_data_merge
 
 
@@ -48,35 +47,10 @@ def pdf_attendance_list_render(df, template, **kwargs):
     return filepath
 
 
-@actionfailed_on_exception
-def task_pdf_attendance_list():
+class TaskPdfAttendanceList(SingleUVTask):
     """Fichier pdf de fiches de présence"""
 
-    @taskfailed_on_exception
-    def pdf_attendance_list(xls_merge, group, target):
-        df = pd.read_excel(xls_merge)
-
-        if group == "all":
-            group = None
-        else:
-            check_columns(df, group, file=xls_merge)
-
-        template = "attendance_list.tex.jinja2"
-
-        pdfs = []
-        for gn, group in df.groupby(group or (lambda x: "all")):
-            group = group.sort_values(["Nom", "Prénom"])
-            kwargs = {"group": f"Groupe: {gn}", "filename": f"{gn}.pdf"}
-            pdf = pdf_attendance_list_render(group, template, **kwargs)
-            pdfs.append(pdf)
-
-        with Output(target) as target0:
-            with zipfile.ZipFile(target0(), "w") as z:
-                for filepath in pdfs:
-                    z.write(filepath, os.path.basename(filepath))
-
-    args = parse_args(
-        task_pdf_attendance_list,
+    cli_args = (
         argument(
             "-g",
             "--group",
@@ -85,42 +59,40 @@ def task_pdf_attendance_list():
         ),
     )
 
-    planning, uv, info = get_unique_uv()
-    xls_merge = generated(task_xls_student_data_merge.target, **info)
-    target = generated(f"attendance_{args.group}.zip", **info)
+    def __init__(self):
+        super().__init__()
+        self.xls_merge = generated(task_xls_student_data_merge.target, **self.info)
+        self.target = generated(f"attendance_{self.group}.zip", **self.info)
+        self.file_dep = [self.xls_merge]
 
-    return {
-        "file_dep": [xls_merge],
-        "targets": [target],
-        "actions": [(pdf_attendance_list, [xls_merge, args.group, target])],
-    }
+    def run(self):
+        df = pd.read_excel(self.xls_merge)
 
+        if self.group == "all":
+            self.group = None
+        else:
+            check_columns(df, self.group, file=self.xls_merge)
 
-@actionfailed_on_exception
-def task_pdf_attendance_full():
-    """Feuilles de présence pour toutes les séances"""
+        template = "attendance_list.tex.jinja2"
 
-    @taskfailed_on_exception
-    def pdf_attendance_full(xls_merge, target, **kwargs):
-        df = pd.read_excel(xls_merge)
-        template = "attendance_name_full.tex.jinja2"
         pdfs = []
-        ctype = kwargs["ctype"]
-
-        check_columns(df, ctype, file=xls_merge)
-        for gn, group in df.groupby(ctype):
+        for gn, group in df.groupby(self.group or (lambda x: "all")):
             group = group.sort_values(["Nom", "Prénom"])
-            kwargs["filename"] = group + ".pdf"
-            pdf = pdf_attendance_list_render(group, template, group=gn, **kwargs)
+            kwargs = {"group": f"Groupe: {gn}", "filename": f"{gn}.pdf"}
+            pdf = pdf_attendance_list_render(group, template, **kwargs)
             pdfs.append(pdf)
 
-        with Output(target) as target0:
+        with Output(self.target) as target0:
             with zipfile.ZipFile(target0(), "w") as z:
                 for filepath in pdfs:
                     z.write(filepath, os.path.basename(filepath))
 
-    args = parse_args(
-        task_pdf_attendance_full,
+
+class PdfAttendanceFull(SingleUVTask):
+    """Feuilles de présence pour toutes les séances"""
+
+    always_make = True
+    cli_args = (
         argument(
             "-c",
             "--course",
@@ -136,16 +108,29 @@ def task_pdf_attendance_full():
         ),
     )
 
-    planning, uv, info = get_unique_uv()
-    xls_merge = generated(task_xls_student_data_merge.target, **info)
-    target = generated(f"attendance_{args.course}_full.zip", **info)
-    kwargs = {**info, "nslot": args.slots, "ctype": args.course}
-    return {
-        "file_dep": [xls_merge],
-        "targets": [target],
-        "actions": [(pdf_attendance_full, [xls_merge, target], kwargs)],
-        "uptodate": [False],
-    }
+    def __init__(self):
+        super().__init__()
+        self.xls_merge = generated(task_xls_student_data_merge.target, **self.info)
+        self.target = generated(f"attendance_{self.course}_full.zip", **self.info)
+        self.kwargs = {**self.info, "nslot": self.slots, "ctype": self.course}
+
+    def run(self):
+        df = pd.read_excel(self.xls_merge)
+        template = "attendance_name_full.tex.jinja2"
+        pdfs = []
+        ctype = self.kwargs["ctype"]
+
+        check_columns(df, ctype, file=self.xls_merge)
+        for gn, group in df.groupby(ctype):
+            group = group.sort_values(["Nom", "Prénom"])
+            self.kwargs["filename"] = group + ".pdf"
+            pdf = pdf_attendance_list_render(group, template, group=gn, **self.kwargs)
+            pdfs.append(pdf)
+
+        with Output(self.target) as target0:
+            with zipfile.ZipFile(target0(), "w") as z:
+                for filepath in pdfs:
+                    z.write(filepath, os.path.basename(filepath))
 
 
 @actionfailed_on_exception
