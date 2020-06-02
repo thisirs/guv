@@ -194,6 +194,7 @@ def slug_rot(*columns):
             lambda x: "".join(x.astype(str)),
             axis=1
         )
+
         def slug_rot_transform(e):
             e0 = unidecode.unidecode(e).lower()
             e0 = ''.join(e0.split())
@@ -539,4 +540,3 @@ def lib_list(lib):
     no = int('0' + m.group(2))
     sem = 0 if m.group(3) == 'A' else 1
     return crs, no, sem
-
