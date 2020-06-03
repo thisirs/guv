@@ -16,7 +16,6 @@ from .utils import (
     documents,
     generated,
     selected_uv,
-    action_msg,
     argument,
     parse_args,
     get_unique_uv,
@@ -71,78 +70,27 @@ class TaskCsvInscrits(MultipleUVTask):
             df.to_csv(target(), index=False)
 
 
-@add_templates(target="student_data.xlsx")
-def task_xls_student_data():
-    """Fusionne les informations sur les étudiants fournies par Moodle et
-l'UTC."""
+class XlsStudentData(MultipleUVTask):
+    target = "student_data.xlsx"
 
-    def merge_student_data(target, **kw):
-        if "extraction_ENT" in kw:
-            df = pd.read_csv(kw["extraction_ENT"], sep="\t", encoding='ISO_8859_1')
+    def __init__(self, planning, uv, info):
+        super().__init__(planning, uv, info)
+        self.target = generated(XlsStudentData.target, **info)
 
-            # Split information in 2 columns
-            df[["Branche", "Semestre"]] = df.pop('Spécialité 1').str.extract(
-                '(?P<Branche>[a-zA-Z]+) *(?P<Semestre>[0-9]+)',
-                expand=True
-            )
-            df["Semestre"] = pd.to_numeric(df['Semestre'])
-
-            # Drop unrelevant columns
-            df = df.drop(['Inscription', 'Spécialité 2', 'Résultat ECTS', 'UTC', 'Réussite', 'Statut'], axis=1)
-
-            # Drop unamed columns
-            df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
-
-            if "csv_moodle" in kw:
-                df = add_moodle_data(df, kw["csv_moodle"])
-
-            if "csv_UTC" in kw:
-                df = add_UTC_data(df, kw["csv_UTC"])
-        elif "csv_UTC" in kw:
-            df = pd.read_csv(kw["csv_UTC"])
-            if "csv_moodle" in kw:
-                df = add_moodle_data(df, kw["csv_moodle"])
-        elif "csv_moodle" in kw:
-            fn = kw["csv_moodle"]
-            if fn.endswith('.csv'):
-                df = pd.read_csv(fn)
-            elif fn.endswith('.xlsx') or fn.endswith('.xls'):
-                df = pd.read_excel(fn)
-
-        if "tiers_temps" in kw:
-            df = add_tiers_temps(df, kw["tiers_temps"])
-
-        if "TD_switches" in kw:
-            df = add_switches(df, kw["TD_switches"], "TD")
-
-        if "TP_switches" in kw:
-            df = add_switches(df, kw["TP_switches"], "TP")
-
-        if "info_étudiants" in kw:
-            df = add_student_info(df, kw["info_étudiants"])
-
-        dff = df.sort_values(["Nom", "Prénom"])
-
-        with Output(target) as target:
-            dff.to_excel(target(), index=False)
-
-    for planning, uv, info in selected_uv():
         kw = {}
         deps = []
-
-        extraction_ENT = documents(settings.ENT_LISTING, **info)
+        extraction_ENT = documents(self.settings.ENT_LISTING, **info)
         if os.path.exists(extraction_ENT):
             kw["extraction_ENT"] = extraction_ENT
             deps.append(extraction_ENT)
 
-        csv_moodle = documents(settings.MOODLE_LISTING, **info)
+        csv_moodle = documents(self.settings.MOODLE_LISTING, **info)
         if os.path.exists(csv_moodle):
             kw["csv_moodle"] = csv_moodle
             deps.append(csv_moodle)
 
         csv_UTC = generated(TaskCsvInscrits.target, **info)
-        raw_UTC = documents(task_inscrits.target, **info)
-        if os.path.exists(raw_UTC):
+        if os.path.exists(csv_UTC):
             kw["csv_UTC"] = csv_UTC
             deps.append(csv_UTC)
 
@@ -166,20 +114,58 @@ l'UTC."""
             kw['info_étudiants'] = info_etu
             deps.append(info_etu)
 
-        target = generated(task_xls_student_data.target, **info)
+        self.file_dep = deps
+        self.kwargs = kw
 
-        if deps:
-            yield {
-                "name": f"{planning}_{uv}",
-                "file_dep": deps,
-                "targets": [target],
-                "actions": [(merge_student_data, [target], kw)],
-                "verbosity": 2,
-            }
-        else:
-            f = generated(task_xls_student_data.target, **info, **{'local': True})
-            msg = f"Pas de données étudiants pour construire le fichier {f}"
-            yield action_msg(msg, name=f"{planning}_{uv}", targets=[target])
+    def run(self):
+        if "extraction_ENT" in self.kwargs:
+            df = pd.read_csv(self.kwargs["extraction_ENT"], sep="\t", encoding='ISO_8859_1')
+
+            # Split information in 2 columns
+            df[["Branche", "Semestre"]] = df.pop('Spécialité 1').str.extract(
+                '(?P<Branche>[a-zA-Z]+) *(?P<Semestre>[0-9]+)',
+                expand=True
+            )
+            df["Semestre"] = pd.to_numeric(df['Semestre'])
+
+            # Drop unrelevant columns
+            df = df.drop(['Inscription', 'Spécialité 2', 'Résultat ECTS', 'UTC', 'Réussite', 'Statut'], axis=1)
+
+            # Drop unamed columns
+            df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
+
+            if "csv_moodle" in self.kwargs:
+                df = add_moodle_data(df, self.kwargs["csv_moodle"])
+
+            if "csv_UTC" in self.kwargs:
+                df = add_UTC_data(df, self.kwargs["csv_UTC"])
+        elif "csv_UTC" in self.kwargs:
+            df = pd.read_csv(self.kwargs["csv_UTC"])
+            if "csv_moodle" in self.kwargs:
+                df = add_moodle_data(df, self.kwargs["csv_moodle"])
+        elif "csv_moodle" in self.kwargs:
+            fn = self.kwargs["csv_moodle"]
+            if fn.endswith('.csv'):
+                df = pd.read_csv(fn)
+            elif fn.endswith('.xlsx') or fn.endswith('.xls'):
+                df = pd.read_excel(fn)
+
+        if "tiers_temps" in self.kwargs:
+            df = add_tiers_temps(df, self.kwargs["tiers_temps"])
+
+        if "TD_switches" in self.kwargs:
+            df = add_switches(df, self.kwargs["TD_switches"], "TD")
+
+        if "TP_switches" in self.kwargs:
+            df = add_switches(df, self.kwargs["TP_switches"], "TP")
+
+        if "info_étudiants" in self.kwargs:
+            df = add_student_info(df, self.kwargs["info_étudiants"])
+
+        dff = df.sort_values(["Nom", "Prénom"])
+
+        with Output(self.target) as target:
+            dff.to_excel(target(), index=False)
 
 
 @add_templates(target="student_data_merge.xlsx")
@@ -225,7 +211,7 @@ def task_xls_student_data_merge():
             dff.to_csv(target(), index=False)
 
     planning, uv, info = get_unique_uv()
-    source = generated(task_xls_student_data.target, **info)
+    source = generated(XlsStudentData.target, **info)
     target = generated(task_xls_student_data_merge.target, **info)
     docs = settings.AGGREGATE_DOCUMENTS if "AGGREGATE_DOCUMENTS" in settings else {}
     deps = [source]
