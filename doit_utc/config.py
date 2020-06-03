@@ -27,6 +27,9 @@ class Settings():
         self.DEBUG = 0
 
     def __getattr__(self, name):
+        if name.startswith("__"):  # for copy to succeed ignore __getattr__
+            raise AttributeError(name)
+
         if not self._loaded:
             self.load(self.config_file)
             self._loaded = True
