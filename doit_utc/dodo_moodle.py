@@ -209,6 +209,9 @@ class HtmlTable(UVTask, CliArgsMixin):
         slots = compute_slots(self.csv_inst_list, self.planning, filter_uvs=[self.uv])
         slots = slots[slots["Activité"].isin(courses)]
 
+        if len(slots) == 0:
+            raise Exception("Pas de créneaux pour ", courses)
+
         def mondays(beg, end):
             while beg <= end:
                 nbeg = beg + timedelta(days=7)
