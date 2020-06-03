@@ -35,24 +35,6 @@ from .scripts.add_student_data import (
 )
 
 
-@add_templates(target=settings.AFFECTATION_LISTING)
-def task_inscrits():
-    def inscrits(doc):
-        if not os.path.exists(doc):
-            return TaskFailed(f"Pas de fichier `{doc}'")
-        else:
-            print(f"Utilisation du fichier `{doc}'")
-
-    for planning, uv, info in selected_uv():
-        doc = documents(task_inscrits.target, **info)
-        yield {
-            "name": f"{planning}_{uv}",
-            "actions": [(inscrits, [doc])],
-            "targets": [doc],
-            "uptodate": [True],
-        }
-
-
 class TaskCsvInscrits(MultipleUVTask):
     """Construit un fichier CSV à partir des données brutes de la promo
     fournies par l'UTC."""
@@ -60,7 +42,8 @@ class TaskCsvInscrits(MultipleUVTask):
     target = "inscrits.csv"
 
     def __init__(self):
-        self.utc_listing = documents(task_inscrits.target, **self.info)
+        utc_listing_fn = self.config["AFFECTATION_LISTING"]
+        self.utc_listing = documents(utc_listing_fn, **self.info)
         self.file_dep = [self.utc_listing]
         self.target = generated(TaskCsvInscrits.target, **self.info)
 
