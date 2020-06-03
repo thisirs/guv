@@ -191,12 +191,14 @@ class CsvAllCourses(CliArgsMixin, TaskBase):
     "Fichier csv de tous les créneaux du semestre"
 
     target = "UTC_UV_list_créneau.csv"
-    cli_args = argument(
-        "-p",
-        "--plannings",
-        nargs="+",
-        default=settings.SELECTED_PLANNINGS,
-        help="Liste des plannings à considérer",
+    cli_args = (
+        argument(
+            "-p",
+            "--plannings",
+            nargs="+",
+            default=settings.SELECTED_PLANNINGS,
+            help="Liste des plannings à considérer",
+        ),
     )
 
     def __init__(self):
