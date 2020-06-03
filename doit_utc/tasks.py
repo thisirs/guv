@@ -79,7 +79,7 @@ class TaskBase(object):
                 # Return a generator but make sure all build_task
                 # functions are executed first.
                 tasks = [
-                    build_task(cls(planning, uv, info), **kw)
+                    build_task(cls(planning, uv, info), **kw, name=f"{planning}_{uv}")
                     for planning, uv, info in selected_uv()
                 ]
                 return (t for t in tasks)
