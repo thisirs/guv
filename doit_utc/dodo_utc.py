@@ -45,7 +45,7 @@ def task_utc_uv_list_to_csv():
                 print(f'Processing page ({i+1}/{npages})')
                 page = i + 1
                 tabula_args = {'pages': page}
-                df = read_pdf(uv_list_filename, **tabula_args, pandas_options=pdo)
+                df = read_pdf(uv_list_filename, **tabula_args, pandas_options=pdo)[0]
 
                 if page == 1:
                     # Detect if header has not been properly detected
