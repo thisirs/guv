@@ -1,5 +1,6 @@
 import sys
 import re
+from pathlib import Path
 import argparse
 
 from doit.exceptions import TaskFailed
@@ -92,6 +93,14 @@ class SingleUVTask(TaskBase):
     def __init__(self, *args, **kwargs):
         super().__init__()
         self.planning, self.uv, self.info = get_unique_uv()
+        self._settings = None
+
+    @property
+    def config(self):
+        if self._settings is None:
+            self._settings = settings.copy()
+            self._settings.load(Path(settings.BASE_DIR) / self.uv / "config.py")
+        return self._settings
 
 
 class MultipleUVTask(TaskBase):
@@ -99,6 +108,14 @@ class MultipleUVTask(TaskBase):
         super().__init__()
         self.planning, self.uv, self.info = planning, uv, info
         self.name = f"{self.planning}_{self.uv}"
+        self._settings = None
+
+    @property
+    def config(self):
+        if self._settings is None:
+            self._settings = settings.copy()
+            self._settings.load(Path(settings.BASE_DIR) / self.uv / "config.py")
+        return self._settings
 
 
 class CliArgsMixin(TaskBase):
