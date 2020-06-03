@@ -18,7 +18,7 @@ from .utils import (
     check_columns,
 )
 from .tasks import SingleUVTask
-from .dodo_students import task_xls_student_data_merge
+from .dodo_students import XlsStudentDataMerge
 
 
 def pdf_attendance_list_render(df, template, **kwargs):
@@ -61,7 +61,7 @@ class TaskPdfAttendanceList(SingleUVTask):
 
     def __init__(self):
         super().__init__()
-        self.xls_merge = generated(task_xls_student_data_merge.target, **self.info)
+        self.xls_merge = generated(XlsStudentDataMerge.target, **self.info)
         self.target = generated(f"attendance_{self.group}.zip", **self.info)
         self.file_dep = [self.xls_merge]
 
@@ -110,7 +110,7 @@ class PdfAttendanceFull(SingleUVTask):
 
     def __init__(self):
         super().__init__()
-        self.xls_merge = generated(task_xls_student_data_merge.target, **self.info)
+        self.xls_merge = generated(XlsStudentDataMerge.target, **self.info)
         self.target = generated(f"attendance_{self.course}_full.zip", **self.info)
         self.kwargs = {**self.info, "nslot": self.slots, "ctype": self.course}
 
@@ -215,7 +215,7 @@ def task_attendance_sheet_room():
                     z.write(filepath, os.path.basename(filepath))
 
     planning, uv, info = get_unique_uv()
-    xls_merge = generated(task_xls_student_data_merge.target, **info)
+    xls_merge = generated(XlsStudentDataMerge.target, **info)
     target = generated(f"attendance_rooms.zip", **info)
     return {
         "file_dep": [xls_merge],

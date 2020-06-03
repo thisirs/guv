@@ -25,7 +25,7 @@ from .utils import (
     check_columns,
     URL,
 )
-from .dodo_students import task_xls_student_data_merge
+from .dodo_students import XlsStudentDataMerge
 
 
 @actionfailed_on_exception
@@ -180,7 +180,7 @@ def task_pdf_trombinoscope():
     )
 
     for planning, uv, info in selected_uv():
-        dep = generated(task_xls_student_data_merge.target, **info)
+        dep = generated(XlsStudentDataMerge.target, **info)
         if args.group == "all":
             if args.subgroup is not None:
                 target = generated(f"trombi_all_{args.subgroup}.pdf", **info)

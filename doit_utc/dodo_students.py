@@ -12,7 +12,6 @@ from doit.exceptions import TaskFailed
 from .config import settings
 from .utils import (
     Output,
-    add_templates,
     documents,
     generated,
     selected_uv,
@@ -22,9 +21,9 @@ from .utils import (
     actionfailed_on_exception,
     taskfailed_on_exception,
     check_columns,
-    rel_to_dir
+    rel_to_dir,
 )
-from .tasks import MultipleUVTask
+from .tasks import MultipleUVTask, SingleUVTask
 from .scripts.parse_utc_list import parse_UTC_listing
 from .scripts.add_student_data import (
     add_moodle_data,
@@ -151,15 +150,28 @@ class XlsStudentData(MultipleUVTask):
             dff.to_excel(target(), index=False)
 
 
-@add_templates(target="student_data_merge.xlsx")
-@actionfailed_on_exception
-def task_xls_student_data_merge():
+class XlsStudentDataMerge(SingleUVTask):
     """Ajoute toutes les autres informations étudiants"""
 
-    def merge_student_data(source, target, docs):
-        df = pd.read_excel(source)
+    target = "student_data_merge.xlsx"
 
-        for path, aggregater in docs.items():
+    def __init__(self):
+        super().__init__()
+        self.student_data = generated(XlsStudentData.target, **self.info)
+        self.target = generated(XlsStudentDataMerge.target, **self.info)
+
+        self.docs = (
+            self.settings.AGGREGATE_DOCUMENTS
+            if "AGGREGATE_DOCUMENTS" in self.settings
+            else {}
+        )
+        deps = [path for path, _ in self.docs.items()]
+        self.file_dep = deps + [self.student_data]
+
+    def run(self):
+        df = pd.read_excel(self.student_data)
+
+        for path, aggregater in self.docs.items():
             if os.path.exists(path):
                 print("Aggregating %s" % rel_to_dir(path, settings.BASE_DIR))
                 df = aggregater(df, path)
@@ -186,27 +198,12 @@ def task_xls_student_data_merge():
         # On fige la première ligne
         ws.freeze_panes = "A2"
 
-        with Output(target) as target0:
+        with Output(self.target) as target0:
             wb.save(target0())
 
-        target = os.path.splitext(target)[0] + ".csv"
+        target = os.path.splitext(self.target)[0] + ".csv"
         with Output(target) as target:
             dff.to_csv(target(), index=False)
-
-    planning, uv, info = get_unique_uv()
-    source = generated(XlsStudentData.target, **info)
-    target = generated(task_xls_student_data_merge.target, **info)
-    docs = settings.AGGREGATE_DOCUMENTS if "AGGREGATE_DOCUMENTS" in settings else {}
-    deps = [source]
-    for path, _ in docs.items():
-        deps.append(path)
-
-    return {
-        "file_dep": deps,
-        "targets": [target],
-        "actions": [(merge_student_data, [source, target, docs])],
-        "verbosity": 2,
-    }
 
 
 @actionfailed_on_exception
@@ -250,7 +247,7 @@ def task_csv_exam_groups():
     )
 
     planning, uv, info = get_unique_uv()
-    deps = [generated(task_xls_student_data_merge.target, **info)]
+    deps = [generated(XlsStudentDataMerge.target, **info)]
     target = generated("exam_groups.csv", **info)
     target_moodle = generated("exam_groups_moodle.csv", **info)
 
@@ -272,7 +269,7 @@ Crée des fichiers csv pour chaque UV sélectionnées"""
     def csv_groups(target, xls_merge, ctype):
         df = pd.read_excel(xls_merge)
 
-        check_columns(df, ctype, file=task_xls_student_data_merge.target)
+        check_columns(df, ctype, file=XlsStudentDataMerge.target)
         dff = df[["Courriel", ctype]]
 
         with Output(target) as target:
@@ -284,7 +281,7 @@ Crée des fichiers csv pour chaque UV sélectionnées"""
     )
 
     for planning, uv, info in selected_uv():
-        deps = [generated(task_xls_student_data_merge.target, **info)]
+        deps = [generated(XlsStudentDataMerge.target, **info)]
 
         for ctype in args.groups:
             target = generated(f"{ctype}_group_moodle.csv", **info)
@@ -437,7 +434,7 @@ def task_csv_moodle_groups():
     )
 
     planning, uv, info = get_unique_uv()
-    xls_merge = generated(task_xls_student_data_merge.target, **info)
+    xls_merge = generated(XlsStudentDataMerge.target, **info)
     target = generated(f"{args.course}_{args.project}_binomes.csv", **info)
     target_moodle = generated(f"{args.course}_{args.project}_binomes_moodle.csv", **info)
     deps = [xls_merge]

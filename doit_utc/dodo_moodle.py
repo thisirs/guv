@@ -30,7 +30,7 @@ from .utils import (
 )
 from .tasks import CliArgsMixin, SingleUVTask, MultipleUVTask
 from .utils_noconfig import pformat, make_groups
-from .dodo_students import task_xls_student_data_merge
+from .dodo_students import XlsStudentDataMerge
 from .dodo_utc import CsvAllCourses
 from .dodo_instructors import (
     task_add_instructors,
@@ -398,7 +398,7 @@ Les restrictions se font par adresse email.
     def json_group(target, xls_merge, colname):
         df = pd.read_excel(xls_merge)
 
-        check_columns(df, colname, file=task_xls_student_data_merge.target)
+        check_columns(df, colname, file=XlsStudentDataMerge.target)
         dff = df[["Adresse de courriel", colname]]
 
         # Dictionnary of group in COLNAME and corresponding Cond
@@ -439,7 +439,7 @@ Les restrictions se font par adresse email.
     )
 
     for planning, uv, info in selected_uv():
-        deps = [generated(task_xls_student_data_merge.target, **info)]
+        deps = [generated(XlsStudentDataMerge.target, **info)]
         target = generated(f"{args.group}_group_moodle.json", **info)
 
         yield {
@@ -515,7 +515,7 @@ class CsvCreateGroups(CliArgsMixin, SingleUVTask):
     def __init__(self):
         super().__init__()
         # Set dependencies
-        self.xls_merge = generated(task_xls_student_data_merge.target, **self.info)
+        self.xls_merge = generated(XlsStudentDataMerge.target, **self.info)
         self.file_dep = [self.xls_merge]
 
         # Set targets

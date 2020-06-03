@@ -18,7 +18,7 @@ from .utils import (
     check_columns,
 )
 from .tasks import CliArgsMixin, SingleUVTask
-from .dodo_students import task_xls_student_data_merge
+from .dodo_students import XlsStudentDataMerge
 from .dodo_instructors import task_xls_affectation
 from .scripts.xls_gradebook import run
 
@@ -64,7 +64,7 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
         super().__init__()
 
         self.csv_fname = generated(f"{self.grade_colname}_ENT.csv", **self.info)
-        self.xls_merge = generated(task_xls_student_data_merge.target, **self.info)
+        self.xls_merge = generated(XlsStudentDataMerge.target, **self.info)
 
         self.targets = [self.csv_fname]
         self.file_dep = [self.xls_merge]
@@ -180,7 +180,7 @@ def task_xls_grades_sheet():
             description=task_xls_grades_sheet.__doc__)
 
     planning, uv, info = get_unique_uv()
-    data_file = generated(task_xls_student_data_merge.target, **info)
+    data_file = generated(XlsStudentDataMerge.target, **info)
     docs = documents("", **info)
     deps = [data_file]
     return {
@@ -209,7 +209,7 @@ def task_yaml_QCM():
                 yaml.dump(rec, fd, default_flow_style=False)
 
     planning, uv, info = get_unique_uv()
-    xls_merge = generated(task_xls_student_data_merge.target, **info)
+    xls_merge = generated(XlsStudentDataMerge.target, **info)
     yaml_fname = generated('QCM.yaml', **info)
     deps = [xls_merge]
     return {
@@ -227,7 +227,7 @@ class XlsAssignmentGrade(CliArgsMixin, SingleUVTask):
 
     def __init__(self):
         super().__init__(self)
-        self.xls_merge = generated(task_xls_student_data_merge.target, **self.info)
+        self.xls_merge = generated(XlsStudentDataMerge.target, **self.info)
         self.inst_uv = documents(task_xls_affectation.target, **self.info)
         self.target = generated(f'{self.exam}.xlsx', **self.info)
         self.file_dep = [self.inst_uv, self.xls_merge]
