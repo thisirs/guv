@@ -266,20 +266,41 @@ class HtmlTable(MultipleUVTask, CliArgsMixin):
         return df
 
 
-@actionfailed_on_exception
-def task_json_restriction():
+class JsonResctriction(SingleUVTask):
     """Ficher json des restrictions d'accès aux ressources sur Moodle
 basées sur le début/fin des séances."""
 
-    def restriction_list(csv, uv, course, AB, target):
-        df = pd.read_csv(csv)
-        df = df.loc[df["Code enseig."] == uv]
-        df = df.loc[df["Activité"] == course]
-        gb = df.groupby(AB)
+    cli_args = (
+        argument(
+            "-c",
+            "--course",
+            default="TP",
+            choices=["Cours", "TD", "TP"],
+            help="Type de séances considérées",
+        ),
+        argument(
+            "-a", "--AB", action="store_true", help="Prise en compte des semaines A/B"
+        ),
+    )
+
+    def __init__(self):
+        AB = "_AB" if self.AB else ""
+        target_fn = f"moodle_restrictions_{self.course}{AB}.json"
+        self.target = generated(target_fn, **self.info)
+        self.all_courses = generated(CsvAllCourses.target)
+        self.file_dep = [self.all_courses]
+
+    def run(self):
+        df = pd.read_csv(self.all_courses)
+        df = df.loc[df["Code enseig."] == self.uv]
+        df = df.loc[df["Activité"] == self.course]
+
+        key = "numAB" if self.AB else "num"
+        gb = df.groupby(key)
 
         def get_beg_end_date_each(num, df):
             def group_beg_end(row):
-                if AB == "numAB":
+                if self.AB:
                     group = row["Lib. créneau"] + row["semaine"]
                 else:
                     group = row["Lib. créneau"]
@@ -325,7 +346,7 @@ basées sur le début/fin des séances."""
                 for g, b, e in gbe
             ]
 
-            info = dict(group_id=settings.GROUP_ID)
+            info = dict(group_id=self.settings.GROUP_ID)
             return (
                 "Séance " + str(num),
                 {
@@ -343,7 +364,7 @@ basées sur le début/fin des séances."""
 
         moodle_date = dict(get_beg_end_date_each(name, g) for name, g in gb)
 
-        with Output(target, protected=True) as target:
+        with Output(self.target, protected=True) as target:
             with open(target(), "w") as fd:
                 s = (
                     "{\n"
@@ -364,38 +385,6 @@ basées sur le début/fin des séances."""
                     + "\n}"
                 )
                 print(s, file=fd)
-
-    args = parse_args(
-        task_json_restriction,
-        argument(
-            "-c",
-            "--course",
-            default="TP",
-            choices=["Cours", "TD", "TP"],
-            help="Type de séances considérées",
-        ),
-        argument(
-            "-a", "--AB", action="store_true", help="Prise en compte des semaines A/B"
-        ),
-    )
-
-    planning, uv, info = get_unique_uv()
-    AB = "numAB" if args.AB else "num"
-    course = args.course
-    if AB == "numAB":
-        target_fn = f"moodle_restrictions_{course}_AB.json"
-    else:
-        target_fn = f"moodle_restrictions_{course}.json"
-
-    target = generated(target_fn, **info)
-    dep = generated(CsvAllCourses.target)
-
-    return {
-        "actions": [(restriction_list, [dep, uv, course, AB, target])],
-        "file_dep": [dep],
-        "targets": [target],
-        "uptodate": [False],
-    }
 
 
 @actionfailed_on_exception
