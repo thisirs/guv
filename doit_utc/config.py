@@ -31,7 +31,8 @@ class Settings():
             raise AttributeError(name)
 
         if not self._loaded:
-            self.load(self.config_file)
+            for config_file in self.config_files:
+                self.load(config_file)
             self._loaded = True
         if name in self.__dict__:
             return self.__dict__[name]
