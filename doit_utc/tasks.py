@@ -1,5 +1,6 @@
 import sys
 import re
+import copy
 from pathlib import Path
 import argparse
 
@@ -96,9 +97,9 @@ class SingleUVTask(TaskBase):
         self._settings = None
 
     @property
-    def config(self):
+    def settings(self):
         if self._settings is None:
-            self._settings = settings.copy()
+            self._settings = copy.copy(settings)
             self._settings.load(Path(settings.BASE_DIR) / self.uv / "config.py")
         return self._settings
 
@@ -111,9 +112,9 @@ class MultipleUVTask(TaskBase):
         self._settings = None
 
     @property
-    def config(self):
+    def settings(self):
         if self._settings is None:
-            self._settings = settings.copy()
+            self._settings = copy.copy(settings)
             self._settings.load(Path(settings.BASE_DIR) / self.uv / "config.py")
         return self._settings
 

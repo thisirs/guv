@@ -41,7 +41,7 @@ class TaskCsvInscrits(MultipleUVTask):
     target = "inscrits.csv"
 
     def __init__(self):
-        utc_listing_fn = self.config["AFFECTATION_LISTING"]
+        utc_listing_fn = self.settings.AFFECTATION_LISTING
         self.utc_listing = documents(utc_listing_fn, **self.info)
         self.file_dep = [self.utc_listing]
         self.target = generated(TaskCsvInscrits.target, **self.info)
