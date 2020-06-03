@@ -13,9 +13,11 @@ class Settings():
             wd = os.getcwd()
 
         if (Path(wd).parent / "config.py").exists():
-            self.config_file = Path(wd).parent / "config.py"
+            self.config_files = [Path(wd).parent / "config.py"]
+            if (Path(wd) / "config.py").exists():
+                self.config_files += [Path(wd) / "config.py"]
         elif (Path(wd) / "config.py").exists():
-            self.config_file = Path(wd) / "config.py"
+            self.config_files = [Path(wd) / "config.py"]
         else:
             raise Exception("La variable SEMESTER_VARIABLE ne pointe pas")
 
