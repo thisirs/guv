@@ -39,6 +39,13 @@ class Settings():
         else:
             raise AttributeError(f"Setting variable {name} not set in config.py file")
 
+    def __contains__(self, e):
+        if not self._loaded:
+            for config_file in self.config_files:
+                self.load(config_file)
+            self._loaded = True
+        return e in self.__dict__
+
     def load(self, config_file):
         if not Path(config_file).exists():
             raise Exception
