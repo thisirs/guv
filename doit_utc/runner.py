@@ -1,4 +1,3 @@
-import os
 import sys
 
 from doit.cmd_base import ModuleTaskLoader
@@ -6,15 +5,9 @@ from doit.doit_cmd import DoitMain
 from doit import loader
 
 from .utils_noconfig import ParseArgAction
-
-# Set configuration files to load
-os.environ.setdefault(
-    "SETTINGS_FILES",
-    ",".join([os.path.abspath("../config.py"), os.path.abspath("./config.py")]),
-)
-
 from .config import settings
 
+# Make doit config accessible for doit
 DOIT_CONFIG = settings.DOIT_CONFIG
 
 
