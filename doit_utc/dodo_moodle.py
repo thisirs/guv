@@ -23,12 +23,11 @@ from .utils import (
     parse_args,
     argument,
     check_columns,
-    get_unique_uv,
     DATE_FORMAT,
     TIME_FORMAT,
     lib_list,
 )
-from .tasks import CliArgsMixin, SingleUVTask, MultipleUVTask
+from .tasks import CliArgsMixin, UVTask
 from .utils_noconfig import pformat, make_groups
 from .dodo_students import XlsStudentDataMerge
 from .dodo_utc import CsvAllCourses
@@ -108,7 +107,7 @@ def task_html_inst():
         }
 
 
-class HtmlTable(MultipleUVTask, CliArgsMixin):
+class HtmlTable(UVTask, CliArgsMixin):
     """Table HTML des TD/TP"""
 
     cli_args = (
@@ -266,7 +265,7 @@ class HtmlTable(MultipleUVTask, CliArgsMixin):
         return df
 
 
-class JsonResctriction(SingleUVTask):
+class JsonResctriction(UVTask, CliArgsMixin):
     """Ficher json des restrictions d'accès aux ressources sur Moodle
 basées sur le début/fin des séances."""
 
@@ -283,7 +282,8 @@ basées sur le début/fin des séances."""
         ),
     )
 
-    def __init__(self):
+    def __init__(self, planning, uv, info):
+        super().__init__(planning, uv, info)
         AB = "_AB" if self.AB else ""
         target_fn = f"moodle_restrictions_{self.course}{AB}.json"
         self.target = generated(target_fn, **self.info)
@@ -451,7 +451,7 @@ Les restrictions se font par adresse email.
         }
 
 
-class CsvCreateGroups(CliArgsMixin, SingleUVTask):
+class CsvCreateGroups(UVTask, CliArgsMixin):
     "Création de groupes prêt à charger sous Moodle"
 
     cli_args = (
@@ -512,8 +512,8 @@ class CsvCreateGroups(CliArgsMixin, SingleUVTask):
         ),
     )
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, planning, uv, info):
+        super().__init__(planning, uv, info)
         # Set dependencies
         self.xls_merge = generated(XlsStudentDataMerge.target, **self.info)
         self.file_dep = [self.xls_merge]

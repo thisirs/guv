@@ -17,13 +17,13 @@ from .utils import (
     argument,
     check_columns,
 )
-from .tasks import CliArgsMixin, SingleUVTask
+from .tasks import CliArgsMixin, UVTask
 from .dodo_students import XlsStudentDataMerge
 from .dodo_instructors import task_xls_affectation
 from .scripts.xls_gradebook import run
 
 
-class TaskCsvForUpload(CliArgsMixin, SingleUVTask):
+class TaskCsvForUpload(CliArgsMixin, UVTask):
     """Fichier csv de notes prêtes à être chargées sur l'ENT.
 
 Crée un fichier csv de notes prêtes à être chargées sur l'ENT. La
@@ -60,8 +60,8 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
         ),
     )
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, planning, uv, info):
+        super().__init__(planning, uv, info)
 
         self.csv_fname = generated(f"{self.grade_colname}_ENT.csv", **self.info)
         self.xls_merge = generated(XlsStudentDataMerge.target, **self.info)
@@ -219,14 +219,14 @@ def task_yaml_QCM():
     }
 
 
-class XlsAssignmentGrade(CliArgsMixin, SingleUVTask):
+class XlsAssignmentGrade(CliArgsMixin, UVTask):
     """Création d'un fichier Excel pour remplissage des notes par les intervenants"""
 
     cli_args = (argument("-e", "--exam", required=True, help="Nom de l'examen"),)
     always_make = True
 
-    def __init__(self):
-        super().__init__(self)
+    def __init__(self, planning, uv, info):
+        super().__init__(planning, uv, info)
         self.xls_merge = generated(XlsStudentDataMerge.target, **self.info)
         self.inst_uv = documents(task_xls_affectation.target, **self.info)
         self.target = generated(f'{self.exam}.xlsx', **self.info)

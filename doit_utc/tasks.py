@@ -14,7 +14,7 @@ from .config import settings
 class TaskBase(object):
     """Subclass this to define tasks."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         name = self.__class__.__name__
         task_name = re.sub(r'(?<!^)(?=[A-Z])', '_', name).lower()
         if task_name.startswith("task_"):
@@ -24,7 +24,7 @@ class TaskBase(object):
 
     @classmethod
     def create_doit_tasks(cls):
-        if cls in [TaskBase, SingleUVTask, CliArgsMixin, MultipleUVTask]:
+        if cls in [TaskBase, UVTask, CliArgsMixin]:
             return  # avoid create tasks from base class 'Task'
 
         # Convert task name to snake-case
@@ -41,23 +41,23 @@ class TaskBase(object):
             kwargs.update(dict(
                 (a, getattr(obj, a))
                 for a in ["name", "targets", "file_dep", "uptodate", "verbosity"]
-                if a in dir(instance)
+                if a in dir(obj)
             ))
 
             # Allow always_make attr
-            if hasattr(instance, "always_make"):
+            if hasattr(obj, "always_make"):
                 kwargs["uptodate"] = [False]
 
             # Allow targets attr specified as single
             # target in target attr
             if "targets" not in kw:
-                if hasattr(instance, "target"):
-                    kwargs["targets"] = [instance.target]
+                if hasattr(obj, "target"):
+                    kwargs["targets"] = [obj.target]
 
             # Catch any exception an action might trigger
             def wrapper(*args, **kwargs):
                 try:
-                    return instance.run(*args, **kwargs)
+                    return obj.run(*args, **kwargs)
                 except Exception as e:
                     if settings.DEBUG > 0:
                         raise e from e
@@ -69,15 +69,20 @@ class TaskBase(object):
             return kwargs
 
         try:
-            if cls is MultipleUVTask:
-                def generator():
-                    for planning, uv, info in selected_uv():
-                        instance = cls(planning, uv, info)
-                        yield build_task(instance, **kw)
-                return generator()
-            else:
+            if UVTask not in cls.__mro__:
                 instance = cls()
                 return build_task(instance, **kw)
+            elif hasattr(cls, "unique_uv") and cls.unique_uv:
+                instance = cls(*get_unique_uv())
+                return build_task(instance, **kw)
+            else:
+                # Return a generator but make sure all build_task
+                # functions are executed first.
+                tasks = [
+                    build_task(cls(planning, uv, info), **kw)
+                    for planning, uv, info in selected_uv()
+                ]
+                return (t for t in tasks)
 
         except ParseArgsFailed as e:  # Cli parser failed
             kw = {
@@ -90,8 +95,24 @@ class TaskBase(object):
             return kw
 
 
+class UVTask(TaskBase):
+    unique_uv = True
+
+    def __init__(self, planning, uv, info):
+        super().__init__()
+        self.planning, self.uv, self.info = planning, uv, info
+        self._settings = None
+
+    @property
+    def settings(self):
+        if self._settings is None:
+            self._settings = copy.copy(settings)
+            self._settings.load(Path(settings.BASE_DIR) / self.uv / "config.py")
+        return self._settings
+
+
 class SingleUVTask(TaskBase):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, planning, uv, info):
         super().__init__()
         self.planning, self.uv, self.info = get_unique_uv()
         self._settings = None
@@ -121,7 +142,7 @@ class MultipleUVTask(TaskBase):
 
 class CliArgsMixin(TaskBase):
     def __init__(self, *args, **kwargs):
-        super().__init__()
+        super().__init__(*args, **kwargs)
         self.parse_args()
 
     def parse_args(self):

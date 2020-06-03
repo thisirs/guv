@@ -16,12 +16,10 @@ from .utils import (
     generated,
     selected_uv,
     compute_slots,
-    actionfailed_on_exception,
-    parse_args,
     argument,
     action_msg,
 )
-from .tasks import CliArgsMixin, TaskBase
+from .tasks import CliArgsMixin, UVTask
 
 
 @add_templates(target='UTC_UV_list.csv')
@@ -187,9 +185,10 @@ def task_UTC_UV_list():
     }
 
 
-class CsvAllCourses(CliArgsMixin, TaskBase):
+class CsvAllCourses(CliArgsMixin, UVTask):
     "Fichier csv de tous les créneaux du semestre"
 
+    unique_uv = False
     target = "UTC_UV_list_créneau.csv"
     cli_args = (
         argument(
@@ -201,8 +200,8 @@ class CsvAllCourses(CliArgsMixin, TaskBase):
         ),
     )
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, planning, uv, info):
+        super().__init__(planning, uv, info)
         from .dodo_instructors import task_add_instructors
         self.csv = generated(task_add_instructors.target)
 

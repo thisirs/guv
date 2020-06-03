@@ -23,7 +23,7 @@ from .utils import (
     check_columns,
     rel_to_dir,
 )
-from .tasks import MultipleUVTask, SingleUVTask
+from .tasks import UVTask
 from .scripts.parse_utc_list import parse_UTC_listing
 from .scripts.add_student_data import (
     add_moodle_data,
@@ -34,13 +34,15 @@ from .scripts.add_student_data import (
 )
 
 
-class TaskCsvInscrits(MultipleUVTask):
+class TaskCsvInscrits(UVTask):
     """Construit un fichier CSV à partir des données brutes de la promo
     fournies par l'UTC."""
 
     target = "inscrits.csv"
+    unique_uv = False
 
-    def __init__(self):
+    def __init__(self, planning, uv, info):
+        super().__init__(planning, uv, info)
         utc_listing_fn = self.settings.AFFECTATION_LISTING
         self.utc_listing = documents(utc_listing_fn, **self.info)
         self.file_dep = [self.utc_listing]
@@ -52,8 +54,9 @@ class TaskCsvInscrits(MultipleUVTask):
             df.to_csv(target(), index=False)
 
 
-class XlsStudentData(MultipleUVTask):
+class XlsStudentData(UVTask):
     target = "student_data.xlsx"
+    unique_uv = False
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
@@ -150,13 +153,14 @@ class XlsStudentData(MultipleUVTask):
             dff.to_excel(target(), index=False)
 
 
-class XlsStudentDataMerge(SingleUVTask):
+class XlsStudentDataMerge(UVTask):
     """Ajoute toutes les autres informations étudiants"""
 
     target = "student_data_merge.xlsx"
+    unique_uv = False
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, planning, uv, info):
+        super().__init__(planning, uv, info)
         self.student_data = generated(XlsStudentData.target, **self.info)
         self.target = generated(XlsStudentDataMerge.target, **self.info)
 

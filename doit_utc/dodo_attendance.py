@@ -17,7 +17,7 @@ from .utils import (
     actionfailed_on_exception,
     check_columns,
 )
-from .tasks import SingleUVTask
+from .tasks import UVTask, CliArgsMixin
 from .dodo_students import XlsStudentDataMerge
 
 
@@ -47,7 +47,7 @@ def pdf_attendance_list_render(df, template, **kwargs):
     return filepath
 
 
-class TaskPdfAttendanceList(SingleUVTask):
+class TaskPdfAttendanceList(UVTask, CliArgsMixin):
     """Fichier pdf de fiches de présence"""
 
     cli_args = (
@@ -59,8 +59,8 @@ class TaskPdfAttendanceList(SingleUVTask):
         ),
     )
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, planning, uv, info):
+        super().__init__(planning, uv, info)
         self.xls_merge = generated(XlsStudentDataMerge.target, **self.info)
         self.target = generated(f"attendance_{self.group}.zip", **self.info)
         self.file_dep = [self.xls_merge]
@@ -88,7 +88,7 @@ class TaskPdfAttendanceList(SingleUVTask):
                     z.write(filepath, os.path.basename(filepath))
 
 
-class PdfAttendanceFull(SingleUVTask):
+class PdfAttendanceFull(UVTask, CliArgsMixin):
     """Feuilles de présence pour toutes les séances"""
 
     always_make = True
@@ -108,8 +108,8 @@ class PdfAttendanceFull(SingleUVTask):
         ),
     )
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, planning, uv, info):
+        super().__init__(planning, uv, info)
         self.xls_merge = generated(XlsStudentDataMerge.target, **self.info)
         self.target = generated(f"attendance_{self.course}_full.zip", **self.info)
         self.kwargs = {**self.info, "nslot": self.slots, "ctype": self.course}

@@ -11,7 +11,7 @@ from .utils import (
     argument,
     Output
 )
-from .tasks import MultipleUVTask, SingleUVTask, CliArgsMixin
+from .tasks import UVTask, CliArgsMixin
 from .dodo_instructors import task_xls_affectation, task_add_instructors
 
 
@@ -120,7 +120,7 @@ def create_cal_from_dataframe(df, text, target):
         pdf.save_to(target())
 
 
-class CalUv(MultipleUVTask):
+class CalUv(UVTask):
     """Calendrier PDF de la semaine globale des UV sélectionnées
 
 Crée le calendrier des Cours/TD/TP pour chaque UV sélectionnées.
@@ -131,7 +131,7 @@ Crée le calendrier des Cours/TD/TP pour chaque UV sélectionnées.
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
         self.uv_list = documents(task_xls_affectation.target, **self.info)
-        self.target = generated(self.target, **self.info)
+        self.target = generated(CalUv.target, **self.info)
         jinja_dir = os.path.join(os.path.dirname(__file__), "templates")
         template = os.path.join(jinja_dir, "calendar_template.tex.jinja2")
         self.file_dep = [self.uv_list, template]
@@ -146,7 +146,7 @@ Crée le calendrier des Cours/TD/TP pour chaque UV sélectionnées.
         return create_cal_from_dataframe(df_uv_real, text, self.target)
 
 
-class CalInst(SingleUVTask, CliArgsMixin):
+class CalInst(UVTask, CliArgsMixin):
     """Calendrier PDF d'une semaine de toutes les UV/UE d'un intervenant."""
 
     cli_args = (
@@ -166,8 +166,8 @@ class CalInst(SingleUVTask, CliArgsMixin):
         ),
     )
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, planning, uv, info):
+        super().__init__(planning, uv, info)
         self.uv_list = generated(task_add_instructors.target)
         jinja_dir = os.path.join(os.path.dirname(__file__), "templates")
         template = os.path.join(jinja_dir, "calendar_template.tex.jinja2")
