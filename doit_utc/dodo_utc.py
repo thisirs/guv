@@ -207,7 +207,7 @@ class CsvAllCourses(CliArgsMixin, TaskBase):
         self.csv = generated(task_add_instructors.target)
 
         self.file_dep = [self.csv]
-        self.targets = [generated(self.target, **self.info)]
+        self.target = generated(CsvAllCourses.target)
 
     def run(self):
         df = pd.read_csv(self.csv)
