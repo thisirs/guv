@@ -11,7 +11,7 @@ from .utils import (
     argument,
     Output
 )
-from .tasks import MultipleUVTask, SingleUVTask
+from .tasks import MultipleUVTask, SingleUVTask, CliArgsMixin
 from .dodo_instructors import task_xls_affectation, task_add_instructors
 
 
@@ -146,7 +146,7 @@ Crée le calendrier des Cours/TD/TP pour chaque UV sélectionnées.
         return create_cal_from_dataframe(df_uv_real, text, self.target)
 
 
-class CalInst(SingleUVTask):
+class CalInst(SingleUVTask, CliArgsMixin):
     """Calendrier PDF d'une semaine de toutes les UV/UE d'un intervenant."""
 
     cli_args = (
