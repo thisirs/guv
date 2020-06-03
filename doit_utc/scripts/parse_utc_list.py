@@ -64,7 +64,7 @@ def parse_UTC_listing(filename):
     # car il n'a pas de pendant pour l'autre semaine. On le fixe donc
     # manuellement à A ou B.
     if "TP" in df.columns:
-        semAB = [i for i in df.TP.unique() if re.match("T[0-9]{,2}[AB]")]
+        semAB = [i for i in df.TP.unique() if re.match("T[0-9]{,2}[AB]", i)]
         if semAB:
             gr = [i for i in df.TP.unique() if re.match("^T[0-9]{,2}$", i)]
             rep = {}
