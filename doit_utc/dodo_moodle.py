@@ -141,7 +141,8 @@ class HtmlTable(UVTask, CliArgsMixin):
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
 
-        self.file_dep = [generated(task_add_instructors.target)]
+        self.csv_inst_list = generated(task_add_instructors.target)
+        self.file_dep = [self.csv_inst_list]
 
         if self.grouped:
             name = "_".join(self.courses) + "_grouped"
