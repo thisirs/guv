@@ -123,7 +123,7 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
         check_columns(df, ctype, file=self.xls_merge)
         for gn, group in df.groupby(ctype):
             group = group.sort_values(["Nom", "Prénom"])
-            self.kwargs["filename"] = group + ".pdf"
+            self.kwargs["filename"] = gn + ".pdf"
             pdf = pdf_attendance_list_render(group, template, group=gn, **self.kwargs)
             pdfs.append(pdf)
 
