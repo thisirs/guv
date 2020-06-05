@@ -16,6 +16,7 @@ from .utils import (
     get_unique_uv,
     actionfailed_on_exception,
     check_columns,
+    escape_tex
 )
 from .tasks import UVTask, CliArgsMixin
 from .dodo_students import XlsStudentDataMerge
@@ -36,19 +37,31 @@ def pdf_attendance_list_render(df, template, **kwargs):
     )
     template = latex_jinja_env.get_template(template)
 
-    temp_dir = tempfile.mkdtemp()
     df = df.sort_values(["Nom", "Prénom"])
     students = [{"name": f'{row["Nom"]} {row["Prénom"]}'} for _, row in df.iterrows()]
+
+    # Render template with provided data
     tex = template.render(students=students, **kwargs)
-    pdf = latex.build_pdf(tex)
+
+    temp_dir = tempfile.mkdtemp()
+
     filename = kwargs["filename"]
+    pdf = latex.build_pdf(tex)
     filepath = os.path.join(temp_dir, filename)
     pdf.save_to(filepath)
-    return filepath
+
+    tex_filename = os.path.splitext(filename)[0] + '.tex'
+    tex_filepath = os.path.join(temp_dir, tex_filename)
+    with open(tex_filepath, "w") as fd:
+        fd.write(tex)
+
+    return filepath, tex_filepath
 
 
 class TaskPdfAttendanceList(UVTask, CliArgsMixin):
     """Fichier pdf de fiches de présence"""
+
+    always_make = True
 
     cli_args = (
         argument(
@@ -57,6 +70,11 @@ class TaskPdfAttendanceList(UVTask, CliArgsMixin):
             required=True,
             help="Nom de la colonne du groupement à considérer",
         ),
+        argument(
+            "--save-tex",
+            action="store_true",
+            help="Met le(s) fichier(s) .tex généré(s) à disposition"
+        )
     )
 
     def __init__(self, planning, uv, info):
@@ -76,16 +94,25 @@ class TaskPdfAttendanceList(UVTask, CliArgsMixin):
         template = "attendance_list.tex.jinja2"
 
         pdfs = []
+        texs = []
         for gn, group in df.groupby(self.group or (lambda x: "all")):
             group = group.sort_values(["Nom", "Prénom"])
-            kwargs = {"group": f"Groupe: {gn}", "filename": f"{gn}.pdf"}
-            pdf = pdf_attendance_list_render(group, template, **kwargs)
+            kwargs = {"group": f"Groupe: {escape_tex(gn)}", "filename": f"{gn}.pdf"}
+            pdf, tex = pdf_attendance_list_render(group, template, **kwargs)
             pdfs.append(pdf)
+            texs.append(tex)
 
         with Output(self.target) as target0:
             with zipfile.ZipFile(target0(), "w") as z:
                 for filepath in pdfs:
                     z.write(filepath, os.path.basename(filepath))
+
+        if self.save_tex:
+            target = os.path.splitext(self.target)[0] + "_source.zip"
+            with Output(target) as target0:
+                with zipfile.ZipFile(target0(), "w") as z:
+                    for filepath in texs:
+                        z.write(filepath, os.path.basename(filepath))
 
 
 class PdfAttendanceFull(UVTask, CliArgsMixin):
@@ -124,7 +151,7 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
         for gn, group in df.groupby(ctype):
             group = group.sort_values(["Nom", "Prénom"])
             self.kwargs["filename"] = gn + ".pdf"
-            pdf = pdf_attendance_list_render(group, template, group=gn, **self.kwargs)
+            pdf, tex = pdf_attendance_list_render(group, template, group=gn, **self.kwargs)
             pdfs.append(pdf)
 
         with Output(self.target) as target0:
@@ -196,7 +223,7 @@ def task_attendance_sheet_room():
             stu1 = df0.iloc[i]["Nom"]
             stu2 = df0.iloc[j]["Nom"]
             filename = f"{rooms_name[n]}.pdf"
-            pdf = pdf_attendance_list_render(
+            pdf, tex = pdf_attendance_list_render(
                 df0.iloc[i : (j + 1)], "attendance_list.tex.jinja2", filename=filename
             )
             pdfs.append(pdf)
@@ -204,7 +231,7 @@ def task_attendance_sheet_room():
 
         if dftt is not None:
             filename = "tiers-temps.pdf"
-            pdf = pdf_attendance_list_render(
+            pdf, tex = pdf_attendance_list_render(
                 dftt, "attendance_list.tex.jinja2", filename=filename
             )
             pdfs.append(pdf)
