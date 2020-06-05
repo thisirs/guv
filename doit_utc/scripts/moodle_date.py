@@ -80,9 +80,13 @@ class CondGroup(Cond):
         else:
             raise Exception()
 
+    def group_id(self, **info):
+        if self.grp not in info["group_id"]:
+            raise Exception(f"Le groupe nommé {self.grp} n'a pas d'identifiant Moodle dans la variable GROUP_ID")
+        return info["group_id"][self.grp]
+
     def to_PHP_inner(self, **info):
-        id = info["group_id"][self.grp]
-        return {'type': 'group', 'id': id}
+        return {'type': 'group', 'id': self.group_id(**info)}
 
 
 class CondProfil(Cond):
