@@ -269,7 +269,7 @@ class HtmlTable(UVTask, CliArgsMixin):
         return df
 
 
-class JsonResctriction(UVTask, CliArgsMixin):
+class JsonRestriction(UVTask, CliArgsMixin):
     """Ficher json des restrictions d'accès aux ressources sur Moodle
 basées sur le début/fin des séances."""
 
