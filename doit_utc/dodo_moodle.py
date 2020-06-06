@@ -2,10 +2,10 @@ import os
 import math
 import random
 import argparse
-import numpy as np
-import pandas as pd
-from datetime import timedelta, datetime, time
 import json
+from datetime import timedelta, datetime, time
+import pandas as pd
+import numpy as np
 import pynliner
 import jinja2
 import markdown
