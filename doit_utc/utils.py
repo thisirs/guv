@@ -174,6 +174,7 @@ def md5(fname):
 
 
 def hash_rot_md5(a):
+    "Return a hash invariant by rotation"
     def substring():
         b = a + a
         for i in range(len(a)):
@@ -427,6 +428,8 @@ def create_plannings(planning_type):
     """Generate list of working days according to planning"""
 
     def generate_days(beg, end, skip, turn, course):
+        """Generate working days from BEG to END"""
+
         daynames = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi']
         days = []
         delta = end - beg
@@ -488,11 +491,15 @@ def create_plannings(planning_type):
 
 
 def compute_slots(csv_inst_list, planning_type, empty_instructor=True, filter_uvs=None):
+    # Filter by planning
     df = pd.read_csv(csv_inst_list)
     df = df.loc[df['Planning'] == planning_type]
 
+    # Filter out when empty instructor
     if not empty_instructor:
         df = df.loc[(~pd.isnull(df['Intervenants']))]
+
+    # Filter by set of UV
     if filter_uvs:
         df = df.loc[df['Code enseig.'].isin(filter_uvs)]
 
@@ -527,6 +534,7 @@ def compute_slots(csv_inst_list, planning_type, empty_instructor=True, filter_uv
 
 
 def lib_list(lib):
+    """Return a numeric tuple to sort course codenames"""
     m = re.match('([CDT])([0-9]*)([AB]*)', lib)
     crs = {'C': 0, 'D': 1, 'T': 2}[m.group(1)]
     no = int('0' + m.group(2))

@@ -19,7 +19,9 @@ class Settings():
         elif (Path(wd) / "config.py").exists():
             self.config_files = [Path(wd) / "config.py"]
         else:
-            raise Exception("La variable SEMESTER_VARIABLE ne pointe pas")
+            raise Exception(
+                f"""Le dossier courant ou le dossier de la variable '{SEMESTER_VARIABLE}' n'est pas reconnu comme un dossier de semestre ou d'uv."""
+            )
 
         self._loaded = False
 
