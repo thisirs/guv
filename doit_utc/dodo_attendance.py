@@ -12,9 +12,6 @@ from .utils import (
     Output,
     generated,
     argument,
-    parse_args,
-    get_unique_uv,
-    actionfailed_on_exception,
     check_columns,
     escape_tex
 )
@@ -160,11 +157,19 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
                     z.write(filepath, os.path.basename(filepath))
 
 
-@actionfailed_on_exception
-def task_attendance_sheet_room():
+class AttendanceSheetRoom(UVTask):
     """Feuille de présence par taille des salles"""
 
-    def attendance_sheet_room(csv, target):
+    always_make = True
+    target = "attendance_rooms.zip"
+
+    def __init__(self, planning, uv, info):
+        super().__init__(planning, uv, info)
+        self.xls_merge = generated(XlsStudentDataMerge.target, **info)
+        self.file_dep = [self.xls_merge]
+        self.target = generated(AttendanceSheetRoom.target, **info)
+
+    def rooms(self):
         groupby = {}
         while True:
             room = input("Salle: ")
@@ -175,9 +180,13 @@ def task_attendance_sheet_room():
                         print("Liste des salles: \n%s" % groupby)
                         break
                     else:
-                        return TaskFailed("Il faut au moins une salle")
+                        raise Exception("Il faut au moins une salle")
             elif re.fullmatch("[0-9]+", num):
                 groupby[room] = int(num)
+        return groupby
+
+    def run(self):
+        groupby = self.rooms()
 
         def breaks(total, rooms):
             assert sum(rooms) >= total
@@ -203,7 +212,7 @@ def task_attendance_sheet_room():
 
             return breaks
 
-        df = pd.read_excel(xls_merge)
+        df = pd.read_excel(self.xls_merge)
         if "Tiers-temps" in df.columns:
             df0 = df.loc[df["Tiers-temps"] == 0]
             dftt = df.loc[df["Tiers-temps"] != 0]
@@ -236,26 +245,29 @@ def task_attendance_sheet_room():
             )
             pdfs.append(pdf)
 
-        with Output(target) as target0:
+        with Output(self.target) as target0:
             with zipfile.ZipFile(target0(), "w") as z:
                 for filepath in pdfs:
                     z.write(filepath, os.path.basename(filepath))
 
-    planning, uv, info = get_unique_uv()
-    xls_merge = generated(XlsStudentDataMerge.target, **info)
-    target = generated(f"attendance_rooms.zip", **info)
-    return {
-        "file_dep": [xls_merge],
-        "targets": [target],
-        "actions": [(attendance_sheet_room, [xls_merge, target])],
-    }
 
-
-@actionfailed_on_exception
-def task_attendance_sheet():
+class AttendanceSheet(UVTask, CliArgsMixin):
     """Fichiers pdf de feuilles de présence sans les noms des étudiants."""
 
-    def generate_attendance_sheets(target, **kwargs):
+    cli_args = (
+        argument(
+            "-e",
+            "--exam",
+            required=True,
+            help="Nom de la colonne du groupement à considérer",
+        ),
+    )
+
+    def __init__(self, planning, uv, info):
+        super().__init__(planning, uv, info)
+        self.target = generated(f"{self.exam}_présence_%s.pdf", **info)
+
+    def run(self):
         groupby = {}
         while True:
             room = input("Salle: ")
@@ -286,27 +298,9 @@ def task_attendance_sheet():
         for room, number in groupby.items():
             tex = template.render(number=number, group=f"Salle {room}")
 
-            target0 = target % room
+            target0 = self.target % room
             # with open(target0+'.tex', 'w') as fd:
             #     fd.write(tex)
 
             pdf = latex.build_pdf(tex)
             pdf.save_to(target0)
-
-    args = parse_args(
-        task_attendance_sheet,
-        argument(
-            "-e",
-            "--exam",
-            required=True,
-            help="Nom de la colonne du groupement à considérer",
-        ),
-    )
-
-    planning, uv, info = get_unique_uv()
-    target = generated(f"{args.exam}_présence_%s.pdf", **info)
-
-    return {
-        "targets": [target],
-        "actions": [(generate_attendance_sheets, [target])],
-    }
