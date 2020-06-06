@@ -1,5 +1,5 @@
-import numpy as np
 import string
+import numpy as np
 from doit.action import PythonAction
 from doit.exceptions import TaskFailed
 
