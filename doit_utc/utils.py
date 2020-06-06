@@ -357,10 +357,6 @@ def action_msg(obj, **kwargs):
     return action
 
 
-class KeepError(Exception):
-    pass
-
-
 def rel_to_dir(path, root):
     common_prefix = os.path.commonprefix([path, root])
     return os.path.relpath(path, common_prefix)
