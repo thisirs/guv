@@ -411,10 +411,6 @@ class Output():
             print(f"Wrote `{rel_to_dir(self.target, settings.BASE_DIR)}'")
 
 
-DATE_FORMAT = "%Y-%m-%d"
-TIME_FORMAT = "%H:%M"
-URL = 'https://demeter.utc.fr/portal/pls/portal30/portal30.get_photo_utilisateur?username='
-
 LATEX_SUBS = (
     (re.compile(r'\\'), r'\\textbackslash'),
     (re.compile(r'([{}_#%&$])'), r'\\\1'),

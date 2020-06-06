@@ -23,8 +23,6 @@ from .utils import (
     parse_args,
     argument,
     check_columns,
-    DATE_FORMAT,
-    TIME_FORMAT,
     lib_list,
 )
 from .tasks import CliArgsMixin, UVTask
@@ -39,6 +37,9 @@ from .dodo_instructors import (
 )
 
 from .scripts.moodle_date import CondDate, CondGroup, CondOr, CondProfil
+
+DATE_FORMAT = "%Y-%m-%d"
+TIME_FORMAT = "%H:%M"
 
 
 @add_templates(target="intervenants.html")

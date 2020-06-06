@@ -23,9 +23,10 @@ from .utils import (
     actionfailed_on_exception,
     taskfailed_on_exception,
     check_columns,
-    URL,
 )
 from .dodo_students import XlsStudentDataMerge
+
+URL = 'https://demeter.utc.fr/portal/pls/portal30/portal30.get_photo_utilisateur?username='
 
 
 @actionfailed_on_exception
