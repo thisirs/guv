@@ -1,39 +1,76 @@
+import os
 import sys
+import inspect
+import argparse
+import jinja2
 
-from doit.cmd_base import ModuleTaskLoader
 from doit.doit_cmd import DoitMain
-from doit import loader
+from doit.cmd_base import NamespaceTaskLoader
 
-from .utils_noconfig import ParseArgAction
-from .config import settings
-
-# Make doit config accessible for doit
-DOIT_CONFIG = settings.DOIT_CONFIG
+import doit_utc
 
 
-from .dodo_instructors import *
-from .dodo_utc import *
-from .dodo_grades import *
-from .dodo_students import *
-from .dodo_trombinoscope import *
-from .dodo_moodle import *
-from .dodo_ical import *
-from .dodo_calendar import *
-from .dodo_attendance import *
+class ModulesTaskLoader(NamespaceTaskLoader):
+    def __init__(self, *modules):
+        super().__init__()
+        self.namespace = {}
+        for module in modules:
+            self.namespace.update(dict(inspect.getmembers(module)))
+
+
+def run_doit(args):
+    from . import dodo_instructors
+    from . import dodo_utc
+    from . import dodo_grades
+    from . import dodo_students
+    from . import dodo_trombinoscope
+    from . import dodo_moodle
+    from . import dodo_ical
+    from . import dodo_calendar
+    from . import dodo_attendance
+    modules = [
+        dodo_instructors,
+        dodo_utc,
+        dodo_grades,
+        dodo_students,
+        dodo_trombinoscope,
+        dodo_moodle,
+        dodo_ical,
+        dodo_calendar,
+        dodo_attendance,
+    ]
+    sys.exit(DoitMain(ModulesTaskLoader(*modules)).run(args))
+
+
+def create_uv_dirs(base_dir, uvs):
+    print(uvs)
+    for uv in uvs:
+        uv_dir = os.path.join(base_dir, uv)
+        doc_dir = os.path.join(uv_dir, "documents")
+        gen_dir = os.path.join(uv_dir, "generated")
+        os.makedirs(uv_dir, exist_ok=True)
+        os.makedirs(doc_dir, exist_ok=True)
+        os.makedirs(gen_dir, exist_ok=True)
+
+        tmpl_dir = os.path.join(doit_utc.__path__[0], 'templates')
+        jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(tmpl_dir))
+        tmpl = jinja_env.get_template("uv_config.py")
+
+        context = {}
+        content = tmpl.render(context)
+        new_path = os.path.join(uv_dir, "config.py")
+        with open(new_path, 'w', encoding='utf-8') as new_file:
+            new_file.write(content)
 
 
 def main():
     if len(sys.argv) == 1:
-        # No command-line arguments, run doit normally
-        sys.exit(DoitMain(ModuleTaskLoader(globals())).run([]))
+        run_doit([])
     elif len(sys.argv) >= 2:
-        arg = sys.argv[1]
-        if arg == 'doit':
-            # If first argument is doit, delete it and pass the rest
-            # to doit
-            del sys.argv[1]
-            sys.exit(DoitMain(ModuleTaskLoader(globals())).run(sys.argv[1:]))
-        elif arg in [
+        first_arg = sys.argv[1]
+        if first_arg == "doit":
+            run_doit(sys.argv[2:])
+        elif first_arg in [
                 "auto",
                 "clean",
                 "dumpdb",
@@ -45,18 +82,42 @@ def main():
                 "run",
                 "strace",
                 "help"]:
-            # If non-task command, run it without modifying command
-            # line arguments
-            sys.exit(DoitMain(ModuleTaskLoader(globals())).run(sys.argv[1:]))
-        elif arg == "tabcompletion":
+            run_doit(sys.argv[1:])
+        elif first_arg == "tabcompletion":
             # Handle tabcompletion argument specially
-            mtl = ModuleTaskLoader(globals())
-            tasks = loader.load_tasks(mtl.namespace)
-            actions = [task.actions for task in tasks]
-            actions = [task.actions[0] for task in tasks if task.actions]
-            parser_actions = [e for e in actions if type(e) == ParseArgAction]
-            parsers = [p.parser for p in parser_actions]
+            pass
+        elif first_arg == "createsemester":
+            parser = argparse.ArgumentParser()
+            parser.add_argument("createsemester")
+            parser.add_argument("semester")
+            parser.add_argument("--uv", nargs="+")
+            args = parser.parse_args()
+            base_dir = os.path.join(os.getcwd(), args.semester)
+            doc_dir = os.path.join(base_dir, "documents")
+            gen_dir = os.path.join(base_dir, "generated")
+            os.makedirs(base_dir, exist_ok=True)
+            os.makedirs(doc_dir, exist_ok=True)
+            os.makedirs(gen_dir, exist_ok=True)
+
+            tmpl_dir = os.path.join(doit_utc.__path__[0], 'templates')
+            jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(tmpl_dir))
+            tmpl = jinja_env.get_template("semester_config.py")
+
+            context = {}
+            content = tmpl.render(context)
+            new_path = os.path.join(base_dir, "config.py")
+            with open(new_path, 'w', encoding='utf-8') as new_file:
+                new_file.write(content)
+
+            create_uv_dirs(base_dir, args.uv)
+
+        elif first_arg == "createuv":
+            parser = argparse.ArgumentParser()
+            parser.add_argument("createuv")
+            parser.add_argument("uv", nargs="+")
+            args = parser.parse_args()
+            create_uv_dirs(os.getcwd(), args.uv)
         else:
             # Run doit without command-line arguments to avoid errors.
             # Doit tasks can handle sys.argv itself
-            sys.exit(DoitMain(ModuleTaskLoader(globals())).run(sys.argv[1:2]))
+            run_doit(sys.argv[1:2])
