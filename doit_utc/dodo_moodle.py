@@ -355,20 +355,25 @@ basées sur le début/fin des séances."""
             return (
                 "Séance " + str(num),
                 {
-                    "début minuit": (CondDate() >= dt_min_midnight).to_PHP(**info),
-                    "début": (CondDate() >= dt_min).to_PHP(**info),
-                    "début lundi": (CondDate() >= dt_min_monday).to_PHP(**info),
-                    "début par groupe": CondOr(after_beg_group).to_PHP(**info),
-                    "fin minuit": (CondDate() >= dt_max_midnight).to_PHP(**info),
-                    "fin": (CondDate() >= dt_max).to_PHP(**info),
-                    "fin vendredi": (CondDate() >= dt_max_friday).to_PHP(**info),
-                    "fin par groupe": CondOr(after_end_group).to_PHP(**info),
-                    "créneaux par groupe": CondOr(window_group).to_PHP(**info),
+                    "visible si: t < min(B)": (CondDate() < dt_min).to_PHP(**info),
+                    "visible si: t >= min(B)": (CondDate() >= dt_min).to_PHP(**info),
+                    "visible si: t >= max(E)": (CondDate() >= dt_max).to_PHP(**info),
+                    "visible si: t < max(E)": (CondDate() < dt_max).to_PHP(**info),
+                    "visible si: t >= previous_monday(min(B))": (CondDate() >= dt_min_monday).to_PHP(**info),
+                    "visible si: t >= next_friday(max(E))": (CondDate() >= dt_max_friday).to_PHP(**info),
+                    "visible si: t >= previous_midnight(min(B))": (CondDate() >= dt_min_midnight).to_PHP(**info),
+                    "visible si: t >= next_midnight(max(E))": (CondDate() >= dt_max_midnight).to_PHP(**info),
+                    "visible si: t <= B par groupe": CondOr(before_beg_group).to_PHP(**info),
+                    "visible si: t > B par groupe": CondOr(after_beg_group).to_PHP(**info),
+                    "visible si: t > E par groupe": CondOr(after_end_group).to_PHP(**info),
+                    "visible si: t <= E par groupe": CondOr(before_end_group).to_PHP(**info),
+                    "visible si: B <= t < E par groupe": CondOr(window_group).to_PHP(**info),
                 },
             )
 
         moodle_date = dict(get_beg_end_date_each(name, g) for name, g in gb)
 
+        max_len = len("visible si: t >= previous_midnight(min(B))")
         with Output(self.target, protected=True) as target:
             with open(target(), "w") as fd:
                 s = (
@@ -378,7 +383,7 @@ basées sur le début/fin des séances."""
                             f'  "{slot}": {"{"}\n'
                             + ",\n".join(
                                 (
-                                    f'    "{name}": {" " * (16 - len(name))}'
+                                    f'    "{name}": {" " * (max_len - len(name))}'
                                     + json.dumps(moodle_json, ensure_ascii=False)
                                 )
                                 for name, moodle_json in dates.items()
