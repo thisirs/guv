@@ -34,7 +34,8 @@ class TaskBase(object):
 
         kw = {
             "doc": cls.__doc__,
-            "basename": task_name
+            "basename": task_name,
+            "verbosity": 2
         }
 
         def build_task(obj, **kwargs):
