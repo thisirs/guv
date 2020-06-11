@@ -18,89 +18,118 @@ from .utils import (
     compute_slots,
     argument,
     action_msg,
+    rel_to_dir
 )
-from .tasks import CliArgsMixin, UVTask
+from .tasks import CliArgsMixin, TaskBase
 
 
-@add_templates(target='UTC_UV_list.csv')
-def task_utc_uv_list_to_csv():
+class UtcUvListToCsv(TaskBase):
     """Crée un fichier CSV à partir de la liste d'UV au format PDF."""
 
-    def utc_uv_list_to_csv(semester, uv_list_filename, ue_list_filename, target):
+    target = "UTC_UV_list.csv"
+
+    def __init__(self):
+        super().__init__()
+        self.uv_list_filename = documents(task_UTC_UV_list.target)
+        self.ue_list_filename = documents('UTC_UE_list.xlsx')
+        self.target = documents(UtcUvListToCsv.target)
+
+        self.file_dep = [
+            fn
+            for fn in [
+                self.uv_list_filename,
+                self.ue_list_filename
+            ]
+            if os.path.exists(fn)
+        ]
+
+        if not self.file_dep:
+            uv_fn = rel_to_dir(self.uv_list_filename, settings.BASE_DIR)
+            ue_fn = rel_to_dir(self.ue_list_filename, settings.BASE_DIR)
+            msg = f"Au moins un des fichiers {uv_fn} ou {ue_fn} doit être disponible."
+            raise Exception(msg)
+
+    def read_pdf(self):
+        pdf = PdfFileReader(open(self.uv_list_filename, 'rb'))
+        npages = pdf.getNumPages()
+
+        possible_cols = ['Code enseig.', 'Activité', 'Jour', 'Heure début',
+                         'Heure fin', 'Semaine', 'Locaux', 'Type créneau',
+                         'Lib. créneau', 'Responsable enseig.']
+
+        tables = []
+        pdo = {'header': None}
+        for i in range(npages):
+            print(f'Processing page ({i+1}/{npages})')
+            page = i + 1
+            tabula_args = {'pages': page}
+            df = read_pdf(self.uv_list_filename, **tabula_args, pandas_options=pdo)[0]
+
+            if page == 1:
+                # Detect if header has not been properly detected
+                header_height = ((re.match('[A-Z]{,3}[0-9]+', str(df.iloc[0, 0])) is None) +
+                                 (re.match('[A-Z]{,3}[0-9]+', str(df.iloc[1, 0])) is None))
+                print(f'Header has {header_height} lines')
+
+                # Compute single line/multiline header
+                header = df.iloc[:header_height].fillna('').agg(['sum']).iloc[0]
+
+                # Strip header
+                df = df.iloc[header_height:]
+
+                # Set name of column from header
+                df = df.rename(columns=header)
+
+                # Rename incorrectly parsed headers
+                df = df.rename(columns={
+                    'Activit': 'Activité',
+                    'Type cr neau': 'Type créneau',
+                    'Lib. cr': 'Lib. créneau',
+                    'Lib.créneau': 'Lib. créneau',
+                    'Lib.\rcréneau': 'Lib. créneau',
+                    'Heuredébut': 'Heure début',
+                    'Heure d': 'Heure début',
+                    'Heurefin': 'Heure fin'
+                })
+
+                unordered_cols = list(set(df.columns).intersection(set(possible_cols)))
+                cols_order = {k: i for i, k in enumerate(df.columns)}
+                cols = sorted(unordered_cols, key=lambda x: cols_order[x])
+
+                if "Semaine" in cols:
+                    week_idx = cols.index('Semaine')
+                else:
+                    week_idx = cols.index('Heure fin') + 1
+
+                df = df[cols]
+                print('%d columns found' % len(df.columns))
+            else:
+                print('%d columns found' % len(df.columns))
+                if len(df.columns) == len(cols) - 1:
+                    df.insert(week_idx, 'Semaine', np.nan)
+                df.columns = cols
+
+                # Detect possible multiline header
+                header_height = ((re.match('[A-Z]{,3}[0-9]+', str(df.iloc[0, 0])) is None) +
+                                 (re.match('[A-Z]{,3}[0-9]+', str(df.iloc[1, 0])) is None))
+                print(f'Header has {header_height} lines')
+                df = df.iloc[header_height:]
+
+            df['Planning'] = settings.SEMESTER
+            tables.append(df)
+
+        return pd.concat(tables)
+
+    def run(self):
         tables = []
 
-        if os.path.exists(uv_list_filename):
-            # Nombre de pages
-            pdf = PdfFileReader(open(uv_list_filename, 'rb'))
-            npages = pdf.getNumPages()
+        # Lire tous les créneaux par semaine de toute les UVs
+        if os.path.exists(self.uv_list_filename):
+            tables.append(self.read_pdf())
 
-            possible_cols = ['Code enseig.', 'Activité', 'Jour', 'Heure début',
-                             'Heure fin', 'Semaine', 'Locaux', 'Type créneau',
-                             'Lib. créneau', 'Responsable enseig.']
-
-            pdo = {'header': None}
-            for i in range(npages):
-                print(f'Processing page ({i+1}/{npages})')
-                page = i + 1
-                tabula_args = {'pages': page}
-                df = read_pdf(uv_list_filename, **tabula_args, pandas_options=pdo)[0]
-
-                if page == 1:
-                    # Detect if header has not been properly detected
-                    header_height = ((re.match('[A-Z]{,3}[0-9]+', str(df.iloc[0, 0])) is None) +
-                                     (re.match('[A-Z]{,3}[0-9]+', str(df.iloc[1, 0])) is None))
-                    print(f'Header has {header_height} lines')
-
-                    # Compute single line/multiline header
-                    header = df.iloc[:header_height].fillna('').agg(['sum']).iloc[0]
-
-                    # Strip header
-                    df = df.iloc[header_height:]
-
-                    # Set name of column from header
-                    df = df.rename(columns=header)
-
-                    # Rename incorrectly parsed headers
-                    df = df.rename(columns={
-                        'Activit': 'Activité',
-                        'Type cr neau': 'Type créneau',
-                        'Lib. cr': 'Lib. créneau',
-                        'Lib.créneau': 'Lib. créneau',
-                        'Lib.\rcréneau': 'Lib. créneau',
-                        'Heuredébut': 'Heure début',
-                        'Heure d': 'Heure début',
-                        'Heurefin': 'Heure fin'
-                    })
-
-                    unordered_cols = list(set(df.columns).intersection(set(possible_cols)))
-                    cols_order = {k: i for i, k in enumerate(df.columns)}
-                    cols = sorted(unordered_cols, key=lambda x: cols_order[x])
-
-                    if "Semaine" in cols:
-                        week_idx = cols.index('Semaine')
-                    else:
-                        week_idx = cols.index('Heure fin') + 1
-
-                    df = df[cols]
-                    print('%d columns found' % len(df.columns))
-                else:
-                    print('%d columns found' % len(df.columns))
-                    if len(df.columns) == len(cols) - 1:
-                        df.insert(week_idx, 'Semaine', np.nan)
-                    df.columns = cols
-
-                    # Detect possible multiline header
-                    header_height = ((re.match('[A-Z]{,3}[0-9]+', str(df.iloc[0, 0])) is None) +
-                                     (re.match('[A-Z]{,3}[0-9]+', str(df.iloc[1, 0])) is None))
-                    print(f'Header has {header_height} lines')
-                    df = df.iloc[header_height:]
-
-                df['Planning'] = semester
-                tables.append(df)
-
-        if os.path.exists(ue_list_filename):
-            df_ue = pd.read_excel(ue_list_filename)
-            tables.append(df_ue)
+        # Lire les créneaux par semaine pour les masters
+        if os.path.exists(self.ue_list_filename):
+            tables.append(pd.read_excel(self.ue_list_filename))
 
         df = pd.concat(tables)
 
@@ -113,7 +142,7 @@ def task_utc_uv_list_to_csv():
         # A ou B au lieu de semaine A et semaine B
         df['Semaine'].replace("^semaine ([AB])$", "\\1", regex=True, inplace=True)
 
-        # Semaine ni A ni B pour les TP: mettre à A
+        # Semaine ni A ni B pour les TP: demander
         uvs = [uv for _, uv, _ in selected_uv(all=True)]
 
         def fix_semaineAB(group):
@@ -141,32 +170,8 @@ def task_utc_uv_list_to_csv():
 
         df = df.groupby(['Code enseig.', 'Activité']).apply(fix_semaineAB)
 
-        with Output(target) as target:
+        with Output(self.target) as target:
             df.to_csv(target(), index=False)
-
-    uv_list_filename = documents(task_UTC_UV_list.target)
-    ue_list_filename = documents('UTC_UE_list.xlsx')
-    target = documents(task_utc_uv_list_to_csv.target)
-
-    deps = []
-    if os.path.exists(uv_list_filename):
-        deps.append(uv_list_filename)
-    if os.path.exists(ue_list_filename):
-        deps.append(ue_list_filename)
-
-    if deps:
-        semester = settings.SEMESTER
-        return {
-            'file_dep': deps,
-            'targets': [target],
-            'actions': [(utc_uv_list_to_csv, [semester, uv_list_filename, ue_list_filename, target])],
-            'verbosity': 2
-        }
-    else:
-        uv_fn = documents(task_UTC_UV_list.target, local=True)
-        ue_fn = documents('UTC_UE_list.xlsx', local=True)
-        msg = f"Au moins un des fichiers {uv_fn} ou {ue_fn} doit être disponible."
-        return action_msg(msg, targets=[target])
 
 
 @add_templates(target=settings.CRENEAU_UV)
@@ -185,7 +190,7 @@ def task_UTC_UV_list():
     }
 
 
-class CsvAllCourses(CliArgsMixin, UVTask):
+class CsvAllCourses(CliArgsMixin, TaskBase):
     "Fichier csv de tous les créneaux du semestre"
 
     unique_uv = False
@@ -200,8 +205,8 @@ class CsvAllCourses(CliArgsMixin, UVTask):
         ),
     )
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
+    def __init__(self):
+        super().__init__()
         from .dodo_instructors import task_add_instructors
         self.csv = generated(task_add_instructors.target)
 

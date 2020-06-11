@@ -5,7 +5,7 @@ from pandas.api.types import CategoricalDtype
 
 from doit.exceptions import TaskFailed
 
-from .dodo_utc import task_utc_uv_list_to_csv
+from .dodo_utc import UtcUvListToCsv
 from .utils import (
     Output,
     add_templates,
@@ -93,7 +93,7 @@ def task_add_instructors():
             df_merge.to_csv(target(), index=False)
 
     target = generated(task_add_instructors.target)
-    uv_list = documents(task_utc_uv_list_to_csv.target)
+    uv_list = documents(UtcUvListToCsv.target)
     insts = []
     for planning, uv, info in selected_uv('all'):
         insts.append(documents(task_xls_affectation.target, **info))
@@ -221,7 +221,7 @@ def task_xls_affectation():
         with Output(target, protected=True) as target:
             df_uv.to_excel(target(), sheet_name='Intervenants', index=False)
 
-    uvlist_csv = documents(task_utc_uv_list_to_csv.target)
+    uvlist_csv = documents(UtcUvListToCsv.target)
     for planning, uv, info in selected_uv():
         target = documents(task_xls_affectation.target, **info)
 
