@@ -17,7 +17,6 @@ from .utils import (
     selected_uv,
     compute_slots,
     argument,
-    action_msg,
     rel_to_dir
 )
 from .tasks import CliArgsMixin, TaskBase

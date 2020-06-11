@@ -340,24 +340,6 @@ def skip_week(d1, weeks=1):
     return [d1 + timedelta(days=x) for x in range(7*weeks-1)]
 
 
-def action_msg(obj, **kwargs):
-    if isinstance(obj, str):
-        msg = obj
-    else:
-        msg = obj.__doc__
-        msg = textwrap.fill(" ".join(msg.splitlines()[1:]).strip())
-
-    action = {
-        'actions': [lambda: TaskFailed(msg)],
-        'verbosity': 2,
-        'uptodate': [False]
-    }
-
-    action.update(**kwargs)
-
-    return action
-
-
 def rel_to_dir(path, root):
     common_prefix = os.path.commonprefix([path, root])
     return os.path.relpath(path, common_prefix)
