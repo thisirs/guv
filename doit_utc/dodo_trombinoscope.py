@@ -16,34 +16,66 @@ from .utils import (
     Output,
     documents,
     generated,
-    selected_uv,
     escape_tex,
     argument,
-    parse_args,
-    actionfailed_on_exception,
-    taskfailed_on_exception,
     check_columns,
 )
 from .dodo_students import XlsStudentDataMerge
+from .tasks import UVTask, CliArgsMixin
 
 URL = 'https://demeter.utc.fr/portal/pls/portal30/portal30.get_photo_utilisateur?username='
 
 
-@actionfailed_on_exception
-def task_pdf_trombinoscope():
+class PdfTrombinoscope(UVTask, CliArgsMixin):
     """Fichier PDF des trombinoscopes par groupes et/ou sous-groupes"""
 
-    @taskfailed_on_exception
-    def pdf_trombinoscope(xls_merge, target, groupby, subgroupby, width):
-        # On vérifie que GROUPBY et SUBGROUPBY sont licites
-        df = pd.read_excel(xls_merge)
-        if groupby == "all":
-            groupby = None
-        else:
-            check_columns(df, groupby, file=xls_merge)
+    always_make = True
+    cli_args = (
+        argument(
+            "-g",
+            "--group",
+            dest="groupby",
+            required=True,
+            help="Nom de colonne pour réaliser un groupement",
+        ),
+        argument(
+            "-s",
+            "--subgroup",
+            dest="subgroupby",
+            required=False,
+            default=None,
+            help="Nom de colonne des sous-groupes (binômes, trinômes)",
+        ),
+    )
 
-        if subgroupby is not None:
-            check_columns(df, subgroupby, file=xls_merge)
+    def __init__(self, planning, uv, info):
+        super().__init__(planning, uv, info)
+
+        self.xls_merge = generated(XlsStudentDataMerge.target, **info)
+        if self.groupby == "all":
+            if self.subgroupby is not None:
+                self.target = generated(f"trombi_all_{self.subgroupby}.pdf", **info)
+            else:
+                self.target = generated(f"trombi_all.pdf", **info)
+        else:
+            if self.subgroupby is not None:
+                self.target = generated(f"trombi_{self.groupby}_{self.subgroupby}.zip", **info)
+            else:
+                self.target = generated(f"trombi_{self.groupby}.zip", **info)
+
+        self.file_dep = [self.xls_merge]
+        self.width = 5
+
+    def run(self):
+        # On vérifie que GROUPBY et SUBGROUPBY sont licites
+        df = pd.read_excel(self.xls_merge)
+        if self.groupby == "all":
+            self.groupby = None
+        else:
+            check_columns(df, self.groupby, file=self.xls_merge)
+
+        if self.subgroupby is not None:
+            check_columns(df, self.subgroupby, file=self.xls_merge)
 
         async def download_image(session, login):
             url = URL + login
@@ -101,18 +133,18 @@ def task_pdf_trombinoscope():
         tmpl = latex_jinja_env.get_template("trombinoscope_template_2.tex.jinja2")
 
         # Diviser par groupe de TP/TP
-        for title, group in df.groupby(groupby or (lambda x: "all")):
+        for title, group in df.groupby(self.groupby or (lambda x: "all")):
 
             # Diviser par binomes, sous-groupes
-            dff = group.groupby(subgroupby or (lambda x: 0))
+            dff = group.groupby(self.subgroupby or (lambda x: 0))
 
             # Nom de fichier
             if len(dff) == 1:
                 fn = title + ".pdf"
             else:
-                fn = title + "_" + subgroupby + ".pdf"
+                fn = title + "_" + self.subgroupby + ".pdf"
             data = []
-            # Intérer sur ces sous-groupes des groupes de TP/TD
+            # Insérer sur ces sous-groupes des groupes de TP/TD
             for name, df_group in dff:
                 group = {}
                 if len(dff) != 1:
@@ -121,7 +153,7 @@ def task_pdf_trombinoscope():
                 rows = []
                 dfs = df_group.sort_values(["Nom", "Prénom"])
                 # Grouper par WIDTH sur une ligne si plus de WIDTH
-                for _, df_row in dfs.groupby(np.arange(len(df_group.index)) // width):
+                for _, df_row in dfs.groupby(np.arange(len(df_group.index)) // self.width):
                     cells = []
                     for _, row in df_row.iterrows():
                         path = os.path.abspath(documents(f'images/{row["Login"]}.jpg'))
@@ -145,7 +177,7 @@ def task_pdf_trombinoscope():
                 group["rows"] = rows
                 data.append(group)
 
-            tex = tmpl.render(title=title, data=data, width="c" * width)
+            tex = tmpl.render(title=title, data=data, width="c" * self.width)
             # with open(target0+'.tex', 'w') as fd:
             #     fd.write(tex)
 
@@ -154,7 +186,7 @@ def task_pdf_trombinoscope():
 
         # with Output(fn) as target0:
         #     pdf.save_to(target0())
-        with Output(target) as target0:
+        with Output(self.target) as target0:
             files = glob.glob(os.path.join(temp_dir, "*.pdf"))
             if len(files) == 1:
                 shutil.move(files[0], target0())
@@ -162,44 +194,3 @@ def task_pdf_trombinoscope():
                 with zipfile.ZipFile(target0(), "w") as z:
                     for filepath in files:
                         z.write(filepath, os.path.basename(filepath))
-
-    args = parse_args(
-        task_pdf_trombinoscope,
-        argument(
-            "-g",
-            "--group",
-            required=True,
-            help="Nom de colonne pour réaliser un groupement",
-        ),
-        argument(
-            "-s",
-            "--subgroup",
-            required=False,
-            default=None,
-            help="Nom de colonne des sous-groupes (binômes, trinômes)",
-        ),
-    )
-
-    for planning, uv, info in selected_uv():
-        dep = generated(XlsStudentDataMerge.target, **info)
-        if args.group == "all":
-            if args.subgroup is not None:
-                target = generated(f"trombi_all_{args.subgroup}.pdf", **info)
-            else:
-                target = generated(f"trombi_all.pdf", **info)
-        else:
-            if args.subgroup is not None:
-                target = generated(f"trombi_{args.group}_{args.subgroup}.zip", **info)
-            else:
-                target = generated(f"trombi_{args.group}.zip", **info)
-
-        yield {
-            "name": f"{planning}_{uv}",
-            "file_dep": [dep],
-            "targets": [target],
-            "actions": [
-                (pdf_trombinoscope, [dep, target, args.group, args.subgroup, 5])
-            ],
-            "uptodate": [False],
-            "verbosity": 2,
-        }
