@@ -274,6 +274,8 @@ class GradeSheetWriter:
     worksheet."""
 
     def __init__(self, args):  # args argument comes from parser returned by get_parser
+        # Store args to be used in write method
+        self.args = args
 
         # args always has a name, store it
         if args.name:
@@ -369,18 +371,25 @@ class GradeSheetWriter:
         parser.add_argument('--name', dest='name', required=True)
         parser.add_argument('-d', '--data', dest='data_file')
         parser.add_argument('-o', '--output-file', dest='output_file')
+        parser.add_argument('--order-by', required=False)
         return parser
 
     # Return columns to create in first worksheet. `value' columns are
     # copied directly from source of information, `cell` columns are
     # created to be referenced later in the workbook.
     def get_columns(self, **kwargs):
-        return {
+        id_dict = {
             'Nom': 'raw',
             'Prénom': 'raw',
-            'Courriel': 'raw',
-            self.name: 'cell'
+            'Courriel': 'raw'
         }
+
+        if kwargs.get("order_by") is not None:
+            id_dict[kwargs.get("order_by")] = "raw"
+
+        id_dict[self.name] = "cell"
+
+        return id_dict
 
     def write(self):
         raise NotImplementedError
@@ -420,7 +429,13 @@ class GradeSheetSimpleWriter(GradeSheetWriter):
 
         ref_list = lastname.right()
         max_len = 0
-        for i, (index, record) in enumerate(self.df.iterrows()):
+        if self.args.order_by is not None:
+            df_sort = self.df.reset_index().sort_values(
+                [self.args.order_by, "index"]
+            ).drop("index", axis=1)
+        else:
+            df_sort = self.df
+        for i, (index, record) in enumerate(df_sort.iterrows()):
             max_len = max(max_len, len(record['Nom']), len(record['Prénom']))
 
             lastname = ref_list.right(i)
@@ -568,7 +583,13 @@ questions structurées."""
 
             fit_cells_at_col(last_name, first_name)
 
-        for j, (index, record) in enumerate(self.df.iterrows()):
+        if self.args.order_by is not None:
+            df_sort = self.df.reset_index().sort_values(
+                [self.args.order_by, "index"]
+            ).drop("index", axis=1)
+        else:
+            df_sort = self.df
+        for j, (index, record) in enumerate(df_sort.iterrows()):
             ref_cell = ref_names.right(j).above(2)
             insert_record(ref_cell, record)
 
@@ -633,7 +654,13 @@ class GradeSheetExamMultipleWriter(GradeSheetExamWriter):
             # On fige les colonnes après le barème
             self.gradesheet.freeze_panes = self.gradesheet.cell(1, col+1).coordinate
 
-            for i, (index, record) in enumerate(self.df.iterrows()):
+            if self.args.order_by is not None:
+                df_sort = self.df.reset_index().sort_values(
+                    [self.args.order_by, "index"]
+                ).drop("index", axis=1)
+            else:
+                df_sort = self.df
+            for i, (index, record) in enumerate(df_sort.iterrows()):
                 self.gradesheet.cell(ref[0]-2, col+i+1, record['Nom'])
                 self.gradesheet.cell(ref[0]-1, col+i+1, record['Prénom'])
 
@@ -665,7 +692,13 @@ class GradeSheetExamMultipleWriter(GradeSheetExamWriter):
                             for inst in self.insts]
         non_empty_grades = ", ".join(non_empty_grades)
 
-        for i, (index, record) in enumerate(self.df.iterrows()):
+        if self.args.order_by is not None:
+            df_sort = self.df.reset_index().sort_values(
+                [self.args.order_by, "index"]
+            ).drop("index", axis=1)
+        else:
+            df_sort = self.df
+        for i, (index, record) in enumerate(df_sort.iterrows()):
             formula = "=IF(SUM({0}) = 0, \"\", IF(SUM({0}) = 1, {1}, NA())".format(
                 non_empty_grades.format(
                     utils.get_column_letter(col+i+1).upper(),
@@ -1003,7 +1036,13 @@ class GradeSheetJuryWriter(GradeSheetWriterConfig):
         # On écrit la note des admis uniquement pour le calcul des
         # percentiles
         self.wb.active = self.ws_data
-        for i, (index, record) in enumerate(self.df.iterrows()):
+        if self.args.order_by is not None:
+            df_sort = self.df.reset_index().sort_values(
+                [self.args.order_by, "index"]
+            ).drop("index", axis=1)
+        else:
+            df_sort = self.df
+        for i, (index, record) in enumerate(df_sort.iterrows()):
             record['Note admis'].value = (
                 '=IFERROR(IF({}=1, {}, ""), "")'.format(
                     get_address_of_cell(record['Admis']),
@@ -1013,7 +1052,7 @@ class GradeSheetJuryWriter(GradeSheetWriterConfig):
 
         # On écrit la colonnes des admis/refusés
         self.wb.active = self.ws_data
-        for i, (index, record) in enumerate(self.df.iterrows()):
+        for i, (index, record) in enumerate(df_sort.iterrows()):
             record["Admis"].value = (
                 '=IFERROR(IF(OR({}), NA(), IF(AND({}), 1, 0)), NA())'.format(
                     ", ".join(
@@ -1037,7 +1076,7 @@ class GradeSheetJuryWriter(GradeSheetWriterConfig):
 
         # On écrit la note ECTS en fonction des autres notes
         self.wb.active = self.ws_data
-        for i, (index, record) in enumerate(self.df.iterrows()):
+        for i, (index, record) in enumerate(df_sort.iterrows()):
             record['Note ECTS'].value = (
                 '=IF(ISNA({}), NA(), IF({}="RESERVE", "RESERVE", IF({}="ABS", "ABS", IF({}=0, "F", IF({}>={}, "A", IF({}>={}, "B", IF({}>={}, "C", IF({}>={}, "D", "E"))))))))'.format(
                     get_address_of_cell(record['Admis']),
@@ -1054,7 +1093,7 @@ class GradeSheetJuryWriter(GradeSheetWriterConfig):
                     get_address_of_cell(percentiles_used["D si >="])
                 )
             )
-        for cell in self.df["Note ECTS"]:
+        for cell in df_sort["Note ECTS"]:
             cell.alignment = Alignment(horizontal='center')
 
         range = self.get_column_range('Note ECTS')
