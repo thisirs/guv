@@ -20,7 +20,7 @@ from .utils import (
 from .tasks import CliArgsMixin, UVTask
 from .dodo_students import XlsStudentDataMerge
 from .dodo_instructors import task_xls_affectation
-from .scripts.xls_gradebook import run
+from .gradebook import run
 
 
 class CsvForUpload(CliArgsMixin, UVTask):
