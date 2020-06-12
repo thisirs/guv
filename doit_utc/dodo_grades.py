@@ -23,7 +23,7 @@ from .dodo_instructors import task_xls_affectation
 from .scripts.xls_gradebook import run
 
 
-class TaskCsvForUpload(CliArgsMixin, UVTask):
+class CsvForUpload(CliArgsMixin, UVTask):
     """Fichier csv de notes prêtes à être chargées sur l'ENT.
 
 Crée un fichier csv de notes prêtes à être chargées sur l'ENT. La
