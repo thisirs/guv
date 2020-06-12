@@ -6,6 +6,7 @@ import pandas as pd
 def add_moodle_data(df, fn):
     """Incorpore les données du fichier extrait de Moodle"""
 
+    print("Chargement de données issues de Moodle")
     if fn.endswith('.csv'):
         dfm = pd.read_csv(fn)
     elif fn.endswith('.xlsx') or fn.endswith('.xls'):
@@ -93,6 +94,8 @@ def add_moodle_data(df, fn):
 def add_UTC_data(df, fn):
     'Incorpore les données Cours/TD/TP des inscrits UTC'
 
+    print("Chargement du fichier de répartition des étudiants dans les créneaux")
+
     # Données issues du fichier des affectations au Cours/TD/TP
     dfu = pd.read_csv(fn)
 
@@ -164,6 +167,8 @@ def filter_student(df, pattern):
 
 
 def add_tiers_temps(df, fn):
+    print("Chargement des étudiants bénéficiant d'un tiers-temps")
+
     # Aucun tiers-temps
     df['Tiers-temps'] = False
 
@@ -197,6 +202,8 @@ def add_tiers_temps(df, fn):
 
 
 def add_switches(df, fn, ctype):
+    print(f"Chargement du fichier d'échange de créneaux de {ctype}")
+
     def slug(e):
         return unidecode.unidecode(e.upper().strip())
 
@@ -252,6 +259,8 @@ def add_switches(df, fn, ctype):
 
 
 def add_student_info(df, fn):
+    print("Chargement de renseignements complémentaires sur les étudiants")
+
     df['Info'] = ""
 
     def slug(e):

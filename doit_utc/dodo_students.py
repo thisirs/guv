@@ -104,6 +104,7 @@ class XlsStudentData(UVTask):
 
     def run(self):
         if "extraction_ENT" in self.kwargs:
+            print("Chargement de données issues de l'ENT")
             df = pd.read_csv(self.kwargs["extraction_ENT"], sep="\t", encoding='ISO_8859_1')
 
             # Split information in 2 columns
