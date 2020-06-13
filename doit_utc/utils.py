@@ -189,6 +189,13 @@ def hash_rot_md5(a):
 
 
 def slug_rot(*columns):
+    "Return functions to create primary key columns"
+
+    def slug_rot_transform(e):
+        e0 = unidecode.unidecode(e).lower()
+        e0 = ''.join(e0.split())
+        return hash_rot_md5(e0)
+
     def func(df):
         check_columns(df, columns)
         s = df[list(columns)].apply(
@@ -196,15 +203,11 @@ def slug_rot(*columns):
             axis=1
         )
 
-        def slug_rot_transform(e):
-            e0 = unidecode.unidecode(e).lower()
-            e0 = ''.join(e0.split())
-            return hash_rot_md5(e0)
         s = s.apply(slug_rot_transform)
         s.name = "_".join(columns)
         return s
 
-    return func
+    return slug_rot_transform, func
 
 
 def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset=None, drop=None, rename=None, read_method=None, kw_read={}):
