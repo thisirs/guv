@@ -188,13 +188,16 @@ def hash_rot_md5(a):
     return s0
 
 
-def slug_rot(*columns):
-    "Return functions to create primary key columns"
+def slugrot_string(e):
+    "Rotation-invariant hash on a string"
 
-    def slug_rot_transform(e):
-        e0 = unidecode.unidecode(e).lower()
-        e0 = ''.join(e0.split())
-        return hash_rot_md5(e0)
+    e0 = unidecode.unidecode(e).lower()
+    e0 = ''.join(e0.split())
+    return hash_rot_md5(e0)
+
+
+def slugrot(*columns):
+    "Rotation-invariant hash function on a dataframe"
 
     def func(df):
         check_columns(df, columns)
@@ -203,11 +206,11 @@ def slug_rot(*columns):
             axis=1
         )
 
-        s = s.apply(slug_rot_transform)
+        s = s.apply(slugrot_string)
         s.name = "_".join(columns)
         return s
 
-    return slug_rot_transform, func
+    return func
 
 
 def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset=None, drop=None, rename=None, read_method=None, kw_read={}):

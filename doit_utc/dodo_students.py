@@ -24,7 +24,8 @@ from .utils import (
     taskfailed_on_exception,
     check_columns,
     rel_to_dir,
-    slug_rot
+    slugrot,
+    slugrot_string
 )
 from .tasks import UVTask
 from .scripts.parse_utc_list import parse_UTC_listing
@@ -241,7 +242,7 @@ class XlsStudentDataMerge(UVTask):
         df['Tiers-temps'] = False
 
         # Add column that acts as a primary key
-        tf, tf_df = slug_rot("Nom", "Prénom")
+        tf_df = slugrot("Nom", "Prénom")
         df["fullname_slug"] = tf_df(df)
 
         with open(fn, 'r') as fd:
@@ -253,7 +254,7 @@ class XlsStudentDataMerge(UVTask):
                 if not line:
                     continue
 
-                slugname = tf(line)
+                slugname = slugrot_string(line)
 
                 res = df.loc[df.fullname_slug == slugname]
                 if len(res) == 0:
@@ -267,17 +268,13 @@ class XlsStudentDataMerge(UVTask):
 
     def add_switches(self, ctype):
         def add_switches_ctype(df, fn):
-            def slug(e):
-                return unidecode.unidecode(e.upper().strip())
-
             def swap_record(df, idx1, idx2, col):
-
                 tmp = df.loc[idx1, col]
                 df.loc[idx1, col] = df.loc[idx2, col]
                 df.loc[idx2, col] = tmp
 
             # Add column that acts as a primary key
-            tf, tf_df = slug_rot("Nom", "Prénom")
+            tf_df = slugrot("Nom", "Prénom")
             df["fullname_slug"] = tf_df(df)
             df[f'{ctype}_orig'] = df[ctype]
 
@@ -297,7 +294,7 @@ class XlsStudentDataMerge(UVTask):
                             raise Exception('Nombre d\'enregistrement != 1', len(stu1row), stu1)
                         stu1idx = stu1row.index[0]
                     else:
-                        stu1row = df.loc[df.fullname_slug == tf(stu1)]
+                        stu1row = df.loc[df.fullname_slug == slugrot_string(stu1)]
                         if len(stu1row) != 1:
                             raise Exception('Nombre d\'enregistrement != 1', len(stu1row), stu1)
                         stu1idx = stu1row.index[0]
@@ -311,7 +308,7 @@ class XlsStudentDataMerge(UVTask):
                         stu2idx = stu2row.index[0]
                         swap_record(df, stu1idx, stu2idx, ctype)
                     else:
-                        stu2row = df.loc[df.fullname_slug == tf(stu2)]
+                        stu2row = df.loc[df.fullname_slug == slugrot_string(stu2)]
                         if len(stu2row) != 1:
                             raise Exception('Nombre d\'enregistrement != 1', len(stu2row), stu2)
                         stu2idx = stu2row.index[0]
@@ -326,7 +323,7 @@ class XlsStudentDataMerge(UVTask):
         df['Info'] = ""
 
         # Add column that acts as a primary key
-        tf, tf_df = slug_rot("Nom", "Prénom")
+        tf_df = slugrot("Nom", "Prénom")
         df["fullname_slug"] = tf_df(df)
 
         infos = open(fn, 'r').read()
@@ -338,7 +335,7 @@ class XlsStudentDataMerge(UVTask):
                 etu, *text = chunk.split("\n", maxsplit=1)
                 text = "\n".join(text).strip("\n")
                 text = textwrap.dedent(text)
-                slugname = tf(etu)
+                slugname = slugrot_string(etu)
 
                 res = df.loc[df.fullname_slug == slugname]
                 if len(res) == 0:
