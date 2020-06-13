@@ -1,11 +1,10 @@
 import os
 import re
-import unidecode
 import math
 import random
+import textwrap
 import numpy as np
 import pandas as pd
-import textwrap
 from openpyxl import Workbook
 from openpyxl import utils
 from openpyxl.utils.dataframe import dataframe_to_rows
@@ -167,38 +166,43 @@ class XlsStudentDataMerge(UVTask):
         self.target = generated(XlsStudentDataMerge.target, **self.info)
 
         # Documents to aggregate
-        self.docs = {}
+        self.docs = []
 
         tiers_temps = documents("tiers_temps.raw", **self.info)
         if os.path.exists(tiers_temps):
-            self.docs[tiers_temps] = self.add_tiers_temps
+            self.docs.append((tiers_temps, self.add_tiers_temps))
 
         TD_switches = documents("TD_switches.raw", **info)
         if os.path.exists(TD_switches):
-            self.docs[TD_switches] = self.add_switches("TD")
+            self.docs.append((TD_switches, self.add_switches("TD")))
 
         TP_switches = documents("TP_switches.raw", **info)
         if os.path.exists(TP_switches):
-            self.docs[TP_switches] = self.add_switches("TP")
+            self.docs.append((TP_switches, self.add_switches("TP")))
 
         info_etu = documents("info_étudiants.org", **info)
         if os.path.exists(info_etu):
-            self.docs[info_etu] = self.add_student_info
+            self.docs.append((info_etu, self.add_student_info))
 
         agg_docs = (
             self.settings.AGGREGATE_DOCUMENTS
             if "AGGREGATE_DOCUMENTS" in self.settings
-            else {}
+            else []
         )
-        self.docs.update(agg_docs)
+        if isinstance(agg_docs, list):
+            self.docs = self.docs + agg_docs
+        elif isinstance(agg_docs, dict):
+            self.docs = self.docs + [(key, value) for key, value in agg_docs.items()]
+        else:
+            raise Exception("Format de AGGREGATE_DOCUMENTS incorrect")
 
-        deps = [path for path, _ in self.docs.items()]
+        deps = [path for path, _ in self.docs]
         self.file_dep = deps + [self.student_data]
 
     def run(self):
         df = pd.read_excel(self.student_data)
 
-        for path, aggregater in self.docs.items():
+        for path, aggregater in self.docs:
             if os.path.exists(path):
                 print("Aggregating %s" % rel_to_dir(path, settings.BASE_DIR))
                 df = aggregater(df, path)
