@@ -1,8 +1,11 @@
 import os
+import re
+import unidecode
 import math
 import random
 import numpy as np
 import pandas as pd
+import textwrap
 from openpyxl import Workbook
 from openpyxl import utils
 from openpyxl.utils.dataframe import dataframe_to_rows
@@ -22,15 +25,13 @@ from .utils import (
     taskfailed_on_exception,
     check_columns,
     rel_to_dir,
+    slug_rot
 )
 from .tasks import UVTask
 from .scripts.parse_utc_list import parse_UTC_listing
 from .scripts.add_student_data import (
     add_moodle_data,
     add_UTC_data,
-    add_tiers_temps,
-    add_switches,
-    add_student_info
 )
 
 
@@ -79,25 +80,25 @@ class XlsStudentData(UVTask):
             kw["csv_UTC"] = csv_UTC
             deps.append(csv_UTC)
 
-        tiers_temps = documents("tiers_temps.raw", **info)
-        if os.path.exists(tiers_temps):
-            kw["tiers_temps"] = tiers_temps
-            deps.append(tiers_temps)
+        # tiers_temps = documents("tiers_temps.raw", **info)
+        # if os.path.exists(tiers_temps):
+        #     kw["tiers_temps"] = tiers_temps
+        #     deps.append(tiers_temps)
 
-        TD_switches = documents("TD_switches.raw", **info)
-        if os.path.exists(TD_switches):
-            kw["TD_switches"] = TD_switches
-            deps.append(TD_switches)
+        # TD_switches = documents("TD_switches.raw", **info)
+        # if os.path.exists(TD_switches):
+        #     kw["TD_switches"] = TD_switches
+        #     deps.append(TD_switches)
 
-        TP_switches = documents("TP_switches.raw", **info)
-        if os.path.exists(TP_switches):
-            kw["TP_switches"] = TP_switches
-            deps.append(TP_switches)
+        # TP_switches = documents("TP_switches.raw", **info)
+        # if os.path.exists(TP_switches):
+        #     kw["TP_switches"] = TP_switches
+        #     deps.append(TP_switches)
 
-        info_etu = documents("info_étudiants.org", **info)
-        if os.path.exists(info_etu):
-            kw['info_étudiants'] = info_etu
-            deps.append(info_etu)
+        # info_etu = documents("info_étudiants.org", **info)
+        # if os.path.exists(info_etu):
+        #     kw['info_étudiants'] = info_etu
+        #     deps.append(info_etu)
 
         self.file_dep = deps
         self.kwargs = kw
@@ -136,17 +137,17 @@ class XlsStudentData(UVTask):
             elif fn.endswith('.xlsx') or fn.endswith('.xls'):
                 df = pd.read_excel(fn)
 
-        if "tiers_temps" in self.kwargs:
-            df = add_tiers_temps(df, self.kwargs["tiers_temps"])
+        # if "tiers_temps" in self.kwargs:
+        #     df = add_tiers_temps(df, self.kwargs["tiers_temps"])
 
-        if "TD_switches" in self.kwargs:
-            df = add_switches(df, self.kwargs["TD_switches"], "TD")
+        # if "TD_switches" in self.kwargs:
+        #     df = add_switches(df, self.kwargs["TD_switches"], "TD")
 
-        if "TP_switches" in self.kwargs:
-            df = add_switches(df, self.kwargs["TP_switches"], "TP")
+        # if "TP_switches" in self.kwargs:
+        #     df = add_switches(df, self.kwargs["TP_switches"], "TP")
 
-        if "info_étudiants" in self.kwargs:
-            df = add_student_info(df, self.kwargs["info_étudiants"])
+        # if "info_étudiants" in self.kwargs:
+        #     df = add_student_info(df, self.kwargs["info_étudiants"])
 
         dff = df.sort_values(["Nom", "Prénom"])
 
@@ -165,11 +166,32 @@ class XlsStudentDataMerge(UVTask):
         self.student_data = generated(XlsStudentData.target, **self.info)
         self.target = generated(XlsStudentDataMerge.target, **self.info)
 
-        self.docs = (
+        # Documents to aggregate
+        self.docs = {}
+
+        tiers_temps = documents("tiers_temps.raw", **self.info)
+        if os.path.exists(tiers_temps):
+            self.docs[tiers_temps] = self.add_tiers_temps
+
+        TD_switches = documents("TD_switches.raw", **info)
+        if os.path.exists(TD_switches):
+            self.docs[TD_switches] = self.add_switches("TD")
+
+        TP_switches = documents("TP_switches.raw", **info)
+        if os.path.exists(TP_switches):
+            self.docs[TP_switches] = self.add_switches("TP")
+
+        info_etu = documents("info_étudiants.org", **info)
+        if os.path.exists(info_etu):
+            self.docs[info_etu] = self.add_student_info
+
+        agg_docs = (
             self.settings.AGGREGATE_DOCUMENTS
             if "AGGREGATE_DOCUMENTS" in self.settings
             else {}
         )
+        self.docs.update(agg_docs)
+
         deps = [path for path, _ in self.docs.items()]
         self.file_dep = deps + [self.student_data]
 
@@ -209,6 +231,121 @@ class XlsStudentDataMerge(UVTask):
         target = os.path.splitext(self.target)[0] + ".csv"
         with Output(target) as target:
             dff.to_csv(target(), index=False)
+
+    def add_tiers_temps(self, df, fn):
+        # Aucun tiers-temps
+        df['Tiers-temps'] = False
+
+        # Add column that acts as a primary key
+        tf, tf_df = slug_rot("Nom", "Prénom")
+        df["fullname_slug"] = tf_df(df)
+
+        with open(fn, 'r') as fd:
+            for line in fd:
+                # Saute commentaire ou ligne vide
+                line = line.strip()
+                if line.startswith('#'):
+                    continue
+                if not line:
+                    continue
+
+                slugname = tf(line)
+
+                res = df.loc[df.fullname_slug == slugname]
+                if len(res) == 0:
+                    raise Exception('Pas de correspondance pour `{:s}`'.format(line))
+                elif len(res) > 1:
+                    raise Exception('Plusieurs correspondances pour `{:s}`'.format(line))
+                df.loc[res.index[0], 'Tiers-temps'] = True
+
+        df = df.drop('fullname_slug', axis=1)
+        return df
+
+    def add_switches(self, ctype):
+        def add_switches_ctype(df, fn):
+            def slug(e):
+                return unidecode.unidecode(e.upper().strip())
+
+            def swap_record(df, idx1, idx2, col):
+
+                tmp = df.loc[idx1, col]
+                df.loc[idx1, col] = df.loc[idx2, col]
+                df.loc[idx2, col] = tmp
+
+            # Add column that acts as a primary key
+            tf, tf_df = slug_rot("Nom", "Prénom")
+            df["fullname_slug"] = tf_df(df)
+            df[f'{ctype}_orig'] = df[ctype]
+
+            with open(fn, 'r') as fd:
+                for line in fd:
+                    if line.strip().startswith('#'):
+                        continue
+                    if not line.strip():
+                        continue
+
+                    stu1, stu2, *t = [e.strip() for e in line.split('---')]
+                    assert len(t) == 0
+
+                    if '@etu' in stu1:
+                        stu1row = df.loc[df['Courriel'] == stu1]
+                        if len(stu1row) != 1:
+                            raise Exception('Nombre d\'enregistrement != 1', len(stu1row), stu1)
+                        stu1idx = stu1row.index[0]
+                    else:
+                        stu1row = df.loc[df.fullname_slug == tf(stu1)]
+                        if len(stu1row) != 1:
+                            raise Exception('Nombre d\'enregistrement != 1', len(stu1row), stu1)
+                        stu1idx = stu1row.index[0]
+
+                    if re.match('^[TD][0-9]+', stu2):
+                        df.loc[stu1idx, ctype] = stu2
+                    elif '@etu' in stu2:
+                        stu2row = df.loc[df['Courriel'] == stu2]
+                        if len(stu2row) != 1:
+                            raise Exception('Nombre d\'enregistrement != 1', len(stu2row), stu2)
+                        stu2idx = stu2row.index[0]
+                        swap_record(df, stu1idx, stu2idx, ctype)
+                    else:
+                        stu2row = df.loc[df.fullname_slug == tf(stu2)]
+                        if len(stu2row) != 1:
+                            raise Exception('Nombre d\'enregistrement != 1', len(stu2row), stu2)
+                        stu2idx = stu2row.index[0]
+                        swap_record(df, stu1idx, stu2idx, ctype)
+
+            df = df.drop('fullname_slug', axis=1)
+            return df
+
+        return add_switches_ctype
+
+    def add_student_info(self, df, fn):
+        df['Info'] = ""
+
+        # Add column that acts as a primary key
+        tf, tf_df = slug_rot("Nom", "Prénom")
+        df["fullname_slug"] = tf_df(df)
+
+        infos = open(fn, 'r').read()
+        if infos:
+            for chunk in re.split("^\\* *", infos, flags=re.MULTILINE):
+                if not chunk:
+                    continue
+
+                etu, *text = chunk.split("\n", maxsplit=1)
+                text = "\n".join(text).strip("\n")
+                text = textwrap.dedent(text)
+                slugname = tf(etu)
+
+                res = df.loc[df.fullname_slug == slugname]
+                if len(res) == 0:
+                    raise Exception('Pas de correspondance pour `{:s}`'.format(etu))
+                elif len(res) > 1:
+                    raise Exception('Plusieurs correspondances pour `{:s}`'.format(etu))
+
+                df.loc[res.index[0], 'Info'] = text
+
+        df = df.drop('fullname_slug', axis=1)
+        return df
 
 
 @actionfailed_on_exception
