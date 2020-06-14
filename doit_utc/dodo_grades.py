@@ -1,3 +1,9 @@
+"""
+Fichier qui regroupe des tâches liées aux notes: chargement de notes
+numériques ou ECTS sur l'ENT, fichier Excel avec barème, fichier Excel
+pour faire un jury.
+"""
+
 import os
 import sys
 import numpy as np

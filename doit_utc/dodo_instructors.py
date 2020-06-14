@@ -1,3 +1,9 @@
+"""
+Fichier qui regroupe des tâches de gestion des intervenants au sein
+d'une UV : fichier Excel du nombre d'heures théoriques, décompte des
+heures remplacées.
+"""
+
 import os
 import re
 import pandas as pd

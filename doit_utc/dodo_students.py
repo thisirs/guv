@@ -1,3 +1,8 @@
+"""
+Fichier qui regroupe des tâches de création d'un fichier Excel sur
+l'effectif d'une UV.
+"""
+
 import os
 import re
 import math

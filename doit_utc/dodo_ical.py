@@ -1,3 +1,8 @@
+"""
+Fichier qui regroupe des tâches de génération de fichiers ICal des
+créneaux d'une UV ou d'un intervenant.
+"""
+
 import os
 import glob
 import tempfile

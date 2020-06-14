@@ -1,3 +1,13 @@
+"""
+Fichier qui regroupe des tâches pour interagir avec Moodle : création
+de fichiers de groupes officiels de Cours/TD/TP où aléatoires
+(binômes, trinômes par groupes) prêt à charger, descriptif de l'UV et
+des intervenants sous forme de code HTML à copier-coller dans Moodle,
+tableau des créneaux de l'UV sous forme de tableau HTML, création de
+fichier Json pour copier-coller des restrictions d'accès en fonction
+de l'appartenance à un groupe.
+"""
+
 import os
 import math
 import random

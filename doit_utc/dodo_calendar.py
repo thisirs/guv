@@ -1,3 +1,8 @@
+"""
+Fichier qui regroupe des tâches liées à la génération de calendrier
+par semaine d'une UV ou d'un intervenant.
+"""
+
 import os
 import re
 import pandas as pd

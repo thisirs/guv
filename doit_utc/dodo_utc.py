@@ -1,3 +1,8 @@
+"""
+Fichier qui regroupe les tâches de création des créneaux officiels de
+Cours/TD/TP.
+"""
+
 import os
 import re
 import numpy as np

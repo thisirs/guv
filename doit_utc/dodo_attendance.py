@@ -1,3 +1,8 @@
+"""
+Fichier qui regroupe les tâches liées à la création de fiches de
+présence.
+"""
+
 import os
 import re
 import zipfile

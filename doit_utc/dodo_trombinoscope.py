@@ -1,3 +1,8 @@
+"""
+Fichier qui regroupe des tâches de création de trombinoscopes en
+fonction de groupes de Cours/TD/TP ou de projet.
+"""
+
 import os
 import hashlib
 import shutil
