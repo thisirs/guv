@@ -45,7 +45,6 @@ def run_doit(args):
 
 
 def create_uv_dirs(base_dir, uvs):
-    print(uvs)
     for uv in uvs:
         uv_dir = os.path.join(base_dir, uv)
         doc_dir = os.path.join(uv_dir, "documents")
