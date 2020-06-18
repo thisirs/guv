@@ -23,7 +23,6 @@ import markdown
 from .config import settings
 from .utils import (
     Output,
-    add_templates,
     documents,
     generated,
     selected_uv,
@@ -52,14 +51,21 @@ DATE_FORMAT = "%Y-%m-%d"
 TIME_FORMAT = "%H:%M"
 
 
-@add_templates(target="intervenants.html")
-def task_html_inst():
+class HtmlInst(UVTask):
     "Génère la description des intervenants pour Moodle"
 
-    def html_inst(xls_uv, xls_details, target):
-        df_uv = pd.read_excel(xls_uv)
+    target = "intervenants.html"
+
+    def __init__(self, uv, planning, info):
+        super().__init__(uv, planning, info)
+        self.insts_details = documents("intervenants.xlsx")
+        self.insts_uv = documents(task_xls_affectation.target, **info)
+        self.target = generated(HtmlInst.target, **info)
+
+    def run(self):
+        df_uv = pd.read_excel(self.insts_uv)
         df_uv = create_insts_list(df_uv)
-        df_details = read_xls_details(xls_details)
+        df_details = read_xls_details(self.insts_details)
 
         # Add details from df_details
         df = df_uv.merge(
@@ -97,25 +103,9 @@ def task_html_inst():
         md = template.render(insts=insts, contact=contact)
         html = markdown.markdown(md)
 
-        with Output(target) as target:
+        with Output(self.target) as target:
             with open(target(), "w") as fd:
                 fd.write(html)
-
-    insts_details = documents("intervenants.xlsx")
-    jinja_dir = os.path.join(os.path.dirname(__file__), "templates")
-    template = os.path.join(jinja_dir, "instructors.html.jinja2")
-
-    for planning, uv, info in selected_uv():
-        insts_uv = documents(task_xls_affectation.target, **info)
-        target = generated(task_html_inst.target, **info)
-
-        yield {
-            "name": f"{planning}_{uv}",
-            "file_dep": [insts_uv, insts_details, template],
-            "targets": [target],
-            "actions": [(html_inst, [insts_uv, insts_details, target])],
-            "verbosity": 2,
-        }
 
 
 class HtmlTable(UVTask, CliArgsMixin):
