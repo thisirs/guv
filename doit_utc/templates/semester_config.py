@@ -2,8 +2,8 @@
 
 
 import os
-from doit_utc.utils import skip_week, skip_range
 from datetime import date
+from doit_utc.utils import skip_week, skip_range
 
 BASE_DIR = os.path.dirname(__file__)
 
@@ -42,7 +42,8 @@ vacances_printemps = skip_range(date(2020, 4, 13), date(2020, 4, 18))
 # Semaine des finals
 final = skip_range(date(2020, 6, 19), date(2020, 6, 27))
 
-# Jours changés
+
+# Dictionnaire des journées qui sont changées en d'autres jours
 TURN = {
     date(2020, 5, 4): 'Vendredi',
     date(2020, 5, 12): 'Vendredi',
@@ -50,11 +51,13 @@ TURN = {
     date(2020, 6, 4): 'Lundi'
 }
 
-# Jours sautés pour Cours/TD/TP
+# Liste des journées où il n'y a pas Cours/TD/TP
 SKIP_DAYS_C = ferie + vacances_printemps + median + final
 SKIP_DAYS_D = ferie + vacances_printemps + debut + median + final
 SKIP_DAYS_T = ferie + vacances_printemps + debut + final
 
+# Configuration du chemin de la base de données de doit et des tâches
+# par défault à exécuter dans le dossier du semestre.
 DOIT_CONFIG = {
     'dep_file': os.path.join(BASE_DIR, '.doit.db'),
     "default_tasks": ["utc_uv_list_to_csv"]

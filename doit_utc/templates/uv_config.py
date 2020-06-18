@@ -29,14 +29,24 @@ ENT_LISTING = document("extraction_enseig_note.XLS")
 # Listing fourni par
 AFFECTATION_LISTING = document("inscrits_boufflet.txt")
 
-# Documents supplémentaires à agréger au fichier Excel
-AGGREGATE_DOCUMENTS = {
-    generated("final_groups.csv"): aggregate(
-        left_on="Courriel",
-        right_on="Courriel",
-        kw_read={"names": ["Courriel", "group"]}
+# Documents supplémentaires à agréger au fichier Excel de l'UV. C'est
+# une liste de couples. Chaque couple est composé du chemin du fichier
+# à agréger et d'une fonction qui réalise l'agrégation. Cette fonction
+# prend en argument un DataFrame existant ainsi que le chemin du
+# fichier à agréger et renvoie le DataFrame mis à jour. Une fonction
+# d'aide AGGREGATE est disponible qui renvoie des fonctions classiques
+# d'agrégation.
+AGGREGATE_DOCUMENTS = [
+    (
+        generated("final_groups.csv"),
+        aggregate(
+            left_on="Courriel",
+            right_on="Courriel",
+            kw_read={"names": ["Courriel", "group"]},
+        ),
     )
-}
+]
+
 
 
 # Identifiant Moodle des différents groupes créés sur la page SY02
