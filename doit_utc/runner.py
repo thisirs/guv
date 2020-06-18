@@ -91,7 +91,7 @@ def main():
             parser = argparse.ArgumentParser()
             parser.add_argument("createsemester")
             parser.add_argument("semester")
-            parser.add_argument("--uv", nargs="+")
+            parser.add_argument("--uv", nargs="*", default=[])
             args = parser.parse_args()
             base_dir = os.path.join(os.getcwd(), args.semester)
             doc_dir = os.path.join(base_dir, "documents")
