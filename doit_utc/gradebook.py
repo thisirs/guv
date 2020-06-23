@@ -790,7 +790,10 @@ class GradeSheetSimpleGroup(GradeSheetSimpleWriter):
                     add_worksheet_name=True
                 )
                 if self.grade_type == "num":
-                    formula = "=%s+%s" % (grade_addr, grademod_addr)
+                    formula = "=IF(ISBLANK({0}), \"\", {0}+{1})".format(
+                        grade_addr,
+                        grademod_addr
+                    )
                     record[self.name].value = formula
                 elif self.grade_type == "sym":
                     formula = "=IF(ISBLANK(%s),IF(ISBLANK(%s),\"\", %s),%s)" % (
