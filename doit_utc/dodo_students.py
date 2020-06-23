@@ -203,7 +203,7 @@ class XlsStudentDataMerge(UVTask):
             raise Exception("Format de AGGREGATE_DOCUMENTS incorrect")
 
         deps = [path for path, _ in self.docs]
-        self.file_dep = deps + [self.student_data]
+        self.file_dep = deps + [self.student_data] + settings.config_files
 
     def run(self):
         df = pd.read_excel(self.student_data)
