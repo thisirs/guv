@@ -313,7 +313,7 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
             key = right_on
 
         for index, row in merged_df_ro.iterrows():
-            print("WARNING: key not found: ", row[key])
+            print("WARNING: identifiant présent dans le document à aggréger mais introuvable dans la base de données :", row[key])
 
         # Try to merge columns
         for c in duplicated_columns:
