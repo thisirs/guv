@@ -464,6 +464,8 @@ Les restrictions se font par adresse email.
 class CsvCreateGroups(UVTask, CliArgsMixin):
     "Création de groupes prêt à charger sous Moodle"
 
+    always_make = True
+
     cli_args = (
         argument("title", help="Nom associé à l'ensemble des groupes créés"),
         argument(
@@ -477,7 +479,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             "--global",
             dest="global_",
             action="store_true",
-            help="Utilisation des noms",
+            help="Remettre à zéro la suite des noms de sous-groupes",
         ),
         argument(
             "-r",
@@ -610,10 +612,15 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                 yield self.make_groups(name, df_group, name_gen)
 
         s_groups = pd.concat(df_gen())
-        df = pd.concat((df["Courriel"], s_groups), axis=1)
+        df_out = pd.concat((df["Courriel"], s_groups), axis=1)
 
         with Output(self.targets[0]) as target:
-            df.to_csv(target(), index=False, header=False)
+            df_out.to_csv(target(), index=False, header=False)
+
+        df_groups = pd.DataFrame({"groupname": df["Login"], 'groupingname': s_groups})
+        csv_target = os.path.splitext(self.targets[0])[0] + '_secret.csv'
+        with Output(csv_target) as target:
+            df_groups.to_csv(target(), index=False)
 
     def make_groups(self, name, df, name_gen):
         """Faire des groupes avec le dataframe `df` nommé `name`"""
