@@ -409,7 +409,7 @@ def task_csv_exam_groups():
 
 @actionfailed_on_exception
 def task_csv_groups():
-    """Fichiers csv des groupes de Cours/TD/TP pour Moodle
+    """Fichiers csv des groupes de Cours/TD/TP/singleton pour Moodle
 
 Crée des fichiers csv pour chaque UV sélectionnées"""
 
@@ -417,15 +417,21 @@ Crée des fichiers csv pour chaque UV sélectionnées"""
     def csv_groups(target, xls_merge, ctype):
         df = pd.read_excel(xls_merge)
 
-        check_columns(df, ctype, file=XlsStudentDataMerge.target)
-        dff = df[["Courriel", ctype]]
+        if ctype == "singleton":
+            dff = df[["Courriel", "Login"]]
 
-        with Output(target) as target:
-            dff.to_csv(target(), index=False, header=False)
+            with Output(target) as target:
+                dff.to_csv(target(), index=False, header=False)
+        else:
+            check_columns(df, ctype, file=XlsStudentDataMerge.target)
+            dff = df[["Courriel", ctype]]
+
+            with Output(target) as target:
+                dff.to_csv(target(), index=False, header=False)
 
     args = parse_args(
         task_csv_groups,
-        argument('-g', '--groups', nargs='*', default=["Cours", "TD", "TP"], help="Liste des groupements à considérer")
+        argument('-g', '--groups', nargs='*', default=["Cours", "TD", "TP", "singleton"], help="Liste des groupements à considérer")
     )
 
     for planning, uv, info in selected_uv():
