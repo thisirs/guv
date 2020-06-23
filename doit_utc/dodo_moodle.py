@@ -397,21 +397,35 @@ basées sur le début/fin des séances."""
                 print(s, file=fd)
 
 
-@actionfailed_on_exception
-def task_json_group():
+class JsonGroup(UVTask, CliArgsMixin):
     """Fichier json des restrictions d'accès aux ressources sur Moodle.
 
 Les restrictions se font par adresse email.
 """
 
-    @taskfailed_on_exception
-    def json_group(target, xls_merge, colname):
-        df = pd.read_excel(xls_merge)
+    cli_args = (
+        argument(
+            "-g",
+            "--group",
+            required=True,
+            help="Nom de la colonne réalisant un groupement",
+        ),
+    )
 
-        check_columns(df, colname, file=XlsStudentDataMerge.target)
-        dff = df[["Adresse de courriel", colname]]
+    def __init__(self, planning, uv, info):
+        super().__init__(planning, uv, info)
 
-        # Dictionnary of group in COLNAME and corresponding Cond
+        self.xls_merge = generated(XlsStudentDataMerge.target, **info)
+        self.target = generated(f"{self.group}_group_moodle.json", **info)
+        self.file_dep = [self.xls_merge]
+
+    def run(self):
+        df = pd.read_excel(self.xls_merge)
+
+        check_columns(df, self.group, file=self.xls_merge)
+        dff = df[["Adresse de courriel", self.group]]
+
+        # Dictionnary of group in GROUP and corresponding Cond
         # object for that group.
         json_dict = {
             group_name: CondOr(
@@ -420,10 +434,10 @@ Les restrictions se font par adresse email.
                     for index, row in group.iterrows()
                 ]
             ).to_PHP()
-            for group_name, group in dff.groupby(colname)
+            for group_name, group in dff.groupby(self.group)
         }
 
-        with Output(target, protected=True) as target:
+        with Output(self.target, protected=True) as target:
             with open(target(), "w") as fd:
                 s = (
                     "{\n"
@@ -437,28 +451,6 @@ Les restrictions se font par adresse email.
                     + "\n}"
                 )
                 print(s, file=fd)
-
-    args = parse_args(
-        task_json_group,
-        argument(
-            "-g",
-            "--group",
-            required=True,
-            help="Nom de la colonne réalisant un groupement",
-        ),
-    )
-
-    for planning, uv, info in selected_uv():
-        deps = [generated(XlsStudentDataMerge.target, **info)]
-        target = generated(f"{args.group}_group_moodle.json", **info)
-
-        yield {
-            "name": f"{planning}_{uv}_{args.group}",
-            "actions": [(json_group, [target, deps[0], args.group])],
-            "file_dep": deps,
-            "targets": [target],
-            "verbosity": 2,
-        }
 
 
 class CsvCreateGroups(UVTask, CliArgsMixin):

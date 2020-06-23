@@ -32,7 +32,7 @@ from .utils import (
     slugrot,
     slugrot_string
 )
-from .tasks import UVTask
+from .tasks import UVTask, CliArgsMixin
 from .scripts.parse_utc_list import parse_UTC_listing
 from .scripts.add_student_data import (
     add_moodle_data,
@@ -354,99 +354,106 @@ class XlsStudentDataMerge(UVTask):
         return df
 
 
-@actionfailed_on_exception
-def task_csv_exam_groups():
+class CsvExamGroups(UVTask, CliArgsMixin):
     """Fichier csv des demi-groupe de TP pour le passage des examens de TP."""
 
-    @taskfailed_on_exception
-    def csv_exam_groups(target, target_moodle, xls_merge, tp_col, tiers_temps_col):
-        df = pd.read_excel(xls_merge)
+    cli_args = (
+        argument(
+            "-t",
+            "--tiers-temps",
+            required=False,
+            default="Tiers-temps",
+            help="Nom de la colonne des tiers-temps",
+        ),
+        argument(
+            "-p",
+            "--tp",
+            required=False,
+            default="TP",
+            help="Nom de la colonne pour réaliser un groupement",
+        ),
+    )
+
+    def __init__(self, planning, uv, info):
+        super().__init__(planning, uv, info)
+
+        self.xls_merge = generated(XlsStudentDataMerge.target, **info)
+        self.target = generated("exam_groups.csv", **info)
+        self.target_moodle = generated("exam_groups_moodle.csv", **info)
+        self.file_dep = [self.xls_merge]
+
+    def run(self):
+        df = pd.read_excel(self.xls_merge)
 
         def exam_split(df):
-            if tiers_temps_col in df.columns:
-                dff = df.sort_values(tiers_temps_col, ascending=False)
+            if self.tiers_temps_col in df.columns:
+                dff = df.sort_values(self.tiers_temps, ascending=False)
             else:
                 dff = df
             n = len(df.index)
             m = math.ceil(n / 2)
-            sg1 = dff.iloc[:m, :][tp_col] + "i"
-            sg2 = dff.iloc[m:, :][tp_col] + "ii"
+            sg1 = dff.iloc[:m, :][self.tp] + "i"
+            sg2 = dff.iloc[m:, :][self.tp] + "ii"
             dff["TPE"] = pd.concat([sg1, sg2])
             return dff
 
-        check_columns(df, [tp_col, tiers_temps_col], file=xls_merge)
+        check_columns(df, [self.tp, self.tiers_temps], file=self.xls_merge)
 
-        dff = df.groupby(tp_col, group_keys=False).apply(exam_split)
+        dff = df.groupby(self.tp, group_keys=False).apply(exam_split)
         if 'Adresse de courriel' in dff.columns:
             dff = dff[["Adresse de courriel", "TPE"]]  # Prefer moodle email
         else:
             dff = dff[["Courriel", "TPE"]]
 
-        with Output(target) as target0:
+        with Output(self.target) as target0:
             dff.to_csv(target0(), index=False)
 
-        with Output(target_moodle) as target:
+        with Output(self.target_moodle) as target:
             dff.to_csv(target(), index=False, header=False)
 
-    args = parse_args(
-        task_csv_exam_groups,
-        argument('-t', '--tiers-temps', required=False, default='Tiers-temps', help="Nom de la colonne des tiers-temps"),
-        argument('-p', '--tp', required=False, default='TP', help="Nom de la colonne pour réaliser un groupement"),
-    )
 
-    planning, uv, info = get_unique_uv()
-    deps = [generated(XlsStudentDataMerge.target, **info)]
-    target = generated("exam_groups.csv", **info)
-    target_moodle = generated("exam_groups_moodle.csv", **info)
-
-    return {
-        "actions": [(csv_exam_groups, [target, target_moodle, deps[0], args.tp, args.tiers_temps])],
-        "file_dep": deps,
-        "targets": [target_moodle],
-        "verbosity": 2,
-    }
-
-
-@actionfailed_on_exception
-def task_csv_groups():
+class CsvGroups(UVTask, CliArgsMixin):
     """Fichiers csv des groupes de Cours/TD/TP/singleton pour Moodle
 
 Crée des fichiers csv pour chaque UV sélectionnées"""
 
-    @taskfailed_on_exception
-    def csv_groups(target, xls_merge, ctype):
-        df = pd.read_excel(xls_merge)
-
-        if ctype == "singleton":
-            dff = df[["Courriel", "Login"]]
-
-            with Output(target) as target:
-                dff.to_csv(target(), index=False, header=False)
-        else:
-            check_columns(df, ctype, file=XlsStudentDataMerge.target)
-            dff = df[["Courriel", ctype]]
-
-            with Output(target) as target:
-                dff.to_csv(target(), index=False, header=False)
-
-    args = parse_args(
-        task_csv_groups,
-        argument('-g', '--groups', nargs='*', default=["Cours", "TD", "TP", "singleton"], help="Liste des groupements à considérer")
+    cli_args = (
+        argument(
+            "-g",
+            "--groups",
+            nargs="*",
+            default=["Cours", "TD", "TP", "singleton"],
+            help="Liste des groupements à considérer",
+        ),
     )
 
-    for planning, uv, info in selected_uv():
-        deps = [generated(XlsStudentDataMerge.target, **info)]
+    def __init__(self, planning, uv, info):
+        super().__init__(planning, uv, info)
 
-        for ctype in args.groups:
-            target = generated(f"{ctype}_group_moodle.csv", **info)
+        self.xls_merge = generated(XlsStudentDataMerge.target, **info)
+        self.targets = [
+            generated(f"{ctype}_group_moodle.csv", **info)
+            for ctype in self.groups
+        ]
+        self.file_dep = [self.xls_merge]
 
-            yield {
-                "name": f"{planning}_{uv}_{ctype}",
-                "actions": [(csv_groups, [target, deps[0], ctype])],
-                "file_dep": deps,
-                "targets": [target],
-                "verbosity": 2,
-            }
+    def run(self):
+        df = pd.read_excel(self.xls_merge)
+
+        for ctype in self.groups:
+            target = generated(f"{ctype}_group_moodle.csv", **self.info)
+
+            if ctype == "singleton":
+                dff = df[["Courriel", "Login"]]
+
+                with Output(target) as target:
+                    dff.to_csv(target(), index=False, header=False)
+            else:
+                check_columns(df, ctype, file=XlsStudentDataMerge.target)
+                dff = df[["Courriel", ctype]]
+
+                with Output(target) as target:
+                    dff.to_csv(target(), index=False, header=False)
 
 
 @actionfailed_on_exception
@@ -605,31 +612,64 @@ def task_csv_moodle_groups():
         # avoid circular dep
     }
 
-@actionfailed_on_exception
-def task_csv_groups_groupings():
+
+class CsvGroupsGroupings(UVTask, CliArgsMixin):
     """Fichier csv de noms de groupes et groupements à charger sur Moodle.
 
     Il faut spécifier le nombre de groupes dans chaque groupement et le
     nombre de groupements.
     """
 
-    def csv_groups_groupings(target, ngroups, ngroupings, ngroupsf, ngroupingsf):
+    cli_args = (
+        argument(
+            "-g",
+            type=int,
+            dest="ngroups",
+            required=True,
+            help="Nombre de groupes dans chaque groupement",
+        ),
+        argument(
+            "-f",
+            dest="ngroupsf",
+            default="D##_P1_@",
+            help="Format du nom de groupe (defaut: %(default)s)",
+        ),
+        argument(
+            "-G",
+            dest="ngroupings",
+            type=int,
+            required=True,
+            help="Nombre de groupements",
+        ),
+        argument(
+            "-F",
+            dest="ngroupingsf",
+            default="D##_P1",
+            help="Format du nom de groupement (defaut: %(default)s)",
+        ),
+    )
+
+    def __init__(self, planning, uv, info):
+        super().__init__(planning, uv, info)
+        self.target = generated(f"groups_groupings.csv", **info)
+
+    def run(self):
         letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        ngroupings = min(26, ngroupings)
-        ngroups = min(26, ngroups)
+        ngroupings = min(26, self.ngroupings)
+        ngroups = min(26, self.ngroups)
 
         groups = []
         groupings = []
         for G in range(ngroupings):
             grouping_letter = letters[G]
             grouping_number = str(G + 1)
-            grouping = (ngroupingsf
+            grouping = (self.ngroupingsf
                         .replace("@@", grouping_letter)
                         .replace("##", grouping_number))
             for g in range(ngroups):
                 group_letter = letters[g]
                 group_number = str(g + 1)
-                group = (ngroupsf
+                group = (self.ngroupsf
                          .replace("@@", grouping_letter)
                          .replace("##", grouping_number)
                          .replace("@", group_letter)
@@ -638,28 +678,6 @@ def task_csv_groups_groupings():
                 groups.append(group)
                 groupings.append(grouping)
 
-        df_groups = pd.DataFrame({"groupname": groups, 'groupingname': groupings})
-        with Output(target, protected=True) as target:
+        df_groups = pd.DataFrame({"groupname": groups, 'groupingname': self.groupings})
+        with Output(self.target, protected=True) as target:
             df_groups.to_csv(target(), index=False)
-
-    args = parse_args(
-        task_csv_groups_groupings,
-        argument('-g', type=int, required=True, help="Nombre de groupes dans chaque groupement"),
-        argument('-f',
-                 default="D##_P1_@",
-                 help="Format du nom de groupe (defaut: %(default)s)"),
-        argument('-G', type=int, required=True, help="Nombre de groupements"),
-        argument('-F',
-                 default="D##_P1",
-                 help="Format du nom de groupement (defaut: %(default)s)")
-    )
-
-    planning, uv, info = get_unique_uv()
-    target = generated(f"groups_groupings.csv", **info)
-
-    return {
-        "targets": [target],
-        "actions": [(csv_groups_groupings,
-                     [target, args.g, args.G, args.f, args.F])],
-    }
-
