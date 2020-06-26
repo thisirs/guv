@@ -202,14 +202,17 @@ class XlsStudentDataMerge(UVTask):
         else:
             raise Exception("Format de AGGREGATE_DOCUMENTS incorrect")
 
-        deps = [path for path, _ in self.docs]
+        deps = [path for path, _ in self.docs if path is not None]
         self.file_dep = deps + [self.student_data] + settings.config_files
 
     def run(self):
         df = pd.read_excel(self.student_data)
 
         for path, aggregater in self.docs:
-            if os.path.exists(path):
+            if path is None:
+                print("File is None, aggregating without file")
+                df = aggregater(df, None)
+            elif os.path.exists(path):
                 print("Aggregating %s" % rel_to_dir(path, settings.BASE_DIR))
                 df = aggregater(df, path)
             else:
