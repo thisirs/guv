@@ -30,7 +30,8 @@ from .utils import (
     check_columns,
     rel_to_dir,
     slugrot,
-    slugrot_string
+    slugrot_string,
+    sort_values
 )
 from .tasks import UVTask, CliArgsMixin
 from .scripts.parse_utc_list import parse_UTC_listing
@@ -154,7 +155,7 @@ class XlsStudentData(UVTask):
         # if "info_étudiants" in self.kwargs:
         #     df = add_student_info(df, self.kwargs["info_étudiants"])
 
-        dff = df.sort_values(["Nom", "Prénom"])
+        dff = sort_values(df, ["Nom", "Prénom"])
 
         with Output(self.target) as target:
             dff.to_excel(target(), index=False)
@@ -218,7 +219,7 @@ class XlsStudentDataMerge(UVTask):
             else:
                 print("WARNING: File %s not found!" % rel_to_dir(path, settings.BASE_DIR))
 
-        dff = df.sort_values(["Nom", "Prénom"])
+        dff = sort_values(df, ["Nom", "Prénom"])
 
         wb = Workbook()
         ws = wb.active

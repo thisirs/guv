@@ -24,6 +24,7 @@ from .utils import (
     escape_tex,
     argument,
     check_columns,
+    sort_values
 )
 from .dodo_students import XlsStudentDataMerge
 from .tasks import UVTask, CliArgsMixin
@@ -156,7 +157,7 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
                     group["title"] = name
 
                 rows = []
-                dfs = df_group.sort_values(["Nom", "Prénom"])
+                dfs = sort_values(df_group, ["Nom", "Prénom"])
                 # Grouper par WIDTH sur une ligne si plus de WIDTH
                 for _, df_row in dfs.groupby(np.arange(len(df_group.index)) // self.width):
                     cells = []

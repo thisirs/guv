@@ -14,7 +14,8 @@ from .utils import (
     documents,
     generated,
     argument,
-    Output
+    Output,
+    sort_values
 )
 from .tasks import UVTask, CliArgsMixin
 from .dodo_instructors import task_xls_affectation, task_add_instructors

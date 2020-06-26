@@ -22,6 +22,7 @@ from .utils import (
     parse_args,
     argument,
     check_columns,
+    sort_values
 )
 from .tasks import CliArgsMixin, UVTask
 from .dodo_students import XlsStudentDataMerge
@@ -112,7 +113,7 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
 
         df0 = pd.DataFrame(cols, columns=col_names)
         df0 = df0[col_names]
-        df0 = df0.sort_values(["Nom", "Prénom"])
+        df0 = sort_values(df0, ["Nom", "Prénom"])
 
         with Output(self.csv_fname, protected=True) as csv_fname:
             df0.to_csv(csv_fname(), index=False, sep=";")
@@ -143,7 +144,7 @@ manuelle."""
 
         # On rattrape les absents
         df = pd.merge(dfall, df, how='left', on=['Nom', 'Prénom', 'Courriel'])
-        df = df.sort_values(['Nom', 'Prénom'])
+        df = sort_values(df, ["Nom", "Prénom"])
 
         csv_grades = os.path.splitext(xls_grades)[0] + '.csv'
         with Output(csv_grades, protected=True) as csv_grades:
@@ -245,7 +246,8 @@ class XlsAssignmentGrade(CliArgsMixin, UVTask):
         insts = inst_uv_TD['Intervenants'].unique()
 
         df = pd.read_excel(self.xls_merge)
-        df = df[['Nom', 'Prénom', 'Courriel']].sort_values(['Nom', 'Prénom'])
+        df = df[['Nom', 'Prénom', 'Courriel']]
+        df = sort_values(df, ['Nom', 'Prénom'])
         df = df.assign(Note=np.nan)
 
         with Output(self.target, protected=True) as target:

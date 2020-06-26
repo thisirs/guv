@@ -18,7 +18,8 @@ from .utils import (
     generated,
     argument,
     check_columns,
-    escape_tex
+    escape_tex,
+    sort_values
 )
 from .tasks import UVTask, CliArgsMixin
 from .dodo_students import XlsStudentDataMerge
@@ -39,7 +40,7 @@ def pdf_attendance_list_render(df, template, **kwargs):
     )
     template = latex_jinja_env.get_template(template)
 
-    df = df.sort_values(["Nom", "Prénom"])
+    df = sort_values(df, ["Nom", "Prénom"])
     students = [{"name": f'{row["Nom"]} {row["Prénom"]}'} for _, row in df.iterrows()]
 
     # Render template with provided data
@@ -98,7 +99,7 @@ class TaskPdfAttendanceList(UVTask, CliArgsMixin):
         pdfs = []
         texs = []
         for gn, group in df.groupby(self.group or (lambda x: "all")):
-            group = group.sort_values(["Nom", "Prénom"])
+            group = sort_values(group, ["Nom", "Prénom"])
             kwargs = {"group": f"Groupe: {escape_tex(gn)}", "filename": f"{gn}.pdf"}
             pdf, tex = pdf_attendance_list_render(group, template, **kwargs)
             pdfs.append(pdf)
@@ -151,7 +152,7 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
 
         check_columns(df, ctype, file=self.xls_merge)
         for gn, group in df.groupby(ctype):
-            group = group.sort_values(["Nom", "Prénom"])
+            group = sort_values(group, ["Nom", "Prénom"])
             self.kwargs["filename"] = gn + ".pdf"
             pdf, tex = pdf_attendance_list_render(group, template, group=gn, **self.kwargs)
             pdfs.append(pdf)
