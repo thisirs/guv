@@ -67,6 +67,45 @@ def check_columns(dataframe, columns, **kwargs):
         raise Exception(msg)
 
 
+def fillna_column(colname, na_value="ABS"):
+    """Utilisable dans postprocessing ou preprocessing où à la place de
+    aggregate dans le AGGREGATE_DOCUMENTS."""
+
+    def func(df, path=None):
+        check_columns(df, [colname])
+        df[colname].fillna("ABS", inplace=True)
+        return df
+    return func
+
+
+def replace_regex(colname, *reps, new_colname=None):
+    """Utilisable dans postprocessing ou preprocessing ou à la place de
+    aggregate dans le AGGREGATE_DOCUMENTS."""
+
+    def func(df, path=None):
+        check_columns(df, colname)
+        s = df[colname]
+        for rep in reps:
+            s.replace(*rep, regex=True, inplace=True)
+        cn = new_colname if new_colname is not None else colname
+        df = df.assign(**{cn: s})
+        return df
+    return func
+
+
+def replace_column(colname, rep_dict, new_colname=None):
+    """Utilisable dans postprocessing ou preprocessing où à la place de
+    aggregate dans le AGGREGATE_DOCUMENTS."""
+
+    def func(df, path=None):
+        check_columns(df, colname)
+        col_ref = df[colname].replace(rep_dict)
+        cn = new_colname if new_colname is not None else colname
+        df = df.assign(**{cn: col_ref})
+        return df
+    return func
+
+
 def parse_args(task, *args, **kwargs):
     # Command-line arguments
     argv = kwargs.get("argv", sys.argv)
