@@ -9,6 +9,7 @@ from functools import wraps
 from datetime import timedelta
 import pandas as pd
 import unidecode
+import textwrap
 
 from doit.exceptions import TaskFailed
 
@@ -249,6 +250,40 @@ def slugrot(*columns):
         return s
 
     return func
+
+
+def aggregate_org(colname):
+    def aggregate_org0(left_df, path):
+        if not path.endswith('.org'):
+            raise Exception(f"{path} n'est pas un fichier org")
+
+        left_df[colname] = ""
+
+        # Add column that acts as a primary key
+        tf_df = slugrot("Nom", "Prénom")
+        left_df["fullname_slug"] = tf_df(left_df)
+
+        infos = open(path, 'r').read()
+        if infos:
+            for chunk in re.split("^\\* *", infos, flags=re.MULTILINE):
+                if not chunk:
+                    continue
+                etu, *text = chunk.split("\n", maxsplit=1)
+                text = "\n".join(text).strip("\n")
+                text = textwrap.dedent(text)
+                slugname = slugrot_string(etu)
+
+                res = left_df.loc[left_df.fullname_slug == slugname]
+                if len(res) == 0:
+                    raise Exception('Pas de correspondance pour `{:s}`'.format(etu))
+                elif len(res) > 1:
+                    raise Exception('Plusieurs correspondances pour `{:s}`'.format(etu))
+
+                left_df.loc[res.index[0], colname] = text
+
+        df = left_df.drop('fullname_slug', axis=1)
+        return df
+    return aggregate_org0
 
 
 def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset=None, drop=None, rename=None, read_method=None, kw_read={}):
