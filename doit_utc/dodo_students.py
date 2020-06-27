@@ -21,7 +21,6 @@ from .utils import (
     Output,
     documents,
     generated,
-    selected_uv,
     argument,
     parse_args,
     get_unique_uv,
