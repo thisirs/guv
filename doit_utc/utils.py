@@ -388,6 +388,10 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
         for index, row in merged_df_ro.iterrows():
             print("WARNING: identifiant présent dans le document à aggréger mais introuvable dans la base de données :", row[key])
 
+        if postprocessing is not None:
+            print("Postprocessing")
+            agg_df = postprocessing(agg_df)
+
         # Try to merge columns
         for c in duplicated_columns:
             c_y = c + '_y'
@@ -402,9 +406,6 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
 
         # Drop useless columns
         agg_df = agg_df.drop(drop_cols, axis=1, errors='ignore')
-
-        if postprocessing is not None:
-            agg_df = postprocessing(agg_df)
 
         return agg_df
 
