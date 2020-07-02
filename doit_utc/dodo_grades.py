@@ -96,6 +96,17 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
         col_names = ["Nom", "Prénom", "Login", "Note"]
 
         if not self.ects:
+            # La note doit être arrondie sinon l'ENT grogne (champ
+            # trop long)
+            def round_grade(e):
+                try:
+                    return round(pd.to_numeric(e), 2)
+                except Exception:
+                    return e
+
+            cols["Note"] = cols["Note"].apply(round_grade)
+
+            # Ajout d'un colonne de commentaire par copie
             if self.comment_colname is None:
                 col_names.append("Commentaire")
                 cols["Commentaire"] = ""
