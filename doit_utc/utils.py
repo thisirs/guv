@@ -604,21 +604,3 @@ def lib_list(lib):
     return crs, no, sem
 
 
-def sort_values(df, columns):
-    """Trier le DataFrame en prenant en compte les accents"""
-
-    drop_cols = []
-    sort_cols = []
-    for colname in columns:
-        try:
-            s = df[colname].str.normalize("NFKD")
-            new_colname = colname + "_NFKD"
-            df = df.assign(**{new_colname: s})
-            sort_cols.append(new_colname)
-            drop_cols.append(new_colname)
-        except AttributeError:
-            sort_cols.append(colname)
-
-    df = df.sort_values(sort_cols)
-    df = df.drop(columns=drop_cols)
-    return df

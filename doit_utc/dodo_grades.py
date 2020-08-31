@@ -22,8 +22,8 @@ from .utils import (
     parse_args,
     argument,
     check_columns,
-    sort_values
 )
+from .utils_noconfig import sort_values
 from .tasks import CliArgsMixin, UVTask
 from .dodo_students import XlsStudentDataMerge
 from .dodo_instructors import task_xls_affectation

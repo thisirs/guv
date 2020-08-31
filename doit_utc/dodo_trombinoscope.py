@@ -24,8 +24,8 @@ from .utils import (
     escape_tex,
     argument,
     check_columns,
-    sort_values
 )
+from .utils_noconfig import sort_values
 from .dodo_students import XlsStudentDataMerge
 from .tasks import UVTask, CliArgsMixin
 

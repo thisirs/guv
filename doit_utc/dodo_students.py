@@ -30,8 +30,8 @@ from .utils import (
     rel_to_dir,
     slugrot,
     slugrot_string,
-    sort_values
 )
+from .utils_noconfig import sort_values
 from .tasks import UVTask, CliArgsMixin
 from .scripts.parse_utc_list import parse_UTC_listing
 from .scripts.add_student_data import (

@@ -19,8 +19,8 @@ from .utils import (
     argument,
     check_columns,
     escape_tex,
-    sort_values
 )
+from .utils_noconfig import sort_values
 from .tasks import UVTask, CliArgsMixin
 from .dodo_students import XlsStudentDataMerge
 
