@@ -70,13 +70,18 @@ class TaskBase(object):
             return kwargs
 
         try:
+
             if UVTask not in cls.__mro__:
+                # La tâche n'est pas liée à une UV
                 instance = cls()
                 return build_task(instance, **kw)
             elif hasattr(cls, "unique_uv") and cls.unique_uv:
-                instance = cls(*get_unique_uv())
+                # La tâche ne s'applique qu'à une seule UV
+                planning, uv, info = get_unique_uv()
+                instance = cls(planning, uv, info)
                 return build_task(instance, **kw)
             else:
+                # La tâche s'applique à un ensemble d'UV
                 # Return a generator but make sure all build_task
                 # functions are executed first.
                 tasks = [
@@ -135,9 +140,7 @@ class CliArgsMixin(TaskBase):
             raise ParseArgsFailed(self.parser)
 
         # Base task specified in command line
-        base_task = argv[1]
-
-        if self.task_name == base_task:  # Args are relevant
+        if len(argv) >= 2 and argv[1] == self.task_name:
             sargv = argv[2:]
             args = self.parser.parse_args(sargv)
         else:
@@ -151,5 +154,6 @@ class CliArgsMixin(TaskBase):
 
             args = self.parser.parse_args(args=[])
 
+        # Set parsed arguments as attributes of self
         for key, value in args.__dict__.items():
             self.__setattr__(key, value)
