@@ -158,8 +158,6 @@ class CliArgsMixin(TaskBase):
 
         # Command-line arguments
         argv = sys.argv
-        if len(argv) < 2:          # doit_utc a_task [args]
-            raise Exception("Wrong number of arguments in sys.argv")
 
         # Give access to parser with cli keyword (for shell completion)
         if len(argv) == 2 and argv[1] == "parsearg":
