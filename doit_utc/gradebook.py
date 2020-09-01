@@ -1032,7 +1032,7 @@ questions structurées."""
 WRITERS = [GradeSheetNoGroup, GradeSheetGroup]
 
 
-def run2(argv=sys.argv[1:], prog=os.path.basename(__file__), description=None):
+def run(argv=sys.argv[1:], prog=os.path.basename(__file__), description=None):
     parser = argparse.ArgumentParser(prog=prog, description=description)
     subparsers = parser.add_subparsers(dest="sub_command", required=True)
     name_to_writer = {}
