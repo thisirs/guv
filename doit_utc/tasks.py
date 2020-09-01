@@ -149,7 +149,7 @@ class CliArgsMixin(TaskBase):
 
             # If parse_args fails, don't show error message and don't sys.exit()
             def dummy(msg):
-                raise ParseArgsFailed(self.parser)
+                raise Exception()
             self.parser.error = dummy
 
             args = self.parser.parse_args(args=[])
