@@ -8,230 +8,34 @@ import os
 import sys
 import math
 import argparse
-
 from collections import OrderedDict
+
+from schema import Schema, And, Use, Or, Optional
+
+from . import openpyxl_patched as openpyxl
+
 from openpyxl import Workbook
 from openpyxl import utils
-from openpyxl.cell import Cell, MergedCell
-from openpyxl.worksheet.worksheet import Worksheet
-from openpyxl.styles import Alignment, PatternFill, Side, Border
+from openpyxl.styles import Alignment, PatternFill
 from openpyxl.formatting.rule import CellIsRule
-from openpyxl.utils.cell import absolute_coordinate
+from .openpyxl_utils import (
+    frame_range,
+    get_address_of_cell,
+    get_range_from_cells,
+    get_segment,
+    row_and_col,
+    fit_cells_at_col,
+)
 
 import pandas as pd
-import oyaml as yaml            # Ordered yaml
+import oyaml as yaml  # Ordered yaml
 
-# Custom navigation functions
-def left(self, step=1):
-    return self.offset(0, -step)
-
-def right(self, step=1):
-    return self.offset(0, step)
-
-def above(self, step=1):
-    return self.offset(-step, 0)
-
-def below(self, step=1):
-    return self.offset(step, 0)
-
-def top(self):
-    return self.parent.cell(column=self.column, row=1)
-
-def text(self, value):
-    self.value = value
-    return self
-
-def center(self):
-    self.alignment = Alignment(horizontal='center', vertical='center')
-    return self
-
-def set_border(self):
-    thin = Side(border_style="thin", color="000000")
-    border = Border(top=thin, left=thin, right=thin, bottom=thin)
-    self.border += border
-    return self
-
-# Add offset function to MergedCell
-def offset(self, row=0, column=0):
-    offset_column = self.column + column
-    offset_row = self.row + row
-    return self.parent.cell(column=offset_column, row=offset_row)
-
-def merge(self, cell):
-    assert self.parent == cell.parent
-
-    self.parent.merge_cells(
-        start_row=self.row,
-        start_column=self.column,
-        end_row=cell.row,
-        end_column=cell.column
-    )
-    return self
+from .utils_noconfig import sort_values
 
 
-MergedCell.offset = offset
+def walk_tree(tree, depth=None):
+    "Generate coordinates of cells to represent a tree"
 
-Cell.left = left
-Cell.right = right
-Cell.above = above
-Cell.below = below
-Cell.top = top
-Cell.text = text
-Cell.center = center
-Cell.set_border = set_border
-Cell.merge = merge
-MergedCell.left = left
-MergedCell.right = right
-MergedCell.above = above
-MergedCell.below = below
-MergedCell.top = top
-MergedCell.text = text
-MergedCell.center = center
-MergedCell.set_border = set_border
-
-
-def merge_cells2(self, cell1, cell2):
-    """Merge rectangle defined by upper left and lower right cells"""
-
-    self.merge_cells(
-        start_row=cell1.row,
-        start_column=cell1.col_idx,
-        end_row=cell2.row,
-        end_column=cell2.col_idx
-    )
-
-    return self.cell(row=cell1.row, column=cell1.col_idx)
-
-Worksheet.merge_cells2 = merge_cells2
-
-
-def frame_range(cell1, cell2):
-    cell_range = cell1.coordinate + ":" + cell2.coordinate
-    thin = Side(border_style="thin", color="000000")
-    top = Border(top=thin)
-    left = Border(left=thin)
-    right = Border(right=thin)
-    bottom = Border(bottom=thin)
-
-    rows = cell1.parent[cell_range]
-    for cell in rows[0]:
-        cell.border = cell.border + top
-    for cell in rows[-1]:
-        cell.border = cell.border + bottom
-
-    for row in rows:
-        l = row[0]
-        r = row[-1]
-        l.border = l.border + left
-        r.border = r.border + right
-
-
-def get_address_of_cell(cell, absolute=False, add_worksheet_name=None, compat=False):
-    """Renvoie l'adresse d'un objet Cell sous forme "A1" en prenant en
-    compte la feuille courante si la cellule se trouve sur une
-    autre feuille.
-    """
-
-    cell_worksheet = cell.parent
-    workbook = cell.parent.parent
-    active_worksheet = workbook.active
-
-    if absolute:
-        coordinate = absolute_coordinate(cell.coordinate)
-    else:
-        coordinate = cell.coordinate
-
-    if add_worksheet_name == False or (add_worksheet_name is None and cell_worksheet == active_worksheet):
-        return coordinate
-    else:
-        if compat:          # GoogleSheet compatibility
-            return "INDIRECT(\"'{}'!{}\")".format(cell_worksheet.title, coordinate)
-        else:
-            return "'{}'!{}".format(cell_worksheet.title, coordinate)
-
-
-def get_range_from_cells(cell1, cell2, absolute=False, add_worksheet_name=None, compat=False):
-    cell_worksheet = cell1.parent
-    workbook = cell1.parent.parent
-    active_worksheet = workbook.active
-
-    # Upper-left and lower right cells
-    cell1_row, cell2_row = (cell1.row, cell2.row) if cell1.row < cell2.row else (cell2.row, cell1.row)
-    cell1_col, cell2_col = (cell1.column, cell2.column) if cell1.column < cell2.column else (cell2.column, cell1.column)
-
-    # Excel-like coordinates
-    cell1_addr = utils.get_column_letter(cell1_col) + str(cell1_row)
-    cell2_addr = utils.get_column_letter(cell2_col) + str(cell2_row)
-
-    if absolute:
-        range = absolute_coordinate(cell1_addr) + ":" + absolute_coordinate(cell2_addr)
-    else:
-        range = cell1_addr + ":" + cell2_addr
-
-    if add_worksheet_name == False or (add_worksheet_name is None and cell_worksheet == active_worksheet):
-        return range
-    else:
-        if compat:          # GoogleSheet compatibility
-            return "INDIRECT(\"'{}'!{}\")".format(cell_worksheet.title, range)
-        else:
-            return "'{}'!{}".format(cell_worksheet.title, range)
-
-
-def get_segment(cell1, cell2):
-    """Return a generator giving cells from cell1 to cell2"""
-    if cell1.row == cell2.row:
-        if cell1.column > cell2.column:
-            cell1, cell2 = cell2, cell1
-
-        for i in range(cell1.column, cell2.column+1):
-            yield cell1.parent.cell(row=cell1.row, column=i)
-    elif cell1.column == cell2.column:
-        if cell1.row > cell2.row:
-            cell1, cell2 = cell2, cell1
-
-        for i in range(cell1.row, cell2.row+1):
-            yield cell1.parent.cell(column=cell1.column, row=i)
-    else:
-        raise Exception('Must have same row or column')
-
-
-def row_and_col(cell1, cell2):
-    assert cell1.parent == cell2.parent
-    parent = cell1.parent
-    return parent.cell(row=cell1.row, column=cell2.column)
-
-
-def col_and_row(cell1, cell2):
-    return row_and_col(cell2, cell1)
-
-
-def if_empty_formula(formula, blank_value=""):
-    if formula.startswith("="):
-        formula = formula[1:]
-
-    return "=IF(ISBLANK(%s),\"%s\",%s)" % (
-        formula,
-        blank_value,
-        formula
-    )
-
-
-from operator import attrgetter
-from itertools import groupby
-
-def fit_cells_at_col(*cells):
-    worksheet = cells[0].parent
-    assert all(c.parent == worksheet for c in cells)
-    cells = list(cells)
-    cells.sort(key=attrgetter("column"))
-    for k, g in groupby(cells, key=attrgetter("column")):
-        lengths = [len(l) for c in g if c.value is not None for l in str(c.value).splitlines()]
-        if lengths:
-            max_len = max(lengths)
-            worksheet.column_dimensions[utils.get_column_letter(k)].width = 1.3*max_len
-
-
-def walk_tree(tree, depth=None, start_at=0):
     def compute_depth(tree):
         if isinstance(tree, (OrderedDict, dict)):
             return 1 + max(compute_depth(child) for child in tree.values())
@@ -251,7 +55,9 @@ def walk_tree(tree, depth=None, start_at=0):
             x_span = None
             for key, child in tree.items():
                 try:
-                    yield from walk_tree0(key, child, current_depth + 1, nleaves + current_leaves)
+                    yield from walk_tree0(
+                        key, child, current_depth + 1, nleaves + current_leaves
+                    )
                 except RunOut as e:
                     nleaf, sdepth = e.args
                     current_leaves += nleaf
@@ -260,304 +66,376 @@ def walk_tree(tree, depth=None, start_at=0):
             if current_depth != 0:
                 yield name, nleaves, sdepth, current_leaves, x_span
                 raise RunOut(current_leaves, sdepth)
-        else:                   # Leaf
+        else:  # Leaf
             x_span = math.ceil((depth + 1) // (current_depth + 1))
             sdepth = depth - x_span
             yield name, nleaves, sdepth, 1, x_span
             raise RunOut(1, sdepth)
 
-    yield from walk_tree0('root', tree, 0, 0)
+    yield from walk_tree0("root", tree, 0, 0)
 
 
-class GradeSheetWriter:
-    """Base class to build and write a workbook. It consists in only one
-    worksheet."""
+class CliArgsMixin:
+    def add_arguments(self):
+        self._parser = argparse.ArgumentParser(add_help=False)
 
-    def __init__(self, args):  # args argument comes from parser returned by get_parser
-        # Store args to be used in write method
-        self.args = args
+    def add_argument(self, *args, **kwargs):
+        self._parser.add_argument(*args, **kwargs)
 
-        # args always has a name, store it
-        if args.name:
-            self.name = args.name
+    def parse_arguments(self):
+        self.args = self._parser.parse_args(self.argv)
 
+
+class MultipleCliOpt(CliArgsMixin):
+    def add_arguments(self):
+        super().add_arguments()
+        self.add_argument("--worksheets", dest="group_by")
+
+    def get_columns(self, **kwargs):
+        columns = super().get_columns(**kwargs)
+
+        if self.args.group_by is not None:
+            columns.append((self.args.group_by, "raw", 5))
+
+        return columns
+
+
+class GroupCliOpt(CliArgsMixin):
+    def add_arguments(self):
+        super().add_arguments()
+        self.add_argument("--group", dest="group_by")
+
+
+class ConfigCliOpt(CliArgsMixin):
+    config_argname = "--config"
+
+    def add_arguments(self):
+        super().add_arguments()
+        self.add_argument(self.config_argname, dest="config_file")
+
+    @property
+    def config(self):
+        if not hasattr(self, "_config") or self._config is None:
+            self._config = self.parse_config()
+        return self._config
+
+    def validate_config(self, config):
+        return config
+
+    def parse_config(self):
+        config_file = self.args.config_file
+        if not os.path.exists(config_file):
+            raise Exception(f"Configuration file '{config_file}' not found")
+
+        with open(config_file, "r") as stream:
+            config = list(yaml.load_all(stream, Loader=yaml.SafeLoader))[0]
+            config = self.validate_config(config)
+            return config
+
+
+class BaseGradeSheet(CliArgsMixin):
+    def __init__(self, argv=sys.argv[1:]):
+        self.argv = argv
+
+    def add_arguments(self):
+        super().add_arguments()
+        self.add_argument("--name", required=True)
+        self.add_argument("-d", "--data", dest="data_file"),
+        self.add_argument("-o", "--output-file")
+        self.add_argument("--order-by", required=False)
+
+    def setup(self):
         # Setting source of grades
-        if args.data_file:
-            if os.path.isdir(args.data_file):
-                fn = 'student_data_merge.xlsx'
-                self.data_file = os.path.join(args.data_file, fn)
+        if self.args.data_file:
+            if os.path.isdir(self.args.data_file):
+                fn = "student_data_merge.xlsx"
+                self.data_file = os.path.join(self.args.data_file, fn)
             else:
-                self.data_file = args.data_file
+                self.data_file = self.args.data_file
         else:
-            self.data_file = 'student_data_merge.xlsx'
+            self.data_file = "student_data_merge.xlsx"
 
         # Reading source of information into a Pandas dataframe
         if not os.path.exists(self.data_file):
-            raise Exception(f'Data file `{self.data_file}` does not exist')
+            raise Exception(f"Data file `{self.data_file}` does not exist")
         self.data_df = pd.read_excel(self.data_file, engine="openpyxl")
 
         # Setting path of gradebook file to be written
-        if args.output_file:
-            if os.path.isdir(args.output_file):
-                fn = f'{args.name}_gradebook.xlsx'
-                self.output_file = os.path.join(args.output_file, fn)
+        if self.args.output_file:
+            if os.path.isdir(self.args.output_file):
+                fn = f"{self.args.name}_gradebook.xlsx"
+                self.output_file = os.path.join(self.args.output_file, fn)
             else:
-                self.output_file = args.output_file
+                self.output_file = self.args.output_file
         else:
-            self.output_file = f'{args.name}_gradebook.xlsx'
+            self.output_file = f"{self.args.name}_gradebook.xlsx"
 
+    def get_columns(self, **kwargs):
+        "Renvoie les colonnes à utiliser dans la première feuille de calculs"
+
+        # Default columns
+        columns = [("Nom", "raw", 0), ("Prénom", "raw", 0), ("Courriel", "raw", 0)]
+
+        # Add order_by columns if specified in command line and don't
+        # include it in worksheet
+        if self.args.order_by is not None:
+            columns.append((self.args.order_by, "hide", 5))
+
+        # Add column for grades
+        columns.append((self.args.name, "cell", 100))
+
+        return columns
+
+    def create_first_worksheet(self):
         # Create workbook and first worksheet named "data"
-        self.wb = Workbook()
-        self.ws_data = self.wb.active
-        self.ws_data.title = "data"
+        self.workbook = Workbook()
+        self.first_ws = self.workbook.active
+        self.first_ws.title = "data"
 
         # Pandas dataframe that mirrors the first worksheet
-        self.df = pd.DataFrame()
+        self.first_df = pd.DataFrame()
 
         # Get columns to be copied from source of information DATA_DF
         # to first worksheet
-        columns = self.get_columns(**args.__dict__)
+        columns = self.get_columns()
+
+        # Sort columns according to priority and index in columns
+        columns = [(i, *rest) for i, rest in enumerate(columns)]
+
+        def sort_func(e):
+            i, name, type, priority = e
+            return priority, i
+
+        columns = sorted(columns, key=sort_func)
+        columns = [(name, type) for i, name, type, priority in columns]
+
+        # Number of students
         N = len(self.data_df.index)
-        for i, (name, type) in enumerate(columns.items()):
-            idx = i + 1
 
-            # Write header of column with Pandas style
-            self.ws_data.cell(1, idx).value = name
-            self.ws_data.cell(1, idx).style = "Pandas"
+        # Write `first_ws` and `first_df` column by column from
+        # data in `data_df`
+        idx = 1
+        for name, type in columns:
+            # Update first_ws
+            if type != "hide":
+                # Write header of column with Pandas style
+                self.first_ws.cell(1, idx).value = name
+                self.first_ws.cell(1, idx).style = "Pandas"
 
-            if name in self.data_df.columns:
-                # Copy data from DATA_DF if existing into first worksheet
-                for i, value in enumerate(self.data_df[name]):
-                    self.ws_data.cell(i + 2, idx).value = value
-                cells = self.ws_data[utils.get_column_letter(idx)][1:(N+1)]
+                # Copy data from `data_df` if existing into first
+                # worksheet
+                if name in self.data_df.columns:
+                    for i, value in enumerate(self.data_df[name]):
+                        self.first_ws.cell(i + 2, idx).value = value
+
+                # Get cells
+                cells = self.first_ws[utils.get_column_letter(idx)][1 : (N + 1)]
 
                 # Fit width of column to actual content
-                fit_cells_at_col(*cells)
+                fit_cells_at_col(self.first_ws.cell(1, idx), *cells)
 
-                # Add values or cells to DF
-                if type == "raw":
-                    self.df[name] = self.data_df[name]
-                elif type == "cell" or type is None:
-                    self.df[name] = cells
-                else:
-                    raise Exception("Unkown type of column ", type)
+                # Next column index
+                idx += 1
 
             else:
                 # Non-existent column
-                if type == 'cell' or type is None:
-                    cells = self.ws_data[utils.get_column_letter(idx)][1:(N+1)]
-                    self.df[name] = cells
-                elif type == 'raw':
-                    raise Exception('No data to copy from and type is data', name, self.data_df.columns)
+                cells = None
+
+            # Update first_df
+            if name in self.data_df.columns:  # If column exists
+                if type in ["hide", "raw"]:
+                    self.first_df[name] = self.data_df[name]
+                elif type in ["grade", "cell"]:
+                    if cells is None:
+                        raise Exception("Type is `{type}` but ")
+                    self.first_df[name] = cells
+                else:
+                    raise Exception("Unkown type of column ", type)
+            else:
+                if type in ["grade", "cell"]:
+                    self.first_df[name] = cells
+                elif type in ["hide", "raw"]:
+                    raise Exception(
+                        "No data to copy from and type is 'raw' or 'hide'",
+                        name,
+                        self.data_df.columns,
+                    )
                 else:
                     raise Exception("Unkown type of column ", type)
 
         # Sort all columns
-        self.ws_data.auto_filter.ref = 'A1:{}{}'.format(
-            utils.get_column_letter(idx),
-            N + 1)
+        self.first_ws.auto_filter.ref = "A1:{}{}".format(
+            utils.get_column_letter(idx - 1), N + 1
+        )
 
         if N >= 10:
             # Freeze header row and first two columns if more than 10 columns
-            self.ws_data.freeze_panes = "C2"
+            self.first_ws.freeze_panes = "C2"
         else:
             # Freeze header row
-            self.ws_data.freeze_panes = "A2"
+            self.first_ws.freeze_panes = "A2"
 
-    # Create parser whose arguments will be available to the constructor
-    @classmethod
-    def get_parser(cls):
-        parser = argparse.ArgumentParser(description=cls.__doc__, add_help=False)
-        parser.add_argument('--name', dest='name', required=True)
-        parser.add_argument('-d', '--data', dest='data_file')
-        parser.add_argument('-o', '--output-file', dest='output_file')
-        parser.add_argument('--order-by', required=False)
-        return parser
+    def write_workbook(self):
+        self.workbook.save(self.output_file)
 
-    # Return columns to create in first worksheet. `value' columns are
-    # copied directly from source of information, `cell` columns are
-    # created to be referenced later in the workbook.
-    def get_columns(self, **kwargs):
-        id_dict = {
-            'Nom': 'raw',
-            'Prénom': 'raw',
-            'Courriel': 'raw'
-        }
-
-        if kwargs.get("order_by") is not None:
-            id_dict[kwargs.get("order_by")] = "raw"
-
-        id_dict[self.name] = "cell"
-
-        return id_dict
+    def create_worksheets(self):
+        pass
 
     def write(self):
-        raise NotImplementedError
+        self.add_arguments()
+        self.parse_arguments()
+        self.setup()
+        self.create_first_worksheet()
+        self.create_worksheets()
+        self.write_workbook()
 
 
-class GradeSheetWriterConfig(GradeSheetWriter):
-    def __init__(self, args):
-        self.config = self.parse_config(args.config)
-        super().__init__(args)
+class GradeSheetMultiple(MultipleCliOpt, BaseGradeSheet):
+    """Abstract class for workbook with multiple worksheets"""
 
-    def parse_config(self, config):
-        if not os.path.exists(config):
-            raise Exception("Configuration file not found")
+    def create_worksheets(self):
+        """Create one or more worksheets based on `worksheets` argument."""
 
-        with open(config, "r") as stream:
-            return list(yaml.load_all(stream, Loader=yaml.SafeLoader))[0]
-
-
-class GradeSheetSimpleWriter(GradeSheetWriter):
-    """Feuille de notes simple par étudiant et sans barème."""
-
-    # Name used to identify the class to use in the sub_command
-    # parser.
-    name = 'simple'
-
-    def write(self, ref=None):
-        # Create a second worksheet
-        self.gradesheet = self.wb.create_sheet(title=self.name)
-
-        if ref is None:
-            ref = (3, 1)
-        row, col = ref
-
-        lastname = self.gradesheet.cell(*ref).text("Nom")
-        name = lastname.below().text("Prénom")
-        grade = name.below().text("Note")
-
-        ref_list = lastname.right()
-        max_len = 0
-        if self.args.order_by is not None:
-            df_sort = self.df.reset_index().sort_values(
-                [self.args.order_by, "index"]
-            ).drop("index", axis=1)
-        else:
-            df_sort = self.df
-        for i, (index, record) in enumerate(df_sort.iterrows()):
-            max_len = max(max_len, len(record['Nom']), len(record['Prénom']))
-
-            lastname = ref_list.right(i)
-            name = lastname.below()
-            grade = name.below()
-
-            lastname.value = record['Nom']
-            name.value = record['Prénom']
-
-            # Get cell to be filled in first worksheet and make it
-            # point to current cell in second worksheet.
-            cell = record[self.gradesheet.title]
-
-            cell.value = if_empty_formula(
-                get_address_of_cell(grade, add_worksheet_name=True)
+        if self.args.group_by is not None:
+            gb = self.first_df.sort_values(self.args.group_by).groupby(
+                self.args.group_by
             )
+            for name, group in gb:
+                if self.args.order_by is not None:
+                    group = sort_values(group, [self.args.order_by])
+                self.create_worksheet(name, group)
+        else:
+            group = self.first_df
+            if self.args.order_by is not None:
+                group = sort_values(group, [self.args.order_by])
+            self.create_worksheet("grade", group)
 
-        for i in range(len(self.df)):
-            self.gradesheet.column_dimensions[utils.get_column_letter(col+i+1)].width = max_len
-
-        # On fige la première ligne
-        self.gradesheet.freeze_panes = ref_list.top()
-
-        # Write workbook
-        self.wb.save(self.output_file)
+    def create_worksheet(self, name, group):
+        pass
 
 
-class GradeSheetExamWriter(GradeSheetWriterConfig):
-    """Feuille de notes pour un examen type médian/final avec des
-questions structurées."""
-
-    # Name used to identify the class to use in the sub_command
-    # parser.
-    name = 'exam'
-
-    # Add a structure argument
-    @classmethod
-    def get_parser(cls):
-        parser = super(GradeSheetExamWriter, GradeSheetExamWriter).get_parser()
-        parser.add_argument('-s', '--struct', required=True, dest='config')
-        return parser
+class MarkingScheme:
+    def __init__(self, tree):
+        self.tree = tree
+        self.width = None
+        self.height = None
 
     @property
-    def tree(self):
-        return self.config
+    def points(self):
+        "Return list of points"
 
-    def write_structure(self, upper_left):
-        "Write structure at UPPER_LEFT and return lower right cell."
-        maxi = maxj = -1
-
-        for name, i, j, di, dj in walk_tree(self.tree):
-            maxi = max(maxi, i+di)
-            maxj = max(maxj, j+dj)
-            self.gradesheet.merge_cells(
-                start_row=upper_left[0]+i,
-                start_column=upper_left[1]+j,
-                end_row=upper_left[0]+i+di-1,
-                end_column=upper_left[1]+j+dj-1)
-            self.gradesheet.cell(
-                row=upper_left[0]+i,
-                column=upper_left[1]+j).value = name
-            al = Alignment(horizontal="center", vertical="center")
-            self.gradesheet.cell(
-                row=upper_left[0]+i,
-                column=upper_left[1]+j).alignment = al
-
-        # Return lower right cell of structure
-        return maxi + upper_left[0] - 1, maxj + upper_left[1] - 1
-
-    def write(self, ref=None):
-        # Create new gradesheet
-        self.gradesheet = self.wb.create_sheet(title=self.name)
-        self.wb.active = self.gradesheet
-
-        # Write structure at ref
-        if ref is None:
-            ref = (3, 1)
-        row, col = self.write_structure(upper_left=ref)
-
-        # Write header for grade row
-        self.gradesheet.cell(row=row, column=col).below().value = "Grade"
-        self.gradesheet.cell(row=row, column=col).below(2).value = "Grade /20"
-
-        # Write total of points
-        ref_points = self.gradesheet.cell(row=ref[0], column=col+1)
-
-        def get_points(struct):
-            if isinstance(struct, (OrderedDict, dict)):
-                return [
-                    j for i in struct.values() for j in get_points(i)
-                ]
+        def get_points(tree):
+            if isinstance(tree, dict):
+                return [pts for node in tree.values() for pts in get_points(node)]
             else:
+                # Should be a list of dict, concatenating
                 a = {}
-                for s in struct:
+                for s in tree:
                     a.update(s)
                 return [a["points"]]
 
-        ref_points.above().text("Points")
-        points_list = get_points(self.tree)
-        for i, points in enumerate(points_list):
-            ref_points.below(i).text(points)
-        ref_points_last = ref_points.below(len(points_list)-1)
+        return get_points(self.tree)
 
-        global_total = ref_points_last.below().text(
-            "=SUM(%s)" % get_range_from_cells(ref_points, ref_points_last)
+    @property
+    def coeffs(self):
+        "Return list of coeffs"
+
+        def get_coeffs(tree):
+            if isinstance(tree, dict):
+                return [pts for node in tree.values() for pts in get_coeffs(node)]
+            else:
+                # Should be a list of dict, concatenating
+                a = {}
+                for s in tree:
+                    a.update(s)
+                if "coeffs" in a:
+                    return [a["coeffs"]]
+                else:
+                    return [1]
+
+        return get_coeffs(self.tree)
+
+    def write(self, worksheet, ref):
+        row = ref.row
+        col = ref.col_idx
+        maxi = maxj = -1
+
+        for name, i, j, di, dj in walk_tree(self.tree):
+            maxi = max(maxi, i + di)
+            maxj = max(maxj, j + dj)
+            worksheet.merge_cells(
+                start_row=row + i,
+                start_column=col + j,
+                end_row=row + i + di - 1,
+                end_column=col + j + dj - 1,
+            )
+            worksheet.cell(row=row + i, column=col + j).value = name
+            al = Alignment(horizontal="center", vertical="center")
+            worksheet.cell(row=row + i, column=col + j).alignment = al
+
+        tree_height = maxi
+        tree_width = maxj
+
+        # Columns of coeffs
+        ref_coeffs = ref.right(tree_width)
+        ref_coeffs.above().text("Coeffs")
+
+        for i, coeff in enumerate(self.coeffs):
+            ref_coeffs.below(i).text(coeff)
+        self.sum_coeffs = sum(self.coeffs)
+        self.coeff_cells = [ref_coeffs.below(i) for i in range(len(self.coeffs))]
+
+        # Columns of points
+        ref_points = ref_coeffs.right()
+        ref_points.above().text("Points")
+
+        for i, points in enumerate(self.points):
+            ref_points.below(i).text(points)
+        self.points_cells = [ref_points.below(i) for i in range(len(self.points))]
+
+        ref_points_last = ref_points.below(len(self.points) - 1)
+
+        self.global_total = ref_points_last.below().text(
+            "="
+            + "+".join(
+                "{0} * {1}".format(cell_coeff.coordinate, cell_point.coordinate)
+                for cell_point, cell_coeff in zip(self.points_cells, self.coeff_cells)
+            )
         )
+        ref_points_last.below().left().text("Grade")
 
         ref_points_last.below(2).text(20)
+        ref_points_last.below(2).left().text("Grade /20")
 
-        # Width of structure
-        n_questions = row - ref[0] + 1
+        self.width = tree_width + 2
+        self.height = tree_height
+        self.bottom_right = worksheet.cell(row + self.height, col + self.width)
 
-        ref_names = ref_points.right()
+
+class GradeSheetNoGroup(ConfigCliOpt, GradeSheetMultiple):
+    name = "simple"
+    config_argname = "--marking-scheme"
+
+    def create_worksheet(self, name, group):
+        gradesheet = self.workbook.create_sheet(title=name)
+
+        # Make current worksheet the default one, useful for get_address_of_cell
+        self.workbook.active = gradesheet
+
+        ref = gradesheet.cell(3, 1)
+        ms = MarkingScheme(self.config)
+        ms.write(gradesheet, ref)
+
+        ref = row_and_col(ref, ms.bottom_right)
 
         # Freeze the structure
-        self.gradesheet.freeze_panes = ref_names.top()
+        gradesheet.freeze_panes = ref.top()
 
         def insert_record(ref_cell, record):
-            last_name = ref_cell.text(record['Nom'])
-            first_name = last_name.below().text(record['Prénom'])
+            last_name = ref_cell.text(record["Nom"])
+            first_name = last_name.below().text(record["Prénom"])
             first_grade = first_name.below()
-            last_grade = first_grade.below(n_questions - 1)
+            last_grade = first_grade.below(ms.height - 1)
             total = last_grade.below()
             total_20 = total.below()
 
@@ -566,441 +444,364 @@ questions structurées."""
             total.value = formula
 
             total_20.text(
-                "=IF(ISTEXT(%s),\"\",%s/%s*20)" % (
+                '=IF(ISTEXT(%s),"",%s/%s*20)'
+                % (
                     get_address_of_cell(total),
                     get_address_of_cell(total),
-                    get_address_of_cell(global_total, absolute=True)
+                    get_address_of_cell(ms.global_total, absolute=True),
                 )
             )
 
             # Cell in first worksheet
-            cell = record[self.gradesheet.title]
+            cell = record[self.args.name]
             cell.value = "=" + get_address_of_cell(
-                total_20,
-                add_worksheet_name=True,
-                absolute=True
+                total_20, add_worksheet_name=True, absolute=True
             )
 
             fit_cells_at_col(last_name, first_name)
 
-        if self.args.order_by is not None:
-            df_sort = self.df.reset_index().sort_values(
-                [self.args.order_by, "index"]
-            ).drop("index", axis=1)
-        else:
-            df_sort = self.df
-        for j, (index, record) in enumerate(df_sort.iterrows()):
-            ref_cell = ref_names.right(j).above(2)
+        for j, (index, record) in enumerate(group.iterrows()):
+            ref_cell = ref.right(j).above(2)
             insert_record(ref_cell, record)
 
-        self.wb.save(self.output_file)
 
+class GradeSheetGroup(GroupCliOpt, ConfigCliOpt, GradeSheetMultiple):
+    """Base class for workbook with grades by group of students"""
 
-class GradeSheetExamMultipleWriter(GradeSheetExamWriter):
-    """Feuille de notes avec barème et liste des correcteurs."""
+    name = "group"
+    config_argname = "--marking-scheme"
 
-    name = 'exammult'
+    def add_arguments(self):
+        super().add_arguments()
 
-    def __init__(self, args):
-        super().__init__(args)
-        insts_file = args.insts
-        df = pd.read_excel(insts_file, engine="openpyxl")
-        insts = df['Intervenants'].unique()
+        # Make groups inside each worksheet
+        self.add_argument("--groups", dest="subgroup_by", default=lambda x: 0)
 
-        def select_inst(i):
-            while True:
-                try:
-                    choice = input(f'Sélectionner le correcteur {i} (y/n)? ')
-                    if choice.upper() == "Y":
-                        print(f"Correcteur {i} sélectionné")
-                        return True
-                    elif choice.upper() == "N":
-                        print(f"Correcteur {i} non sélectionné")
-                        return False
-                    else:
-                        raise ValueError
-                except ValueError:
-                    continue
-                else:
-                    break
+        # FIXME: Use it or delete it
+        self.add_argument(
+            "-t",
+            "--grade-type",
+            default="num",
+            required=False,
+            choices=["num", "sym"],
+            dest="grade_type",
+        )
 
-        self.insts = [i for i in insts if select_inst(i)]
+    # FIXME: Check order_by and group_by
+    def setup(self):
+        super().setup()
 
-    @classmethod
-    def get_parser(cls):
-        parser = super(GradeSheetExamMultipleWriter, GradeSheetExamMultipleWriter).get_parser()
-        parser.add_argument('-i', '--instructors', required=True, dest='insts')
-        return parser
+    def get_columns(self):
+        columns = super().get_columns()
 
-    def get_columns(self, **kwargs):
-        return {
-            'Nom': 'raw',
-            'Prénom': 'raw',
-            'Courriel': 'raw',
-            'Note': 'cell',
-            "Correcteur": 'cell',
-        }
+        if not callable(self.args.subgroup_by):
+            columns.append((self.args.subgroup_by, "raw", 6))
 
-    def write(self, ref=None):
-        if ref is None:
-            ref = (3, 1)
+        if self.args.grade_type == "num":
+            columns.append((self.args.name + " brut", "cell", 9))
 
-        for inst in self.insts:
-            self.gradesheet = self.wb.create_sheet(title=inst)
-
-            row, col = self.write_structure(upper_left=ref)
-            self.gradesheet.cell(row+1, col, "Note")
-
-            # On fige les colonnes après le barème
-            self.gradesheet.freeze_panes = self.gradesheet.cell(1, col+1).coordinate
-
-            if self.args.order_by is not None:
-                df_sort = self.df.reset_index().sort_values(
-                    [self.args.order_by, "index"]
-                ).drop("index", axis=1)
-            else:
-                df_sort = self.df
-            for i, (index, record) in enumerate(df_sort.iterrows()):
-                self.gradesheet.cell(ref[0]-2, col+i+1, record['Nom'])
-                self.gradesheet.cell(ref[0]-1, col+i+1, record['Prénom'])
-
-                # On écrit le total des points pour former la note globale
-                range = (
-                    utils.get_column_letter(col+i+1) + str(ref[0]) +
-                    ':' +
-                    utils.get_column_letter(col+i+1) + str(row)
-                )
-                formula = f'=IF(COUNTBLANK({range})>0, "", SUM({range}))'
-
-                self.gradesheet.cell(row+1, col+i+1, formula)
-
-        # Formula to return first non empty cell
-        grade_format = '""'
-        for inst in self.insts:
-            cell = "'{}'!{{0}}{{1}}".format(inst)
-            grade_format = f"IF({cell} = \"\", {grade_format}, {cell})"
-
-        # Formula to return first instructor
-        inst_format = '""'
-        for inst in self.insts:
-            cell = "'{}'!{{0}}{{1}}".format(inst)
-            inst_format = f"IF({cell} = \"\", {inst_format}, \"{inst}\")"
-        # inst_format = "CONCATENATE(\"Corrigé par \", {})".format(inst_format)
-
-        # List of booleans of non empty cells from each sheet
-        non_empty_grades = ["IF('{}'!{{0}}{{1}} <> \"\", 1, 0)".format(inst)
-                            for inst in self.insts]
-        non_empty_grades = ", ".join(non_empty_grades)
-
-        if self.args.order_by is not None:
-            df_sort = self.df.reset_index().sort_values(
-                [self.args.order_by, "index"]
-            ).drop("index", axis=1)
-        else:
-            df_sort = self.df
-        for i, (index, record) in enumerate(df_sort.iterrows()):
-            formula = "=IF(SUM({0}) = 0, \"\", IF(SUM({0}) = 1, {1}, NA())".format(
-                non_empty_grades.format(
-                    utils.get_column_letter(col+i+1).upper(),
-                    row+1
-                ),
-                grade_format.format(
-                    utils.get_column_letter(col+i+1).upper(),
-                    row+1
-                )
-            )
-            record["Note"].value = formula
-
-            formula = "=IF(SUM({0}) = 0, \"\", IF(SUM({0}) = 1, {1}, NA())".format(
-                non_empty_grades.format(
-                    utils.get_column_letter(col+i+1).upper(),
-                    row+1
-                ),
-                inst_format.format(
-                    utils.get_column_letter(col+i+1).upper(),
-                    row+1
-                )
-            )
-            record["Correcteur"].value = formula
-
-        self.wb.save(self.output_file)
-
-
-class GradeSheetSimpleGroup(GradeSheetSimpleWriter):
-    """Simple gradesheet per groups, no subgrading"""
-
-    name = 'group'
-
-    def __init__(self, args):
-        super(GradeSheetSimpleGroup, self).__init__(args)
-        self.group = args.group
-        self.grade_type = args.grade_type
-
-    def get_columns(self, **kwargs):
-        return {
-            'Nom': 'raw',
-            'Prénom': 'raw',
-            'Courriel': 'raw',
-            kwargs['group']: 'raw',
-            self.name: 'cell'
-        }
-
-    @classmethod
-    def get_parser(cls):
-        parser = super(GradeSheetSimpleGroup, GradeSheetSimpleGroup).get_parser()
-        parser.add_argument('-g', '--group', required=True, dest='group')
-        parser.add_argument('-t', '--grade-type', default='num', required=False, choices=['num', 'sym'], dest='grade_type')
-        return parser
-
-    def write(self, ref=None):
-        # Write new gradesheet and make it default
-        self.gradesheet = self.wb.create_sheet(title=self.name)
-        self.wb.active = self.gradesheet
-
-        header_ref_cell = self.gradesheet['B1']
-        header_ref_cell.below().left().text("Note").below().text("Correction")
-
-        for i, (key, group) in enumerate(self.df.groupby(self.group)):
-            # Group name
-            self.gradesheet.merge_cells2(
-                header_ref_cell.right(2*i),
-                header_ref_cell.right(2*i+1))
-            header_ref_cell.right(2*i).value = key
-
-            # Note
-            self.gradesheet.merge_cells2(
-                header_ref_cell.below().right(2*i),
-                header_ref_cell.below().right(2*i+1))
-
-            name_cells = []
-            for j, (index, record) in enumerate(group.iterrows()):
-                name = record['Nom'] + ' ' + record['Prénom']
-                name_cell = header_ref_cell.right(2*i).below(2+j)
-                name_cell.value = name
-                name_cells.append(name_cell)
-
-                grade_addr = get_address_of_cell(
-                    header_ref_cell.below().right(2*i),
-                    absolute=True,
-                    add_worksheet_name=True
-                )
-                grademod_addr = get_address_of_cell(
-                    header_ref_cell.below(2+j).right(2*i+1),
-                    absolute=True,
-                    add_worksheet_name=True
-                )
-                if self.grade_type == "num":
-                    formula = "=IF(ISBLANK({0}), \"\", {0}+{1})".format(
-                        grade_addr,
-                        grademod_addr
-                    )
-                    record[self.name].value = formula
-                elif self.grade_type == "sym":
-                    formula = "=IF(ISBLANK(%s),IF(ISBLANK(%s),\"\", %s),%s)" % (
-                        grademod_addr,
-                        grade_addr,
-                        grade_addr,
-                        grademod_addr
-                    )
-                    record[self.name].value = formula
-                else:
-                    raise Exception("Unknown grade type")
-
-            fit_cells_at_col(*name_cells)
-
-        self.wb.save(self.output_file)
-
-
-class GradeSheetAssignmentWriter(GradeSheetExamWriter):
-    """Feuille pour attribution d'une note par groupe.
-    """
-
-    name = 'assignment'
-
-    def __init__(self, args):
-        super().__init__(args)
-        self.group = args.group
-
-    def get_columns(self, **kwargs):
-        return {
-            'Nom': 'raw',
-            'Prénom': 'raw',
-            'Courriel': 'raw',
-            kwargs['group']: 'raw',
-            self.name: 'cell'
-        }
-
-    @classmethod
-    def get_parser(cls):
-        parser = super(GradeSheetAssignmentWriter, GradeSheetAssignmentWriter).get_parser()
-        parser.add_argument('-g', '--group', required=True, dest='group')
-        return parser
-
-    def write(self, ref=None):
-        # Write new gradesheet
-        self.gradesheet = self.wb.create_sheet(title=self.name)
-
-        if ref is None:
-            ref = (3, 1)
-        row, col = self.write_structure(upper_left=ref)
-
-        for i, (key, group) in enumerate(self.df.groupby(self.group)):
-            group_names = ', '.join(group['Nom'] + ' ' + group['Prénom'])
-            self.gradesheet.cell(ref[0]-2, col+i+1, key)
-            self.gradesheet.cell(ref[0]-1, col+i+1, group_names)
-
-            first = self.gradesheet.cell(ref[0], col+i+1)
-            last = self.gradesheet.cell(row, col+i+1)
-            grade = self.gradesheet.cell(row+1, col+i+1)
-
-            formula = "=SUM(%s)" % get_range_from_cells(
-                first,
-                last,
-                add_worksheet_name=False
-            )
-            grade.value = formula
-
-            # Write link to grade for each member of group
-            for index, record in group.iterrows():
-                record[self.name].value = if_empty_formula(
-                    get_address_of_cell(
-                        grade,
-                        add_worksheet_name=True
-                ))
-
-        self.wb.save(self.output_file)
-
-
-class GradeSheetJuryWriter(GradeSheetWriterConfig):
-    """Feuille Excel pour jury avec les notes, une colonne des notes
-    agrégées, des percentiles pour les notes ECTS.
-    """
-    name = "jury"
-
-    def get_columns(self, **kwargs):
-        columns = {
-            'Nom': 'raw',
-            'Prénom': 'raw',
-            'Courriel': 'raw',
-            'Admis': 'cell',
-            'Note admis': 'cell'
-        }
-
-        for name, props in self.config['columns'].items():
-            if props is not None:
-                columns[name] = props.get('type')
-            else:
-                columns[name] = None
-
-        columns['Note agrégée'] = 'cell'
-        columns['Note ECTS'] = 'cell'
         return columns
 
-    @classmethod
-    def get_parser(cls):
-        parser = super(GradeSheetJuryWriter, GradeSheetJuryWriter).get_parser()
-        parser.add_argument('-c', '--config', required=True, dest='config')
-        return parser
+    def create_worksheet(self, name, group):
+        gradesheet = self.workbook.create_sheet(title=name)
+
+        # Write marking scheme
+        ref = gradesheet.cell(3, 1)
+        ms = MarkingScheme(self.config)
+        ms.write(gradesheet, ref)
+
+        # Add room for name and total
+        height = ms.height + 4
+
+        # Write each block with write_group_block
+        ref = ref.right(ms.width).above(2)
+
+        # FIXME: Sort groups according to order_by
+        for subname, subgroup in group.groupby(self.args.subgroup_by):
+            bottom_right = self.write_group_block(
+                gradesheet, ref, subname, subgroup, height, ms
+            )
+            frame_range(ref, bottom_right)
+            frame_range(ref.below(2), bottom_right)
+            ref = row_and_col(ref, bottom_right.right())
+
+    def write_group_block(self, gradesheet, ref_cell, name, group, height, ms):
+        # Make current worksheet the default one, useful for get_address_of_cell
+        self.workbook.active = gradesheet
+
+        # First column is group column
+        group_range = list(get_segment(ref_cell, ref_cell.below(height - 1)))
+
+        # Group name
+        group_range[0].text(name).merge(group_range[1]).center()
+
+        # Total of column group
+        group_total = group_range[-2]
+
+        formula = '=IFERROR({0},"")'.format(
+            "+".join(
+                "{1} * IF(ISBLANK({0}), 1/0, {0})".format(
+                    get_address_of_cell(group_cell, absolute=True),
+                    get_address_of_cell(coeff_cell, absolute=True),
+                )
+                for group_cell, coeff_cell in zip(group_range[2:-2], ms.coeff_cells)
+            )
+        )
+        group_total.value = formula
+
+        group_total_20 = group_range[-1].text(
+            '=IF(ISTEXT({0}),"",{0}/{1}*20)'.format(
+                get_address_of_cell(group_total),
+                get_address_of_cell(ms.global_total, absolute=True),
+            )
+        )
+
+        # Next columns are per-student columns
+        N = len(group)  # Number of students
+        gen = generate_ranges(ref_cell.right(), by="col", length=height, nranges=N)
+
+        # Group student dataframe record and corresponding column range
+        for stu_range, (index, record) in zip(gen, group.iterrows()):
+            stu_range[0].value = record["Nom"]
+            stu_range[1].value = record["Prénom"]
+
+            # Total of student
+            stu_total = stu_range[-2]
+            formula = '=IFERROR({0},"")'.format(
+                "+".join(
+                    "{2} * IF(ISBLANK({0}), IF(ISBLANK({1}), 1/0, {1}), {0})".format(
+                        get_address_of_cell(stu_cell),
+                        get_address_of_cell(group_cell),
+                        get_address_of_cell(coeff_cell, absolute=True),
+                    )
+                    for group_cell, stu_cell, coeff_cell in zip(
+                        group_range[2:-2], stu_range[2:-2], ms.coeff_cells
+                    )
+                )
+            )
+            stu_total.value = formula
+
+            # Total of student over 20
+            stu_total_20 = stu_range[-1]
+            stu_total_20.text(
+                '=IF(ISTEXT(%s),"",%s/%s*20)'
+                % (
+                    get_address_of_cell(stu_total),
+                    get_address_of_cell(stu_total),
+                    get_address_of_cell(ms.global_total, absolute=True),
+                )
+            )
+
+            record[self.args.name].value = "=" + get_address_of_cell(
+                stu_total_20, add_worksheet_name=True
+            )
+            record[self.args.name + " brut"].value = "=" + get_address_of_cell(
+                stu_total, add_worksheet_name=True
+            )
+
+        return_cell = ref_cell.below(height - 1).right(N)
+        return return_cell
+
+
+class GradeSheetJury(ConfigCliOpt, BaseGradeSheet):
+    name = "jury"
+    config_argname = "--config"
+
+    def validate_config(self, config):
+        """Validation du fichier de configuration"""
+
+        def validate_grade2(data):
+            if data.get("type", "grade") == "grade":
+                schema = Schema(
+                    {
+                        Optional("type", default="grade"): "grade",
+                        Optional("Note éliminatoire", default=-1): -1,
+                        Optional(str): object,
+                    }
+                )
+            else:
+                schema = Schema(
+                    {"type": Or("raw", "hide", "cell"), Optional(str): object,}
+                )
+            return schema.validate(data)
+
+        validate_grade = Schema(
+            Or(
+                And(
+                    Or(None, {}, ""),
+                    Use(lambda dummy: {"type": "grade", "Note éliminatoire": -1}),
+                ),
+                And(dict, Use(validate_grade2)),
+            )
+        )
+
+        DEFAULT_COLUMNS = {"Note agrégée": {"type": "grade", "Note éliminatoire": -1}}
+
+        validate_columns = Or(
+            And(Or(None, {}, ""), Use(lambda dummy: DEFAULT_COLUMNS)),
+            {
+                Optional("Note agrégée", default=DEFAULT_COLUMNS["Note agrégée"]): {},
+                Optional(str): validate_grade,
+            },
+        )
+
+        DEFAULT_OPTIONS = {
+            "Percentile note A": 0.9,
+            "Percentile note B": 0.65,
+            "Percentile note C": 0.35,
+            "Percentile note D": 0.1,
+        }
+
+        validate_options = Or(
+            And(Or(None, {}, ""), Use(lambda dummy: DEFAULT_OPTIONS)),
+            {
+                "Percentile note A": float,
+                "Percentile note B": float,
+                "Percentile note C": float,
+                "Percentile note D": float,
+                Optional(str): object,
+            },
+            {Optional(str): object},
+        )
+
+        sc = Schema(
+            Or(
+                And(
+                    None,
+                    Use(
+                        lambda dummy: {
+                            "columns": validate_columns.validate(None),
+                            "options": validate_options.validate(None),
+                        }
+                    ),
+                ),
+                {
+                    Optional(
+                        "columns", default=validate_columns.validate(None)
+                    ): validate_columns,
+                    Optional(
+                        "options", default=validate_options.validate(None)
+                    ): validate_options,
+                },
+            )
+        )
+
+        return sc.validate(config)
+
+    def get_columns(self, **kwargs):
+        "Les colonnes à utiliser dans la feuille Excel"
+
+        # Les colonnes classiques
+        columns = [("Nom", "raw", 0), ("Prénom", "raw", 0), ("Courriel", "raw", 0)]
+
+        # Les colonnes nécessaires pour les différents calculs
+        columns.append(("Admis", "cell", 0))
+        columns.append(("Note admis", "cell", 0))
+
+        # Les colonnes spécifiées dans le fichier de configuration
+        for name, props in self.config["columns"].items():
+            col_type = props.get("type") if props is not None else None
+            columns.append((name, col_type, 0))
+
+        # La colonne de la note finale : A, B, C, D, E, F
+        columns.append(("Note ECTS", "cell", 0))
+
+        return columns
+
+    def write(self):
+        self.add_arguments()
+        self.parse_arguments()
+        self.setup()
+        super().create_first_worksheet()
+        self.create_second_worksheet()
+        self.update_first_worksheet()
+        self.write_workbook()
 
     def get_column_range(self, colname):
         "Renvoie la plage de cellule de la colonne COLNAME sans l'en-tête."
 
-        if colname not in self.df.columns:
-            raise Exception('Unknown column name: {}'.format(colname))
+        if colname not in self.first_df.columns:
+            raise Exception("Unknown column name: {}".format(colname))
 
-        cells = self.df[colname]
+        cells = self.first_df[colname]
         first, last = cells.iloc[0], cells.iloc[-1]
 
         return get_range_from_cells(first, last)
 
-    def write(self, ref=None):
-        # Write new gradesheet
-        self.gradesheet = self.wb.create_sheet(title=self.name)
+    @property
+    def grade_columns(self):
+        """Colonnes associées à des notes"""
 
+        for name, props in self.config["columns"].items():
+            if props["type"] == "grade":
+                props2 = props.copy()
+                del props2["type"]
+                yield name, props2
+
+    def write_key_value_props(self, ref_cell, title, props):
+        "Helper function to write key-value table"
+
+        keytocell = {}
+        ref_cell.text(title).merge(ref_cell.right()).style = "Pandas"
+        for key, value in props.items():
+            ref_cell = ref_cell.below()
+            ref_cell.value = key
+            ref_cell.right().value = value
+            keytocell[key] = ref_cell.right()
+        return ref_cell.right(), keytocell
+
+    def create_second_worksheet(self):
+        # Write new gradesheet
+        self.gradesheet = self.workbook.create_sheet(title=self.name)
+        self.workbook.active = self.gradesheet
         current_cell = self.gradesheet.cell(row=1, column=1)
 
-        # Helper function to write key-value table
-        def write_key_value_props(ref_cell, title, props):
-            keytocell = {}
-            ref_cell.text(title).merge(ref_cell.right()).style = "Pandas"
-            for key, value in props.items():
-                ref_cell = ref_cell.below()
-                ref_cell.value = key
-                ref_cell.right().value = value
-                keytocell[key] = ref_cell.right()
-            return ref_cell.right(), keytocell
-
-        # Write options for all "columns" items in configuration file
-        grades_options = {}
-        if "Note agrégée" not in self.config['columns']:
-            self.config['columns']['Note agrégée'] = {
-                'note_éliminatoire': -1
-            }
-        for name, props in self.config['columns'].items():
-            # Add default options
-            if props is None:
-                opts = {'note_éliminatoire': -1}
-            elif 'options' not in props:
-                opts = {'note_éliminatoire': -1}
-            elif 'note_éliminatoire' not in props['options']:
-                opts = props['options']
-                opts['note_éliminatoire'] = -1
-
+        # Write option blocks for grade columns
+        self.grades_options = {}
+        for name, props in self.grade_columns:
             # Write key-value table
-            lower_right, keytocell = write_key_value_props(
-                current_cell,
-                name,
-                opts
+            lower_right, keytocell = self.write_key_value_props(
+                current_cell, name, props
             )
-            grades_options[name] = keytocell
+            self.grades_options[name] = keytocell
             current_cell = lower_right.below(2).left(1)
 
-        # Add default global options
-        options = self.config.get('options', {})
-        for ects, grade in zip('ABCD', [0.9, 0.65, 0.35, 0.1]):
-            if ('Percentile note ' + ects) not in options:
-                options['Percentile note ' + ects] = grade
+        # Add default global options block
+        options = self.config.get("options", {})
+        for ects, grade in zip("ABCD", [0.9, 0.65, 0.35, 0.1]):
+            if ("Percentile note " + ects) not in options:
+                options["Percentile note " + ects] = grade
 
-        lower_right, global_options = write_key_value_props(
-            current_cell,
-            "Options globales",
-            options
+        lower_right, self.global_options = self.write_key_value_props(
+            current_cell, "Options globales", options
         )
         current_cell = lower_right.below(2).left(1)
 
         # On écrit les seuils des notes correspondants aux percentiles choisis
         props = {}
-        self.wb.active = self.gradesheet
-        for i, ects in enumerate('ABCD'):
-            percentile_cell = global_options['Percentile note ' + ects]
-            props[ects + " si >="] = (
-                '=IF(ISERROR(PERCENTILE({}, {})), NA(), PERCENTILE({}, {}))'.format(
-                    self.get_column_range('Note admis'),
-                    get_address_of_cell(percentile_cell),
-                    self.get_column_range('Note admis'),
-                    get_address_of_cell(percentile_cell)
-                )
+        for i, ects in enumerate("ABCD"):
+            percentile_cell = self.global_options["Percentile note " + ects]
+            props[
+                ects + " si >="
+            ] = "=IF(ISERROR(PERCENTILE({0}, {1})), NA(), PERCENTILE({0}, {1}))".format(
+                self.get_column_range("Note admis"),
+                get_address_of_cell(percentile_cell),
             )
 
-        lower_right, percentiles_theo = write_key_value_props(
-            current_cell,
-            "Percentiles théoriques",
-            props
+        lower_right, percentiles_theo = self.write_key_value_props(
+            current_cell, "Percentiles théoriques", props
         )
         current_cell = lower_right.below(2).left(1)
 
         # Percentiles effectifs
         props = {}
-        self.wb.active = self.gradesheet
-        for i, ects in enumerate('ABCD'):
-            props[ects + " si >="] = (
-                "=" + get_address_of_cell(percentiles_theo[ects + " si >="])
+        for i, ects in enumerate("ABCD"):
+            props[ects + " si >="] = "=" + get_address_of_cell(
+                percentiles_theo[ects + " si >="]
             )
 
-        lower_right, percentiles_used = write_key_value_props(
-            current_cell,
-            "Percentiles utilisés",
-            props
+        lower_right, self.percentiles_used = self.write_key_value_props(
+            current_cell, "Percentiles utilisés", props
         )
         current_cell = lower_right.below(2).left(1)
 
@@ -1008,257 +809,274 @@ class GradeSheetJuryWriter(GradeSheetWriterConfig):
         # colonne `Admis`
         ref_cell = self.gradesheet.cell(row=1, column=4)
         props = {}
-        for ects in 'ABCDEF':
-            props["Nombre de " + ects] = (
-                '=COUNTIF({}, "{}")'
-            ).format(
-                self.get_column_range('Note ECTS'),
-                ects
+        for ects in "ABCDEF":
+            props["Nombre de " + ects] = ('=COUNTIF({}, "{}")').format(
+                self.get_column_range("Note ECTS"), ects
             )
-        props["Nombre d'admis"] = (
-            '=SUMIF({}, "<>#N/A")'.format(
-                self.get_column_range('Admis')
-            )
+        props["Nombre d'admis"] = '=SUMIF({}, "<>#N/A")'.format(
+            self.get_column_range("Admis")
         )
-        props["Effectif total"] = (
-            "=COUNTA({})".format(
-                self.get_column_range('Admis')
-            )
+        props["Effectif total"] = "=COUNTA({})".format(self.get_column_range("Admis"))
+        props["Ratio"] = '=AVERAGEIF({}, "<>#N/A")'.format(
+            self.get_column_range("Admis")
         )
-        props["Ratio"] = (
-            '=AVERAGEIF({}, "<>#N/A")'.format(
-                self.get_column_range('Admis')
-            )
-        )
-        lower_right, statistiques = write_key_value_props(
-            ref_cell,
-            "Statistiques",
-            props
+        lower_right, statistiques = self.write_key_value_props(
+            ref_cell, "Statistiques", props
         )
 
-        # On écrit la note des admis uniquement pour le calcul des
-        # percentiles
-        self.wb.active = self.ws_data
-        if self.args.order_by is not None:
-            df_sort = self.df.reset_index().sort_values(
-                [self.args.order_by, "index"]
-            ).drop("index", axis=1)
-        else:
-            df_sort = self.df
-        for i, (index, record) in enumerate(df_sort.iterrows()):
-            record['Note admis'].value = (
-                '=IFERROR(IF({}=1, {}, ""), "")'.format(
-                    get_address_of_cell(record['Admis']),
-                    get_address_of_cell(record['Note agrégée'])
+    def update_first_worksheet(self):
+        # Pour que get_address_of_cell marche correctement
+        self.workbook.active = self.first_ws
+
+        # On écrit la colonne "Admis" des admis/refusés basée sur les
+        # barres
+        for i, (index, record) in enumerate(self.first_df.iterrows()):
+            # Teste si une des notes est vide
+            any_blank_cell = "OR({})".format(
+                ", ".join(
+                    "ISBLANK({})".format(get_address_of_cell(record[name]))
+                    for name, props in self.grade_columns
                 )
             )
 
-        # On écrit la colonnes des admis/refusés
-        self.wb.active = self.ws_data
-        for i, (index, record) in enumerate(df_sort.iterrows()):
-            record["Admis"].value = (
-                '=IFERROR(IF(OR({}), NA(), IF(AND({}), 1, 0)), NA())'.format(
-                    ", ".join(
-                        "ISBLANK({})".format(
-                            get_address_of_cell(record[name])
-                        )
-                        for name, _ in self.config['columns'].items()
-                    ),
-                    ", ".join(
-                        "IF(ISNUMBER({}), {}>={}, 1)".format(
-                            get_address_of_cell(record[name]),
-                            get_address_of_cell(record[name]),
-                            get_address_of_cell(
-                                grades_options[name]['note_éliminatoire']
-                            )
-                        )
-                        for name, _ in self.config['columns'].items()
+            # Teste si toutes les barres sont atteintes
+            above_all_threshold = "AND({})".format(
+                ", ".join(
+                    "IF(ISNUMBER({0}), {0}>={1}, 1)".format(
+                        get_address_of_cell(record[name]),
+                        get_address_of_cell(
+                            self.grades_options[name]["Note éliminatoire"],
+                            absolute=True,
+                        ),
                     )
+                    for name, props in self.grade_columns
                 )
             )
 
-        # On écrit la note ECTS en fonction des autres notes
-        self.wb.active = self.ws_data
-        for i, (index, record) in enumerate(df_sort.iterrows()):
-            record['Note ECTS'].value = (
-                '=IF(ISNA({}), NA(), IF({}="RESERVE", "RESERVE", IF({}="ABS", "ABS", IF({}=0, "F", IF({}>={}, "A", IF({}>={}, "B", IF({}>={}, "C", IF({}>={}, "D", "E"))))))))'.format(
-                    get_address_of_cell(record['Admis']),
-                    get_address_of_cell(record['Note agrégée']),
-                    get_address_of_cell(record['Note agrégée']),
-                    get_address_of_cell(record['Admis']),
-                    get_address_of_cell(record['Note agrégée']),
-                    get_address_of_cell(percentiles_used["A si >="]),
-                    get_address_of_cell(record['Note agrégée']),
-                    get_address_of_cell(percentiles_used["B si >="]),
-                    get_address_of_cell(record['Note agrégée']),
-                    get_address_of_cell(percentiles_used["C si >="]),
-                    get_address_of_cell(record['Note agrégée']),
-                    get_address_of_cell(percentiles_used["D si >="])
-                )
-            )
-        for cell in df_sort["Note ECTS"]:
-            cell.alignment = Alignment(horizontal='center')
+            # NA() s'il y a un problème, 0 si recalé, 1 si reçu
+            formula = f"=IFERROR(IF({any_blank_cell}, NA(), IF({above_all_threshold}, 1, 0)), NA())"
+            record["Admis"].value = formula
 
-        range = self.get_column_range('Note ECTS')
-        for ects, color in zip('ABCDEF', [
-                '00FF00',
-                'C2FF00',
-                'F7FF00',
-                'FFC100',
-                'FF6900',
-                'FF0000'
-        ]):
-            fill = PatternFill(start_color=color, end_color=color, fill_type='solid')
-            rule = CellIsRule(operator='equal', formula=[f'"{ects}"'], fill=fill)
-            self.ws_data.conditional_formatting.add(range, rule)
+        # On écrit la note agrégée des admis dans la colonne "Note
+        # admis" pour faciliter le calcul des percentiles sur les
+        # admis
+        for i, (index, record) in enumerate(self.first_df.iterrows()):
+            record["Note admis"].value = '=IFERROR(IF({}=1, {}, ""), "")'.format(
+                get_address_of_cell(record["Admis"]),
+                get_address_of_cell(record["Note agrégée"]),
+            )
+
+        # On écrit la note ECTS en fonction de la note agrégée et des
+        # percentiles utilisés
+        perc_A = get_address_of_cell(self.percentiles_used["A si >="], absolute=True)
+        perc_B = get_address_of_cell(self.percentiles_used["B si >="], absolute=True)
+        perc_C = get_address_of_cell(self.percentiles_used["C si >="], absolute=True)
+        perc_D = get_address_of_cell(self.percentiles_used["D si >="], absolute=True)
+        percs = dict(perc_A=perc_A, perc_B=perc_B, perc_C=perc_C, perc_D=perc_D)
+
+        for i, (index, record) in enumerate(self.first_df.iterrows()):
+            note_admis = get_address_of_cell(record["Admis"])
+            note_agregee = get_address_of_cell(record["Note agrégée"])
+            opts = dict(note_admis=note_admis, note_agregee=note_agregee)
+            opts.update(percs)
+
+            # Fonction pour la construction des IF imbriqués
+            def switch(ifs, default):
+                if ifs:
+                    cond, then = ifs[0]
+                    return "IF({cond}, {then}, {else_})".format(
+                        cond=cond.format(**opts),
+                        then=then,
+                        else_=switch(ifs[1:], default),
+                    )
+                else:
+                    return default
+
+            # Formule de type switch/case
+            formula = switch(
+                (
+                    ("ISNA({note_admis})", "NA()"),
+                    ('{note_agregee}="RESERVE"', '"RESERVE"'),
+                    ('{note_agregee}="ABS"', '"ABS"'),
+                    ("{note_admis}=0", '"F"'),
+                    ("{note_agregee}>={perc_A}", '"A"'),
+                    ("{note_agregee}>={perc_B}", '"B"'),
+                    ("{note_agregee}>={perc_C}", '"C"'),
+                    ("{note_agregee}>={perc_D}", '"D"'),
+                ),
+                '"E"',
+            )
+
+            record["Note ECTS"].value = "=" + formula
+
+        # On centre les notes ECTS
+        for cell in self.first_df["Note ECTS"]:
+            cell.alignment = Alignment(horizontal="center")
+
+        # On colore la cellule en fonction de la note ECTS
+        range = self.get_column_range("Note ECTS")
+        for ects, color in zip(
+            "ABCDEF", ["00FF00", "C2FF00", "F7FF00", "FFC100", "FF6900", "FF0000"]
+        ):
+            fill = PatternFill(start_color=color, end_color=color, fill_type="solid")
+            rule = CellIsRule(operator="equal", formula=[f'"{ects}"'], fill=fill)
+            self.first_ws.conditional_formatting.add(range, rule)
 
         # Formattage conditionnel pour les notes éliminatoires
-        self.wb.active = self.ws_data
-        redFill = PatternFill(start_color='EE1111',
-                              end_color='EE1111',
-                              fill_type='solid')
+        red_fill = PatternFill(
+            start_color="EE1111", end_color="EE1111", fill_type="solid"
+        )
 
-        for name, opts in grades_options.items():
-            threshold_cell = opts["note_éliminatoire"]
-            threshold_addr = get_address_of_cell(
-                threshold_cell,
-                compat=True
-            )
-            self.ws_data.conditional_formatting.add(
+        for name, opts in self.grades_options.items():
+            threshold_cell = opts["Note éliminatoire"]
+            threshold_addr = get_address_of_cell(threshold_cell, compat=True)
+            self.first_ws.conditional_formatting.add(
                 self.get_column_range(name),
-                CellIsRule(operator='lessThan',
-                           formula=[threshold_addr],
-                           fill=redFill))
+                CellIsRule(
+                    operator="lessThan", formula=[threshold_addr], fill=red_fill
+                ),
+            )
 
         # On offre la possibilité de trier
-        self.wb.active = self.ws_data
-        max_column = self.ws_data.max_column
-        max_row = self.ws_data.max_row
-        self.ws_data.auto_filter.ref = 'A1:{}{}'.format(
-            utils.get_column_letter(max_column),
-            max_row)
-        range = self.get_column_range('Note ECTS')
-        self.ws_data.auto_filter.add_sort_condition(range)
-
-        # On sauve le classeur
-        self.wb.save(self.output_file)
+        max_column = self.first_ws.max_column
+        max_row = self.first_ws.max_row
+        self.first_ws.auto_filter.ref = "A1:{}{}".format(
+            utils.get_column_letter(max_column), max_row
+        )
+        range = self.get_column_range("Note ECTS")
+        self.first_ws.auto_filter.add_sort_condition(range)
 
 
-class GradeSheetGroupStruct(GradeSheetExamWriter):
-    """Feuille de notes avec grille, par groupes avec modifications par étudiants"""
+class GradeSheetSimpleWriter(GradeSheetMultiple):
+    """Feuille de notes simple par étudiant et sans barème."""
 
-    name = 'group-struct'
+    name = "simple"
 
-    def __init__(self, args):
-        super().__init__(args)
-        self.group = args.group
+    def get_columns(self, **kwargs):
+        "Renvoie les colonnes à utiliser dans la première feuille de calculs"
+
+        # Default columns
+        columns = {"Nom": "raw", "Prénom": "raw", "Courriel": "raw"}
+
+        # Add order_by columns if specified in command line
+        if self.args.order_by is not None:
+            columns[self.args.order_by] = "raw"
+
+        if self.args.group_by is not None:
+            columns[self.args.group_by] = "raw"
+
+        # Add column for grades
+        columns[self.args.name] = "cell"
+
+        return columns
+
+    def create_worksheet(self, name, group):
+        gradesheet = self.workbook.create_sheet(title=name)
+        ref = (1, 1)
+        row, col = ref
+
+        lastname = gradesheet.cell(*ref).text("Nom")
+        name = lastname.below().text("Prénom")
+        grade = name.below().text("Note")
+
+        ref_list = lastname.right()
+        max_len = 0
+        for i, (index, record) in enumerate(group.iterrows()):
+            max_len = max(max_len, len(record["Nom"]), len(record["Prénom"]))
+
+            lastname = ref_list.right(i)
+            name = lastname.below()
+            grade = name.below()
+
+            lastname.value = record["Nom"]
+            name.value = record["Prénom"]
+
+            # Get cell to be filled in first worksheet and make it
+            # point to current cell in second worksheet.
+            cell = record[self.args.name]
+
+            cell.value = if_blank_formula(
+                get_address_of_cell(grade, add_worksheet_name=True)
+            )
+
+        for i in range(len(group)):
+            gradesheet.column_dimensions[
+                utils.get_column_letter(col + i + 1)
+            ].width = max_len
+
+        # On fige la première ligne
+        gradesheet.freeze_panes = ref_list.top()
+
+
+class GradeSheetExamWriter(ConfigCliOpt, GradeSheetMultiple):
+    """Feuille de notes pour un examen type médian/final avec des
+questions structurées."""
+
+    # Name used to identify the class to use in the sub_command
+    # parser.
+    name = "exam"
 
     def get_columns(self, **kwargs):
         return {
-            'Nom': 'raw',
-            'Prénom': 'raw',
-            'Courriel': 'raw',
-            kwargs['group']: 'raw',
-            self.name: 'cell'
+            "Nom": "raw",
+            "Prénom": "raw",
+            "Courriel": "raw",
+            self.args.group: "raw",
+            self.args.name: "cell",
         }
 
-    @classmethod
-    def get_parser(cls):
-        parser = super(GradeSheetAssignmentWriter, GradeSheetAssignmentWriter).get_parser()
-        parser.add_argument('-g', '--group', required=True, dest='group')
-        return parser
-
-    def write(self, ref=None):
-        # Write new gradesheet
-        self.gradesheet = self.wb.create_sheet(title=self.name)
-        self.wb.active = self.gradesheet
-
-        if ref is None:
-            ref = (4, 1)
-        row, col = self.write_structure(upper_left=ref)
-
-        # First, last and total grade for column "all"
-        first_all = self.gradesheet.cell(row=ref[0], column=col+1)
-        total_all = self.gradesheet.cell(row=row+1, column=col+1)
-        last_all = total_all.above()
-
-        for i, (key, group) in enumerate(self.df.groupby(self.group)):
-            # Name of column common to all members of group
-            first_all.above(2).value = "Group"
-            self.gradesheet.merge_cells2(first_all.above(2).set_border(), first_all.above(1)).center()
-
-            # Write all names
-            for j, (index, record) in enumerate(group.iterrows()):
-                first_all.above(2).right(j+1).value = record['Nom']
-                first_all.above().right(j+1).value = record['Prénom']
-                fit_cells_at_col(first_all.above(2).right(j+1), first_all.above().right(j+1))
-                frame_range(first_all.above(2).right(j+1), first_all.above().right(j+1))
-
-            # Name of current group
-            first_all.above(3).value = key
-            self.gradesheet.merge_cells2(first_all.above(3).set_border(), first_all.above(3).right(len(group))).center()
-
-            for j, (index, record) in enumerate(group.iterrows()):
-                first_stu_grade = first_all.right(j+1)
-                last_stu_grade = last_all.right(j+1)
-                total_stu_grade = total_all.right(j+1)
-
-                formula = "=" + "+".join(
-                    "IF(ISBLANK(%s),%s,%s)" % (
-                        get_address_of_cell(stu_g),
-                        get_address_of_cell(all_g, absolute=True),
-                        get_address_of_cell(stu_g)
-                    )
-                    for all_g, stu_g in zip(
-                            get_segment(first_all, last_all),
-                            get_segment(first_stu_grade, last_stu_grade)
-                    )
-                )
-
-                total_stu_grade.value = formula
-
-                record[self.name].value = "=" + get_address_of_cell(
-                    total_stu_grade,
-                    add_worksheet_name=True
-                )
-
-            frame_range(first_all, last_all.right(len(group)))
-            total_all = total_all.right(len(group)+1)
-            first_all = first_all.right(len(group)+1)
-            last_all = total_all.above()
-
-        self.wb.save(self.output_file)
+    def create_worksheet(self, name, group):
+        gradesheet = self.workbook.create_sheet(title=name)
 
 
-WRITERS = [
-    GradeSheetSimpleWriter,
-    GradeSheetExamWriter,
-    GradeSheetExamMultipleWriter,
-    GradeSheetAssignmentWriter,
-    GradeSheetJuryWriter,
-    GradeSheetSimpleGroup,
-    GradeSheetGroupStruct
-]
+WRITERS = [GradeSheetNoGroup, GradeSheetGroup]
 
 
-def run(argv=sys.argv[1:], prog=os.path.basename(__file__), description=None):
+def run2(argv=sys.argv[1:], prog=os.path.basename(__file__), description=None):
     parser = argparse.ArgumentParser(prog=prog, description=description)
     subparsers = parser.add_subparsers(dest="sub_command", required=True)
     name_to_writer = {}
     for type in WRITERS:
         name_to_writer[type.name] = type
-        base_parser = type.get_parser()
+        obj = type()
+        obj.add_arguments()
+        base_parser = obj._parser
         subparsers.add_parser(type.name, help=type.__doc__, parents=[base_parser])
     args = parser.parse_args(argv)
 
     writer_class = name_to_writer[args.sub_command]
-    writer = writer_class(args)
+    writer = writer_class(argv=argv[1:])
     writer.write()
 
 
-if __name__ == '__main__':
-    # run("--type assignment --group TPE -s median.yaml --name bar -d ../generated --uv SY02 --planning P2018".split())
-    # run("--type simple --name bar -d ../generated --uv SY02 --planning P2018".split())
-    # run("--type jury --name bar -c config.yaml -d ../generated --uv SY02 --planning P2018".split())
-    # run()
-    pass
+if __name__ == "__main__":
+    # argv = ["--name", "Note TP", "-d", "scripts/tests", "--worksheets", "TP", "--order-by", "Prénom_moodle"]
+    # a = GradeSheetSimpleWriter(argv=argv)
+    # a.write()
+
+    # argv = ["--name", "Note TP", "-d", "scripts/tests", "--worksheets", "TP", "--order-by", "Prénom_moodle", "--struct", "scripts/tests/config_test.yaml"]
+    # a = GradeSheetNoGroup(argv=argv)
+    # a.write()
+
+    # argv = ["--name", "Note TP", "-d", "scripts/tests", "--worksheets", "TD", "--groups", "TP", "--struct", "scripts/tests/config_test.yaml"]
+    # a = GradeSheetGroup(argv=argv)
+    # a.write()
+
+    # argv = ["--name", "Note TP", "-d", "scripts/tests", "--worksheets", "TD", "--groups", "TP", "--struct", "scripts/tests/config_test.yaml"]
+    # a = GradeSheetGroup(argv=argv)
+    # a.write()
+
+    argv = [
+        "--name",
+        "Rapport",
+        "-d",
+        "/home/sylvain/CloudStation/Sylvain/enseignements/P2020/SY09/generated/student_data_merge.xlsx",
+        "--worksheets",
+        "group",
+        "--groups",
+        "dataset",
+        "--struct",
+        "scripts/tests/config_test3.yaml",
+    ]
+    a = GradeSheetGroup(argv=argv)
+    a.write()

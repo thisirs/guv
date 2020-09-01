@@ -186,11 +186,9 @@ manuelle."""
     }
 
 
-@actionfailed_on_exception
 def task_xls_grades_sheet():
     """Génère un fichier Excel pour faciliter la correction des examens/projets/jury"""
 
-    @taskfailed_on_exception
     def xls_grades_sheet(data_file, docs):
         cmd_args = sys.argv[2:] + ['-o', docs, '-d', data_file]
         run(cmd_args,
