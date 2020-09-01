@@ -11,7 +11,7 @@ from .utils_noconfig import ParseArgsFailed, ParseArgAction
 from .config import settings
 
 
-class TaskBase(object):
+class TaskBase:
     """Subclass this to define tasks."""
 
     def __init__(self):
