@@ -133,7 +133,7 @@ class UtcUvListToCsv(TaskBase):
 
         # Lire les créneaux par semaine pour les masters
         if os.path.exists(self.ue_list_filename):
-            tables.append(pd.read_excel(self.ue_list_filename))
+            tables.append(pd.read_excel(self.ue_list_filename, engine="openpyxl"))
 
         df = pd.concat(tables)
 

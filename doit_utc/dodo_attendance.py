@@ -87,7 +87,7 @@ class TaskPdfAttendanceList(UVTask, CliArgsMixin):
         self.file_dep = [self.xls_merge]
 
     def run(self):
-        df = pd.read_excel(self.xls_merge)
+        df = pd.read_excel(self.xls_merge, engine="openpyxl")
 
         if self.group == "all":
             self.group = None
@@ -145,7 +145,7 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
         self.kwargs = {**self.info, "nslot": self.slots, "ctype": self.course}
 
     def run(self):
-        df = pd.read_excel(self.xls_merge)
+        df = pd.read_excel(self.xls_merge, engine="openpyxl")
         template = "attendance_name_full.tex.jinja2"
         pdfs = []
         ctype = self.kwargs["ctype"]
@@ -218,7 +218,7 @@ class AttendanceSheetRoom(UVTask):
 
             return breaks
 
-        df = pd.read_excel(self.xls_merge)
+        df = pd.read_excel(self.xls_merge, engine="openpyxl")
         if "Tiers-temps" in df.columns:
             df0 = df.loc[df["Tiers-temps"] == 0]
             dftt = df.loc[df["Tiers-temps"] != 0]

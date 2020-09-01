@@ -9,7 +9,7 @@ def add_moodle_data(df, fn):
     if fn.endswith('.csv'):
         dfm = pd.read_csv(fn)
     elif fn.endswith('.xlsx') or fn.endswith('.xls'):
-        dfm = pd.read_excel(fn)
+        dfm = pd.read_excel(fn, engine="openpyxl")
 
     dfm = dfm.drop(['Institution', 'Département', 'Dernier téléchargement depuis ce cours'], axis=1)
 

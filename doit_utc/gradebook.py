@@ -294,7 +294,7 @@ class GradeSheetWriter:
         # Reading source of information into a Pandas dataframe
         if not os.path.exists(self.data_file):
             raise Exception(f'Data file `{self.data_file}` does not exist')
-        self.data_df = pd.read_excel(self.data_file)
+        self.data_df = pd.read_excel(self.data_file, engine="openpyxl")
 
         # Setting path of gradebook file to be written
         if args.output_file:
@@ -604,7 +604,7 @@ class GradeSheetExamMultipleWriter(GradeSheetExamWriter):
     def __init__(self, args):
         super().__init__(args)
         insts_file = args.insts
-        df = pd.read_excel(insts_file)
+        df = pd.read_excel(insts_file, engine="openpyxl")
         insts = df['Intervenants'].unique()
 
         def select_inst(i):

@@ -89,7 +89,7 @@ def task_add_instructors():
     def add_instructors(target, csv, insts):
         df_csv = pd.read_csv(csv)
 
-        df_insts = [pd.read_excel(inst) for inst in insts]
+        df_insts = [pd.read_excel(inst, engine="openpyxl") for inst in insts]
         df_inst = pd.concat(df_insts, ignore_index=True)
         df_inst.Semaine = df_inst.Semaine.astype(object)
 
@@ -117,13 +117,10 @@ def task_add_instructors():
 def read_xls_details(fn):
     """Lit un fichier Excel avec un ordre sur la colonne 'Statut'."""
 
-    sts = ['MCF', 'PR', 'PRAG', 'PRCE', 'PAST', 'ECC', 'Doct', 'ATER',
-           'Vacataire']
+    sts = ["MCF", "PR", "PRAG", "PRCE", "PAST", "ECC", "Doct", "ATER", "Vacataire"]
     status_type = CategoricalDtype(categories=sts, ordered=True)
 
-    return pd.read_excel(fn, dtype={
-        'Statut': status_type
-    })
+    return pd.read_excel(fn, dtype={"Statut": status_type}, engine="openpyxl")
 
 
 @add_templates(target='intervenants_details.xlsx')
@@ -135,7 +132,7 @@ affectations sont prises pour chaque UV.
     """
 
     def xls_inst_details(inst_uv, inst_details, target):
-        inst_uv = pd.read_excel(inst_uv)
+        inst_uv = pd.read_excel(inst_uv, engine="openpyxl")
         inst_details = pd.read_excel(inst_details)
 
         # Add details from inst_details

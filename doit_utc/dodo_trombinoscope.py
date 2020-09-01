@@ -74,7 +74,7 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
 
     def run(self):
         # On vérifie que GROUPBY et SUBGROUPBY sont licites
-        df = pd.read_excel(self.xls_merge)
+        df = pd.read_excel(self.xls_merge, engine="openpyxl")
         if self.groupby == "all":
             self.groupby = None
         else:

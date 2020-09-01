@@ -312,7 +312,7 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
             if path.endswith('.csv'):
                 right_df = pd.read_csv(path, **kw_read)
             elif path.endswith('.xlsx') or path.endswith('.xls'):
-                right_df = pd.read_excel(path, **kw_read)
+                right_df = pd.read_excel(path, engine="openpyxl", **kw_read)
             else:
                 raise Exception('No read method and unsupported file extension')
         else:
