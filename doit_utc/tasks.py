@@ -112,35 +112,6 @@ class UVTask(TaskBase):
         return self._settings
 
 
-class SingleUVTask(TaskBase):
-    def __init__(self, planning, uv, info):
-        super().__init__()
-        self.planning, self.uv, self.info = get_unique_uv()
-        self._settings = None
-
-    @property
-    def settings(self):
-        if self._settings is None:
-            self._settings = copy.copy(settings)
-            self._settings.load(Path(settings.BASE_DIR) / self.uv / "config.py")
-        return self._settings
-
-
-class MultipleUVTask(TaskBase):
-    def __init__(self, planning, uv, info):
-        super().__init__()
-        self.planning, self.uv, self.info = planning, uv, info
-        self.name = f"{self.planning}_{self.uv}"
-        self._settings = None
-
-    @property
-    def settings(self):
-        if self._settings is None:
-            self._settings = copy.copy(settings)
-            self._settings.load(Path(settings.BASE_DIR) / self.uv / "config.py")
-        return self._settings
-
-
 class CliArgsMixin(TaskBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
