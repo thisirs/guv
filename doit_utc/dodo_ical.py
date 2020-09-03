@@ -15,12 +15,8 @@ import pandas as pd
 from doit.exceptions import TaskFailed
 
 from .config import settings
-from .utils import (
-    Output,
-    generated,
-    compute_slots,
-    argument,
-)
+from .utils_config import Output, generated, compute_slots
+from .utils import argument
 from .dodo_instructors import task_add_instructors
 from .tasks import UVTask, CliArgsMixin
 

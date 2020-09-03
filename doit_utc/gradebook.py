@@ -30,7 +30,7 @@ from .openpyxl_utils import (
 import pandas as pd
 import oyaml as yaml  # Ordered yaml
 
-from .utils_noconfig import sort_values
+from .utils import sort_values
 
 
 def walk_tree(tree, depth=None):

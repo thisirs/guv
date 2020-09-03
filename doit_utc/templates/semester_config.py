@@ -55,10 +55,3 @@ TURN = {
 SKIP_DAYS_C = ferie + vacances_printemps + median + final
 SKIP_DAYS_D = ferie + vacances_printemps + debut + median + final
 SKIP_DAYS_T = ferie + vacances_printemps + debut + final
-
-# Configuration du chemin de la base de données de doit et des tâches
-# par défault à exécuter dans le dossier du semestre.
-DOIT_CONFIG = {
-    'dep_file': os.path.join(BASE_DIR, '.doit.db'),
-    "default_tasks": ["utc_uv_list_to_csv"]
-}

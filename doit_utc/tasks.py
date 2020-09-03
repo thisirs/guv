@@ -6,9 +6,9 @@ import argparse
 
 from doit.exceptions import TaskFailed
 
-from .utils import selected_uv, get_unique_uv
-from .utils_noconfig import ParseArgsFailed, ParseArgAction
 from .config import settings
+from .utils_config import selected_uv, get_unique_uv
+from .utils import ParseArgsFailed, ParseArgAction
 
 
 class TaskBase:

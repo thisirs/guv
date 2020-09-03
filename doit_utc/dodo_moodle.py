@@ -21,15 +21,8 @@ import jinja2
 import markdown
 
 from .config import settings
-from .utils import (
-    Output,
-    documents,
-    generated,
-    compute_slots,
-    argument,
-    check_columns,
-    lib_list,
-)
+from .utils_config import Output, documents, generated, compute_slots
+from .utils import argument, check_columns, lib_list
 from .tasks import CliArgsMixin, UVTask
 from .utils_noconfig import pformat, make_groups
 from .dodo_students import XlsStudentDataMerge
@@ -418,7 +411,7 @@ Les restrictions se font par adresse email.
     def run(self):
         df = pd.read_excel(self.xls_merge, engine="openpyxl")
 
-        check_columns(df, self.group, file=self.xls_merge)
+        check_columns(df, self.group, file=self.xls_merge, base_dir=settings.BASE_DIR)
         dff = df[["Adresse de courriel", self.group]]
 
         # Dictionnary of group in GROUP and corresponding Cond
@@ -551,7 +544,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         df = df.sample(frac=1).reset_index(drop=True)
 
         if self.grouping is not None:
-            check_columns(df, self.grouping, file=self.xls_merge)
+            check_columns(df, self.grouping, file=self.xls_merge, base_dir=settings.BASE_DIR)
 
         # Ajouter le titre à la template
         tmpl = self.template

@@ -10,12 +10,8 @@ import latex
 import jinja2
 
 from .config import settings
-from .utils import (
-    documents,
-    generated,
-    argument,
-    Output,
-)
+from .utils import documents, generated, Output
+from utils_config import argument
 from .tasks import UVTask, CliArgsMixin
 from .dodo_instructors import task_xls_affectation, task_add_instructors
 

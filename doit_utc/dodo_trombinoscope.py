@@ -17,15 +17,9 @@ import jinja2
 import browser_cookie3
 import latex
 
-from .utils import (
-    Output,
-    documents,
-    generated,
-    escape_tex,
-    argument,
-    check_columns,
-)
-from .utils_noconfig import sort_values
+from .config import settings
+from .utils_config import Output, documents, generated
+from .utils import sort_values, escape_tex, argument, check_columns
 from .dodo_students import XlsStudentDataMerge
 from .tasks import UVTask, CliArgsMixin
 
@@ -78,10 +72,10 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
         if self.groupby == "all":
             self.groupby = None
         else:
-            check_columns(df, self.groupby, file=self.xls_merge)
+            check_columns(df, self.groupby, file=self.xls_merge, base_dir=settings.BASE_DIR)
 
         if self.subgroupby is not None:
-            check_columns(df, self.subgroupby, file=self.xls_merge)
+            check_columns(df, self.subgroupby, file=self.xls_merge, base_dir=settings.BASE_DIR)
 
         async def download_image(session, login):
             url = URL + login

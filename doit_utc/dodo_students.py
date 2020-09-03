@@ -17,13 +17,11 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 from doit.exceptions import TaskFailed
 
 from .config import settings
+from .utils_config import Output, documents, generated, get_unique_uv
 from .utils import (
-    Output,
-    documents,
-    generated,
+    sort_values,
     argument,
     parse_args,
-    get_unique_uv,
     actionfailed_on_exception,
     taskfailed_on_exception,
     check_columns,
@@ -31,7 +29,6 @@ from .utils import (
     slugrot,
     slugrot_string,
 )
-from .utils_noconfig import sort_values
 from .tasks import UVTask, CliArgsMixin
 from .scripts.parse_utc_list import parse_UTC_listing
 from .scripts.add_student_data import (
@@ -400,7 +397,7 @@ class CsvExamGroups(UVTask, CliArgsMixin):
             dff["TPE"] = pd.concat([sg1, sg2])
             return dff
 
-        check_columns(df, [self.tp, self.tiers_temps], file=self.xls_merge)
+        check_columns(df, [self.tp, self.tiers_temps], file=self.xls_merge, base_dir=settings.BASE_DIR)
 
         dff = df.groupby(self.tp, group_keys=False).apply(exam_split)
         if 'Adresse de courriel' in dff.columns:
@@ -452,7 +449,7 @@ Crée des fichiers csv pour chaque UV sélectionnées"""
                 with Output(target) as target:
                     dff.to_csv(target(), index=False, header=False)
             else:
-                check_columns(df, ctype, file=XlsStudentDataMerge.target)
+                check_columns(df, ctype, file=XlsStudentDataMerge.target, base_dir=settings.BASE_DIR)
                 dff = df[["Courriel", ctype]]
 
                 with Output(target) as target:
@@ -466,7 +463,7 @@ def task_csv_moodle_groups():
     @taskfailed_on_exception
     def csv_moodle_groups(target, target_moodle, xls_merge, ctype, project, group_names, other_groups):
         df = pd.read_excel(xls_merge, engine="openpyxl")
-        check_columns(df, ctype, file=xls_merge)
+        check_columns(df, ctype, file=xls_merge, base_dir=settings.BASE_DIR)
         gdf = df.groupby(ctype)
 
         if other_groups is not None:

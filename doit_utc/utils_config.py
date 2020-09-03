@@ -1,0 +1,207 @@
+import os
+import time
+from datetime import timedelta
+import pandas as pd
+
+from .utils import rel_to_dir
+from .config import settings
+
+
+def selected_uv(all=False):
+    if all:
+        for planning, settings0 in settings.PLANNINGS.items():
+            uvp = settings0['UVS']
+            for uv in uvp:
+                yield planning, uv, {'planning': planning, 'uv': uv}
+    else:
+        for planning, settings0 in settings.PLANNINGS.items():
+            uvp = settings0['UVS']
+            for uv in set(settings.SELECTED_UVS).intersection(set(uvp)):
+                yield planning, uv, {'planning': planning, 'uv': uv}
+
+
+def get_unique_uv():
+    uvs = list(selected_uv())
+    if len(uvs) != 1:
+        uvs = [uv for _, uv, _ in uvs]
+        raise Exception(f"Une seule UV doit être sélectionnée. Les UVs sélectionnées sont: {', '.join(uvs)}")
+    return uvs[0]
+
+
+def documents(fn, **info):
+    if "local" in info:
+        base_dir = os.path.basename(settings.BASE_DIR)
+    else:
+        base_dir = settings.BASE_DIR
+
+    if 'uv' in info or 'ue' in info:
+        uv = info.get('uv', info.get('ue'))
+        return os.path.join(base_dir, uv, 'documents', fn)
+    else:
+        return os.path.join(base_dir, 'documents', fn)
+
+
+def generated(fn, **info):
+    if "local" in info:
+        base_dir = ""
+    else:
+        base_dir = settings.BASE_DIR
+
+    if 'uv' in info or 'ue' in info:
+        uv = info.get('uv', info.get('ue'))
+        return os.path.join(base_dir, uv, 'generated', fn)
+    else:
+        return os.path.join(base_dir, 'generated', fn)
+
+
+class Output():
+    def __init__(self, target, protected=False):
+        self.target = target
+        self.protected = protected
+
+    def __enter__(self):
+        if os.path.exists(self.target):
+            if self.protected:
+                while True:
+                    try:
+                        choice = input('Le fichier `%s'' existe déjà. Écraser (d), garder (g), sauvegarder (s), annuler (a) ? ' % rel_to_dir(self.target, settings.BASE_DIR))
+                        if choice == 'd':
+                            os.remove(self.target)
+                        elif choice == 's':
+                            parts = os.path.splitext(self.target)
+                            timestr = time.strftime("_%Y%m%d-%H%M%S")
+                            target0 = parts[0] + timestr + parts[1]
+                            os.rename(self.target, target0)
+                        elif choice == 'g':
+                            return lambda: 1/0
+                        elif choice == 'a':
+                            raise Exception('Annulation')
+                        else:
+                            raise ValueError
+                    except ValueError:
+                        continue
+                    else:
+                        break
+            else:
+                print('Écrasement du fichier `%s\'' %
+                      rel_to_dir(self.target, settings.BASE_DIR))
+        else:
+            dirname = os.path.dirname(self.target)
+            if not os.path.exists(dirname):
+                os.makedirs(dirname)
+
+        return lambda: self.target
+
+    def __exit__(self, type, value, traceback):
+        if type is ZeroDivisionError:
+            return True
+        if type is None:
+            print(f"Wrote `{rel_to_dir(self.target, settings.BASE_DIR)}'")
+
+
+def create_plannings(planning_type):
+    """Generate list of working days according to planning"""
+
+    def generate_days(beg, end, skip, turn, course):
+        """Generate working days from BEG to END"""
+
+        daynames = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi']
+        days = []
+        delta = end - beg
+        semaine = {'Lundi': 0, 'Mardi': 0, 'Mercredi': 0, 'Jeudi': 0, 'Vendredi': 0}
+
+        nweek = 0
+
+        for i in range(delta.days + 1):
+            d = beg + timedelta(days=i)
+
+            # Lundi
+            if i % 7 == 0:
+                nweek += 1
+
+            # Ignore week-end
+            if d.weekday() in [5, 6]:
+                continue
+
+            # Skip days
+            if d in skip:
+                continue
+
+            # Get real day
+            day = turn[d] if d in turn else daynames[d.weekday()]
+
+            # Get week A or B
+            if course == 'T':
+                sem = 'A' if semaine[day] % 2 == 0 else 'B'
+                numAB = semaine[day] // 2 + 1
+                semaine[day] += 1
+                num = semaine[day]
+            elif course in ['C', 'D']:
+                semaine[day] += 1
+                numAB = None
+                sem = None
+                num = semaine[day]
+            else:
+                raise Exception("course inconnu")
+
+            if d in turn:
+                days.append((d, turn[d], sem, num, numAB, nweek))
+            else:
+                days.append((d, daynames[d.weekday()], sem, num, numAB, nweek))
+
+        return days
+
+    beg = settings.PLANNINGS[planning_type]['PL_BEG']
+    end = settings.PLANNINGS[planning_type]['PL_END']
+
+    planning_C = generate_days(beg, end, settings.SKIP_DAYS_C, settings.TURN, 'C')
+    planning_D = generate_days(beg, end, settings.SKIP_DAYS_D, settings.TURN, 'D')
+    planning_T = generate_days(beg, end, settings.SKIP_DAYS_T, settings.TURN, 'T')
+
+    return {
+        'C': planning_C,
+        'D': planning_D,
+        'T': planning_T
+    }
+
+def compute_slots(csv_inst_list, planning_type, empty_instructor=True, filter_uvs=None):
+    # Filter by planning
+    df = pd.read_csv(csv_inst_list)
+    df = df.loc[df['Planning'] == planning_type]
+
+    # Filter out when empty instructor
+    if not empty_instructor:
+        df = df.loc[(~pd.isnull(df['Intervenants']))]
+
+    # Filter by set of UV
+    if filter_uvs:
+        df = df.loc[df['Code enseig.'].isin(filter_uvs)]
+
+    planning = create_plannings(planning_type)
+
+    planning_C = planning['C']
+    pl_C = pd.DataFrame(planning_C)
+    pl_C.columns = ['date', 'dayname', 'semaine', 'num', 'numAB', 'nweek']
+
+    df_C = df.loc[df['Lib. créneau'].str.startswith('C'), :]
+    df_Cm = pd.merge(df_C, pl_C, how='left', left_on='Jour', right_on='dayname')
+
+    planning_D = planning['D']
+    pl_D = pd.DataFrame(planning_D)
+    pl_D.columns = ['date', 'dayname', 'semaine', 'num', 'numAB', 'nweek']
+
+    df_D = df.loc[df['Lib. créneau'].str.startswith('D'), :]
+    df_Dm = pd.merge(df_D, pl_D, how='left', left_on='Jour', right_on='dayname')
+
+    planning_T = planning['T']
+    pl_T = pd.DataFrame(planning_T)
+    pl_T.columns = ['date', 'dayname', 'semaine', 'num', 'numAB', 'nweek']
+
+    df_T = df.loc[df['Lib. créneau'].str.startswith('T'), :]
+    if df_T['Semaine'].hasnans:
+        df_Tm = pd.merge(df_T, pl_T, how='left', left_on='Jour', right_on='dayname')
+    else:
+        df_Tm = pd.merge(df_T, pl_T, how='left', left_on=['Jour', 'Semaine'], right_on=['dayname', 'semaine'])
+
+    dfm = pd.concat([df_Cm, df_Dm, df_Tm], ignore_index=True)
+    return dfm

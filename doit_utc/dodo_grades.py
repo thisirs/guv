@@ -12,18 +12,20 @@ import oyaml as yaml            # Ordered yaml
 
 from doit.exceptions import TaskFailed
 
-from .utils import (
+from .config import settings
+from .utils_config import (
     Output,
     documents,
     generated,
-    taskfailed_on_exception,
-    actionfailed_on_exception,
     get_unique_uv,
+)
+from .utils import (
+    sort_values,
+    actionfailed_on_exception,
     parse_args,
     argument,
     check_columns,
 )
-from .utils_noconfig import sort_values
 from .tasks import CliArgsMixin, UVTask
 from .dodo_students import XlsStudentDataMerge
 from .dodo_instructors import task_xls_affectation
@@ -85,7 +87,7 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
 
         df = pd.read_excel(self.xls_merge, engine="openpyxl")
 
-        check_columns(df, self.grade_colname, file=self.xls_merge)
+        check_columns(df, self.grade_colname, file=self.xls_merge, base_dir=settings.BASE_DIR)
 
         cols = {
             "Nom": df.Nom,
@@ -111,7 +113,7 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
                 col_names.append("Commentaire")
                 cols["Commentaire"] = ""
             else:
-                check_columns(df, self.comment_colname, file=self.xls_merge)
+                check_columns(df, self.comment_colname, file=self.xls_merge, base_dir=settings.BASE_DIR)
                 col_names.append("Commentaire")
 
                 def format_msg(e):

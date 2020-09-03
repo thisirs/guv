@@ -103,8 +103,3 @@ GROUP_ID = {
     'T6Bii': 5414
 }
 
-DOIT_CONFIG = {
-    "default_tasks": ["utc_uv_list_to_csv", "xls_student_data_merge"],
-    "verbosity": 2,
-    "dep_file": os.path.join(UV_DIR, "../", ".doit.db"),
-}

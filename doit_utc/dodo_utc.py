@@ -13,17 +13,8 @@ from tabula import read_pdf
 from doit.exceptions import TaskFailed
 
 from .config import settings
-
-from .utils import (
-    Output,
-    add_templates,
-    documents,
-    generated,
-    selected_uv,
-    compute_slots,
-    argument,
-    rel_to_dir
-)
+from .utils_config import Output, documents, generated, selected_uv, compute_slots
+from .utils import add_templates, argument, rel_to_dir
 from .tasks import CliArgsMixin, TaskBase
 
 
