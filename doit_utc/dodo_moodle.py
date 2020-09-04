@@ -24,7 +24,7 @@ from .config import settings
 from .utils_config import Output, documents, generated, compute_slots
 from .utils import argument, check_columns, lib_list
 from .tasks import CliArgsMixin, UVTask
-from .utils_noconfig import pformat, make_groups
+from .utils import pformat, make_groups
 from .dodo_students import XlsStudentDataMerge
 from .dodo_utc import CsvAllCourses
 from .dodo_instructors import (
