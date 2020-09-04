@@ -60,7 +60,7 @@ class TaskBase:
                 try:
                     return obj.run(*args, **kwargs)
                 except Exception as e:
-                    if settings.DEBUG > 0:
+                    if obj.settings.DEBUG > 0:
                         raise e from e
                     msg = " ".join(str(o) for o in e.args)
                     return TaskFailed(msg)
