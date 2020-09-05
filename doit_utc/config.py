@@ -16,6 +16,7 @@ class SettingError(Exception):
 class SettingsUpdate():
     def __init__(self, *sequence):
         self.sequence = sequence
+        self.config_files = [f for c in self.sequence for f in c.config_files]
 
     def __getattr__(self, name):
         if name.startswith("__"):  # for copy to succeed ignore __getattr__
@@ -39,11 +40,11 @@ class SettingsUpdate():
 class Settings:
     def __init__(self, directory):
         self._load_default(directory)
+        self.config_files = [Path(directory) / "config.py"]
         self._load(Path(directory) / "config.py")
 
     def _load_default(self, directory):
         self.DEBUG = 0
-        self.BASE_DIR = directory
 
     def _load(self, config_file):
         if not Path(config_file).exists():
@@ -80,6 +81,8 @@ class SemesterSettings(Settings):
     def _load_default(self, directory):
         super()._load_default(directory)
 
+        self.SEMESTER = os.path.basename(directory)
+        self.SEMESTER_DIR = directory
         self.DOIT_CONFIG = {
             "dep_file": os.path.join(directory, ".doit.db"),
             "default_tasks": ["utc_uv_list_to_csv"],
@@ -105,9 +108,6 @@ class SemesterSettings(Settings):
 
 class UVSettings(Settings):
     def _load_default(self, directory):
-        super()._load_default(directory)
-
-        self.UV_DIR = directory
         self.DOIT_CONFIG = {
             "default_tasks": ["utc_uv_list_to_csv", "xls_student_data_merge"],
             "verbosity": 2,
@@ -131,17 +131,19 @@ class UVSettings(Settings):
 
 if SEMESTER_VARIABLE in os.environ:
     wd = os.environ.get(SEMESTER_VARIABLE)
-    settings = SemesterSettings(wd)
+    semester_settings = SemesterSettings(wd)
 else:
     wd = os.getcwd()
 
     if (Path(wd) / "config.py").exists():
         if (Path(wd).parent / "config.py").exists():
-            uv_settings = UVSettings(wd)
+            # In UV directory
             semester_settings = SemesterSettings(str(Path(wd).parent))
-            settings = SettingsUpdate(semester_settings, uv_settings)
+            semester_settings.UV_DIR = os.path.basename(wd)
         else:
-            settings = SemesterSettings(wd)
+            # In semester directory
+            semester_settings = SemesterSettings(wd)
+            semester_settings.UV_DIR = None
     else:
         raise ConfigError("Le dossier courant n'est pas reconnu comme un dossier de semestre ou un dossier d'UV")
 

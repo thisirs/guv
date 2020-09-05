@@ -6,7 +6,7 @@ import argparse
 
 from doit.exceptions import TaskFailed
 
-from .config import settings
+from .config import semester_settings, SettingsUpdate, UVSettings
 from .utils_config import selected_uv, get_unique_uv
 from .utils import ParseArgsFailed, ParseArgAction
 
@@ -96,6 +96,8 @@ class TaskBase:
             }
             return kw
         except Exception as e:
+            if semester_settings.DEBUG > 0:
+                raise e from e
             tf = TaskFailed(e.args)
             kw["actions"] = [lambda: tf]
             return kw
@@ -112,8 +114,11 @@ class UVTask(TaskBase):
     @property
     def settings(self):
         if self._settings is None:
-            self._settings = copy.copy(settings)
-            self._settings.load(Path(settings.BASE_DIR) / self.uv / "config.py")
+            uv_config_file = Path(
+                semester_settings.SEMESTER_DIR / self.uv / "config.py"
+            )
+            uv_settings = UVSettings(uv_config_file)
+            self._settings = SettingsUpdate(copy.copy(semester_settings), uv_settings)
         return self._settings
 
 

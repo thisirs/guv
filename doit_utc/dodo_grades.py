@@ -12,7 +12,6 @@ import oyaml as yaml            # Ordered yaml
 
 from doit.exceptions import TaskFailed
 
-from .config import settings
 from .utils_config import (
     Output,
     documents,
@@ -87,7 +86,7 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
 
         df = pd.read_excel(self.xls_merge, engine="openpyxl")
 
-        check_columns(df, self.grade_colname, file=self.xls_merge, base_dir=settings.BASE_DIR)
+        check_columns(df, self.grade_colname, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
 
         cols = {
             "Nom": df.Nom,
@@ -113,7 +112,7 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
                 col_names.append("Commentaire")
                 cols["Commentaire"] = ""
             else:
-                check_columns(df, self.comment_colname, file=self.xls_merge, base_dir=settings.BASE_DIR)
+                check_columns(df, self.comment_colname, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
                 col_names.append("Commentaire")
 
                 def format_msg(e):

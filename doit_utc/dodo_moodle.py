@@ -20,7 +20,6 @@ import pynliner
 import jinja2
 import markdown
 
-from .config import settings
 from .utils_config import Output, documents, generated, compute_slots
 from .utils import argument, check_columns, lib_list
 from .tasks import CliArgsMixin, UVTask
@@ -226,8 +225,8 @@ class HtmlTable(UVTask, CliArgsMixin):
         rows = []
         weeks = []
         for (mon, nmon) in mondays(
-            settings.PLANNINGS[self.planning]["PL_BEG"],
-            settings.PLANNINGS[self.planning]["PL_END"],
+            self.settings.PLANNINGS[self.planning]["PL_BEG"],
+            self.settings.PLANNINGS[self.planning]["PL_END"],
         ):
             weeks.append(
                 "{}-{}".format(
@@ -411,7 +410,7 @@ Les restrictions se font par adresse email.
     def run(self):
         df = pd.read_excel(self.xls_merge, engine="openpyxl")
 
-        check_columns(df, self.group, file=self.xls_merge, base_dir=settings.BASE_DIR)
+        check_columns(df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
         dff = df[["Adresse de courriel", self.group]]
 
         # Dictionnary of group in GROUP and corresponding Cond
@@ -544,7 +543,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         df = df.sample(frac=1).reset_index(drop=True)
 
         if self.grouping is not None:
-            check_columns(df, self.grouping, file=self.xls_merge, base_dir=settings.BASE_DIR)
+            check_columns(df, self.grouping, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
 
         # Ajouter le titre à la template
         tmpl = self.template

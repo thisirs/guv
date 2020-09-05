@@ -9,9 +9,9 @@ import pandas as pd
 import latex
 import jinja2
 
-from .config import settings
-from .utils import documents, generated, Output
-from utils_config import argument
+from .config import semester_settings
+from .utils_config import documents, generated, Output
+from .utils import argument
 from .tasks import UVTask, CliArgsMixin
 from .dodo_instructors import task_xls_affectation, task_add_instructors
 
@@ -155,14 +155,14 @@ class CalInst(UVTask, CliArgsMixin):
             "-p",
             "--plannings",
             nargs="*",
-            default=settings.SELECTED_PLANNINGS,
+            default=semester_settings.SELECTED_PLANNINGS,
             help="Liste des plannings à considérer",
         ),
         argument(
             "-i",
             "--insts",
             nargs="*",
-            default=[settings.DEFAULT_INSTRUCTOR],
+            default=[semester_settings.DEFAULT_INSTRUCTOR],
             help="Liste des intervenants à considérer",
         ),
     )

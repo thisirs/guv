@@ -4,35 +4,83 @@ from datetime import timedelta
 import pandas as pd
 
 from .utils import rel_to_dir
-from .config import settings
+from .config import semester_settings
 
 
-def selected_uv(all=False):
-    if all:
-        for planning, settings0 in settings.PLANNINGS.items():
-            uvp = settings0['UVS']
-            for uv in uvp:
-                yield planning, uv, {'planning': planning, 'uv': uv}
-    else:
-        for planning, settings0 in settings.PLANNINGS.items():
-            uvp = settings0['UVS']
-            for uv in set(settings.SELECTED_UVS).intersection(set(uvp)):
-                yield planning, uv, {'planning': planning, 'uv': uv}
+def selected_uv(all="dummy"):
+    "Génère les UV configurées dans le fichier config.py du semestre"
 
+    uv_to_planning = {
+        uv: plng
+        for plng, props in semester_settings.PLANNINGS.items()
+        for uv in props["UVS"]
+    }
+
+    if not set(semester_settings.UVS).issubset(set(uv_to_planning.keys())):
+        raise ValueError("Des UVS n'ont pas de planning associé")
+
+    for uv in semester_settings.UVS:
+        plng = uv_to_planning[uv]
+        info = {
+            "uv": uv,
+            "planning": plng
+        }
+        yield plng, uv, info
+
+
+# def selected_uv(all=False):
+#     "Génère les UV configurées dans le fichier config.py du semestre"
+
+#     if all:
+#         for planning, settings0 in semester_settings.PLANNINGS.items():
+#             uvp = settings0['UVS']
+#             for uv in uvp:
+#                 yield planning, uv, {'planning': planning, 'uv': uv}
+#     else:
+#         for planning, settings0 in semester_settings.PLANNINGS.items():
+#             uvp = settings0['UVS']
+#             for uv in set(semester_settings.SELECTED_UVS).intersection(set(uvp)):
+#                 info = {'planning': planning, 'uv': uv}
+#                 info["path"]
+#                 yield planning, uv, {'planning': planning, 'uv': uv}
 
 def get_unique_uv():
-    uvs = list(selected_uv())
-    if len(uvs) != 1:
-        uvs = [uv for _, uv, _ in uvs]
-        raise Exception(f"Une seule UV doit être sélectionnée. Les UVs sélectionnées sont: {', '.join(uvs)}")
-    return uvs[0]
+    if semester_settings.UV_DIR is not None:
+        uv = semester_settings.UV_DIR
+        if uv not in semester_settings.UVS:
+            raise Exception("L'UV n'est pas enregistée")
+
+        plng = [
+            plng
+            for plng, props in semester_settings.PLANNINGS.items()
+            if uv in props["UVS"]
+        ]
+
+        if not plng:
+            raise Exception("L'UV ne fait partie d'aucun planning")
+
+        if len(plng) >= 2:
+            raise Exception("L'UV fait partie de plusieurs plannings")
+
+        info = {"uv": uv, "planning": plng}
+        return plng, uv, info
+    else:
+        raise Exception("Pas dans un dossier d'UV")
+
+
+# def get_unique_uv():
+#     uvs = list(selected_uv())
+#     if len(uvs) != 1:
+#         uvs = [uv for _, uv, _ in uvs]
+#         raise Exception(f"Une seule UV doit être sélectionnée. Les UVs sélectionnées sont: {', '.join(uvs)}")
+#     return uvs[0]
 
 
 def documents(fn, **info):
     if "local" in info:
-        base_dir = os.path.basename(settings.BASE_DIR)
+        base_dir = os.path.basename(semester_settings.SEMESTER_DIR)
     else:
-        base_dir = settings.BASE_DIR
+        base_dir = semester_settings.SEMESTER_DIR
 
     if 'uv' in info or 'ue' in info:
         uv = info.get('uv', info.get('ue'))
@@ -45,7 +93,7 @@ def generated(fn, **info):
     if "local" in info:
         base_dir = ""
     else:
-        base_dir = settings.BASE_DIR
+        base_dir = semester_settings.SEMESTER_DIR
 
     if 'uv' in info or 'ue' in info:
         uv = info.get('uv', info.get('ue'))
@@ -64,7 +112,7 @@ class Output():
             if self.protected:
                 while True:
                     try:
-                        choice = input('Le fichier `%s'' existe déjà. Écraser (d), garder (g), sauvegarder (s), annuler (a) ? ' % rel_to_dir(self.target, settings.BASE_DIR))
+                        choice = input('Le fichier `%s'' existe déjà. Écraser (d), garder (g), sauvegarder (s), annuler (a) ? ' % rel_to_dir(self.target, semester_settings.SEMESTER_DIR))
                         if choice == 'd':
                             os.remove(self.target)
                         elif choice == 's':
@@ -84,7 +132,7 @@ class Output():
                         break
             else:
                 print('Écrasement du fichier `%s\'' %
-                      rel_to_dir(self.target, settings.BASE_DIR))
+                      rel_to_dir(self.target, semester_settings.SEMESTER_DIR))
         else:
             dirname = os.path.dirname(self.target)
             if not os.path.exists(dirname):
@@ -96,7 +144,7 @@ class Output():
         if type is ZeroDivisionError:
             return True
         if type is None:
-            print(f"Wrote `{rel_to_dir(self.target, settings.BASE_DIR)}'")
+            print(f"Wrote `{rel_to_dir(self.target, semester_settings.SEMESTER_DIR)}'")
 
 
 def create_plannings(planning_type):
@@ -151,18 +199,19 @@ def create_plannings(planning_type):
 
         return days
 
-    beg = settings.PLANNINGS[planning_type]['PL_BEG']
-    end = settings.PLANNINGS[planning_type]['PL_END']
+    beg = semester_settings.PLANNINGS[planning_type]['PL_BEG']
+    end = semester_settings.PLANNINGS[planning_type]['PL_END']
 
-    planning_C = generate_days(beg, end, settings.SKIP_DAYS_C, settings.TURN, 'C')
-    planning_D = generate_days(beg, end, settings.SKIP_DAYS_D, settings.TURN, 'D')
-    planning_T = generate_days(beg, end, settings.SKIP_DAYS_T, settings.TURN, 'T')
+    planning_C = generate_days(beg, end, semester_settings.SKIP_DAYS_C, semester_settings.TURN, 'C')
+    planning_D = generate_days(beg, end, semester_settings.SKIP_DAYS_D, semester_settings.TURN, 'D')
+    planning_T = generate_days(beg, end, semester_settings.SKIP_DAYS_T, semester_settings.TURN, 'T')
 
     return {
         'C': planning_C,
         'D': planning_D,
         'T': planning_T
     }
+
 
 def compute_slots(csv_inst_list, planning_type, empty_instructor=True, filter_uvs=None):
     # Filter by planning

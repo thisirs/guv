@@ -16,7 +16,7 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 
 from doit.exceptions import TaskFailed
 
-from .config import settings
+from .config import semester_settings
 from .utils_config import Output, documents, generated, get_unique_uv
 from .utils import (
     sort_values,
@@ -200,7 +200,7 @@ class XlsStudentDataMerge(UVTask):
             raise Exception("Format de AGGREGATE_DOCUMENTS incorrect")
 
         deps = [path for path, _ in self.docs if path is not None]
-        self.file_dep = deps + [self.student_data] + settings.config_files
+        self.file_dep = deps + [self.student_data] + self.settings.config_files
 
     def run(self):
         df = pd.read_excel(self.student_data, engine="openpyxl")
@@ -210,10 +210,10 @@ class XlsStudentDataMerge(UVTask):
                 print("File is None, aggregating without file")
                 df = aggregater(df, None)
             elif os.path.exists(path):
-                print("Aggregating %s" % rel_to_dir(path, settings.BASE_DIR))
+                print("Aggregating %s" % rel_to_dir(path, self.settings.SEMESTER_DIR))
                 df = aggregater(df, path)
             else:
-                print("WARNING: File %s not found!" % rel_to_dir(path, settings.BASE_DIR))
+                print("WARNING: File %s not found!" % rel_to_dir(path, self.settings.SEMESTER_DIR))
 
         dff = sort_values(df, ["Nom", "Prénom"])
 
@@ -397,7 +397,7 @@ class CsvExamGroups(UVTask, CliArgsMixin):
             dff["TPE"] = pd.concat([sg1, sg2])
             return dff
 
-        check_columns(df, [self.tp, self.tiers_temps], file=self.xls_merge, base_dir=settings.BASE_DIR)
+        check_columns(df, [self.tp, self.tiers_temps], file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
 
         dff = df.groupby(self.tp, group_keys=False).apply(exam_split)
         if 'Adresse de courriel' in dff.columns:
@@ -449,7 +449,7 @@ Crée des fichiers csv pour chaque UV sélectionnées"""
                 with Output(target) as target:
                     dff.to_csv(target(), index=False, header=False)
             else:
-                check_columns(df, ctype, file=XlsStudentDataMerge.target, base_dir=settings.BASE_DIR)
+                check_columns(df, ctype, file=XlsStudentDataMerge.target, base_dir=self.settings.SEMESTER_DIR)
                 dff = df[["Courriel", ctype]]
 
                 with Output(target) as target:
@@ -463,7 +463,7 @@ def task_csv_moodle_groups():
     @taskfailed_on_exception
     def csv_moodle_groups(target, target_moodle, xls_merge, ctype, project, group_names, other_groups):
         df = pd.read_excel(xls_merge, engine="openpyxl")
-        check_columns(df, ctype, file=xls_merge, base_dir=settings.BASE_DIR)
+        check_columns(df, ctype, file=xls_merge, base_dir=semester_settings.BASE_DIR)
         gdf = df.groupby(ctype)
 
         if other_groups is not None:

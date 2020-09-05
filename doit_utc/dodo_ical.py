@@ -14,7 +14,7 @@ import pandas as pd
 
 from doit.exceptions import TaskFailed
 
-from .config import settings
+from .config import semester_settings
 from .utils_config import Output, generated, compute_slots
 from .utils import argument
 from .dodo_instructors import task_add_instructors
@@ -39,7 +39,7 @@ def ical_events(dataframe):
     df = dataframe.sort_values('timestamp')
 
     cal = Calendar()
-    cal['summary'] = settings.SEMESTER
+    cal['summary'] = semester_settings.SEMESTER
 
     for index, row in df.iterrows():
         event = Event()
@@ -83,14 +83,14 @@ class IcalInst(UVTask, CliArgsMixin):
             "-p",
             "--plannings",
             nargs="+",
-            default=settings.SELECTED_PLANNINGS,
+            default=semester_settings.SELECTED_PLANNINGS,
             help="Liste des plannings à considérer",
         ),
         argument(
             "-i",
             "--insts",
             nargs="+",
-            default=[settings.DEFAULT_INSTRUCTOR],
+            default=[semester_settings.DEFAULT_INSTRUCTOR],
             help="Liste des intervenants à considérer",
         ),
     )

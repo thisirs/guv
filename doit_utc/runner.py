@@ -19,7 +19,7 @@ class ModulesTaskLoader(NamespaceTaskLoader):
 
 
 def run_doit(args):
-    from .config import settings
+    from .config import semester_settings
     from . import dodo_instructors
     from . import dodo_utc
     from . import dodo_grades
@@ -30,7 +30,7 @@ def run_doit(args):
     from . import dodo_calendar
     from . import dodo_attendance
     modules = [
-        settings,
+        semester_settings,
         dodo_instructors,
         dodo_utc,
         dodo_grades,

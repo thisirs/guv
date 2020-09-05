@@ -13,7 +13,6 @@ import latex
 
 from doit.exceptions import TaskFailed
 
-from .config import settings
 from .utils_config import Output, generated
 from .utils import sort_values, check_columns, escape_tex, argument
 
@@ -88,7 +87,7 @@ class TaskPdfAttendanceList(UVTask, CliArgsMixin):
         if self.group == "all":
             self.group = None
         else:
-            check_columns(df, self.group, file=self.xls_merge, base_dir=settings.BASE_DIR)
+            check_columns(df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
 
         template = "attendance_list.tex.jinja2"
 
@@ -146,7 +145,7 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
         pdfs = []
         ctype = self.kwargs["ctype"]
 
-        check_columns(df, ctype, file=self.xls_merge, base_dir=settings.BASE_DIR)
+        check_columns(df, ctype, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
         for gn, group in df.groupby(ctype):
             group = sort_values(group, ["Nom", "Prénom"])
             self.kwargs["filename"] = gn + ".pdf"

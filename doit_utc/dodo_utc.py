@@ -12,7 +12,7 @@ from tabula import read_pdf
 
 from doit.exceptions import TaskFailed
 
-from .config import settings
+from .config import semester_settings
 from .utils_config import Output, documents, generated, selected_uv, compute_slots
 from .utils import add_templates, argument, rel_to_dir
 from .tasks import CliArgsMixin, TaskBase
@@ -39,8 +39,8 @@ class UtcUvListToCsv(TaskBase):
         ]
 
         if not self.file_dep:
-            uv_fn = rel_to_dir(self.uv_list_filename, settings.BASE_DIR)
-            ue_fn = rel_to_dir(self.ue_list_filename, settings.BASE_DIR)
+            uv_fn = rel_to_dir(self.uv_list_filename, semester_settings.SEMESTER_DIR)
+            ue_fn = rel_to_dir(self.ue_list_filename, semester_settings.SEMESTER_DIR)
             msg = f"Au moins un des fichiers {uv_fn} ou {ue_fn} doit être disponible."
             raise Exception(msg)
 
@@ -110,7 +110,7 @@ class UtcUvListToCsv(TaskBase):
                 print(f'Header has {header_height} lines')
                 df = df.iloc[header_height:]
 
-            df['Planning'] = settings.SEMESTER
+            df['Planning'] = self.settings.SEMESTER
             tables.append(df)
 
         return pd.concat(tables)
@@ -169,7 +169,7 @@ class UtcUvListToCsv(TaskBase):
             df.to_csv(target(), index=False)
 
 
-@add_templates(target=settings.CRENEAU_UV)
+@add_templates(target=semester_settings.CRENEAU_UV)
 def task_UTC_UV_list():
     """Dépendance vers le fichier CRENEAU_UV"""
 
@@ -195,7 +195,7 @@ class CsvAllCourses(CliArgsMixin, TaskBase):
             "-p",
             "--plannings",
             nargs="+",
-            default=settings.SELECTED_PLANNINGS,
+            default=semester_settings.SELECTED_PLANNINGS,
             help="Liste des plannings à considérer",
         ),
     )
@@ -213,8 +213,8 @@ class CsvAllCourses(CliArgsMixin, TaskBase):
 
         tables = []
         for planning_type in self.plannings:
-            uvs = (settings.PLANNINGS[planning_type].get('UVS') or
-                   settings.PLANNINGS[planning_type].get('UES'))
+            uvs = (self.settings.PLANNINGS[planning_type].get('UVS') or
+                   self.settings.PLANNINGS[planning_type].get('UES'))
             df = compute_slots(self.csv, planning_type, filter_uvs=uvs)
             tables.append(df)
 
