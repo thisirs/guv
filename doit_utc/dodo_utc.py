@@ -110,7 +110,7 @@ class UtcUvListToCsv(TaskBase):
                 print(f'Header has {header_height} lines')
                 df = df.iloc[header_height:]
 
-            df['Planning'] = self.settings.SEMESTER
+            df['Planning'] = semester_settings.SEMESTER
             tables.append(df)
 
         return pd.concat(tables)
