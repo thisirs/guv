@@ -10,22 +10,26 @@ from .config import semester_settings
 def selected_uv(all="dummy"):
     "Génère les UV configurées dans le fichier config.py du semestre"
 
-    uv_to_planning = {
-        uv: plng
-        for plng, props in semester_settings.PLANNINGS.items()
-        for uv in props["UVS"]
-    }
+    if semester_settings.UV_DIR is not None:
+        yield get_unique_uv()
 
-    if not set(semester_settings.UVS).issubset(set(uv_to_planning.keys())):
-        raise ValueError("Des UVS n'ont pas de planning associé")
-
-    for uv in semester_settings.UVS:
-        plng = uv_to_planning[uv]
-        info = {
-            "uv": uv,
-            "planning": plng
+    else:
+        uv_to_planning = {
+            uv: plng
+            for plng, props in semester_settings.PLANNINGS.items()
+            for uv in props["UVS"]
         }
-        yield plng, uv, info
+
+        if not set(semester_settings.UVS).issubset(set(uv_to_planning.keys())):
+            raise ValueError("Des UVS n'ont pas de planning associé")
+
+        for uv in semester_settings.UVS:
+            plng = uv_to_planning[uv]
+            info = {
+                "uv": uv,
+                "planning": plng
+            }
+            yield plng, uv, info
 
 
 # def selected_uv(all=False):
@@ -48,20 +52,21 @@ def get_unique_uv():
     if semester_settings.UV_DIR is not None:
         uv = semester_settings.UV_DIR
         if uv not in semester_settings.UVS:
-            raise Exception("L'UV n'est pas enregistée")
+            raise Exception("L'UV n'est pas enregistrée")
 
-        plng = [
+        plngs = [
             plng
             for plng, props in semester_settings.PLANNINGS.items()
             if uv in props["UVS"]
         ]
 
-        if not plng:
+        if not plngs:
             raise Exception("L'UV ne fait partie d'aucun planning")
 
-        if len(plng) >= 2:
+        if len(plngs) >= 2:
             raise Exception("L'UV fait partie de plusieurs plannings")
 
+        plng = plngs[0]
         info = {"uv": uv, "planning": plng}
         return plng, uv, info
     else:
