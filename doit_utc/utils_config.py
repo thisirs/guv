@@ -158,10 +158,9 @@ def create_plannings(planning_type):
     def generate_days(beg, end, skip, turn, course):
         """Generate working days from BEG to END"""
 
-        daynames = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi']
-        days = []
+        daynames = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"]
         delta = end - beg
-        semaine = {'Lundi': 0, 'Mardi': 0, 'Mercredi': 0, 'Jeudi': 0, 'Vendredi': 0}
+        semaine = {"Lundi": 0, "Mardi": 0, "Mercredi": 0, "Jeudi": 0, "Vendredi": 0}
 
         nweek = 0
 
@@ -184,12 +183,12 @@ def create_plannings(planning_type):
             day = turn[d] if d in turn else daynames[d.weekday()]
 
             # Get week A or B
-            if course == 'T':
-                sem = 'A' if semaine[day] % 2 == 0 else 'B'
+            if course == "T":
+                sem = "A" if semaine[day] % 2 == 0 else "B"
                 numAB = semaine[day] // 2 + 1
                 semaine[day] += 1
                 num = semaine[day]
-            elif course in ['C', 'D']:
+            elif course in ["C", "D"]:
                 semaine[day] += 1
                 numAB = None
                 sem = None
@@ -198,64 +197,70 @@ def create_plannings(planning_type):
                 raise Exception("course inconnu")
 
             if d in turn:
-                days.append((d, turn[d], sem, num, numAB, nweek))
+                yield d, turn[d], sem, num, numAB, nweek
             else:
-                days.append((d, daynames[d.weekday()], sem, num, numAB, nweek))
+                yield d, daynames[d.weekday()], sem, num, numAB, nweek
 
-        return days
+    beg = semester_settings.PLANNINGS[planning_type]["PL_BEG"]
+    end = semester_settings.PLANNINGS[planning_type]["PL_END"]
 
-    beg = semester_settings.PLANNINGS[planning_type]['PL_BEG']
-    end = semester_settings.PLANNINGS[planning_type]['PL_END']
+    planning_C = pd.DataFrame(
+        generate_days(
+            beg, end, semester_settings.SKIP_DAYS_C, semester_settings.TURN, "C"
+        ),
+        columns=["date", "dayname", "semaine", "num", "numAB", "nweek"],
+    )
 
-    planning_C = generate_days(beg, end, semester_settings.SKIP_DAYS_C, semester_settings.TURN, 'C')
-    planning_D = generate_days(beg, end, semester_settings.SKIP_DAYS_D, semester_settings.TURN, 'D')
-    planning_T = generate_days(beg, end, semester_settings.SKIP_DAYS_T, semester_settings.TURN, 'T')
+    planning_D = pd.DataFrame(
+        generate_days(
+            beg, end, semester_settings.SKIP_DAYS_C, semester_settings.TURN, "D"
+        ),
+        columns=["date", "dayname", "semaine", "num", "numAB", "nweek"],
+    )
 
-    return {
-        'C': planning_C,
-        'D': planning_D,
-        'T': planning_T
-    }
+    planning_T = pd.DataFrame(
+        generate_days(
+            beg, end, semester_settings.SKIP_DAYS_C, semester_settings.TURN, "T"
+        ),
+        columns=["date", "dayname", "semaine", "num", "numAB", "nweek"],
+    )
+
+    return planning_C, planning_D, planning_T
 
 
 def compute_slots(csv_inst_list, planning_type, empty_instructor=True, filter_uvs=None):
     # Filter by planning
     df = pd.read_csv(csv_inst_list)
-    df = df.loc[df['Planning'] == planning_type]
+    df = df.loc[df["Planning"] == planning_type]
 
     # Filter out when empty instructor
     if not empty_instructor:
-        df = df.loc[(~pd.isnull(df['Intervenants']))]
+        df = df.loc[(~pd.isnull(df["Intervenants"]))]
 
     # Filter by set of UV
     if filter_uvs:
-        df = df.loc[df['Code enseig.'].isin(filter_uvs)]
+        df = df.loc[df["Code enseig."].isin(filter_uvs)]
 
-    planning = create_plannings(planning_type)
+    # List of days for all course type
+    pl_C, pl_D, pl_T = create_plannings(planning_type)
 
-    planning_C = planning['C']
-    pl_C = pd.DataFrame(planning_C)
-    pl_C.columns = ['date', 'dayname', 'semaine', 'num', 'numAB', 'nweek']
+    df_C = df.loc[df["Lib. créneau"].str.startswith("C"), :]
+    df_Cm = pd.merge(df_C, pl_C, how="left", left_on="Jour", right_on="dayname")
 
-    df_C = df.loc[df['Lib. créneau'].str.startswith('C'), :]
-    df_Cm = pd.merge(df_C, pl_C, how='left', left_on='Jour', right_on='dayname')
+    df_D = df.loc[df["Lib. créneau"].str.startswith("D"), :]
+    df_Dm = pd.merge(df_D, pl_D, how="left", left_on="Jour", right_on="dayname")
 
-    planning_D = planning['D']
-    pl_D = pd.DataFrame(planning_D)
-    pl_D.columns = ['date', 'dayname', 'semaine', 'num', 'numAB', 'nweek']
-
-    df_D = df.loc[df['Lib. créneau'].str.startswith('D'), :]
-    df_Dm = pd.merge(df_D, pl_D, how='left', left_on='Jour', right_on='dayname')
-
-    planning_T = planning['T']
-    pl_T = pd.DataFrame(planning_T)
-    pl_T.columns = ['date', 'dayname', 'semaine', 'num', 'numAB', 'nweek']
-
-    df_T = df.loc[df['Lib. créneau'].str.startswith('T'), :]
-    if df_T['Semaine'].hasnans:
-        df_Tm = pd.merge(df_T, pl_T, how='left', left_on='Jour', right_on='dayname')
+    df_T = df.loc[df["Lib. créneau"].str.startswith("T"), :]
+    if df_T["Semaine"].hasnans:
+        df_Tm = pd.merge(df_T, pl_T, how="left", left_on="Jour", right_on="dayname")
     else:
-        df_Tm = pd.merge(df_T, pl_T, how='left', left_on=['Jour', 'Semaine'], right_on=['dayname', 'semaine'])
+        df_Tm = pd.merge(
+            df_T,
+            pl_T,
+            how="left",
+            left_on=["Jour", "Semaine"],
+            right_on=["dayname", "semaine"],
+        )
 
     dfm = pd.concat([df_Cm, df_Dm, df_Tm], ignore_index=True)
     return dfm
