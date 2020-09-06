@@ -187,24 +187,21 @@ manuelle."""
     }
 
 
-def task_xls_grades_sheet():
+class XlsGradeSheet(UVTask):
     """Génère un fichier Excel pour faciliter la correction des examens/projets/jury"""
 
-    def xls_grades_sheet(data_file, docs):
-        cmd_args = sys.argv[2:] + ['-o', docs, '-d', data_file]
+    always_make = True
+
+    def __init__(self, planning, uv, info):
+        super().__init__(planning, uv, info)
+        self.data_file = generated(XlsStudentDataMerge.target, **info)
+        self.docs = documents("", **info)
+
+    def run(self):
+        cmd_args = sys.argv[2:] + ['-o', self.docs, '-d', self.data_file]
         run(cmd_args,
             prog="doit_utc xls_grades_sheet",
-            description=task_xls_grades_sheet.__doc__)
-
-    planning, uv, info = get_unique_uv()
-    data_file = generated(XlsStudentDataMerge.target, **info)
-    docs = documents("", **info)
-    deps = [data_file]
-    return {
-        'actions': [(xls_grades_sheet, [data_file, docs])],
-        'file_dep': deps,
-        'uptodate': [False]
-    }
+            description=XlsGradeSheet.__doc__)
 
 
 @actionfailed_on_exception
