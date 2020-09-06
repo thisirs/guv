@@ -117,7 +117,6 @@ class UVSettings(Settings):
     def validate_config(self, settings):
         required_settings = set(
             [
-                "MOODLE_LISTING",
                 "ENT_LISTING",
                 "AFFECTATION_LISTING",
                 "AGGREGATE_DOCUMENTS"

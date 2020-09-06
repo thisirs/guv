@@ -72,15 +72,16 @@ class XlsStudentData(UVTask):
             kw["extraction_ENT"] = extraction_ENT
             deps.append(extraction_ENT)
 
-        csv_moodle = documents(self.settings.MOODLE_LISTING, **info)
-        if os.path.exists(csv_moodle):
-            kw["csv_moodle"] = csv_moodle
-            deps.append(csv_moodle)
-
         csv_UTC = generated(TaskCsvInscrits.target, **info)
         if os.path.exists(csv_UTC):
             kw["csv_UTC"] = csv_UTC
             deps.append(csv_UTC)
+
+        if "MOODLE_LISTING" in self.settings:
+            csv_moodle = documents(self.settings.MOODLE_LISTING, **info)
+            if os.path.exists(csv_moodle):
+                kw["csv_moodle"] = csv_moodle
+                deps.append(csv_moodle)
 
         # tiers_temps = documents("tiers_temps.raw", **info)
         # if os.path.exists(tiers_temps):
