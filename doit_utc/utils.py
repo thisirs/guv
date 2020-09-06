@@ -22,6 +22,8 @@ def rel_to_dir(path, root):
 
 
 def check_columns(dataframe, columns, **kwargs):
+    """Vérifie que la ou les colonnes `columns' sont dans `dataframe'"""
+
     if isinstance(columns, str):
         columns = [columns]
     missing_cols = [c for c in columns if c not in dataframe.columns]
@@ -39,8 +41,14 @@ def check_columns(dataframe, columns, **kwargs):
 
 
 def fillna_column(colname, na_value="ABS"):
-    """Utilisable dans postprocessing ou preprocessing où à la place de
-    aggregate dans le AGGREGATE_DOCUMENTS."""
+    """Renvoie une fonction qui remplace les valeurs non définies dans la
+    colonne `colname' par `na_value'.
+
+    Utilisable avec l'argument `postprocessing' ou `preprocessing'
+    dans la fonction `aggregate' ou directement à la place de la
+    fonction `aggregate' dans `AGGREGATE_DOCUMENTS'.
+
+    """
 
     def func(df, path=None):
         check_columns(df, [colname])
@@ -50,8 +58,14 @@ def fillna_column(colname, na_value="ABS"):
 
 
 def replace_regex(colname, *reps, new_colname=None):
-    """Utilisable dans postprocessing ou preprocessing ou à la place de
-    aggregate dans le AGGREGATE_DOCUMENTS."""
+    """Renvoie une fonction qui remplace les expressions régulières
+    renseignées dans `reps' dans la colonne `colname'.
+
+    Utilisable avec l'argument `postprocessing' ou `preprocessing'
+    dans la fonction `aggregate' ou directement à la place de la
+    fonction `aggregate' dans `AGGREGATE_DOCUMENTS'.
+
+    """
 
     def func(df, path=None):
         check_columns(df, colname)
@@ -65,8 +79,14 @@ def replace_regex(colname, *reps, new_colname=None):
 
 
 def replace_column(colname, rep_dict, new_colname=None):
-    """Utilisable dans postprocessing ou preprocessing où à la place de
-    aggregate dans le AGGREGATE_DOCUMENTS."""
+    """Renvoie une fonction qui remplace les valeurs renseignées dans
+    `rep_dict' dans la colonne `colname'.
+
+    Utilisable avec l'argument `postprocessing' ou `preprocessing'
+    dans la fonction `aggregate' ou directement à la place de la
+    fonction `aggregate' dans `AGGREGATE_DOCUMENTS'.
+
+    """
 
     def func(df, path=None):
         check_columns(df, colname)
@@ -78,6 +98,22 @@ def replace_column(colname, rep_dict, new_colname=None):
 
 
 def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset=None, drop=None, rename=None, read_method=None, kw_read={}):
+    """Renvoie une fonction qui réalise l'aggrégation d'un DataFrame avec
+    un fichier.
+
+    Les arguments `left_on' et `right_on' sont les clés pour réaliser
+    la jointure. `left_on' est la clé du DataFrame existant et
+    `right_on' est la clé du DataFrame à aggréger présent dans le
+    fichier. `subset` est une liste des colonnes à garder, `drop` une
+    liste des colonnes à enlever. `rename' est un dictionnaire des
+    colonnes à renommer. `read_method' est un callable appelé avec
+    `kw_read' pour lire le fichier contenant le DataFrame à aggréger.
+    `preprocessing' et `postprocessing' sont des callable qui prennent
+    en argument un DataFrame et en renvoie un et qui réalise un pré ou
+    post traitement sur l'aggrégation.
+
+    """
+
     def aggregate0(left_df, path):
         nonlocal left_on, right_on, subset, drop
 
@@ -335,6 +371,10 @@ def slugrot(*columns):
 
 
 def aggregate_org(colname):
+    """Renvoie une fonction d'agrégation d'un fichier .org à utiliser dans
+AGGREGATE_DOCUMENTS.
+    """
+
     def aggregate_org0(left_df, path):
         if not path.endswith('.org'):
             raise Exception(f"{path} n'est pas un fichier org")
