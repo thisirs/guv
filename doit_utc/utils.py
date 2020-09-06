@@ -52,7 +52,7 @@ def fillna_column(colname, na_value="ABS"):
 
     def func(df, path=None):
         check_columns(df, [colname])
-        df[colname].fillna("ABS", inplace=True)
+        df[colname].fillna(na_value, inplace=True)
         return df
     return func
 
