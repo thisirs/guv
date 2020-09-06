@@ -83,26 +83,6 @@ class XlsStudentData(UVTask):
                 kw["csv_moodle"] = csv_moodle
                 deps.append(csv_moodle)
 
-        # tiers_temps = documents("tiers_temps.raw", **info)
-        # if os.path.exists(tiers_temps):
-        #     kw["tiers_temps"] = tiers_temps
-        #     deps.append(tiers_temps)
-
-        # TD_switches = documents("TD_switches.raw", **info)
-        # if os.path.exists(TD_switches):
-        #     kw["TD_switches"] = TD_switches
-        #     deps.append(TD_switches)
-
-        # TP_switches = documents("TP_switches.raw", **info)
-        # if os.path.exists(TP_switches):
-        #     kw["TP_switches"] = TP_switches
-        #     deps.append(TP_switches)
-
-        # info_etu = documents("info_étudiants.org", **info)
-        # if os.path.exists(info_etu):
-        #     kw['info_étudiants'] = info_etu
-        #     deps.append(info_etu)
-
         self.file_dep = deps
         self.kwargs = kw
 
@@ -139,18 +119,6 @@ class XlsStudentData(UVTask):
                 df = pd.read_csv(fn)
             elif fn.endswith('.xlsx') or fn.endswith('.xls'):
                 df = pd.read_excel(fn)
-
-        # if "tiers_temps" in self.kwargs:
-        #     df = add_tiers_temps(df, self.kwargs["tiers_temps"])
-
-        # if "TD_switches" in self.kwargs:
-        #     df = add_switches(df, self.kwargs["TD_switches"], "TD")
-
-        # if "TP_switches" in self.kwargs:
-        #     df = add_switches(df, self.kwargs["TP_switches"], "TP")
-
-        # if "info_étudiants" in self.kwargs:
-        #     df = add_student_info(df, self.kwargs["info_étudiants"])
 
         dff = sort_values(df, ["Nom", "Prénom"])
 
