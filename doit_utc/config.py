@@ -140,10 +140,12 @@ else:
             # In UV directory
             semester_settings = SemesterSettings(str(Path(wd).parent))
             semester_settings.UV_DIR = os.path.basename(wd)
+            uv_settings = UVSettings(wd)
         else:
             # In semester directory
             semester_settings = SemesterSettings(wd)
             semester_settings.UV_DIR = None
+            uv_settings = ()
     else:
         raise ConfigError("Le dossier courant n'est pas reconnu comme un dossier de semestre ou un dossier d'UV")
 
