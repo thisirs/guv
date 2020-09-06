@@ -51,7 +51,7 @@ class HtmlInst(UVTask):
         self.target = generated(HtmlInst.target, **info)
 
     def run(self):
-        df_uv = pd.read_excel(self.insts_uv, engine="openpyxl")
+        df_uv = pd.read_excel(self.insts_uv)
         df_uv = create_insts_list(df_uv)
         df_details = read_xls_details(self.insts_details)
 
@@ -408,7 +408,7 @@ Les restrictions se font par adresse email.
         self.file_dep = [self.xls_merge]
 
     def run(self):
-        df = pd.read_excel(self.xls_merge, engine="openpyxl")
+        df = pd.read_excel(self.xls_merge)
 
         check_columns(df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
         dff = df[["Adresse de courriel", self.group]]
@@ -537,7 +537,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                     self.template = "{title}_{grouping_name}_{group_name}"
 
     def run(self):
-        df = pd.read_excel(self.xls_merge, engine="openpyxl")
+        df = pd.read_excel(self.xls_merge)
 
         # Shuffle rows
         df = df.sample(frac=1).reset_index(drop=True)

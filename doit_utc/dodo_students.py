@@ -137,7 +137,7 @@ class XlsStudentData(UVTask):
             if fn.endswith('.csv'):
                 df = pd.read_csv(fn)
             elif fn.endswith('.xlsx') or fn.endswith('.xls'):
-                df = pd.read_excel(fn, engine="openpyxl")
+                df = pd.read_excel(fn)
 
         # if "tiers_temps" in self.kwargs:
         #     df = add_tiers_temps(df, self.kwargs["tiers_temps"])
@@ -203,7 +203,7 @@ class XlsStudentDataMerge(UVTask):
         self.file_dep = deps + [self.student_data] + self.settings.config_files
 
     def run(self):
-        df = pd.read_excel(self.student_data, engine="openpyxl")
+        df = pd.read_excel(self.student_data)
 
         for path, aggregater in self.docs:
             if path is None:
@@ -383,7 +383,7 @@ class CsvExamGroups(UVTask, CliArgsMixin):
         self.file_dep = [self.xls_merge]
 
     def run(self):
-        df = pd.read_excel(self.xls_merge, engine="openpyxl")
+        df = pd.read_excel(self.xls_merge)
 
         def exam_split(df):
             if self.tiers_temps_col in df.columns:
@@ -438,7 +438,7 @@ Crée des fichiers csv pour chaque UV sélectionnées"""
         self.file_dep = [self.xls_merge]
 
     def run(self):
-        df = pd.read_excel(self.xls_merge, engine="openpyxl")
+        df = pd.read_excel(self.xls_merge)
 
         for ctype in self.groups:
             target = generated(f"{ctype}_group_moodle.csv", **self.info)
@@ -462,7 +462,7 @@ def task_csv_moodle_groups():
 
     @taskfailed_on_exception
     def csv_moodle_groups(target, target_moodle, xls_merge, ctype, project, group_names, other_groups):
-        df = pd.read_excel(xls_merge, engine="openpyxl")
+        df = pd.read_excel(xls_merge)
         check_columns(df, ctype, file=xls_merge, base_dir=semester_settings.BASE_DIR)
         gdf = df.groupby(ctype)
 

@@ -84,7 +84,7 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
         if self.ects and self.comment_colname:
             raise Exception("No comment column required when uploading ECTS")
 
-        df = pd.read_excel(self.xls_merge, engine="openpyxl")
+        df = pd.read_excel(self.xls_merge)
 
         check_columns(df, self.grade_colname, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
 
@@ -209,7 +209,7 @@ def task_yaml_QCM():
     """Génère un fichier yaml prérempli pour noter un QCM"""
 
     def yaml_QCM(yaml_fname, xls_merge):
-        df = pd.read_excel(xls_merge, engine="openpyxl")
+        df = pd.read_excel(xls_merge)
         dff = df[['Nom', 'Prénom', 'Courriel']]
         d = dff.to_dict(orient='index')
         rec = [{'Nom': record['Nom'] + ' ' + record['Prénom'],
@@ -247,12 +247,12 @@ class XlsAssignmentGrade(CliArgsMixin, UVTask):
         self.file_dep = [self.inst_uv, self.xls_merge]
 
     def run(self):
-        inst_uv = pd.read_excel(self.inst_uv, engine="openpyxl")
+        inst_uv = pd.read_excel(self.inst_uv)
         TD = inst_uv['Lib. créneau'].str.contains('^D')
         inst_uv_TD = inst_uv.loc[TD]
         insts = inst_uv_TD['Intervenants'].unique()
 
-        df = pd.read_excel(self.xls_merge, engine="openpyxl")
+        df = pd.read_excel(self.xls_merge)
         df = df[['Nom', 'Prénom', 'Courriel']]
         df = sort_values(df, ['Nom', 'Prénom'])
         df = df.assign(Note=np.nan)
