@@ -19,6 +19,7 @@ class ModulesTaskLoader(NamespaceTaskLoader):
 
 
 def run_doit(args):
+    # Load settings from configuration files
     from .config import semester_settings
     from .config import uv_settings
 
