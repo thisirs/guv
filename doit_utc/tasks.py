@@ -114,9 +114,7 @@ class UVTask(TaskBase):
     @property
     def settings(self):
         if self._settings is None:
-            uv_config_file = Path(
-                semester_settings.SEMESTER_DIR / self.uv / "config.py"
-            )
+            uv_config_file = Path(semester_settings.SEMESTER_DIR) / self.uv
             uv_settings = UVSettings(uv_config_file)
             self._settings = SettingsUpdate(copy.copy(semester_settings), uv_settings)
         return self._settings
