@@ -111,6 +111,12 @@ class UVTask(TaskBase):
         self.planning, self.uv, self.info = planning, uv, info
         self._settings = None
 
+    def document(self, fn):
+        return str(Path(semester_settings.SEMESTER_DIR) / self.uv / "documents" / fn)
+
+    def generated(self, fn):
+        return str(Path(semester_settings.SEMESTER_DIR) / self.uv / "generated" / fn)
+
     @property
     def settings(self):
         if self._settings is None:
