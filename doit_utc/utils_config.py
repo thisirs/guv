@@ -213,14 +213,14 @@ def create_plannings(planning_type):
 
     planning_D = pd.DataFrame(
         generate_days(
-            beg, end, semester_settings.SKIP_DAYS_C, semester_settings.TURN, "D"
+            beg, end, semester_settings.SKIP_DAYS_D, semester_settings.TURN, "D"
         ),
         columns=["date", "dayname", "semaine", "num", "numAB", "nweek"],
     )
 
     planning_T = pd.DataFrame(
         generate_days(
-            beg, end, semester_settings.SKIP_DAYS_C, semester_settings.TURN, "T"
+            beg, end, semester_settings.SKIP_DAYS_T, semester_settings.TURN, "T"
         ),
         columns=["date", "dayname", "semaine", "num", "numAB", "nweek"],
     )
