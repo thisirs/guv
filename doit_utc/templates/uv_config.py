@@ -1,44 +1,31 @@
 """Fichier de configuration de l'UV"""
 
 
-import os
-from doit_utc.utils import aggregate
-
-# Don't catch exception to see backtrace
+# Mode déboguage
 # DEBUG = 1
 
-UV_DIR = os.path.dirname(__file__)
+# Listing issu de l'ENT (requis)
+ENT_LISTING = ""
 
+# Fichier des affectations dans les Cours/TD/TP (requis)
+AFFECTATION_LISTING = ""
 
-# List of UV to iterate on by default
-SELECTED_UVS = [os.path.basename(os.path.dirname(__file__))]
+# Chemin relatif vers le listing provenant de Moodle (optionnel)
+MOODLE_LISTING = ""
 
-def document(filename):
-    return os.path.join(UV_DIR, "documents", filename)
+# Documents supplémentaires à agréger au fichier Excel de l'effectif
+# de l'UV. C'est une liste de couples. Chaque couple est composé du
+# chemin du fichier à agréger et d'une fonction qui réalise
+# l'agrégation. Cette fonction prend en argument un DataFrame existant
+# ainsi que le chemin du fichier à agréger et renvoie le DataFrame mis
+# à jour. Plusieurs fonction d'aide sont disponibles: aggregate,
+# aggregate_org, fillna_column, replace_regex, replace_column.
 
+from doit_utc.utils import aggregate
 
-def generated(filename):
-    return os.path.join(UV_DIR, "generated", filename)
-
-# Chemin relatif vers le listing provenant de Moodle
-MOODLE_LISTING = document("SY02 Notes.xlsx")
-
-# Listing issu de l'ENT
-ENT_LISTING = document("extraction_enseig_note.XLS")
-
-# Listing fourni par
-AFFECTATION_LISTING = document("inscrits_boufflet.txt")
-
-# Documents supplémentaires à agréger au fichier Excel de l'UV. C'est
-# une liste de couples. Chaque couple est composé du chemin du fichier
-# à agréger et d'une fonction qui réalise l'agrégation. Cette fonction
-# prend en argument un DataFrame existant ainsi que le chemin du
-# fichier à agréger et renvoie le DataFrame mis à jour. Une fonction
-# d'aide AGGREGATE est disponible qui renvoie des fonctions classiques
-# d'agrégation.
 AGGREGATE_DOCUMENTS = [
     (
-        generated("final_groups.csv"),
+        "generated/final_groups.csv",
         aggregate(
             left_on="Courriel",
             right_on="Courriel",
@@ -47,9 +34,8 @@ AGGREGATE_DOCUMENTS = [
     )
 ]
 
-
-
-# Identifiant Moodle des différents groupes créés sur la page SY02
+# Correspondance entre le noms des groupes de Cours/TD/TP et leur
+# identifiant Moodle (optionnel)
 GROUP_ID = {
     'C1': 5377,
     'C2': 5378,
