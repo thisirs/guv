@@ -76,7 +76,7 @@ def ical_events(dataframe):
     return cal.to_ical(sorted=True)
 
 
-class IcalInst(UVTask, CliArgsMixin):
+class IcalInst(CliArgsMixin, TaskBase):
     """Fichier iCal de tous les créneaux des intervenants
 
     Crée un fichier iCal de tous les créneaux de Cours/TP/TD du ou des
