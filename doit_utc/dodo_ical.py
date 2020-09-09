@@ -19,7 +19,7 @@ from .config import semester_settings
 from .utils_config import Output, generated, compute_slots
 from .utils import argument
 from .dodo_instructors import AddInstructors
-from .tasks import UVTask, CliArgsMixin, TaskBase
+from .tasks import CliArgsMixin, TaskBase
 
 
 def ical_events(dataframe):

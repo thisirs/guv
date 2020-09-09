@@ -12,7 +12,7 @@ from pandas.api.types import CategoricalDtype
 from doit.exceptions import TaskFailed
 
 from .dodo_utc import UtcUvListToCsv
-from .utils_config import Output, documents, generated, selected_uv, semester_settings
+from .utils_config import Output, documents, generated, selected_uv
 from .utils import add_templates, lib_list
 from .tasks import UVTask, TaskBase
 from .scripts.excel_hours import create_excel_file
