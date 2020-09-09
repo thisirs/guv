@@ -27,7 +27,7 @@ from .utils import (
 )
 from .tasks import CliArgsMixin, UVTask
 from .dodo_students import XlsStudentDataMerge
-from .dodo_instructors import task_xls_affectation
+from .dodo_instructors import XlsAffectation
 from .gradebook import run
 
 
@@ -242,7 +242,7 @@ class XlsAssignmentGrade(CliArgsMixin, UVTask):
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
         self.xls_merge = generated(XlsStudentDataMerge.target, **self.info)
-        self.inst_uv = documents(task_xls_affectation.target, **self.info)
+        self.inst_uv = documents(XlsAffectation.target, **self.info)
         self.target = generated(f'{self.exam}.xlsx', **self.info)
         self.file_dep = [self.inst_uv, self.xls_merge]
 

@@ -18,8 +18,8 @@ from doit.exceptions import TaskFailed
 from .config import semester_settings
 from .utils_config import Output, generated, compute_slots
 from .utils import argument
-from .dodo_instructors import task_add_instructors
-from .tasks import UVTask, CliArgsMixin
+from .dodo_instructors import AddInstructors
+from .tasks import UVTask, CliArgsMixin, TaskBase
 
 
 def ical_events(dataframe):
@@ -102,9 +102,9 @@ class IcalInst(UVTask, CliArgsMixin):
         ),
     )
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
-        self.csv_slot_inst = generated(task_add_instructors.target)
+    def __init__(self):
+        super().__init__()
+        self.csv_slot_inst = generated(AddInstructors.target)
         self.file_dep = [self.csv_slot_inst]
         self.target = generated(f"{'_'.join(self.plannings)}_ics.zip")
 

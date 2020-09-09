@@ -27,10 +27,10 @@ from .utils import pformat, make_groups
 from .dodo_students import XlsStudentDataMerge
 from .dodo_utc import CsvAllCourses
 from .dodo_instructors import (
-    task_add_instructors,
+    AddInstructors,
     create_insts_list,
     read_xls_details,
-    task_xls_affectation,
+    XlsAffectation,
 )
 
 from .scripts.moodle_date import CondDate, CondGroup, CondOr, CondProfil
@@ -47,7 +47,7 @@ class HtmlInst(UVTask):
     def __init__(self, uv, planning, info):
         super().__init__(uv, planning, info)
         self.insts_details = documents("intervenants.xlsx")
-        self.insts_uv = documents(task_xls_affectation.target, **info)
+        self.insts_uv = documents(XlsAffectation.target, **info)
         self.target = generated(HtmlInst.target, **info)
 
     def run(self):
@@ -130,7 +130,7 @@ class HtmlTable(UVTask, CliArgsMixin):
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
 
-        self.csv_inst_list = generated(task_add_instructors.target)
+        self.csv_inst_list = generated(AddInstructors.target)
         self.file_dep = [self.csv_inst_list]
 
         if self.grouped:

@@ -23,6 +23,12 @@ class TaskBase:
         self.doc = self.__class__.__doc__
 
     @classmethod
+    def build_target(cls, planning, uv, info):
+        return os.path.join(
+            semester_settings.SEMESTER_DIR, uv, cls.directory, cls.target_name
+        )
+
+    @classmethod
     def create_doit_tasks(cls):
         if cls in [TaskBase, UVTask, CliArgsMixin]:
             return  # avoid create tasks from base class 'Task'

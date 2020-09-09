@@ -12,9 +12,9 @@ from pandas.api.types import CategoricalDtype
 from doit.exceptions import TaskFailed
 
 from .dodo_utc import UtcUvListToCsv
-from .utils_config import Output, documents, generated, selected_uv
+from .utils_config import Output, documents, generated, selected_uv, semester_settings
 from .utils import add_templates, lib_list
-from .tasks import UVTask
+from .tasks import UVTask, TaskBase
 from .scripts.excel_hours import create_excel_file
 
 
@@ -77,36 +77,49 @@ def task_xls_instructors():
     }
 
 
-@add_templates(target='UTC_UV_list_instructors.csv')
-def task_add_instructors():
+class AddInstructors(TaskBase):
     """Ajoute les intervenants dans la liste csv des créneaux"""
 
-    def add_instructors(target, csv, insts):
-        df_csv = pd.read_csv(csv)
+    target = "UTC_UV_list_instructors.csv"
 
-        df_insts = [pd.read_excel(inst) for inst in insts]
-        df_inst = pd.concat(df_insts, ignore_index=True)
-        df_inst.Semaine = df_inst.Semaine.astype(object)
+    def __init__(self):
+        self.target = generated(AddInstructors.target)
+        self.uv_list = documents(UtcUvListToCsv.target)
+        self.affectations = [
+            (uv, XlsAffectation.build_target(planning, uv, info))
+            for planning, uv, info in selected_uv()
+        ]
+        files = [f for _, f in self.affectations]
+        self.file_dep = files + [self.uv_list]
 
-        df_merge = pd.merge(df_csv, df_inst, how='left', on=['Jour', 'Heure début', 'Heure fin', 'Semaine', 'Lib. créneau', 'Locaux'])
+    def run(self):
+        df_csv = pd.read_csv(self.uv_list)
 
-        with Output(target) as target:
+        df_affs = [
+            pd.read_excel(xls_aff).assign(**{"Code enseig.": uv})
+            for uv, xls_aff in self.affectations
+        ]
+
+        df_aff = pd.concat(df_affs, ignore_index=True)
+        df_aff.Semaine = df_aff.Semaine.astype(object)
+
+        df_merge = pd.merge(
+            df_csv,
+            df_aff,
+            how="left",
+            on=[
+                "Code enseig.",
+                "Jour",
+                "Heure début",
+                "Heure fin",
+                "Semaine",
+                "Lib. créneau",
+                "Locaux",
+            ],
+        )
+
+        with Output(self.target) as target:
             df_merge.to_csv(target(), index=False)
-
-    target = generated(task_add_instructors.target)
-    uv_list = documents(UtcUvListToCsv.target)
-    insts = []
-    for planning, uv, info in selected_uv('all'):
-        insts.append(documents(task_xls_affectation.target, **info))
-
-    deps = insts + [uv_list]
-
-    return {
-        'file_dep': deps,
-        'targets': [target],
-        'actions': [(add_instructors, [target, uv_list, insts])],
-        'verbosity': 2
-    }
 
 
 def read_xls_details(fn):
@@ -143,7 +156,7 @@ affectations sont prises pour chaque UV.
     insts_details = documents(task_xls_instructors.target)
 
     for planning, uv, info in selected_uv():
-        inst_uv = documents(task_xls_affectation.target, **info)
+        inst_uv = documents(XlsAffectation.target, **info)
         target = generated(task_xls_inst_details.target, **info)
         yield {
             'name': f'{planning}_{uv}',
@@ -189,7 +202,7 @@ def task_xls_UTP():
 
     insts = documents(task_xls_instructors.target)
     for planning, uv, info in selected_uv():
-        xls = documents(task_xls_affectation.target, **info)
+        xls = documents(XlsAffectation.target, **info)
         target = generated(task_xls_UTP.target, **info)
 
         yield {
@@ -201,13 +214,25 @@ def task_xls_UTP():
         }
 
 
-@add_templates(target='intervenants.xlsx')
-def task_xls_affectation():
+class XlsAffectation(UVTask):
     """Fichier Excel des créneaux de toutes les UV configurées."""
 
-    def extract_uv_instructor(uv_list_filename, uv, target):
-        df = pd.read_csv(uv_list_filename)
-        df_uv = df.loc[df['Code enseig.'] == uv, :]
+    unique_uv = False
+    target_name = "intervenants.xlsx"
+    directory = "documents"
+
+    # FIXME: remove
+    target = "intervenants.xlsx"
+
+    def __init__(self, planning, uv, info):
+        super().__init__(planning, uv, info)
+        self.uvlist_csv = documents(UtcUvListToCsv.target)
+        self.file_dep = [self.uvlist_csv]
+        self.target = XlsAffectation.build_target(planning, uv, info)
+
+    def run(self):
+        df = pd.read_csv(self.uvlist_csv)
+        df_uv = df.loc[df['Code enseig.'] == self.uv, :]
 
         selected_columns = ['Jour', 'Heure début', 'Heure fin', 'Locaux',
                             'Semaine', 'Lib. créneau']
@@ -218,20 +243,41 @@ def task_xls_affectation():
         df_uv['Responsable'] = ''
 
         # Copy for modifications
-        with Output(target, protected=True) as target:
+        with Output(self.target, protected=True) as target:
             df_uv.to_excel(target(), sheet_name='Intervenants', index=False)
 
-    uvlist_csv = documents(UtcUvListToCsv.target)
-    for planning, uv, info in selected_uv():
-        target = documents(task_xls_affectation.target, **info)
 
-        yield {
-            'name': f'{planning}_{uv}',
-            'file_dep': [uvlist_csv],
-            'targets': [target],
-            'actions': [(extract_uv_instructor, [uvlist_csv, uv, target])],
-            'verbosity': 2
-        }
+# @add_templates(target='intervenants.xlsx')
+# def XlsAffectation():
+#     """Fichier Excel des créneaux de toutes les UV configurées."""
+
+#     def extract_uv_instructor(uv_list_filename, uv, target):
+#         df = pd.read_csv(uv_list_filename)
+#         df_uv = df.loc[df['Code enseig.'] == uv, :]
+
+#         selected_columns = ['Jour', 'Heure début', 'Heure fin', 'Locaux',
+#                             'Semaine', 'Lib. créneau']
+#         df_uv = df_uv[selected_columns]
+#         df_uv = df_uv.sort_values(['Lib. créneau', 'Semaine'])
+
+#         df_uv['Intervenants'] = ''
+#         df_uv['Responsable'] = ''
+
+#         # Copy for modifications
+#         with Output(target, protected=True) as target:
+#             df_uv.to_excel(target(), sheet_name='Intervenants', index=False)
+
+#     uvlist_csv = documents(UtcUvListToCsv.target)
+#     for planning, uv, info in selected_uv():
+#         target = documents(XlsAffectation.target, **info)
+
+#         yield {
+#             'name': f'{planning}_{uv}',
+#             'file_dep': [uvlist_csv],
+#             'targets': [target],
+#             'actions': [(extract_uv_instructor, [uvlist_csv, uv, target])],
+#             'verbosity': 2
+#         }
 
 
 @add_templates(target='emploi_du_temps.xlsx')
@@ -248,7 +294,7 @@ def task_xls_emploi_du_temps():
             dfs.to_excel(xls_edt(), sheet_name='Emploi du temps', index=False)
 
     for planning, uv, info in selected_uv():
-        dep = documents(task_xls_affectation.target, **info)
+        dep = documents(XlsAffectation.target, **info)
         target = generated(task_xls_emploi_du_temps.target, **info)
         yield {
             'name': f'{planning}_{uv}',

@@ -13,7 +13,7 @@ from .config import semester_settings
 from .utils_config import documents, generated, Output
 from .utils import argument
 from .tasks import UVTask, CliArgsMixin
-from .dodo_instructors import task_xls_affectation, task_add_instructors
+from .dodo_instructors import XlsAffectation, AddInstructors
 
 
 def create_cal_from_dataframe(df, text, target):
@@ -131,7 +131,7 @@ Crée le calendrier des Cours/TD/TP pour chaque UV sélectionnées.
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
-        self.uv_list = documents(task_xls_affectation.target, **self.info)
+        self.uv_list = documents(XlsAffectation.target, **self.info)
         self.target = generated(CalUv.target, **self.info)
         jinja_dir = os.path.join(os.path.dirname(__file__), "templates")
         template = os.path.join(jinja_dir, "calendar_template.tex.jinja2")
@@ -169,7 +169,7 @@ class CalInst(UVTask, CliArgsMixin):
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
-        self.uv_list = generated(task_add_instructors.target)
+        self.uv_list = generated(AddInstructors.target)
         jinja_dir = os.path.join(os.path.dirname(__file__), "templates")
         template = os.path.join(jinja_dir, "calendar_template.tex.jinja2")
         self.file_dep = [self.uv_list, template]
