@@ -7,7 +7,8 @@ import os
 import glob
 import tempfile
 import zipfile
-from datetime import datetime, timedelta
+import datetime
+import pytz
 from icalendar import Event, Calendar
 import numpy as np
 import pandas as pd
@@ -24,45 +25,51 @@ from .tasks import UVTask, CliArgsMixin
 def ical_events(dataframe):
     """Retourne les évènements iCal de tous les cours trouvés dans DATAFRAME"""
 
-    from pytz import timezone
-    localtz = timezone('Europe/Paris')
-
     def timestamp(row):
-        d = row['date']
-        hm = row['Heure début'].split(':')
+        d = row["date"]
+        hm = row["Heure début"].split(":")
         h = int(hm[0])
         m = int(hm[1])
-        return datetime(year=d.year, month=d.month, day=d.day, hour=h, minute=m)
+        timetuple = (d.year, d.month, d.day, h, m)
+
+        # Get current timezone and use it
+        tz = datetime.datetime.utcnow().astimezone().tzinfo
+        dt = datetime.datetime(*timetuple).replace(tzinfo=tz)
+
+        # Return as UTC timezone for datetime to be exported with a
+        # trailing Z (no other timezone info in ics)
+        return dt.astimezone(pytz.utc)
 
     ts = dataframe.apply(timestamp, axis=1)
-    dataframe = dataframe.assign(timestamp=ts.values)
-    df = dataframe.sort_values('timestamp')
+    dataframe = dataframe.assign(timestamp=ts)
+    df = dataframe.sort_values("timestamp")
 
     cal = Calendar()
-    cal['summary'] = semester_settings.SEMESTER
+    cal["summary"] = semester_settings.SEMESTER
 
     for index, row in df.iterrows():
         event = Event()
 
-        uv = row['Code enseig.']
-        name = row['Lib. créneau'].replace(' ', '')
-        week = row['Semaine']
-        room = row['Locaux'].replace(' ', '').replace('BF', 'F')
-        num = row['num']
-        activity = row['Activité']
-        numAB = row['numAB']
+        uv = row["Code enseig."]
+        name = row["Lib. créneau"].replace(" ", "")
+        week = row["Semaine"]
+        room = row["Locaux"].replace(" ", "").replace("BF", "F")
+        num = row["num"]
+        activity = row["Activité"]
+        numAB = row["numAB"]
 
         if week is not np.nan:
-            summary = f'{uv} {activity}{numAB} {week} {room}'
+            summary = f"{uv} {activity}{numAB} {week}"
         else:
-            summary = f'{uv} {activity}{num} {room}'
+            summary = f"{uv} {activity}{num}"
 
-        event.add('summary', summary)
+        event.add("location", f"{room}")
 
-        dt = row['timestamp']
-        dt = localtz.localize(dt)
-        event.add('dtstart', dt)
-        event.add('dtend', dt + timedelta(hours=2))
+        event.add("summary", summary)
+
+        dt = row["timestamp"]
+        event.add("dtstart", dt)
+        event.add("dtend", dt + datetime.timedelta(hours=2))
 
         cal.add_component(event)
 
