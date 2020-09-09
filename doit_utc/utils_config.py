@@ -21,7 +21,7 @@ def selected_uv(all="dummy"):
         uv_to_planning = {
             uv: plng
             for plng, props in semester_settings.PLANNINGS.items()
-            for uv in props["UVS"]
+            for uv in props.get("UVS", []) + props.get("UES", [])
         }
 
         if not set(semester_settings.UVS).issubset(set(uv_to_planning.keys())):
@@ -61,7 +61,7 @@ def get_unique_uv():
         plngs = [
             plng
             for plng, props in semester_settings.PLANNINGS.items()
-            if uv in props["UVS"]
+            if uv in props.get("UVS", []) + props.get("UES", [])
         ]
 
         if not plngs:
