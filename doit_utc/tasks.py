@@ -7,7 +7,7 @@ import argparse
 from doit.exceptions import TaskFailed
 
 from .config import semester_settings, SettingsUpdate, UVSettings
-from .utils_config import selected_uv, get_unique_uv
+from .utils_config import selected_uv, get_unique_uv, NotUVDirectory
 from .utils import ParseArgsFailed, ParseArgAction
 
 
@@ -100,6 +100,10 @@ class TaskBase:
             kw = {
                 'actions': [ParseArgAction(e.parser, e.args)],
             }
+            return kw
+        except NotUVDirectory as e:
+            tf = TaskFailed(e.args)
+            kw["actions"] = [lambda: tf]
             return kw
         except Exception as e:
             if semester_settings.DEBUG > 0:

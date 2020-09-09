@@ -7,6 +7,10 @@ from .utils import rel_to_dir
 from .config import semester_settings
 
 
+class NotUVDirectory(Exception):
+    pass
+
+
 def selected_uv(all="dummy"):
     "Génère les UV configurées dans le fichier config.py du semestre"
 
@@ -70,7 +74,7 @@ def get_unique_uv():
         info = {"uv": uv, "planning": plng}
         return plng, uv, info
     else:
-        raise Exception("Pas dans un dossier d'UV")
+        raise NotUVDirectory
 
 
 # def get_unique_uv():
