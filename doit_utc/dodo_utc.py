@@ -10,11 +10,9 @@ import pandas as pd
 from PyPDF2 import PdfFileReader
 from tabula import read_pdf
 
-from doit.exceptions import TaskFailed
-
 from .config import semester_settings
 from .utils_config import Output, documents, generated, selected_uv, compute_slots
-from .utils import add_templates, argument, rel_to_dir
+from .utils import argument, rel_to_dir
 from .tasks import CliArgsMixin, TaskBase
 
 
@@ -25,7 +23,10 @@ class UtcUvListToCsv(TaskBase):
 
     def __init__(self):
         super().__init__()
-        self.uv_list_filename = documents(task_UTC_UV_list.target)
+        self.uv_list_filename = os.path.join(
+            semester_settings.SEMESTER_DIR,
+            semester_settings.CRENEAU_UV
+        )
         self.ue_list_filename = documents('UTC_UE_list.xlsx')
         self.target = documents(UtcUvListToCsv.target)
 
@@ -167,22 +168,6 @@ class UtcUvListToCsv(TaskBase):
 
         with Output(self.target) as target:
             df.to_csv(target(), index=False)
-
-
-@add_templates(target=semester_settings.CRENEAU_UV)
-def task_UTC_UV_list():
-    """Dépendance vers le fichier CRENEAU_UV"""
-
-    doc = documents(task_UTC_UV_list.target)
-
-    def UTC_UV_list(doc):
-        if not os.path.exists(doc):
-            return TaskFailed(f"Pas de fichier `{doc}'")
-
-    return {
-        'actions': [(UTC_UV_list, [doc])],
-        'targets': [doc]
-    }
 
 
 class CsvAllCourses(CliArgsMixin, TaskBase):

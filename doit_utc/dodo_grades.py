@@ -131,60 +131,47 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
             df0.to_csv(csv_fname(), index=False, sep=";")
 
 
-@actionfailed_on_exception
-def task_xls_merge_final_grade():
+class XlsMergeFinalGrade(CliArgsMixin, UVTask):
     """Fichier Excel des notes finales attribuées
 
 Transforme un classeur Excel avec une feuille par correcteur en une
 seule feuille où les notes sont concaténées pour fusion/révision
 manuelle."""
 
-    def xls_merge_final_grade(xls_sheets, xls_grades):
-        xls = pd.ExcelFile(xls_sheets)
+    cli_args = (argument("-e", "--exam", required=True, help="Nom de l'examen"),)
+    unique_uv = True
+
+    def __init__(self, planning, uv, info):
+        super().__init__(planning, uv, info)
+        self.xls_sheets = documents(f"{self.exam}.xlsx", **self.info)
+        self.target = documents(f"{self.exam}_notes.xlsx", **self.info)
+        self.file_dep = [self.xls_sheets]
+
+    def run(self):
+        xls = pd.ExcelFile(self.xls_sheets)
         dfall = xls.parse(xls.sheet_names[0])
-        dfall = dfall[['Nom', 'Prénom', 'Courriel']]
+        dfall = dfall[["Nom", "Prénom", "Courriel"]]
 
         dfs = []
         for sheet in xls.sheet_names:
             df = xls.parse(sheet)
             df = df.loc[~df.Note.isnull()]
-            df['Correcteur médian'] = sheet
+            df["Correcteur"] = sheet
             dfs.append(df)
 
         # Concaténation de tous les devoirs qui ont une note
         df = pd.concat(dfs, axis=0)
 
         # On rattrape les absents
-        df = pd.merge(dfall, df, how='left', on=['Nom', 'Prénom', 'Courriel'])
+        df = pd.merge(dfall, df, how="left", on=["Nom", "Prénom", "Courriel"])
         df = sort_values(df, ["Nom", "Prénom"])
 
-        csv_grades = os.path.splitext(xls_grades)[0] + '.csv'
+        csv_grades = os.path.splitext(self.target)[0] + ".csv"
         with Output(csv_grades, protected=True) as csv_grades:
             df.to_csv(csv_grades(), index=False)
 
-        with Output(xls_grades, protected=True) as xls_grades:
-            df.to_excel(xls_grades(), index=False)
-
-        # def max_grade(group):
-        #     return group.loc[df['Note'].idxmax()]
-
-        # dff = df.groupby(['Nom', 'Prénom'], group_keys=False).apply(max_grade)
-        # dff.to_excel(xls_grades, index=False)
-
-    args = parse_args(
-        task_xls_merge_final_grade,
-        argument('-e', '--exam', required=True, help="Nom de l'examen"),
-    )
-
-    planning, uv, info = get_unique_uv()
-    xls_sheets = documents(f'{args.exam}.xlsx', **info)
-    xls_grades = documents(f'{args.exam}_notes.xlsx', **info)
-    deps = [xls_sheets]
-    return {
-        'actions': [(xls_merge_final_grade, [xls_sheets, xls_grades])],
-        'targets': [xls_grades],
-        'file_dep': deps,
-    }
+        with Output(self.target, protected=True) as target:
+            df.to_excel(target(), index=False)
 
 
 class XlsGradeSheet(UVTask):
@@ -204,33 +191,33 @@ class XlsGradeSheet(UVTask):
             description=XlsGradeSheet.__doc__)
 
 
-@actionfailed_on_exception
-def task_yaml_QCM():
+class YamlQCM(UVTask):
     """Génère un fichier yaml prérempli pour noter un QCM"""
 
-    def yaml_QCM(yaml_fname, xls_merge):
-        df = pd.read_excel(xls_merge)
-        dff = df[['Nom', 'Prénom', 'Courriel']]
-        d = dff.to_dict(orient='index')
-        rec = [{'Nom': record['Nom'] + ' ' + record['Prénom'],
-                'Courriel': record['Courriel'],
-                'Resultat': ''} for record in d.values()]
+    def __init__(self, uv, planning, info):
+        super().__init__(uv, planning, info)
+        self.xls_merge = generated(XlsStudentDataMerge.target, **info)
+        self.target = generated("QCM.yaml", **info)
+        self.file_dep = [self.xls_merge]
 
-        rec = {'Students': rec, 'Answers': ''}
+    def run(self):
+        df = pd.read_excel(self.xls_merge)
+        dff = df[["Nom", "Prénom", "Courriel"]]
+        d = dff.to_dict(orient="index")
+        rec = [
+            {
+                "Nom": record["Nom"] + " " + record["Prénom"],
+                "Courriel": record["Courriel"],
+                "Resultat": "",
+            }
+            for record in d.values()
+        ]
 
-        with Output(yaml_fname, protected=True) as yaml_fname:
-            with open(yaml_fname(), 'w') as fd:
+        rec = {"Students": rec, "Answers": ""}
+
+        with Output(self.target, protected=True) as yaml_fname:
+            with open(yaml_fname(), "w") as fd:
                 yaml.dump(rec, fd, default_flow_style=False)
-
-    planning, uv, info = get_unique_uv()
-    xls_merge = generated(XlsStudentDataMerge.target, **info)
-    yaml_fname = generated('QCM.yaml', **info)
-    deps = [xls_merge]
-    return {
-        'actions': [(yaml_QCM, [yaml_fname, xls_merge])],
-        'targets': [yaml_fname],
-        'file_dep': deps,
-    }
 
 
 class XlsAssignmentGrade(CliArgsMixin, UVTask):

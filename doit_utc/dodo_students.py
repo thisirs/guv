@@ -17,13 +17,10 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 from doit.exceptions import TaskFailed
 
 from .config import semester_settings
-from .utils_config import Output, documents, generated, get_unique_uv
+from .utils_config import Output, documents, generated
 from .utils import (
     sort_values,
     argument,
-    parse_args,
-    actionfailed_on_exception,
-    taskfailed_on_exception,
     check_columns,
     rel_to_dir,
     slugrot,
@@ -425,21 +422,59 @@ Crée des fichiers csv pour chaque UV sélectionnées"""
                     dff.to_csv(target(), index=False, header=False)
 
 
-@actionfailed_on_exception
-def task_csv_moodle_groups():
+class CsvMoodleGroups(CliArgsMixin, UVTask):
     """Fichier csv de sous-groupes (binômes ou trinômes) aléatoires."""
 
-    @taskfailed_on_exception
-    def csv_moodle_groups(target, target_moodle, xls_merge, ctype, project, group_names, other_groups):
-        df = pd.read_excel(xls_merge)
-        check_columns(df, ctype, file=xls_merge, base_dir=semester_settings.BASE_DIR)
-        gdf = df.groupby(ctype)
+    cli_args = (
+        argument(
+            "-c",
+            "--course",
+            required=True,
+            help="Nom de colonne pour réaliser un groupement",
+        ),
+        argument(
+            "-p", "--project", required=True, help="Nom du groupement que sera réalisé"
+        ),
+        argument(
+            "-g",
+            "--group-names",
+            required=False,
+            default=None,
+            help="Fichier de noms de groupes",
+        ),
+        argument(
+            "-o",
+            "--other-group",
+            required=False,
+            default=None,
+            help="Nom de colonne d'un autre groupement",
+        ),
+    )
 
-        if other_groups is not None:
-            if not isinstance(other_groups, list):
-                other_groups = [other_groups]
+    def __init__(self, planning, uv, info):
+        super().__init__(planning, uv, info)
+        self.xls_merge = generated(XlsStudentDataMerge.target, **self.info)
+        self.target_csv = generated(
+            f"{self.course}_{self.project}_binomes.csv", **self.info
+        )
+        self.target_moodle = generated(
+            f"{self.course}_{self.project}_binomes_moodle.csv", **self.info
+        )
+        # target_moodle only to avoid circular dep
+        self.target = self.target_moodle
+        self.file_dep = [self.xls_merge]
 
-            diff = set(other_groups) - set(df.columns.values)
+    def run(self):
+        df = pd.read_excel(self.xls_merge)
+        check_columns(
+            df, self.course, file=self.xls_merge, base_dir=semester_settings.BASE_DIR
+        )
+
+        if self.other_group is not None:
+            if not isinstance(self.other_group, list):
+                other_groups = [self.other_group]
+
+            diff = set(self.other_group) - set(df.columns.values)
             if diff:
                 s = "s" if len(diff) > 1 else ""
                 return TaskFailed(
@@ -447,14 +482,16 @@ def task_csv_moodle_groups():
                 )
 
         # Build list of group names
-        if group_names is not None and os.path.exists(group_names):
-            with open(group_names, "r") as fd:
+        if self.group_names is not None and os.path.exists(self.group_names):
+            with open(self.group_names, "r") as fd:
                 group_names = [l.strip() for l in fd.readlines()]
                 shuffle = True
                 group_names = [f"%(gn)s_{e}" for e in group_names]
         else:
             shuffle = False
-            group_names = [f"%(gn)s_{project}_{e}" for e in list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")]
+            group_names = [
+                f"%(gn)s_{self.project}_{e}" for e in list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+            ]
 
         def binome_match(df_group, idx1, idx2, other_groups=None, foreign=True):
             "Renvoie vrai si le binôme est bon"
@@ -477,7 +514,7 @@ def task_csv_moodle_groups():
                     return False
 
                 # 2 GB == catastrophe
-                if etu1["Branche"] == 'GB' and etu2["Branche"] == 'GB':
+                if etu1["Branche"] == "GB" and etu2["Branche"] == "GB":
                     return False
 
             # Binomes précédents
@@ -489,9 +526,15 @@ def task_csv_moodle_groups():
             return True
 
         def trinome_match(df_group, idx1, idx2, idx3, other_groups=None, foreign=True):
-            a = binome_match(df_group, idx1, idx2, other_groups=other_groups, foreign=foreign)
-            b = binome_match(df_group, idx1, idx3, other_groups=other_groups, foreign=foreign)
-            c = binome_match(df_group, idx2, idx3, other_groups=other_groups, foreign=foreign)
+            a = binome_match(
+                df_group, idx1, idx2, other_groups=other_groups, foreign=foreign
+            )
+            b = binome_match(
+                df_group, idx1, idx3, other_groups=other_groups, foreign=foreign
+            )
+            c = binome_match(
+                df_group, idx2, idx3, other_groups=other_groups, foreign=foreign
+            )
             return a or b or c
 
         class Ooops(Exception):
@@ -511,9 +554,13 @@ def task_csv_moodle_groups():
             def valid_groups(df_group, groups, other_groups=None, foreign=True):
                 def valid_group(group):
                     if len(group) == 3:
-                        return trinome_match(df_group, *group, other_groups=other_groups, foreign=foreign)
+                        return trinome_match(
+                            df_group, *group, other_groups=other_groups, foreign=foreign
+                        )
                     elif len(group) == 2:
-                        return binome_match(df_group, *group, other_groups=other_groups, foreign=foreign)
+                        return binome_match(
+                            df_group, *group, other_groups=other_groups, foreign=foreign
+                        )
                     elif len(group) == 1:
                         return True
                     else:
@@ -535,8 +582,12 @@ def task_csv_moodle_groups():
                     if len(groups) > len(group_names):
                         raise Exception("Not enough group names")
 
-                    groups_names = group_names[:len(groups)]
-                    final_groups = {etu: (gn % dict(gn=gpn)) for gn, group in zip(groups_names, groups) for etu in group}
+                    groups_names = group_names[: len(groups)]
+                    final_groups = {
+                        etu: (gn % dict(gn=gpn))
+                        for gn, group in zip(groups_names, groups)
+                        for etu in group
+                    }
                 except Ooops:
                     continue
                 break
@@ -546,40 +597,17 @@ def task_csv_moodle_groups():
             gb = pd.concat((df_group, final_df_groups), axis=1)
             return gb
 
-        df = gdf.apply(add_group, other_groups=other_groups, group_names=group_names)
+        gdf = df.groupby(self.course)
+        df = gdf.apply(
+            add_group, other_groups=self.other_group, group_names=self.group_names
+        )
         df = df.sort_values("group")
 
-        with Output(target) as target0:
-            df.to_csv(target0(), index=False)
+        with Output(self.target_csv) as target:
+            df.to_csv(target(), index=False)
 
-        with Output(target_moodle) as target:
+        with Output(self.target_moodle) as target:
             df.to_csv(target(), index=False, header=False)
-
-    args = parse_args(
-        task_csv_moodle_groups,
-        argument('-c', '--course', required=True, help="Nom de colonne pour réaliser un groupement"),
-        argument('-p', '--project', required=True, help="Nom du groupement que sera réalisé"),
-        argument('-g', '--group-names', required=False, default=None, help="Fichier de noms de groupes"),
-        argument('-o', '--other-group', required=False, default=None, help="Nom de colonne d'un autre groupement"),
-    )
-
-    planning, uv, info = get_unique_uv()
-    xls_merge = generated(XlsStudentDataMerge.target, **info)
-    target = generated(f"{args.course}_{args.project}_binomes.csv", **info)
-    target_moodle = generated(f"{args.course}_{args.project}_binomes_moodle.csv", **info)
-    deps = [xls_merge]
-
-    return {
-        "actions": [
-            (
-                csv_moodle_groups,
-                [target, target_moodle, xls_merge, args.course, args.project, args.group_names, args.other_group],
-            )
-        ],
-        "file_dep": deps,
-        "targets": [target_moodle],  # target_moodle only to
-        # avoid circular dep
-    }
 
 
 class CsvGroupsGroupings(UVTask, CliArgsMixin):

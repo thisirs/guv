@@ -12,8 +12,8 @@ from pandas.api.types import CategoricalDtype
 from doit.exceptions import TaskFailed
 
 from .dodo_utc import UtcUvListToCsv
-from .utils_config import Output, documents, generated, selected_uv
-from .utils import add_templates, lib_list
+from .utils_config import Output, documents, generated, selected_uv, semester_settings
+from .utils import add_templates, lib_list, rel_to_dir
 from .tasks import UVTask, TaskBase
 from .scripts.excel_hours import create_excel_file
 
@@ -61,20 +61,24 @@ def create_insts_list(df):
     return(df)
 
 
-@add_templates(target='intervenants.xlsx')
-def task_xls_instructors():
+class XlsInstructors(TaskBase):
     """Fichier de détails global des intervenants toutes UV confondues"""
 
-    doc = documents(task_xls_instructors.target)
+    target = "intervenants.xlsx"
 
-    def xls_instructors(doc):
-        if not os.path.exists(doc):
-            return TaskFailed(f"Pas de fichier `{doc}'")
+    def __init__(self):
+        self.target = documents(XlsInstructors.target)
 
-    return {
-        'actions': [(xls_instructors, [doc])],
-        'targets': [doc]
-    }
+    def run(self):
+        if not os.path.exists(self.target):
+            print(
+                "Le fichier '{}' n'existe pas, création d'un fichier vide".format(
+                    rel_to_dir(self.target, semester_settings.SEMESTER_DIR)
+                )
+            )
+            columns = ["Intervenants", "Statut", "Email", "Website"]
+            with Output(self.target) as target:
+                pd.DataFrame(columns=columns).to_excel(target())
 
 
 class AddInstructors(TaskBase):
@@ -83,6 +87,7 @@ class AddInstructors(TaskBase):
     target = "UTC_UV_list_instructors.csv"
 
     def __init__(self):
+        super().__init__()
         self.target = generated(AddInstructors.target)
         self.uv_list = documents(UtcUvListToCsv.target)
         self.affectations = [
@@ -133,85 +138,72 @@ def read_xls_details(fn):
     })
 
 
-@add_templates(target='intervenants_details.xlsx')
-def task_xls_inst_details():
+class XlsInstDetails(UVTask):
     """Fichier Excel des intervenants par UV avec détails
 
 Les détails sont pris dans le fichiers de détails global. Les
 affectations sont prises pour chaque UV.
     """
 
-    def xls_inst_details(inst_uv, inst_details, target):
-        inst_uv = pd.read_excel(inst_uv)
-        inst_details = pd.read_excel(inst_details)
+    target = "intervenants_details.xlsx"
+
+    def __init__(self, planning, uv, info):
+        super().__init__(self, planning, uv, info)
+        self.target = generated(XlsInstDetails.target, **info)
+        self.insts_details = documents(task_xls_instructors.target)
+        self.inst_uv = documents(XlsAffectation.target, **info)
+        self.file_dep = [self.inst_uv, self.inst_details]
+
+    def run(self):
+        inst_uv = pd.read_excel(self.inst_uv)
+        inst_details = pd.read_excel(self.inst_details)
 
         # Add details from inst_details
-        df = inst_uv.merge(inst_details, how='left',
-                           left_on='Intervenants',
-                           right_on='Intervenants')
+        df = inst_uv.merge(
+            inst_details, how="left", left_on="Intervenants", right_on="Intervenants"
+        )
 
-        with Output(target) as target:
+        with Output(self.target) as target:
             df.to_excel(target(), index=False)
 
-    insts_details = documents(task_xls_instructors.target)
 
-    for planning, uv, info in selected_uv():
-        inst_uv = documents(XlsAffectation.target, **info)
-        target = generated(task_xls_inst_details.target, **info)
-        yield {
-            'name': f'{planning}_{uv}',
-            'file_dep': [inst_uv, insts_details],
-            'targets': [target],
-            'actions': [(xls_inst_details, [inst_uv, insts_details, target])]
-        }
-
-
-@add_templates(
-    target='remplacement.xlsx'
-)
-def task_xls_UTP():
+class XlsUTP(UVTask):
     """Crée un document Excel pour calcul des heures et remplacements."""
 
-    def xls_UTP(xls, details, target):
-        df = pd.read_excel(xls)
+    target = "remplacement.xlsx"
+
+    def __init__(self, planning, uv, info):
+        super().__init__(planning, uv, info)
+        self.xls = documents(XlsAffectation.target, **info)
+        self.insts = documents(task_xls_instructors.target)
+        self.target = generated(XlsUTP.target, **info)
+        self.file_dep = [self.xls, self.insts]
+
+    def run(self):
+        df = pd.read_excel(self.xls)
 
         # Add details
-        df_details = read_xls_details(details)
+        df_details = read_xls_details(self.insts)
 
-        if df['Intervenants'].isnull().all():
-            return TaskFailed("Pas d'intervenants renseignés dans le fichier %s" % xls)
-            # # read from raw file
-            # with open(raw) as fd:
-            #     instructors = [line.rstrip() for line in fd]
-            #     df_insts = np.dataframe({'intervenants': instructors})
+        if df["Intervenants"].isnull().all():
+            return TaskFailed(
+                "Pas d'intervenants renseignés dans le fichier %s" % self.xls
+            )
         else:
-            # aggregate
             df_insts = create_insts_list(df)
 
-        # add details from df_details
-        df = df_insts.merge(df_details, how='left',
-                            left_on='Intervenants',
-                            right_on='Intervenants')
+        # Add details from df_details
+        df = df_insts.merge(
+            df_details, how="left", left_on="Intervenants", right_on="Intervenants"
+        )
 
-        dfs = df.sort_values(['Responsable', 'Statut', 'SortCourseList'],
-                             ascending=False)
+        dfs = df.sort_values(
+            ["Responsable", "Statut", "SortCourseList"], ascending=False
+        )
         dfs = dfs.reset_index()
 
-        with Output(target, protected=True) as target:
+        with Output(self.target, protected=True) as target:
             create_excel_file(target(), dfs)
-
-    insts = documents(task_xls_instructors.target)
-    for planning, uv, info in selected_uv():
-        xls = documents(XlsAffectation.target, **info)
-        target = generated(task_xls_UTP.target, **info)
-
-        yield {
-            'name': f'{planning}_{uv}',
-            'file_dep': [xls, insts],
-            'targets': [target],
-            'actions': [(xls_UTP, [xls, insts, target])],
-            'verbosity': 2
-        }
 
 
 class XlsAffectation(UVTask):
@@ -232,74 +224,50 @@ class XlsAffectation(UVTask):
 
     def run(self):
         df = pd.read_csv(self.uvlist_csv)
-        df_uv = df.loc[df['Code enseig.'] == self.uv, :]
+        df_uv = df.loc[df["Code enseig."] == self.uv, :]
 
-        selected_columns = ['Jour', 'Heure début', 'Heure fin', 'Locaux',
-                            'Semaine', 'Lib. créneau']
+        selected_columns = [
+            "Jour",
+            "Heure début",
+            "Heure fin",
+            "Locaux",
+            "Semaine",
+            "Lib. créneau",
+        ]
         df_uv = df_uv[selected_columns]
-        df_uv = df_uv.sort_values(['Lib. créneau', 'Semaine'])
+        df_uv = df_uv.sort_values(["Lib. créneau", "Semaine"])
 
-        df_uv['Intervenants'] = ''
-        df_uv['Responsable'] = ''
+        df_uv["Intervenants"] = ""
+        df_uv["Responsable"] = ""
 
         # Copy for modifications
         with Output(self.target, protected=True) as target:
-            df_uv.to_excel(target(), sheet_name='Intervenants', index=False)
+            df_uv.to_excel(target(), sheet_name="Intervenants", index=False)
 
 
-# @add_templates(target='intervenants.xlsx')
-# def XlsAffectation():
-#     """Fichier Excel des créneaux de toutes les UV configurées."""
-
-#     def extract_uv_instructor(uv_list_filename, uv, target):
-#         df = pd.read_csv(uv_list_filename)
-#         df_uv = df.loc[df['Code enseig.'] == uv, :]
-
-#         selected_columns = ['Jour', 'Heure début', 'Heure fin', 'Locaux',
-#                             'Semaine', 'Lib. créneau']
-#         df_uv = df_uv[selected_columns]
-#         df_uv = df_uv.sort_values(['Lib. créneau', 'Semaine'])
-
-#         df_uv['Intervenants'] = ''
-#         df_uv['Responsable'] = ''
-
-#         # Copy for modifications
-#         with Output(target, protected=True) as target:
-#             df_uv.to_excel(target(), sheet_name='Intervenants', index=False)
-
-#     uvlist_csv = documents(UtcUvListToCsv.target)
-#     for planning, uv, info in selected_uv():
-#         target = documents(XlsAffectation.target, **info)
-
-#         yield {
-#             'name': f'{planning}_{uv}',
-#             'file_dep': [uvlist_csv],
-#             'targets': [target],
-#             'actions': [(extract_uv_instructor, [uvlist_csv, uv, target])],
-#             'verbosity': 2
-#         }
-
-
-@add_templates(target='emploi_du_temps.xlsx')
-def task_xls_emploi_du_temps():
+class XlsEmploiDuTemps(UVTask):
     "Sélection des créneaux pour envoi aux intervenants"
 
-    def xls_emploi_du_temps(xls_details, xls_edt):
-        df = pd.read_excel(xls_details)
-        selected_columns = ['Jour', 'Heure début', 'Heure fin', 'Locaux',
-                            'Semaine', 'Lib. créneau', 'Intervenants']
+    target = "emploi_du_temps.xlsx"
+
+    def __init__(self, planning, uv, info):
+        super().__init__(planning, uv, info)
+        self.xls_details = documents(XlsAffectation.target, **info)
+        self.target = generated(XlsEmploiDuTemps.target, **info)
+        self.file_dep = [self.xls_details]
+
+    def run(self):
+        df = pd.read_excel(self.xls_details)
+        selected_columns = [
+            "Jour",
+            "Heure début",
+            "Heure fin",
+            "Locaux",
+            "Semaine",
+            "Lib. créneau",
+            "Intervenants",
+        ]
         dfs = df[selected_columns]
 
-        with Output(xls_edt, protected=True) as xls_edt:
-            dfs.to_excel(xls_edt(), sheet_name='Emploi du temps', index=False)
-
-    for planning, uv, info in selected_uv():
-        dep = documents(XlsAffectation.target, **info)
-        target = generated(task_xls_emploi_du_temps.target, **info)
-        yield {
-            'name': f'{planning}_{uv}',
-            'file_dep': [dep],
-            'targets': [target],
-            'actions': [(xls_emploi_du_temps, [dep, target])],
-            'verbosity': 2
-        }
+        with Output(self.target, protected=True) as target:
+            dfs.to_excel(target(), sheet_name="Emploi du temps", index=False)
