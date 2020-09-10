@@ -86,7 +86,7 @@ class TaskBase:
                 # La tâche n'est pas liée à une UV
                 instance = cls()
                 return build_task(instance, **kw)
-            elif hasattr(cls, "unique_uv") and cls.unique_uv:
+            elif cls.unique_uv:
                 # La tâche ne s'applique qu'à une seule UV
                 planning, uv, info = get_unique_uv()
                 instance = cls(planning, uv, info)
@@ -119,6 +119,7 @@ class TaskBase:
 
 
 class UVTask(TaskBase):
+    # Some UVTask might concern a unique UV or collection of UV
     unique_uv = True
 
     def __init__(self, planning, uv, info):
