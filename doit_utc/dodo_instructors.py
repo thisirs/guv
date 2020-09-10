@@ -99,6 +99,7 @@ class AddInstructors(TaskBase):
 
     def run(self):
         df_csv = pd.read_csv(self.uv_list)
+        df_csv.Semaine = df_csv.Semaine.astype(object)
 
         df_affs = [
             pd.read_excel(xls_aff).assign(**{"Code enseig.": uv})
