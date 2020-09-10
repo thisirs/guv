@@ -149,7 +149,7 @@ affectations sont prises pour chaque UV.
     target = "intervenants_details.xlsx"
 
     def __init__(self, planning, uv, info):
-        super().__init__(self, planning, uv, info)
+        super().__init__(planning, uv, info)
         self.target = generated(XlsInstDetails.target, **info)
         self.insts_details = documents(XlsInstructors.target)
         self.inst_uv = documents(XlsAffectation.target, **info)

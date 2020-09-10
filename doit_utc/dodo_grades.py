@@ -194,8 +194,8 @@ class XlsGradeSheet(UVTask):
 class YamlQCM(UVTask):
     """Génère un fichier yaml prérempli pour noter un QCM"""
 
-    def __init__(self, uv, planning, info):
-        super().__init__(uv, planning, info)
+    def __init__(self, planning, uv, info):
+        super().__init__(planning, uv, info)
         self.xls_merge = generated(XlsStudentDataMerge.target, **info)
         self.target = generated("QCM.yaml", **info)
         self.file_dep = [self.xls_merge]

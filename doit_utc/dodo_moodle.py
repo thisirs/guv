@@ -44,8 +44,8 @@ class HtmlInst(UVTask):
 
     target = "intervenants.html"
 
-    def __init__(self, uv, planning, info):
-        super().__init__(uv, planning, info)
+    def __init__(self, planning, uv, info):
+        super().__init__(planning, uv, info)
         self.insts_details = documents("intervenants.xlsx")
         self.insts_uv = documents(XlsAffectation.target, **info)
         self.target = generated(HtmlInst.target, **info)
