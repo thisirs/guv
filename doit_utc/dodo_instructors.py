@@ -150,7 +150,7 @@ affectations sont prises pour chaque UV.
     def __init__(self, planning, uv, info):
         super().__init__(self, planning, uv, info)
         self.target = generated(XlsInstDetails.target, **info)
-        self.insts_details = documents(task_xls_instructors.target)
+        self.insts_details = documents(XlsInstructors.target)
         self.inst_uv = documents(XlsAffectation.target, **info)
         self.file_dep = [self.inst_uv, self.inst_details]
 
@@ -175,7 +175,7 @@ class XlsUTP(UVTask):
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
         self.xls = documents(XlsAffectation.target, **info)
-        self.insts = documents(task_xls_instructors.target)
+        self.insts = documents(XlsInstructors.target)
         self.target = generated(XlsUTP.target, **info)
         self.file_dep = [self.xls, self.insts]
 
