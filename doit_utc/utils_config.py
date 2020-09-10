@@ -74,7 +74,7 @@ def get_unique_uv():
         info = {"uv": uv, "planning": plng}
         return plng, uv, info
     else:
-        raise NotUVDirectory
+        raise NotUVDirectory("La tâche doit être exécutée dans un dossier d'UV")
 
 
 # def get_unique_uv():
