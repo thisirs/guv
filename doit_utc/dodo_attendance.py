@@ -264,6 +264,12 @@ class AttendanceSheet(UVTask, CliArgsMixin):
             required=True,
             help="Nom de la colonne du groupement à considérer",
         ),
+        argument(
+            "-l",
+            "--latex",
+            action="store_true",
+            help="Écrire le fichier LaTeX"
+        )
     )
 
     def __init__(self, planning, uv, info):
@@ -302,8 +308,12 @@ class AttendanceSheet(UVTask, CliArgsMixin):
             tex = template.render(number=number, group=f"Salle {room}")
 
             target0 = self.target % room
-            # with open(target0+'.tex', 'w') as fd:
-            #     fd.write(tex)
+            if self.latex:
+                tex_filename = os.path.splitext(target0)[0] + '.tex'
+                with Output(tex_filename) as target:
+                    with open(target(), 'w') as fd:
+                        fd.write(tex)
 
             pdf = latex.build_pdf(tex)
-            pdf.save_to(target0)
+            with Output(target0) as target0:
+                pdf.save_to(target0())
