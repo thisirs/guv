@@ -13,7 +13,7 @@ from doit.exceptions import TaskFailed
 
 from .dodo_utc import UtcUvListToCsv
 from .utils_config import Output, documents, generated, selected_uv, semester_settings
-from .utils import add_templates, lib_list, rel_to_dir
+from .utils import lib_list, rel_to_dir
 from .tasks import UVTask, TaskBase
 from .scripts.excel_hours import create_excel_file
 
