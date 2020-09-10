@@ -58,7 +58,7 @@ class TaskBase:
 
             # Allow targets attr specified as single
             # target in target attr
-            if "targets" not in kw:
+            if "targets" not in kwargs:
                 if hasattr(obj, "target"):
                     kwargs["targets"] = [obj.target]
 
