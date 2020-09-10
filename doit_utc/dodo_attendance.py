@@ -255,6 +255,8 @@ class AttendanceSheetRoom(UVTask):
 class AttendanceSheet(UVTask, CliArgsMixin):
     """Fichiers pdf de feuilles de présence sans les noms des étudiants."""
 
+    unique_uv = True
+
     cli_args = (
         argument(
             "-e",
