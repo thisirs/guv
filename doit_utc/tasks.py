@@ -110,7 +110,15 @@ class TaskBase:
             tf = TaskFailed(e.args)
             kw["actions"] = [lambda: tf]
             return kw
+        except DependentTaskParserError as e:
+            # La construction de la tâche a échoué car c'est une tâche
+            # dépendante
+            tf = TaskFailed(e.args)
+            kw["actions"] = [lambda: tf]
+            return kw
         except Exception as e:
+            # Exception inexpliquée, la construction de la tâche
+            # échoue. Donner éventuellement la pile d'appels
             if semester_settings.DEBUG > 0:
                 raise e from e
             tf = TaskFailed(e.args)
@@ -142,6 +150,10 @@ class UVTask(TaskBase):
         return self._settings
 
 
+class DependentTaskParserError(Exception):
+    pass
+
+
 class CliArgsMixin(TaskBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -164,17 +176,20 @@ class CliArgsMixin(TaskBase):
         if len(argv) == 2 and argv[1] == "parsearg":
             raise ParseArgsFailed(self.parser)
 
-        # Base task specified in command line
+        # Teste si la tâche courante est la tâche principale spécifiée
+        # dans la ligne de commande ou une tâche dépendante.
         if len(argv) >= 2 and argv[1] == self.task_name:
+            # Tâche principale
             sargv = argv[2:]
             args = self.parser.parse_args(sargv)
         else:
-            # Test if dependant task needs arguments; current ones are not
-            # relevant
+            # Tâche dépendante, la construction de la tâche est
+            # impossible si elle demande des arguments en ligne de
+            # commande
 
             # If parse_args fails, don't show error message and don't sys.exit()
             def dummy(msg):
-                raise Exception()
+                raise DependentTaskParserError()
             self.parser.error = dummy
 
             args = self.parser.parse_args(args=[])
