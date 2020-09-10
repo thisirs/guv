@@ -153,15 +153,15 @@ affectations sont prises pour chaque UV.
         self.target = generated(XlsInstDetails.target, **info)
         self.insts_details = documents(XlsInstructors.target)
         self.inst_uv = documents(XlsAffectation.target, **info)
-        self.file_dep = [self.inst_uv, self.inst_details]
+        self.file_dep = [self.inst_uv, self.insts_details]
 
     def run(self):
         inst_uv = pd.read_excel(self.inst_uv)
-        inst_details = pd.read_excel(self.inst_details)
+        insts_details = pd.read_excel(self.insts_details)
 
         # Add details from inst_details
         df = inst_uv.merge(
-            inst_details, how="left", left_on="Intervenants", right_on="Intervenants"
+            insts_details, how="left", left_on="Intervenants", right_on="Intervenants"
         )
 
         with Output(self.target) as target:
