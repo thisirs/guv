@@ -23,6 +23,10 @@ class TaskBase:
         self.task_name = task_name
         self.doc = self.__class__.__doc__
 
+    @property
+    def settings(self):
+        return semester_settings
+
     @classmethod
     def build_target(cls, planning, uv, info):
         return os.path.join(
