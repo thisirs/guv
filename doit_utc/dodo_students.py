@@ -116,6 +116,8 @@ class XlsStudentData(UVTask):
                 df = pd.read_csv(fn)
             elif fn.endswith('.xlsx') or fn.endswith('.xls'):
                 df = pd.read_excel(fn)
+        else:
+            raise Exception("Pas de documents disponibles")
 
         dff = sort_values(df, ["Nom", "Prénom"])
 
