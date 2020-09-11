@@ -141,15 +141,19 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
 
     def run(self):
         df = pd.read_excel(self.xls_merge)
+        check_columns(df, self.course, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
+
         template = "attendance_name_full.tex.jinja2"
         pdfs = []
-        ctype = self.kwargs["ctype"]
 
-        check_columns(df, ctype, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
-        for gn, group in df.groupby(ctype):
+        context = {
+            **self.info, "nslot": self.slots, "ctype": self.course
+        }
+
+        for gn, group in df.groupby(self.course):
             group = sort_values(group, ["Nom", "Prénom"])
-            self.kwargs["filename"] = gn + ".pdf"
-            pdf, tex = pdf_attendance_list_render(group, template, group=gn, **self.kwargs)
+            context["filename"] = gn + ".pdf"
+            pdf, tex = pdf_attendance_list_render(group, template, group=gn, **context)
             pdfs.append(pdf)
 
         with Output(self.target) as target0:
