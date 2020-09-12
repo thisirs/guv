@@ -21,7 +21,7 @@ import jinja2
 import markdown
 
 from .utils_config import Output, documents, generated, compute_slots
-from .utils import argument, check_columns, lib_list
+from .utils import argument, check_columns, lib_list, sort_values
 from .tasks import CliArgsMixin, UVTask
 from .utils import pformat, make_groups
 from .dodo_students import XlsStudentDataMerge
@@ -449,6 +449,12 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
     cli_args = (
         argument("title", help="Nom associé à l'ensemble des groupes créés"),
         argument(
+            "-o",
+            "--ordered",
+            action="store_true",
+            help="Ordonner la liste des étudiants par ordre alphabétique",
+        ),
+        argument(
             "-G",
             "--grouping",
             required=False,
@@ -537,8 +543,38 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                 else:
                     self.template = "{title}_{grouping_name}_{group_name}"
 
+    def create_name_gen(self, tmpl):
+        "Générateur de noms pour les groupes"
+
+        if self.names is None:
+            if "@" in tmpl:
+                for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+                    yield tmpl.replace("@", letter)
+            elif "#" in tmpl:
+                i = 1
+                while True:
+                    yield tmpl.replace("#", str(i))
+                    i += 1
+            else:
+                raise Exception("Pas de # ou de @ pour générer des noms")
+        elif len(self.names) == 1:
+            path = self.names[0]
+            if os.path.exists(path):
+                with open(path, "r") as fd:
+                    lines = [l.strip() for l in fd.readlines()]
+                if self.random:
+                    random.shuffle(lines)
+                for l in lines:
+                    yield pformat(tmpl, group_name=l.strip())
+            else:
+                raise Exception("Le fichier de noms n'existe pas")
+        else:
+            for n in self.names:
+                yield pformat(tmpl, group_name=n)
+
     def run(self):
         df = pd.read_excel(self.xls_merge)
+        df = sort_values(df, ["Nom", "Prénom"])
 
         # Shuffle rows
         df = df.sample(frac=1).reset_index(drop=True)
@@ -550,46 +586,15 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         tmpl = self.template
         tmpl = pformat(tmpl, title=self.title)
 
-        # Générateur de noms pour les groupes basé sur l'argument
-        # `names`
-        def create_name_gen():
-            "Générateur de noms pour les groupes"
-
-            if self.names is None:
-                if "@" in tmpl:
-                    for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
-                        yield tmpl.replace("@", letter)
-                elif "#" in tmpl:
-                    i = 1
-                    while True:
-                        yield tmpl.replace("#", str(i))
-                        i += 1
-                else:
-                    raise Exception("Pas de # ou de @ pour générer des noms")
-            elif len(self.names) == 1:
-                path = self.names[0]
-                if os.path.exists(path):
-                    with open(path, "r") as fd:
-                        lines = [l.strip() for l in fd.readlines()]
-                    if self.random:
-                        random.shuffle(lines)
-                    for l in lines:
-                        yield pformat(tmpl, group_name=l.strip())
-                else:
-                    raise Exception("Le fichier de noms n'existe pas")
-            else:
-                for n in self.names:
-                    yield pformat(tmpl, group_name=n)
-
         key = (lambda x: True) if self.grouping is None else self.grouping
 
         # Diviser le dataframe en morceaux d'après `key` et faire des
         # groupes dans chaque morceau
         def df_gen():
-            name_gen = create_name_gen()
+            name_gen = self.create_name_gen(tmpl)
             for name, df_group in df.groupby(key):
                 if not self.global_:
-                    name_gen = create_name_gen()
+                    name_gen = self.create_name_gen(tmpl)
                 yield self.make_groups(name, df_group, name_gen)
 
         s_groups = pd.concat(df_gen())
