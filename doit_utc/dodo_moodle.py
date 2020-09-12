@@ -477,6 +477,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         argument(
             "-l",
             "--names",
+            nargs="+",
             required=False,
             help="Liste de mots clés pour construire les noms des groupes",
         ),
