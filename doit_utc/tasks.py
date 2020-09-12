@@ -173,7 +173,7 @@ class CliArgsMixin(TaskBase):
         argv = sys.argv
 
         # Give access to parser with cli keyword (for shell completion)
-        if len(argv) == 2 and argv[1] == "parsearg":
+        if len(argv) == 2 and argv[1] == "tabcompletion":
             raise ParseArgsFailed(self.parser)
 
         # Teste si la tâche courante est la tâche principale spécifiée
