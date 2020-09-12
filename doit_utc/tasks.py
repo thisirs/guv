@@ -17,7 +17,7 @@ class TaskBase:
 
     def __init__(self):
         name = self.__class__.__name__
-        task_name = re.sub(r'(?<!^)(?=[A-Z])', '_', name).lower()
+        task_name = re.sub(r'(?<!^)(?<=[a-z])(?=[A-Z])', '_', name).lower()
         if task_name.startswith("task_"):
             task_name = task_name[5:]
         self.task_name = task_name
@@ -39,7 +39,7 @@ class TaskBase:
             return  # avoid create tasks from base class 'Task'
 
         # Convert task name to snake-case
-        task_name = re.sub(r'(?<!^)(?=[A-Z])', '_', cls.__name__).lower()
+        task_name = re.sub(r'(?<!^)(?<=[a-z])(?=[A-Z])', '_', cls.__name__).lower()
         if task_name.startswith("task_"):
             task_name = task_name[5:]
 
