@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 import importlib
 
@@ -146,5 +147,6 @@ else:
             semester_settings.UV_DIR = None
             uv_settings = ()
     else:
-        raise ConfigError("Le dossier courant n'est pas reconnu comme un dossier de semestre ou un dossier d'UV")
+        print("Le dossier courant n'est pas reconnu comme un dossier de semestre ou un dossier d'UV. Changer de dossier courant.")
+        sys.exit(1)
 
