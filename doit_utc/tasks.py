@@ -102,9 +102,9 @@ class TaskBase:
                 return (t for t in tasks)
 
         except ParseArgsFailed as e:  # Cli parser failed
-            kw = {
+            kw.update({
                 'actions': [ParseArgAction(e.parser, e.args)],
-            }
+            })
             return kw
         except NotUVDirectory as e:
             tf = TaskFailed(e.args)
