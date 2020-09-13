@@ -34,7 +34,7 @@ from .scripts.add_student_data import (
 )
 
 
-class TaskCsvInscrits(UVTask):
+class CsvInscrits(UVTask):
     """Construit un fichier CSV à partir des données brutes de la promo
     fournies par l'UTC."""
 
@@ -46,7 +46,7 @@ class TaskCsvInscrits(UVTask):
         utc_listing_fn = self.settings.AFFECTATION_LISTING
         self.utc_listing = documents(utc_listing_fn, **self.info)
         self.file_dep = [self.utc_listing]
-        self.target = generated(TaskCsvInscrits.target, **self.info)
+        self.target = generated(CsvInscrits.target, **self.info)
 
     def run(self):
         df = parse_UTC_listing(self.utc_listing)
@@ -69,7 +69,7 @@ class XlsStudentData(UVTask):
             kw["extraction_ENT"] = extraction_ENT
             deps.append(extraction_ENT)
 
-        csv_UTC = generated(TaskCsvInscrits.target, **info)
+        csv_UTC = generated(CsvInscrits.target, **info)
         if os.path.exists(csv_UTC):
             kw["csv_UTC"] = csv_UTC
             deps.append(csv_UTC)
