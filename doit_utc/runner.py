@@ -1,13 +1,15 @@
 import os
 import sys
+import re
 import inspect
 import argparse
 import jinja2
 
 from doit.doit_cmd import DoitMain
 from doit.cmd_base import NamespaceTaskLoader
-
 import doit_utc
+
+from .tasks import TaskBase, UVTask, CliArgsMixin
 
 
 class ModulesTaskLoader(NamespaceTaskLoader):
@@ -45,7 +47,70 @@ def run_doit(args):
         dodo_calendar,
         dodo_attendance,
     ]
+
     sys.exit(DoitMain(ModulesTaskLoader(*modules)).run(args))
+
+
+def parse_args():
+    # Load settings from configuration files
+    from .config import semester_settings
+    from .config import uv_settings
+
+    from . import dodo_instructors
+    from . import dodo_utc
+    from . import dodo_grades
+    from . import dodo_students
+    from . import dodo_trombinoscope
+    from . import dodo_moodle
+    from . import dodo_ical
+    from . import dodo_calendar
+    from . import dodo_attendance
+
+    modules = [
+        semester_settings,
+        uv_settings,
+        dodo_instructors,
+        dodo_utc,
+        dodo_grades,
+        dodo_students,
+        dodo_trombinoscope,
+        dodo_moodle,
+        dodo_ical,
+        dodo_calendar,
+        dodo_attendance,
+    ]
+
+    namespace = {
+        k: v
+        for module in modules
+        for k, v in inspect.getmembers(module)
+        if inspect.isclass(v) and issubclass(v, TaskBase)
+    }
+
+    parser = argparse.ArgumentParser(prog="doit-utc", description="")
+    subparsers = parser.add_subparsers(dest="task_name", required=True)
+
+    for name, ref in namespace.items():
+        if ref in [TaskBase, UVTask, CliArgsMixin]:
+            continue
+
+        if ref.__doc__ is None:
+            doc = ""
+        else:
+            # First line
+            doc = ref.__doc__.split("\n")[0]
+
+        task_name = re.sub(r'(?<!^)(?<=[a-z])(?=[A-Z])', '_', name).lower()
+
+        if issubclass(ref, CliArgsMixin):
+            cli_task_parser = subparsers.add_parser(task_name, help=doc)
+            for arg in ref.cli_args:
+                cli_task_parser.add_argument(*arg.args, **arg.kwargs)
+        else:
+            subparsers.add_parser(task_name, help=doc)
+
+    from .zargparse import fake_parse_args
+    fake_parse_args(parser)
 
 
 def create_uv_dirs(base_dir, uvs):
@@ -90,7 +155,7 @@ def main():
             run_doit(sys.argv[1:])
         elif first_arg == "tabcompletion":
             # Handle tabcompletion argument specially
-            pass
+            parse_args()
         elif first_arg == "createsemester":
             parser = argparse.ArgumentParser()
             parser.add_argument("createsemester")
