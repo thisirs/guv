@@ -56,7 +56,7 @@ def pdf_attendance_list_render(df, template, **kwargs):
     return filepath, tex_filepath
 
 
-class TaskPdfAttendanceList(UVTask, CliArgsMixin):
+class PdfAttendanceList(UVTask, CliArgsMixin):
     """Fichier pdf de fiches de présence"""
 
     always_make = True
