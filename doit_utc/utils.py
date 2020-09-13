@@ -1,19 +1,13 @@
 import os
-import sys
 import re
 import string
-import argparse
 import hashlib
 import pandas as pd
 import numpy as np
-from types import SimpleNamespace, GeneratorType
-from functools import wraps
+from types import SimpleNamespace
 from datetime import timedelta
 import unidecode
 import textwrap
-
-from doit.action import PythonAction
-from doit.exceptions import TaskFailed
 
 
 def rel_to_dir(path, root):
@@ -239,75 +233,6 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
     return aggregate0
 
 
-def actionfailed_on_exception(func):
-    """Decorator to allow a task function to raise an exception."""
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        try:
-            ret = func(*args, **kwargs)
-            if isinstance(ret, GeneratorType):
-                ret = (t for t in list(ret))
-            return ret
-        except ParseArgsFailed as e:  # Cli parser failed
-            kwargs = {
-                'actions': [ParseArgAction(e.parser, e.args)],
-            }
-            return kwargs
-        except Exception as e:
-            tf = TaskFailed(e.args)
-            kwargs = {
-                'actions': [lambda: tf],
-            }
-            return kwargs
-    return wrapper
-
-
-def taskfailed_on_exception(func):
-    def wrapper(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except Exception as e:
-            return TaskFailed(e.args)
-    return wrapper
-
-
-def parse_args(task, *args, **kwargs):
-    # Command-line arguments
-    argv = kwargs.get("argv", sys.argv)
-    if len(argv) < 2:          # doit_utc a_task [args]
-        raise Exception("Wrong number of arguments in sys.argv")
-
-    # Argument parser for task
-    task_name = task.__name__.split("_", maxsplit=1)[1]
-    parser = argparse.ArgumentParser(
-        description=task.__doc__,
-        prog=f"doit-utc {task_name}"
-    )
-    for arg in args:
-        parser.add_argument(*arg.args, **arg.kwargs)
-
-    if len(argv) == 2 and argv[1] == "parsearg":
-        raise ParseArgsFailed(parser)
-
-    # Base task specified in command line
-    base_task = argv[1]
-
-    if task_name == base_task:  # Args are relevant
-        sargv = argv[2:]
-        return parser.parse_args(sargv)
-    else:
-        # Test if dependant task needs arguments; current ones are not
-        # relevant
-
-        # If parse_args fails, don't show error message and don't sys.exit()
-        def dummy(msg):
-            raise ParseArgsFailed(parser)
-        parser.error = dummy
-
-        return parser.parse_args(args=[])
-
-
 def argument(*args, **kwargs):
     return SimpleNamespace(args=args, kwargs=kwargs)
 
@@ -450,19 +375,6 @@ def pformat(s, **kwargs):
     formatter = string.Formatter()
     mapping = FormatDict(**kwargs)
     return formatter.vformat(s, (), mapping)
-
-
-class ParseArgsFailed(Exception):
-    def __init__(self, parser):
-        super().__init__()
-        self.parser = parser
-
-
-class ParseArgAction(PythonAction):
-    def __init__(self, parser, args):
-        tf = TaskFailed(args)
-        super().__init__(lambda: tf)
-        self.parser = parser
 
 
 def make_groups(n, proportions, name_gen):

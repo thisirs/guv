@@ -9,7 +9,7 @@ from doit.exceptions import TaskFailed
 
 from .config import semester_settings, SettingsUpdate, UVSettings
 from .utils_config import selected_uv, get_unique_uv, NotUVDirectory
-from .utils import ParseArgsFailed, ParseArgAction
+from .utils import pformat
 
 
 class TaskBase:
@@ -101,11 +101,6 @@ class TaskBase:
                 ]
                 return (t for t in tasks)
 
-        except ParseArgsFailed as e:  # Cli parser failed
-            kw.update({
-                'actions': [ParseArgAction(e.parser, e.args)],
-            })
-            return kw
         except NotUVDirectory as e:
             tf = TaskFailed(e.args)
             kw["actions"] = [lambda: tf]
@@ -171,10 +166,6 @@ class CliArgsMixin(TaskBase):
 
         # Command-line arguments
         argv = sys.argv
-
-        # Give access to parser with cli keyword (for shell completion)
-        if len(argv) == 2 and argv[1] == "tabcompletion":
-            raise ParseArgsFailed(self.parser)
 
         # Teste si la tâche courante est la tâche principale spécifiée
         # dans la ligne de commande ou une tâche dépendante.
