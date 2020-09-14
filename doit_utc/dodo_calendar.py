@@ -61,7 +61,10 @@ def create_cal_from_dataframe(df, text, target):
             author = 'N/A'
 
         room = row['Locaux']
-        room = room.replace(' ', '').replace('BF', 'F')
+        if isinstance(room, str):
+            room = room.replace(' ', '').replace('BF', 'F')
+        else:
+            room = ""
 
         text = text.format(room=room, name=name, author=author, uv=uv)
 
