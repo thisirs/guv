@@ -116,8 +116,8 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
     always_make = True
     cli_args = (
         argument(
-            "-c",
-            "--course",
+            "-g",
+            "--group",
             required=True,
             help="Nom de la colonne du groupement à considérer",
         ),
@@ -133,12 +133,14 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
         self.xls_merge = generated(XlsStudentDataMerge.target, **self.info)
-        self.target = generated(f"attendance_{self.course}_full.zip", **self.info)
-        self.kwargs = {**self.info, "nslot": self.slots, "ctype": self.course}
+        self.target = generated(f"attendance_{self.group}_full.zip", **self.info)
+        self.kwargs = {**self.info, "nslot": self.slots, "ctype": self.group}
 
     def run(self):
         df = pd.read_excel(self.xls_merge)
-        check_columns(df, self.course, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
+        check_columns(
+            df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
+        )
 
         template = "attendance_name_full.tex.jinja2"
         pdfs = []
@@ -147,7 +149,7 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
             **self.info, "nslot": self.slots, "ctype": self.course
         }
 
-        for gn, group in df.groupby(self.course):
+        for gn, group in df.groupby(self.group):
             group = sort_values(group, ["Nom", "Prénom"])
             context["filename"] = gn + ".pdf"
             pdf, tex = pdf_attendance_list_render(group, template, group=gn, **context)
