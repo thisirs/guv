@@ -152,7 +152,7 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
         for gn, group in df.groupby(self.group):
             group = sort_values(group, ["Nom", "Prénom"])
             context["filename"] = gn + ".pdf"
-            pdf, tex = pdf_attendance_list_render(group, template, group=gn, **context)
+            pdf, tex = pdf_attendance_list_render(group, template, group=escape_tex(gn), **context)
             pdfs.append(pdf)
 
         with Output(self.target) as target0:
