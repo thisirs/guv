@@ -124,8 +124,8 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
         argument(
             "-n",
             "--slots",
+            required=True,
             type=int,
-            default=14,
             help="Nombre de colonne dans la feuille de présence",
         ),
     )
