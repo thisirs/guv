@@ -237,14 +237,6 @@ def argument(*args, **kwargs):
     return SimpleNamespace(args=args, kwargs=kwargs)
 
 
-def add_templates(**templates):
-    def decorator(func):
-        for key, value in templates.items():
-            setattr(func, key, value)
-        return func
-    return decorator
-
-
 def hexxor(a, b):  # xor two hex strings of the same length
     return "".join(["%x" % (int(x, 16) ^ int(y, 16)) for (x, y) in zip(a, b)])
 
