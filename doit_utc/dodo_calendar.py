@@ -157,7 +157,7 @@ class CalInst(UVTask, CliArgsMixin):
         argument(
             "-p",
             "--plannings",
-            nargs="*",
+            nargs="+",
             default=semester_settings.SELECTED_PLANNINGS,
             help="Liste des plannings à considérer",
         ),

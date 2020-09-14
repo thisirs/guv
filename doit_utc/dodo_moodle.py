@@ -103,7 +103,7 @@ class HtmlTable(UVTask, CliArgsMixin):
         argument(
             "-c",
             "--courses",
-            nargs="+",
+            nargs="*",
             default=["Cours", "TD", "TP"],
             help="Liste des cours à faire figurer dans le tableau",
         ),
@@ -122,7 +122,7 @@ class HtmlTable(UVTask, CliArgsMixin):
         argument(
             "-n",
             "--names",
-            nargs="*",
+            nargs="+",
             help="Liste ou fichier contenant les noms des lignes du tableau",
         ),
     )
