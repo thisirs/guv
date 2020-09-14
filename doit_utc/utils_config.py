@@ -36,22 +36,6 @@ def selected_uv(all="dummy"):
             yield plng, uv, info
 
 
-# def selected_uv(all=False):
-#     "Génère les UV configurées dans le fichier config.py du semestre"
-
-#     if all:
-#         for planning, settings0 in semester_settings.PLANNINGS.items():
-#             uvp = settings0['UVS']
-#             for uv in uvp:
-#                 yield planning, uv, {'planning': planning, 'uv': uv}
-#     else:
-#         for planning, settings0 in semester_settings.PLANNINGS.items():
-#             uvp = settings0['UVS']
-#             for uv in set(semester_settings.SELECTED_UVS).intersection(set(uvp)):
-#                 info = {'planning': planning, 'uv': uv}
-#                 info["path"]
-#                 yield planning, uv, {'planning': planning, 'uv': uv}
-
 def get_unique_uv():
     if semester_settings.UV_DIR is not None:
         uv = semester_settings.UV_DIR
@@ -75,14 +59,6 @@ def get_unique_uv():
         return plng, uv, info
     else:
         raise NotUVDirectory("La tâche doit être exécutée dans un dossier d'UV")
-
-
-# def get_unique_uv():
-#     uvs = list(selected_uv())
-#     if len(uvs) != 1:
-#         uvs = [uv for _, uv, _ in uvs]
-#         raise Exception(f"Une seule UV doit être sélectionnée. Les UVs sélectionnées sont: {', '.join(uvs)}")
-#     return uvs[0]
 
 
 def documents(fn, **info):
