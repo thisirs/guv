@@ -26,7 +26,7 @@
 \begin{center}
   \begin{tabular}{|p{3cm}|((* for i in range(nslot) *))p{\q}|((* endfor *))}
     \hline
-    Nom ((* for i in range(nslot) *)) & (((ctype)))((( '%02d' % (i+1) )))((* endfor *)) \\ \hline
+    Nom ((* for s in slots_name *)) & ((( s )))((* endfor *)) \\ \hline
     ((* for student in students *))
     \begin{minipage}{3cm}\scriptsize
       ((( student['name'] )))
