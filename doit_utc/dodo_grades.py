@@ -75,9 +75,6 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
         self.file_dep = [self.xls_merge]
 
     def run(self):
-        if self.grade_colname is None:
-            return TaskFailed("Missing grade_colname")
-
         if self.ects and self.comment_colname:
             raise Exception("No comment column required when uploading ECTS")
 
