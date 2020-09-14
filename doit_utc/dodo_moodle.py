@@ -588,7 +588,8 @@ sous-groupes. Le nom des groupes est controlé par `template` et
         df = sort_values(df, ["Nom", "Prénom"])
 
         # Shuffle rows
-        df = df.sample(frac=1).reset_index(drop=True)
+        if not self.ordered:
+            df = df.sample(frac=1).reset_index(drop=True)
 
         if self.grouping is not None:
             check_columns(df, self.grouping, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
