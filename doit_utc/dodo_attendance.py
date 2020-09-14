@@ -57,7 +57,7 @@ def pdf_attendance_list_render(df, template, **kwargs):
 
 
 class PdfAttendanceList(UVTask, CliArgsMixin):
-    """Fichier pdf de fiches de présence"""
+    """Fichier pdf de feuilles de présence par groupes"""
 
     always_make = True
 
@@ -114,7 +114,7 @@ class PdfAttendanceList(UVTask, CliArgsMixin):
 
 
 class PdfAttendanceFull(UVTask, CliArgsMixin):
-    """Feuilles de présence pour toutes les séances"""
+    """Fichier pdf de feuilles de présence par groupe et par séance"""
 
     always_make = True
     cli_args = (

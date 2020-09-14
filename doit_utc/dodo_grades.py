@@ -48,7 +48,7 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
         argument(
             "--ects",
             action="store_true",
-            help="Précise si la note est une note ECTS (pas de commentaire)",
+            help="Précise si la note est une note ECTS (pas de colonne commentaire)",
         ),
         argument(
             "-c",
@@ -61,7 +61,7 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
             "--format",
             required=False,
             default="{msg}",
-            help="Format pour créer un message dans le colonne commentaire",
+            help="Format pour créer un message dans le colonne commentaire (par défaut: '{msg}')",
         ),
     )
 

@@ -35,8 +35,7 @@ from .scripts.add_student_data import (
 
 
 class CsvInscrits(UVTask):
-    """Construit un fichier CSV à partir des données brutes de la promo
-    fournies par l'UTC."""
+    """Construit un fichier CSV à partir des données brutes de la promo fournies par l'UTC."""
 
     target = "inscrits.csv"
     unique_uv = False
@@ -55,6 +54,8 @@ class CsvInscrits(UVTask):
 
 
 class XlsStudentData(UVTask):
+    """Construit le fichier Excel des données étudiants fournies par l'UTC"""
+
     target = "student_data.xlsx"
     unique_uv = False
 

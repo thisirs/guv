@@ -97,13 +97,13 @@ class HtmlInst(UVTask):
 
 
 class HtmlTable(UVTask, CliArgsMixin):
-    """Table HTML des TD/TP"""
+    """Table HTML des Cours/TD/TP à charger sur Moodle"""
 
     cli_args = (
         argument(
             "-c",
             "--courses",
-            nargs="*",
+            nargs="+",
             default=["Cours", "TD", "TP"],
             help="Liste des cours à faire figurer dans le tableau",
         ),
@@ -259,8 +259,11 @@ class HtmlTable(UVTask, CliArgsMixin):
 
 
 class JsonRestriction(UVTask, CliArgsMixin):
-    """Ficher json des restrictions d'accès aux ressources sur Moodle
-basées sur le début/fin des séances."""
+    """Ficher json des restrictions d'accès aux ressources sur Moodle basées sur le début/fin des séances.
+
+
+Le fichier json contient des restrictions d'accès pour les créneaux de Cours/TD/TP basé sur l'appartenance aux groupes de Cours/TD/TP, sur les début/fin de séance, début/fin de semaine.
+"""
 
     cli_args = (
         argument(
@@ -386,9 +389,10 @@ basées sur le début/fin des séances."""
 
 
 class JsonGroup(UVTask, CliArgsMixin):
-    """Fichier json des restrictions d'accès aux ressources sur Moodle.
+    """Fichier json des restrictions d'accès aux ressources sur Moodle par addresse email 
 
-Les restrictions se font par adresse email.
+
+
 """
 
     cli_args = (
@@ -442,7 +446,14 @@ Les restrictions se font par adresse email.
 
 
 class CsvCreateGroups(UVTask, CliArgsMixin):
-    "Création de groupes prêt à charger sous Moodle"
+    """Création de groupes prêt à charger sous Moodle
+
+Si `grouping` est spécifié les groupes sont créés à l'intérieur des
+sous-groupes. Le nom des groupes est controlé par `template` et
+`names`. Le nombre de groupes est controlé par `num-groups`,
+`group-size` et `proportions`.
+
+    """
 
     always_make = True
 
