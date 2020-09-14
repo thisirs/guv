@@ -14,7 +14,7 @@ import latex
 from doit.exceptions import TaskFailed
 
 from .utils_config import Output, generated
-from .utils import sort_values, check_columns, escape_tex, argument
+from .utils import sort_values, check_columns, escape_tex, argument, pformat
 
 from .tasks import UVTask, CliArgsMixin
 from .dodo_students import XlsStudentDataMerge
@@ -128,6 +128,7 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
             type=int,
             help="Nombre de colonne dans la feuille de présence",
         ),
+        argument("-t", "--template", default="{group_name}{number}", help=""),
     )
 
     def __init__(self, planning, uv, info):
@@ -146,7 +147,13 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
         pdfs = []
 
         context = {
-            **self.info, "nslot": self.slots, "ctype": self.course
+            "slots_name": [
+                escape_tex(pformat(self.template, group_name=self.group, number=i+1))
+                for i in range(self.slots)
+            ],
+            **self.info,
+            "nslot": self.slots,
+            "ctype": escape_tex(self.group),
         }
 
         for gn, group in df.groupby(self.group):
