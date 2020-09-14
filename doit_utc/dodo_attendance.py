@@ -65,7 +65,6 @@ class PdfAttendanceList(UVTask, CliArgsMixin):
         argument(
             "-g",
             "--group",
-            required=True,
             help="Nom de la colonne du groupement à considérer",
         ),
         argument(
@@ -84,9 +83,7 @@ class PdfAttendanceList(UVTask, CliArgsMixin):
     def run(self):
         df = pd.read_excel(self.xls_merge)
 
-        if self.group == "all":
-            self.group = None
-        else:
+        if self.group:
             check_columns(df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
 
         template = "attendance_list.tex.jinja2"
