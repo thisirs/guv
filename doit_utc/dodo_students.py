@@ -63,62 +63,49 @@ class XlsStudentData(UVTask):
         super().__init__(planning, uv, info)
         self.target = generated(XlsStudentData.target, **info)
 
-        kw = {}
-        deps = []
-        extraction_ENT = documents(self.settings.ENT_LISTING, **info)
-        if os.path.exists(extraction_ENT):
-            kw["extraction_ENT"] = extraction_ENT
-            deps.append(extraction_ENT)
-
-        csv_UTC = generated(CsvInscrits.target, **info)
-        if os.path.exists(csv_UTC):
-            kw["csv_UTC"] = csv_UTC
-            deps.append(csv_UTC)
+        self.extraction_ENT = documents(self.settings.ENT_LISTING, **info)
+        self.csv_UTC = generated(CsvInscrits.target, **info)
+        self.file_dep = [self.extraction_ENT, self.csv_UTC]
 
         if "MOODLE_LISTING" in self.settings:
-            csv_moodle = documents(self.settings.MOODLE_LISTING, **info)
-            if os.path.exists(csv_moodle):
-                kw["csv_moodle"] = csv_moodle
-                deps.append(csv_moodle)
-
-        self.file_dep = deps
-        self.kwargs = kw
+            self.csv_moodle = documents(self.settings.MOODLE_LISTING, **info)
+            self.file_dep += [self.csv_moodle]
+        else:
+            self.csv_moodle = None
 
     def run(self):
-        if "extraction_ENT" in self.kwargs:
-            print("Chargement de données issues de l'ENT")
-            df = pd.read_csv(self.kwargs["extraction_ENT"], sep="\t", encoding='ISO_8859_1')
+        if not os.path.exists(self.extraction_ENT):
+            raise Exception("Le fichier '{}' n'existe pas".format(self.extraction_ENT))
+        if not os.path.exists(self.csv_UTC):
+            raise Exception("Le fichier '{}' n'existe pas".format(self.csv_UTC))
 
-            # Split information in 2 columns
-            df[["Branche", "Semestre"]] = df.pop('Spécialité 1').str.extract(
-                '(?P<Branche>[a-zA-Z]+) *(?P<Semestre>[0-9]+)',
-                expand=True
-            )
-            df["Semestre"] = pd.to_numeric(df['Semestre'])
+        print("Chargement de données issues de l'ENT")
+        df = pd.read_csv(self.extraction_ENT, sep="\t", encoding='ISO_8859_1')
 
-            # Drop unrelevant columns
-            df = df.drop(['Inscription', 'Spécialité 2', 'Résultat ECTS', 'UTC', 'Réussite', 'Statut'], axis=1)
+        # Split information in 2 columns
+        df[["Branche", "Semestre"]] = df.pop('Spécialité 1').str.extract(
+            '(?P<Branche>[a-zA-Z]+) *(?P<Semestre>[0-9]+)',
+            expand=True
+        )
+        df["Semestre"] = pd.to_numeric(df['Semestre'])
 
-            # Drop unamed columns
-            df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
+        # Drop unrelevant columns
+        df = df.drop(['Inscription', 'Spécialité 2', 'Résultat ECTS', 'UTC', 'Réussite', 'Statut'], axis=1)
 
-            if "csv_moodle" in self.kwargs:
-                df = add_moodle_data(df, self.kwargs["csv_moodle"])
+        # Drop unamed columns
+        df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
 
-            if "csv_UTC" in self.kwargs:
-                df = add_UTC_data(df, self.kwargs["csv_UTC"])
-        elif "csv_UTC" in self.kwargs:
-            df = pd.read_csv(self.kwargs["csv_UTC"])
-            if "csv_moodle" in self.kwargs:
-                df = add_moodle_data(df, self.kwargs["csv_moodle"])
-        elif "csv_moodle" in self.kwargs:
-            fn = self.kwargs["csv_moodle"]
+        print("Ajout des affectations aux Cours/TD/TP")
+        df = add_UTC_data(df, self.csv_UTC)
+
+        if self.csv_moodle is not None:
+            fn = self.csv_moodle
             if fn.endswith('.csv'):
                 df = pd.read_csv(fn)
             elif fn.endswith('.xlsx') or fn.endswith('.xls'):
                 df = pd.read_excel(fn)
-        else:
-            raise Exception("Pas de documents disponibles")
+            print("Ajout des données issues de Moodle")
+            df = add_moodle_data(df, self.csv_moodle)
 
         dff = sort_values(df, ["Nom", "Prénom"])
 
