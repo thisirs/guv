@@ -470,7 +470,7 @@ class CsvMoodleGroups(CliArgsMixin, UVTask):
     def run(self):
         df = pd.read_excel(self.xls_merge)
         check_columns(
-            df, self.course, file=self.xls_merge, base_dir=semester_settings.BASE_DIR
+            df, self.course, file=self.xls_merge, base_dir=semester_settings.SEMESTER_DIR
         )
 
         if self.other_group is not None:
