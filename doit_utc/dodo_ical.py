@@ -125,7 +125,7 @@ class IcalInst(CliArgsMixin, TaskBase):
             if len(self.insts) == 1:
                 inst = self.insts[0]
                 dfm_inst = dfm.loc[dfm["Intervenants"].astype(str) == inst, :]
-                output = generated(f'{inst.replace(" ", "_")}.ics')
+                output = self.build_target(name=f'{inst.replace(" ", "_")}.ics')
                 events = ical_events(dfm_inst)
                 with Output(output) as output:
                     with open(output(), "wb") as fd:
