@@ -64,7 +64,7 @@ class TaskBase:
         def build_task(obj, **kwargs):
             kwargs.update(dict(
                 (a, getattr(obj, a))
-                for a in ["name", "targets", "file_dep", "uptodate", "verbosity"]
+                for a in ["targets", "file_dep", "uptodate", "verbosity"]
                 if a in dir(obj)
             ))
 
