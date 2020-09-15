@@ -39,11 +39,17 @@ class TaskBase:
         )
         return pformat(target, **kwargs)
 
-    def build_target(self):
+    def build_target(self, **kwargs):
+        kw = self.__dict__
+        kw["target_dir"] = self.target_dir
+        kw["target_name"] = self.target_name
+        kw.update(kwargs)
         target = os.path.join(
-            semester_settings.SEMESTER_DIR, self.target_dir, self.target_name
+            semester_settings.SEMESTER_DIR,
+            kw["target_dir"],
+            kw["target_name"],
         )
-        return pformat(target, **self.__dict__)
+        return pformat(target, **kw)
 
     @classmethod
     def create_doit_tasks(cls):
