@@ -133,6 +133,21 @@ def create_uv_dirs(base_dir, uvs):
             new_file.write(content)
 
 
+def createsemester_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("createsemester")
+    parser.add_argument("semester")
+    parser.add_argument("--uv", nargs="*", default=[])
+    return parser
+
+
+def createuv_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("createuv")
+    parser.add_argument("uv", nargs="+")
+    return parser
+
+
 def main():
     if len(sys.argv) == 1:
         run_doit([])
@@ -157,10 +172,7 @@ def main():
             # Handle tabcompletion argument specially
             parse_args()
         elif first_arg == "createsemester":
-            parser = argparse.ArgumentParser()
-            parser.add_argument("createsemester")
-            parser.add_argument("semester")
-            parser.add_argument("--uv", nargs="*", default=[])
+            parser = createsemester_parser()
             args = parser.parse_args()
             base_dir = os.path.join(os.getcwd(), args.semester)
             doc_dir = os.path.join(base_dir, "documents")
@@ -182,9 +194,7 @@ def main():
             create_uv_dirs(base_dir, args.uv)
 
         elif first_arg == "createuv":
-            parser = argparse.ArgumentParser()
-            parser.add_argument("createuv")
-            parser.add_argument("uv", nargs="+")
+            parser = createuv_parser()
             args = parser.parse_args()
             create_uv_dirs(os.getcwd(), args.uv)
         else:
