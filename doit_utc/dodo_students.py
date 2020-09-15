@@ -72,7 +72,7 @@ class XlsStudentData(UVTask):
         self.target = self.build_target()
         self.file_dep = [self.extraction_ENT, self.csv_UTC]
 
-        if "MOODLE_LISTING" in self.settings:
+        if "MOODLE_LISTING" in self.settings and not self.settings.MOODLE_LISTING:
             self.csv_moodle = os.path.join(
                 self.settings.SEMESTER_DIR, self.uv, self.settings.MOODLE_LISTING
             )
@@ -135,22 +135,22 @@ class XlsStudentDataMerge(UVTask):
         # Documents to aggregate
         self.docs = []
 
-        if "TIERS_TEMPS" in self.settings:
+        if "TIERS_TEMPS" in self.settings and not self.settings.TIERS_TEMPS:
             tiers_temps = self.build_dep(self.settings.TIERS_TEMPS)
             if os.path.exists(tiers_temps):
                 self.docs.append((tiers_temps, self.add_tiers_temps))
 
-        if "CHANGEMENT_TD" in self.settings:
+        if "CHANGEMENT_TD" in self.settings and not self.settings.CHANGEMENT_TD:
             TD_switches = self.build_dep(self.settings.CHANGEMENT_TD)
             if os.path.exists(TD_switches):
                 self.docs.append((TD_switches, self.add_switches("TD")))
 
-        if "CHANGEMENT_TP" in self.settings:
+        if "CHANGEMENT_TP" in self.settings and not self.settings.CHANGEMENT_TP:
             TP_switches = self.build_dep(self.settings.CHANGEMENT_TP)
             if os.path.exists(TP_switches):
                 self.docs.append((TP_switches, self.add_switches("TP")))
 
-        if "INFO_ETUDIANT" in self.settings:
+        if "INFO_ETUDIANT" in self.settings and not self.settings.INFO_ETUDIANT:
             info_etu = self.build_dep(self.settings.INFO_ETUDIANT)
             if os.path.exists(info_etu):
                 self.docs.append((info_etu, self.add_student_info))
