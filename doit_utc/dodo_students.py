@@ -17,7 +17,7 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 from doit.exceptions import TaskFailed
 
 from .config import semester_settings
-from .utils_config import Output, documents, generated
+from .utils_config import Output
 from .utils import (
     sort_values,
     argument,
@@ -37,15 +37,18 @@ from .scripts.add_student_data import (
 class CsvInscrits(UVTask):
     """Construit un fichier CSV à partir des données brutes de la promo fournies par l'UTC."""
 
-    target = "inscrits.csv"
+    target_name = "inscrits.csv"
+    target_dir = "generated"
     unique_uv = False
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
         utc_listing_fn = self.settings.AFFECTATION_LISTING
-        self.utc_listing = documents(utc_listing_fn, **self.info)
+        self.utc_listing = os.path.join(
+            semester_settings.SEMESTER_DIR, self.uv, utc_listing_fn
+        )
+        self.target = self.build_target()
         self.file_dep = [self.utc_listing]
-        self.target = generated(CsvInscrits.target, **self.info)
 
     def run(self):
         df = parse_UTC_listing(self.utc_listing)
@@ -56,19 +59,23 @@ class CsvInscrits(UVTask):
 class XlsStudentData(UVTask):
     """Construit le fichier Excel des données étudiants fournies par l'UTC"""
 
-    target = "student_data.xlsx"
+    target_dir = "generated"
+    target_name = "student_data.xlsx"
     unique_uv = False
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
-        self.target = generated(XlsStudentData.target, **info)
-
-        self.extraction_ENT = documents(self.settings.ENT_LISTING, **info)
-        self.csv_UTC = generated(CsvInscrits.target, **info)
+        self.extraction_ENT = os.path.join(
+            self.settings.SEMESTER_DIR, self.uv, self.settings.ENT_LISTING
+        )
+        self.csv_UTC = CsvInscrits.target_from(**self.info)
+        self.target = self.build_target()
         self.file_dep = [self.extraction_ENT, self.csv_UTC]
 
         if "MOODLE_LISTING" in self.settings:
-            self.csv_moodle = documents(self.settings.MOODLE_LISTING, **info)
+            self.csv_moodle = os.path.join(
+                self.settings.SEMESTER_DIR, self.uv, self.settings.MOODLE_LISTING
+            )
             self.file_dep += [self.csv_moodle]
         else:
             self.csv_moodle = None
@@ -116,32 +123,37 @@ class XlsStudentData(UVTask):
 class XlsStudentDataMerge(UVTask):
     """Ajoute toutes les autres informations étudiants"""
 
-    target = "student_data_merge.xlsx"
+    target_name = "student_data_merge.xlsx"
+    target_dir = "generated"
     unique_uv = False
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
-        self.student_data = generated(XlsStudentData.target, **self.info)
-        self.target = generated(XlsStudentDataMerge.target, **self.info)
+        self.student_data = XlsStudentData.target_from(**self.info)
+        self.target = self.build_target()
 
         # Documents to aggregate
         self.docs = []
 
-        tiers_temps = documents("tiers_temps.raw", **self.info)
-        if os.path.exists(tiers_temps):
-            self.docs.append((tiers_temps, self.add_tiers_temps))
+        if "TIERS_TEMPS" in self.settings:
+            tiers_temps = self.build_dep(self.settings.TIERS_TEMPS)
+            if os.path.exists(tiers_temps):
+                self.docs.append((tiers_temps, self.add_tiers_temps))
 
-        TD_switches = documents("TD_switches.raw", **info)
-        if os.path.exists(TD_switches):
-            self.docs.append((TD_switches, self.add_switches("TD")))
+        if "CHANGEMENT_TD" in self.settings:
+            TD_switches = self.build_dep(self.settings.CHANGEMENT_TD)
+            if os.path.exists(TD_switches):
+                self.docs.append((TD_switches, self.add_switches("TD")))
 
-        TP_switches = documents("TP_switches.raw", **info)
-        if os.path.exists(TP_switches):
-            self.docs.append((TP_switches, self.add_switches("TP")))
+        if "CHANGEMENT_TP" in self.settings:
+            TP_switches = self.build_dep(self.settings.CHANGEMENT_TP)
+            if os.path.exists(TP_switches):
+                self.docs.append((TP_switches, self.add_switches("TP")))
 
-        info_etu = documents("info_étudiants.org", **info)
-        if os.path.exists(info_etu):
-            self.docs.append((info_etu, self.add_student_info))
+        if "INFO_ETUDIANT" in self.settings:
+            info_etu = self.build_dep(self.settings.INFO_ETUDIANT)
+            if os.path.exists(info_etu):
+                self.docs.append((info_etu, self.add_student_info))
 
         agg_docs = (
             self.settings.AGGREGATE_DOCUMENTS
@@ -313,6 +325,8 @@ class XlsStudentDataMerge(UVTask):
 class CsvExamGroups(UVTask, CliArgsMixin):
     """Fichier csv des demi-groupe de TP pour le passage des examens de TP."""
 
+    target_dir = "generated"
+    target_name = "exam_groups.csv"
     cli_args = (
         argument(
             "-t",
@@ -332,10 +346,10 @@ class CsvExamGroups(UVTask, CliArgsMixin):
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
-
-        self.xls_merge = generated(XlsStudentDataMerge.target, **info)
-        self.target = generated("exam_groups.csv", **info)
-        self.target_moodle = generated("exam_groups_moodle.csv", **info)
+        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.target = self.build_target()
+        target_name = os.path.splitext(self.target_name)[0] + '_moodle.csv'
+        self.target_moodle = self.build_target(target_name=target_name)
         self.file_dep = [self.xls_merge]
 
     def run(self):
@@ -373,6 +387,9 @@ class CsvGroups(UVTask, CliArgsMixin):
 
 Crée des fichiers csv pour chaque UV sélectionnées"""
 
+    target_dir = "generated"
+    target_name = "{ctype}_group_moodle.csv"
+
     cli_args = (
         argument(
             "-g",
@@ -385,10 +402,9 @@ Crée des fichiers csv pour chaque UV sélectionnées"""
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
-
-        self.xls_merge = generated(XlsStudentDataMerge.target, **info)
+        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
         self.targets = [
-            generated(f"{ctype}_group_moodle.csv", **info)
+            self.build_target(ctype=ctype)
             for ctype in self.groups
         ]
         self.file_dep = [self.xls_merge]
@@ -396,16 +412,14 @@ Crée des fichiers csv pour chaque UV sélectionnées"""
     def run(self):
         df = pd.read_excel(self.xls_merge)
 
-        for ctype in self.groups:
-            target = generated(f"{ctype}_group_moodle.csv", **self.info)
-
+        for ctype, target in zip(self.groups, self.targets):
             if ctype == "singleton":
                 dff = df[["Courriel", "Login"]]
 
                 with Output(target) as target:
                     dff.to_csv(target(), index=False, header=False)
             else:
-                check_columns(df, ctype, file=XlsStudentDataMerge.target, base_dir=self.settings.SEMESTER_DIR)
+                check_columns(df, ctype, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
                 dff = df[["Courriel", ctype]]
 
                 with Output(target) as target:
@@ -415,6 +429,8 @@ Crée des fichiers csv pour chaque UV sélectionnées"""
 class CsvMoodleGroups(CliArgsMixin, UVTask):
     """Fichier csv de sous-groupes (binômes ou trinômes) aléatoires."""
 
+    target_dir = "generated"
+    target_name = "{course}_{project}_binomes.csv"
     cli_args = (
         argument(
             "-c",
@@ -443,13 +459,10 @@ class CsvMoodleGroups(CliArgsMixin, UVTask):
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
-        self.xls_merge = generated(XlsStudentDataMerge.target, **self.info)
-        self.target_csv = generated(
-            f"{self.course}_{self.project}_binomes.csv", **self.info
-        )
-        self.target_moodle = generated(
-            f"{self.course}_{self.project}_binomes_moodle.csv", **self.info
-        )
+        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.target_csv = self.build_target(**self.info)
+        self.target_moodle = os.path.splitext(self.target_csv)[0] + '_moodle.csv'
+
         # target_moodle only to avoid circular dep
         self.target = self.target_moodle
         self.file_dep = [self.xls_merge]
@@ -607,6 +620,8 @@ class CsvGroupsGroupings(UVTask, CliArgsMixin):
     nombre de groupements.
     """
 
+    target_dir = "generated"
+    target_name = "groups_groupings.csv"
     cli_args = (
         argument(
             "-g",
@@ -638,7 +653,7 @@ class CsvGroupsGroupings(UVTask, CliArgsMixin):
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
-        self.target = generated(f"groups_groupings.csv", **info)
+        self.target = self.build_target(**self.info)
 
     def run(self):
         letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"

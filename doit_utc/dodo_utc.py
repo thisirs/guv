@@ -11,7 +11,7 @@ from PyPDF2 import PdfFileReader
 from tabula import read_pdf
 
 from .config import semester_settings
-from .utils_config import Output, documents, generated, selected_uv, compute_slots
+from .utils_config import Output, selected_uv, compute_slots
 from .utils import argument, rel_to_dir
 from .tasks import CliArgsMixin, TaskBase
 
@@ -19,7 +19,8 @@ from .tasks import CliArgsMixin, TaskBase
 class UtcUvListToCsv(TaskBase):
     """Crée un fichier CSV à partir de la liste d'UV au format PDF."""
 
-    target = "UTC_UV_list.csv"
+    target_dir = "documents"
+    target_name = "UTC_UV_list.csv"
 
     def __init__(self):
         super().__init__()
@@ -27,8 +28,14 @@ class UtcUvListToCsv(TaskBase):
             semester_settings.SEMESTER_DIR,
             semester_settings.CRENEAU_UV
         )
-        self.ue_list_filename = documents('UTC_UE_list.xlsx')
-        self.target = documents(UtcUvListToCsv.target)
+
+        self.ue_list_filename = os.path.join(
+            semester_settings.SEMESTER_DIR,
+            "documents",
+            "UTC_UE_list.xlsx"
+        )
+
+        self.target = self.build_target()
 
         self.file_dep = [
             fn
@@ -174,7 +181,8 @@ class CsvAllCourses(CliArgsMixin, TaskBase):
     "Fichier csv de tous les créneaux du semestre"
 
     unique_uv = False
-    target = "UTC_UV_list_créneau.csv"
+    target_dir = "generated"
+    target_name = "UTC_UV_list_créneau.csv"
     cli_args = (
         argument(
             "-p",
@@ -188,10 +196,9 @@ class CsvAllCourses(CliArgsMixin, TaskBase):
     def __init__(self):
         super().__init__()
         from .dodo_instructors import AddInstructors
-        self.csv = generated(AddInstructors.target)
-
+        self.csv = AddInstructors.target_from()
+        self.target = self.build_target()
         self.file_dep = [self.csv]
-        self.target = generated(CsvAllCourses.target)
 
     def run(self):
         df = pd.read_csv(self.csv)

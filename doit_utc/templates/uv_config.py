@@ -34,6 +34,18 @@ AGGREGATE_DOCUMENTS = [
     )
 ]
 
+# Fichier des tiers-temps (optionnel)
+TIERS_TEMPS = ""
+
+# Fichier des changements de TD (optionnel)
+CHANGEMENT_TD = ""
+
+# Fichier des changements de TP (optionnel)
+CHANGEMENT_TP = ""
+
+# Info supplémenaire par étudiant (optionnel)
+INFO_ETUDIANT = ""
+
 # Correspondance entre le noms des groupes de Cours/TD/TP et leur
 # identifiant Moodle (optionnel)
 GROUP_ID = {

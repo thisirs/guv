@@ -10,7 +10,7 @@ import latex
 import jinja2
 
 from .config import semester_settings
-from .utils_config import documents, generated, Output
+from .utils_config import Output
 from .utils import argument
 from .tasks import UVTask, CliArgsMixin
 from .dodo_instructors import XlsAffectation, AddInstructors
@@ -130,12 +130,13 @@ class CalUv(UVTask):
 Crée le calendrier des Cours/TD/TP pour chaque UV sélectionnées.
     """
 
-    target = "calendrier.pdf"
+    target_dir = "generated"
+    target_name = "calendrier.pdf"
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
-        self.uv_list = documents(XlsAffectation.target, **self.info)
-        self.target = generated(CalUv.target, **self.info)
+        self.uv_list = XlsAffectation.target_from(**self.info)
+        self.target = self.build_target()
         jinja_dir = os.path.join(os.path.dirname(__file__), "templates")
         template = os.path.join(jinja_dir, "calendar_template.tex.jinja2")
         self.file_dep = [self.uv_list, template]
@@ -152,6 +153,9 @@ Crée le calendrier des Cours/TD/TP pour chaque UV sélectionnées.
 
 class CalInst(UVTask, CliArgsMixin):
     """Calendrier PDF de la semaine par intervenant"""
+
+    target_dir = "generated"
+    target_name = "{name}_calendrier.pdf"
 
     cli_args = (
         argument(
@@ -172,14 +176,16 @@ class CalInst(UVTask, CliArgsMixin):
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
-        self.uv_list = generated(AddInstructors.target)
+        self.uv_list = AddInstructors.target_from()
         jinja_dir = os.path.join(os.path.dirname(__file__), "templates")
         template = os.path.join(jinja_dir, "calendar_template.tex.jinja2")
         self.file_dep = [self.uv_list, template]
+
+        def build_prefix(inst):
+            return f'{inst.replace(" ", "_")}_{"_".join(self.plannings)}'
+
         self.targets = [
-            generated(
-                f'{inst.replace(" ", "_")}_{"_".join(self.plannings)}_calendrier.pdf'
-            )
+            self.build_target(name=build_prefix(inst))
             for inst in self.insts
         ]
 

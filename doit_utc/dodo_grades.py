@@ -12,11 +12,7 @@ import oyaml as yaml            # Ordered yaml
 
 from doit.exceptions import TaskFailed
 
-from .utils_config import (
-    Output,
-    documents,
-    generated,
-)
+from .utils_config import Output, semester_settings
 from .utils import (
     sort_values,
     argument,
@@ -38,6 +34,8 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
     """
 
     always_make = True
+    target_dir = "generated"
+    target_name = "{grade_colname}_ENT.csv"
     cli_args = (
         argument(
             "-g",
@@ -68,10 +66,8 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
 
-        self.csv_fname = generated(f"{self.grade_colname}_ENT.csv", **self.info)
-        self.xls_merge = generated(XlsStudentDataMerge.target, **self.info)
-
-        self.targets = [self.csv_fname]
+        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.target = self.build_target()
         self.file_dep = [self.xls_merge]
 
     def run(self):
@@ -121,8 +117,8 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
         df0 = df0[col_names]
         df0 = sort_values(df0, ["Nom", "Prénom"])
 
-        with Output(self.csv_fname, protected=True) as csv_fname:
-            df0.to_csv(csv_fname(), index=False, sep=";")
+        with Output(self.target, protected=True) as target:
+            df0.to_csv(target(), index=False, sep=";")
 
 
 class XlsMergeFinalGrade(CliArgsMixin, UVTask):
@@ -132,13 +128,15 @@ Transforme un classeur Excel avec une feuille par correcteur en une
 seule feuille où les notes sont concaténées pour fusion/révision
 manuelle."""
 
+    target_dir = "documents"
+    target_name = "{exam}_notes.xlsx"
     cli_args = (argument("-e", "--exam", required=True, help="Nom de l'examen"),)
     unique_uv = True
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
-        self.xls_sheets = documents(f"{self.exam}.xlsx", **self.info)
-        self.target = documents(f"{self.exam}_notes.xlsx", **self.info)
+        self.xls_sheets = os.path.join(semester_settings.SEMESTER_DIR, self.target_dir, f"{self.exam}.xlsx")
+        self.target = self.build_target()
         self.file_dep = [self.xls_sheets]
 
     def run(self):
@@ -172,11 +170,12 @@ class XlsGradeSheet(UVTask):
     """Génère un fichier Excel pour faciliter la correction des examens/projets/jury"""
 
     always_make = True
+    target_dir = "documents"
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
-        self.data_file = generated(XlsStudentDataMerge.target, **info)
-        self.docs = documents("", **info)
+        self.data_file = XlsStudentDataMerge.target_from(**self.info)
+        self.docs = os.path.join(semester_settings.SEMESTER_DIR, self.uv, self.target_dir)
 
     def run(self):
         cmd_args = sys.argv[2:] + ['-o', self.docs, '-d', self.data_file]
@@ -188,10 +187,13 @@ class XlsGradeSheet(UVTask):
 class YamlQCM(UVTask):
     """Génère un fichier yaml prérempli pour noter un QCM"""
 
+    target_dir = "generated"
+    target_name = "QCM.yaml"
+
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
-        self.xls_merge = generated(XlsStudentDataMerge.target, **info)
-        self.target = generated("QCM.yaml", **info)
+        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.target = self.build_target()
         self.file_dep = [self.xls_merge]
 
     def run(self):
@@ -217,14 +219,16 @@ class YamlQCM(UVTask):
 class XlsAssignmentGrade(CliArgsMixin, UVTask):
     """Création d'un fichier Excel pour remplissage des notes par les intervenants"""
 
+    target_dir = "generated"
+    target_name = "{exam}.xlsx"
     cli_args = (argument("-e", "--exam", required=True, help="Nom de l'examen"),)
     always_make = True
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
-        self.xls_merge = generated(XlsStudentDataMerge.target, **self.info)
-        self.inst_uv = documents(XlsAffectation.target, **self.info)
-        self.target = generated(f'{self.exam}.xlsx', **self.info)
+        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.inst_uv = XlsAffectation.target_from(**self.info)
+        self.target = self.build_target()
         self.file_dep = [self.inst_uv, self.xls_merge]
 
     def run(self):

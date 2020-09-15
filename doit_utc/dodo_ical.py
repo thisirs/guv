@@ -16,7 +16,7 @@ import pandas as pd
 from doit.exceptions import TaskFailed
 
 from .config import semester_settings
-from .utils_config import Output, generated, compute_slots
+from .utils_config import Output, compute_slots
 from .utils import argument
 from .dodo_instructors import AddInstructors
 from .tasks import CliArgsMixin, TaskBase
@@ -83,6 +83,8 @@ class IcalInst(CliArgsMixin, TaskBase):
     plannings renseignés pour les intervenants renseignés.
     """
 
+    target_dir = "generated"
+    target_name = "{name}_ics.zip"
     always_make = True
 
     cli_args = (
@@ -104,9 +106,9 @@ class IcalInst(CliArgsMixin, TaskBase):
 
     def __init__(self):
         super().__init__()
-        self.csv_slot_inst = generated(AddInstructors.target)
+        self.csv_slot_inst = AddInstructors.target_from()
+        self.target = self.build_target(name=f"{'_'.join(self.plannings)}")
         self.file_dep = [self.csv_slot_inst]
-        self.target = generated(f"{'_'.join(self.plannings)}_ics.zip")
 
     def run(self):
         tables = [

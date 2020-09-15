@@ -20,13 +20,14 @@ import pynliner
 import jinja2
 import markdown
 
-from .utils_config import Output, documents, generated, compute_slots
+from .utils_config import Output, compute_slots
 from .utils import argument, check_columns, lib_list, sort_values
 from .tasks import CliArgsMixin, UVTask
 from .utils import pformat, make_groups
 from .dodo_students import XlsStudentDataMerge
 from .dodo_utc import CsvAllCourses
 from .dodo_instructors import (
+    XlsInstructors,
     AddInstructors,
     create_insts_list,
     read_xls_details,
@@ -42,13 +43,15 @@ TIME_FORMAT = "%H:%M"
 class HtmlInst(UVTask):
     "Génère la description des intervenants pour Moodle"
 
-    target = "intervenants.html"
+    target_dir = "generated"
+    target_name = "intervenants.html"
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
-        self.insts_details = documents("intervenants.xlsx")
-        self.insts_uv = documents(XlsAffectation.target, **info)
-        self.target = generated(HtmlInst.target, **info)
+        self.insts_details = XlsInstructors.target_from()
+        self.insts_uv = XlsAffectation.target_from(**self.info)
+        self.target = self.build_target()
+        self.file_dep = [self.insts_details, self.insts_uv]
 
     def run(self):
         df_uv = pd.read_excel(self.insts_uv)
@@ -99,6 +102,9 @@ class HtmlInst(UVTask):
 class HtmlTable(UVTask, CliArgsMixin):
     """Table HTML des Cours/TD/TP à charger sur Moodle"""
 
+    target_dir = "generated"
+    target_name = "{name}_table.html"
+
     cli_args = (
         argument(
             "-c",
@@ -129,18 +135,17 @@ class HtmlTable(UVTask, CliArgsMixin):
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
-
-        self.csv_inst_list = generated(AddInstructors.target)
+        self.csv_inst_list = AddInstructors.target_from()
         self.file_dep = [self.csv_inst_list]
 
         if self.grouped:
             name = "_".join(self.courses) + "_grouped"
             if self.no_AB:
                 name += "_no_AB"
-            self.target = generated(f"{name}_table.html", **self.info)
+            self.target = self.build_target(name=name)
         else:
             self.targets = [
-                generated(f"{course}_table.html", **self.info)
+                self.build_target(name=course)
                 for course in self.courses
             ]
 
@@ -265,6 +270,9 @@ class JsonRestriction(UVTask, CliArgsMixin):
 Le fichier json contient des restrictions d'accès pour les créneaux de Cours/TD/TP basé sur l'appartenance aux groupes de Cours/TD/TP, sur les début/fin de séance, début/fin de semaine.
 """
 
+    target_dir = "generated"
+    target_name = "moodle_restrictions_{course}{AB}.json"
+
     cli_args = (
         argument(
             "-c",
@@ -280,10 +288,9 @@ Le fichier json contient des restrictions d'accès pour les créneaux de Cours/T
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
+        self.all_courses = CsvAllCourses.target_from()
         AB = "_AB" if self.AB else ""
-        target_fn = f"moodle_restrictions_{self.course}{AB}.json"
-        self.target = generated(target_fn, **self.info)
-        self.all_courses = generated(CsvAllCourses.target)
+        self.target = self.build_target(AB=AB)
         self.file_dep = [self.all_courses]
 
     def run(self):
@@ -395,6 +402,8 @@ class JsonGroup(UVTask, CliArgsMixin):
 
 """
 
+    target_dir = "generated"
+    target_name = "{group}_group_moodle.json"
     cli_args = (
         argument(
             "-g",
@@ -406,9 +415,8 @@ class JsonGroup(UVTask, CliArgsMixin):
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
-
-        self.xls_merge = generated(XlsStudentDataMerge.target, **info)
-        self.target = generated(f"{self.group}_group_moodle.json", **info)
+        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.target = self.build_target()
         self.file_dep = [self.xls_merge]
 
     def run(self):
@@ -456,7 +464,8 @@ sous-groupes. Le nom des groupes est controlé par `template` et
     """
 
     always_make = True
-
+    target_dir = "generated"
+    target_name = "{title}_groups.csv"
     cli_args = (
         argument("title", help="Nom associé à l'ensemble des groupes créés"),
         argument(
@@ -524,12 +533,10 @@ sous-groupes. Le nom des groupes est controlé par `template` et
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
-        # Set dependencies
-        self.xls_merge = generated(XlsStudentDataMerge.target, **self.info)
-        self.file_dep = [self.xls_merge]
 
-        # Set targets
-        self.targets = [generated(f"{self.title}_groups.csv", **self.info)]
+        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.target = self.build_target()
+        self.file_dep = [self.xls_merge]
 
         if (
             self.proportions is None

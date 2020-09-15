@@ -15,6 +15,9 @@ from .utils import pformat
 class TaskBase:
     """Subclass this to define tasks."""
 
+    target_dir = "."
+    target_name = None
+
     def __init__(self):
         name = self.__class__.__name__
         task_name = re.sub(r'(?<!^)(?<=[a-z])(?=[A-Z])', '_', name).lower()
@@ -28,10 +31,19 @@ class TaskBase:
         return semester_settings
 
     @classmethod
-    def build_target(cls, planning, uv, info):
-        return os.path.join(
-            semester_settings.SEMESTER_DIR, uv, cls.directory, cls.target_name
+    def target_from(cls, **kwargs):
+        target = os.path.join(
+            semester_settings.SEMESTER_DIR,
+            cls.target_dir,
+            cls.target_name
         )
+        return pformat(target, **kwargs)
+
+    def build_target(self):
+        target = os.path.join(
+            semester_settings.SEMESTER_DIR, self.target_dir, self.target_name
+        )
+        return pformat(target, **self.__dict__)
 
     @classmethod
     def create_doit_tasks(cls):
@@ -129,6 +141,32 @@ class UVTask(TaskBase):
         super().__init__()
         self.planning, self.uv, self.info = planning, uv, info
         self._settings = None
+
+    @classmethod
+    def target_from(cls, **kwargs):
+        target = os.path.join(
+            semester_settings.SEMESTER_DIR,
+            kwargs["uv"],
+            cls.target_dir,
+            cls.target_name,
+        )
+        return pformat(target, **kwargs)
+
+    def build_dep(self, fn):
+        return os.path.join(self.settings.SEMESTER_DIR, self.uv, fn)
+
+    def build_target(self, **kwargs):
+        kw = self.__dict__
+        kw["target_dir"] = self.target_dir
+        kw["target_name"] = self.target_name
+        kw.update(kwargs)
+        target = os.path.join(
+            semester_settings.SEMESTER_DIR,
+            kw["uv"],
+            kw["target_dir"],
+            kw["target_name"],
+        )
+        return pformat(target, **kw)
 
     def document(self, fn):
         return str(Path(semester_settings.SEMESTER_DIR) / self.uv / "documents" / fn)

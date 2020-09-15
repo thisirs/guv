@@ -13,7 +13,7 @@ import latex
 
 from doit.exceptions import TaskFailed
 
-from .utils_config import Output, generated
+from .utils_config import Output
 from .utils import sort_values, check_columns, escape_tex, argument, pformat
 
 from .tasks import UVTask, CliArgsMixin
@@ -60,6 +60,8 @@ class PdfAttendanceList(UVTask, CliArgsMixin):
     """Fichier pdf de feuilles de présence par groupes"""
 
     always_make = True
+    target_dir = "generated"
+    target_name = "attendance_{group}.zip"
 
     cli_args = (
         argument(
@@ -76,8 +78,8 @@ class PdfAttendanceList(UVTask, CliArgsMixin):
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
-        self.xls_merge = generated(XlsStudentDataMerge.target, **self.info)
-        self.target = generated(f"attendance_{self.group}.zip", **self.info)
+        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.target = self.build_target()
         self.file_dep = [self.xls_merge]
 
     def run(self):
@@ -133,8 +135,8 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
-        self.xls_merge = generated(XlsStudentDataMerge.target, **self.info)
-        self.target = generated(f"attendance_{self.group}_full.zip", **self.info)
+        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.target = self.build_target()
         self.kwargs = {**self.info, "nslot": self.slots, "ctype": self.group}
 
     def run(self):
@@ -172,13 +174,14 @@ class AttendanceSheetRoom(UVTask):
     """Feuille de présence par taille des salles"""
 
     always_make = True
-    target = "attendance_rooms.zip"
+    target_dir = "documents"
+    target_name = "attendance_rooms.zip"
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
-        self.xls_merge = generated(XlsStudentDataMerge.target, **info)
+        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.target = self.build_target()
         self.file_dep = [self.xls_merge]
-        self.target = generated(AttendanceSheetRoom.target, **info)
 
     def rooms(self):
         groupby = {}
@@ -265,6 +268,8 @@ class AttendanceSheetRoom(UVTask):
 class AttendanceSheet(UVTask, CliArgsMixin):
     """Fichiers pdf de feuilles de présence sans les noms des étudiants."""
 
+    target_name = "{exam}_présence_%s.pdf"
+    target_dir = "generated"
     unique_uv = True
 
     cli_args = (
@@ -284,7 +289,7 @@ class AttendanceSheet(UVTask, CliArgsMixin):
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
-        self.target = generated(f"{self.exam}_présence_%s.pdf", **info)
+        self.target = self.build_target()
 
     def run(self):
         groupby = {}

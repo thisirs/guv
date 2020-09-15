@@ -17,7 +17,7 @@ import jinja2
 import browser_cookie3
 import latex
 
-from .utils_config import Output, documents, generated
+from .utils_config import Output
 from .utils import sort_values, escape_tex, argument, check_columns
 from .dodo_students import XlsStudentDataMerge
 from .tasks import UVTask, CliArgsMixin
@@ -29,6 +29,7 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
     """Fichier PDF des trombinoscopes par groupes et/ou sous-groupes"""
 
     always_make = True
+    target_dir = "generated"
     cli_args = (
         argument(
             "-g",
@@ -50,18 +51,19 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
 
-        self.xls_merge = generated(XlsStudentDataMerge.target, **info)
+        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
         if self.groupby == "all":
             if self.subgroupby is not None:
-                self.target = generated(f"trombi_all_{self.subgroupby}.pdf", **info)
+                target = "trombi_all_{subgroupby}.pdf"
             else:
-                self.target = generated(f"trombi_all.pdf", **info)
+                target = "trombi_all.pdf"
         else:
             if self.subgroupby is not None:
-                self.target = generated(f"trombi_{self.groupby}_{self.subgroupby}.zip", **info)
+                target = "trombi_{groupby}_{subgroupby}.zip"
             else:
-                self.target = generated(f"trombi_{self.groupby}.zip", **info)
+                target = "trombi_{groupby}.zip"
 
+        self.target = self.build_target(target_name=target)
         self.file_dep = [self.xls_merge]
         self.width = 5
 
@@ -80,13 +82,16 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
             url = URL + login
             async with session.get(url) as response:
                 content = await response.content.read()
+                fp = os.path.join(
+                    self.settings.SEMESTER_DIR, f"documents/images/{login}.jpg"
+                )
                 if len(content) < 100:
                     shutil.copyfile(
                         os.path.join(os.path.dirname(__file__), "images/inconnu.jpg"),
-                        documents(f"images/{login}.jpg"),
+                        fp
                     )
                 else:
-                    with open(documents(f"images/{login}.jpg"), "wb") as handler:
+                    with open(fp, "wb") as handler:
                         handler.write(content)
 
         def md5(fname):
@@ -97,7 +102,7 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
             return hash_md5.hexdigest()
 
         async def download_session(loop):
-            os.makedirs(documents("images"), exist_ok=True)
+            os.makedirs(os.path.join(self.settings.SEMESTER_DIR, "images"), exist_ok=True)
             cj = browser_cookie3.firefox()
             cookies = {c.name: c.value for c in cj if "demeter.utc.fr" in c.domain}
             async with aiohttp.ClientSession(loop=loop, cookies=cookies) as session:
@@ -105,10 +110,16 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
                     os.path.join(os.path.dirname(__file__), "images/inconnu.jpg")
                 )
                 for login in df.Login:
-                    if not os.path.exists(documents(f"images/{login}.jpg")):
+                    fp = os.path.join(
+                        self.settings.SEMESTER_DIR,
+                        "documents",
+                        "images",
+                        "{login}.jpg"
+                    )
+                    if not os.path.exists(fp):
                         await download_image(session, login)
                     else:
-                        md5_curr = md5(documents(f"images/{login}.jpg"))
+                        md5_curr = md5(fp)
                         if md5_curr == md5_inconnu:
                             await download_image(session, login)
 
@@ -155,7 +166,14 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
                 for _, df_row in dfs.groupby(np.arange(len(df_group.index)) // self.width):
                     cells = []
                     for _, row in df_row.iterrows():
-                        path = os.path.abspath(documents(f'images/{row["Login"]}.jpg'))
+                        path = os.path.abspath(
+                            os.path.join(
+                                self.settings.SEMESTER_DIR,
+                                "images",
+                                f'{row["Login"]}.jpg'
+                            )
+                        )
+
                         cell = {
                             "name": row["Prénom"],
                             "lastname": row["Nom"],

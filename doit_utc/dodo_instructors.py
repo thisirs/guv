@@ -12,7 +12,7 @@ from pandas.api.types import CategoricalDtype
 from doit.exceptions import TaskFailed
 
 from .dodo_utc import UtcUvListToCsv
-from .utils_config import Output, documents, generated, selected_uv, semester_settings
+from .utils_config import Output, selected_uv, semester_settings
 from .utils import lib_list, rel_to_dir
 from .tasks import UVTask, TaskBase
 from .scripts.excel_hours import create_excel_file
@@ -64,10 +64,12 @@ def create_insts_list(df):
 class XlsInstructors(TaskBase):
     """Fichier de détails global des intervenants toutes UV confondues"""
 
-    target = "intervenants.xlsx"
+    target_dir = "documents"
+    target_name = "intervenants.xlsx"
 
     def __init__(self):
-        self.target = documents(XlsInstructors.target)
+        super().__init__()
+        self.target = self.build_target()
 
     def run(self):
         if not os.path.exists(self.target):
@@ -84,14 +86,15 @@ class XlsInstructors(TaskBase):
 class AddInstructors(TaskBase):
     """Ajoute les intervenants dans la liste csv des créneaux"""
 
-    target = "UTC_UV_list_instructors.csv"
+    target_dir = "generated"
+    target_name = "UTC_UV_list_instructors.csv"
 
     def __init__(self):
         super().__init__()
-        self.target = generated(AddInstructors.target)
-        self.uv_list = documents(UtcUvListToCsv.target)
+        self.uv_list = UtcUvListToCsv.target_from()
+        self.target = self.build_target()
         self.affectations = [
-            (uv, XlsAffectation.build_target(planning, uv, info))
+            (uv, XlsAffectation.target_from(**info))
             for planning, uv, info in selected_uv()
         ]
         files = [f for _, f in self.affectations]
@@ -146,13 +149,14 @@ Les détails sont pris dans le fichiers de détails global. Les
 affectations sont prises pour chaque UV.
     """
 
-    target = "intervenants_details.xlsx"
+    target_dir = "generated"
+    target_name = "intervenants_details.xlsx"
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
-        self.target = generated(XlsInstDetails.target, **info)
-        self.insts_details = documents(XlsInstructors.target)
-        self.inst_uv = documents(XlsAffectation.target, **info)
+        self.insts_details = XlsInstructors.target_from()
+        self.inst_uv = XlsAffectation.target_from(**self.info)
+        self.target = self.build_target()
         self.file_dep = [self.inst_uv, self.insts_details]
 
     def run(self):
@@ -171,13 +175,14 @@ affectations sont prises pour chaque UV.
 class XlsUTP(UVTask):
     """Crée un document Excel pour calcul des heures et remplacements."""
 
-    target = "remplacement.xlsx"
+    target_dir = "generated"
+    target_name = "remplacement.xlsx"
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
-        self.xls = documents(XlsAffectation.target, **info)
-        self.insts = documents(XlsInstructors.target)
-        self.target = generated(XlsUTP.target, **info)
+        self.xls = XlsAffectation.target_from(**self.info)
+        self.insts = XlsInstructors.target_from()
+        self.target = self.build_target()
         self.file_dep = [self.xls, self.insts]
 
     def run(self):
@@ -212,16 +217,13 @@ class XlsAffectation(UVTask):
 
     unique_uv = False
     target_name = "intervenants.xlsx"
-    directory = "documents"
-
-    # FIXME: remove
-    target = "intervenants.xlsx"
+    target_dir = "documents"
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
-        self.uvlist_csv = documents(UtcUvListToCsv.target)
+        self.uvlist_csv = UtcUvListToCsv.target_from()
+        self.target = self.build_target(**self.info)
         self.file_dep = [self.uvlist_csv]
-        self.target = XlsAffectation.build_target(planning, uv, info)
 
     def run(self):
         df = pd.read_csv(self.uvlist_csv)
@@ -249,12 +251,13 @@ class XlsAffectation(UVTask):
 class XlsEmploiDuTemps(UVTask):
     "Sélection des créneaux pour envoi aux intervenants"
 
-    target = "emploi_du_temps.xlsx"
+    target_dir = "generated"
+    target_name = "emploi_du_temps.xlsx"
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
-        self.xls_details = documents(XlsAffectation.target, **info)
-        self.target = generated(XlsEmploiDuTemps.target, **info)
+        self.xls_details = XlsAffectation.target_from(**self.info)
+        self.target = self.build_target()
         self.file_dep = [self.xls_details]
 
     def run(self):
