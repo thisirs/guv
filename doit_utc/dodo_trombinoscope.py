@@ -102,7 +102,7 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
             return hash_md5.hexdigest()
 
         async def download_session(loop):
-            os.makedirs(os.path.join(self.settings.SEMESTER_DIR, "images"), exist_ok=True)
+            os.makedirs(os.path.join(self.settings.SEMESTER_DIR, "documents", "images"), exist_ok=True)
             cj = browser_cookie3.firefox()
             cookies = {c.name: c.value for c in cj if "demeter.utc.fr" in c.domain}
             async with aiohttp.ClientSession(loop=loop, cookies=cookies) as session:
@@ -169,6 +169,7 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
                         path = os.path.abspath(
                             os.path.join(
                                 self.settings.SEMESTER_DIR,
+                                "documents",
                                 "images",
                                 f'{row["Login"]}.jpg'
                             )
