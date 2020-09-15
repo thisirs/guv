@@ -12,7 +12,7 @@ import jinja2
 from .config import semester_settings
 from .utils_config import Output
 from .utils import argument
-from .tasks import UVTask, CliArgsMixin
+from .tasks import UVTask, CliArgsMixin, TaskBase
 from .dodo_instructors import XlsAffectation, AddInstructors
 
 
@@ -151,7 +151,7 @@ Crée le calendrier des Cours/TD/TP pour chaque UV sélectionnées.
         return create_cal_from_dataframe(df_uv_real, text, self.target)
 
 
-class CalInst(UVTask, CliArgsMixin):
+class CalInst(CliArgsMixin, TaskBase):
     """Calendrier PDF de la semaine par intervenant"""
 
     target_dir = "generated"
@@ -174,8 +174,8 @@ class CalInst(UVTask, CliArgsMixin):
         ),
     )
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
+    def __init__(self):
+        super().__init__()
         self.uv_list = AddInstructors.target_from()
         jinja_dir = os.path.join(os.path.dirname(__file__), "templates")
         template = os.path.join(jinja_dir, "calendar_template.tex.jinja2")
