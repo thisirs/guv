@@ -10,6 +10,21 @@ from doit.cmd_base import NamespaceTaskLoader
 import doit_utc
 
 from .tasks import TaskBase, UVTask, CliArgsMixin
+from .utils import argument
+
+# Load settings from configuration files
+from .config import semester_settings
+from .config import uv_settings
+
+from . import dodo_instructors
+from . import dodo_utc
+from . import dodo_grades
+from . import dodo_students
+from . import dodo_trombinoscope
+from . import dodo_moodle
+from . import dodo_ical
+from . import dodo_calendar
+from . import dodo_attendance
 
 
 class ModulesTaskLoader(NamespaceTaskLoader):
@@ -20,75 +35,31 @@ class ModulesTaskLoader(NamespaceTaskLoader):
             self.namespace.update(dict(inspect.getmembers(module)))
 
 
+task_loader = ModulesTaskLoader(
+    semester_settings,
+    uv_settings,
+    dodo_instructors,
+    dodo_utc,
+    dodo_grades,
+    dodo_students,
+    dodo_trombinoscope,
+    dodo_moodle,
+    dodo_ical,
+    dodo_calendar,
+    dodo_attendance,
+)
+
+
 def run_doit(args):
-    # Load settings from configuration files
-    from .config import semester_settings
-    from .config import uv_settings
-
-    from . import dodo_instructors
-    from . import dodo_utc
-    from . import dodo_grades
-    from . import dodo_students
-    from . import dodo_trombinoscope
-    from . import dodo_moodle
-    from . import dodo_ical
-    from . import dodo_calendar
-    from . import dodo_attendance
-    modules = [
-        semester_settings,
-        uv_settings,
-        dodo_instructors,
-        dodo_utc,
-        dodo_grades,
-        dodo_students,
-        dodo_trombinoscope,
-        dodo_moodle,
-        dodo_ical,
-        dodo_calendar,
-        dodo_attendance,
-    ]
-
-    sys.exit(DoitMain(ModulesTaskLoader(*modules)).run(args))
+    sys.exit(DoitMain(task_loader).run(args))
 
 
-def parse_args():
-    # Load settings from configuration files
-    from .config import semester_settings
-    from .config import uv_settings
-
-    from . import dodo_instructors
-    from . import dodo_utc
-    from . import dodo_grades
-    from . import dodo_students
-    from . import dodo_trombinoscope
-    from . import dodo_moodle
-    from . import dodo_ical
-    from . import dodo_calendar
-    from . import dodo_attendance
-
-    modules = [
-        semester_settings,
-        uv_settings,
-        dodo_instructors,
-        dodo_utc,
-        dodo_grades,
-        dodo_students,
-        dodo_trombinoscope,
-        dodo_moodle,
-        dodo_ical,
-        dodo_calendar,
-        dodo_attendance,
-    ]
-
+def generate_tasks():
     namespace = {
         k: v
-        for module in modules
-        for k, v in inspect.getmembers(module)
+        for k, v in task_loader.namespace.items()
         if inspect.isclass(v) and issubclass(v, TaskBase)
     }
-
-    parser = argparse.ArgumentParser(prog="doit-utc", description="")
-    subparsers = parser.add_subparsers(dest="task_name", required=True)
 
     for name, ref in namespace.items():
         if ref in [TaskBase, UVTask, CliArgsMixin]:
@@ -100,17 +71,16 @@ def parse_args():
             # First line
             doc = ref.__doc__.split("\n")[0]
 
-        task_name = re.sub(r'(?<!^)(?<=[a-z])(?=[A-Z])', '_', name).lower()
+        task_name = re.sub(r"(?<!^)(?<=[a-z])(?=[A-Z])", "_", name).lower()
 
         if issubclass(ref, CliArgsMixin):
-            cli_task_parser = subparsers.add_parser(task_name, help=doc)
-            for arg in ref.cli_args:
-                cli_task_parser.add_argument(*arg.args, **arg.kwargs)
+            yield (
+                task_name,
+                doc,
+                [argument(*arg.args, **arg.kwargs) for arg in ref.cli_args],
+            )
         else:
-            subparsers.add_parser(task_name, help=doc)
-
-    from .zargparse import fake_parse_args
-    fake_parse_args(parser)
+            yield task_name, doc, []
 
 
 def create_uv_dirs(base_dir, uvs):
@@ -149,55 +119,68 @@ def createuv_parser():
 
 
 def main():
-    if len(sys.argv) == 1:
+    parser = argparse.ArgumentParser(prog="doit-utc", description="")
+    subparsers = parser.add_subparsers(dest="command")
+
+    createsemester_parser = subparsers.add_parser(
+        "createsemester", help="Crée un dossier de semestre"
+    )
+    createsemester_parser.add_argument("semester")
+    createsemester_parser.add_argument("--uv", nargs="*", default=[])
+
+    createuv_parser = subparsers.add_parser(
+        "createuv",
+        help="Crée des dossiers d'UV"
+    )
+    createuv_parser.add_argument("createuv")
+    createuv_parser.add_argument("uv", nargs="+")
+
+    subparsers.add_parser(
+        "tabcompletion",
+        help="Écrit un fichier d'autocomplétion pour zsh"
+    )
+
+    subparsers.add_parser(
+        "doit",
+        help="Permet d'avoir accès aux commandes doit sous-jacentes"
+    )
+
+    for task_name, doc, args in generate_tasks():
+        sp = subparsers.add_parser(task_name, help=doc)
+        for arg in args:
+            sp.add_argument(*arg.args, **arg.kwargs)
+
+    args = parser.parse_args()
+
+    if args.command is None:
         run_doit([])
-    elif len(sys.argv) >= 2:
-        first_arg = sys.argv[1]
-        if first_arg == "doit":
-            run_doit(sys.argv[2:])
-        elif first_arg in [
-                "auto",
-                "clean",
-                "dumpdb",
-                "forget",
-                "ignore",
-                "info",
-                "list",
-                "reset-dep",
-                "run",
-                "strace",
-                "help"]:
-            run_doit(sys.argv[1:])
-        elif first_arg == "tabcompletion":
-            # Handle tabcompletion argument specially
-            parse_args()
-        elif first_arg == "createsemester":
-            parser = createsemester_parser()
-            args = parser.parse_args()
-            base_dir = os.path.join(os.getcwd(), args.semester)
-            doc_dir = os.path.join(base_dir, "documents")
-            gen_dir = os.path.join(base_dir, "generated")
-            os.makedirs(base_dir, exist_ok=True)
-            os.makedirs(doc_dir, exist_ok=True)
-            os.makedirs(gen_dir, exist_ok=True)
+    elif args.command == "createsemester":
+        base_dir = os.path.join(os.getcwd(), args.semester)
+        doc_dir = os.path.join(base_dir, "documents")
+        gen_dir = os.path.join(base_dir, "generated")
+        os.makedirs(base_dir, exist_ok=True)
+        os.makedirs(doc_dir, exist_ok=True)
+        os.makedirs(gen_dir, exist_ok=True)
 
-            tmpl_dir = os.path.join(doit_utc.__path__[0], 'templates')
-            jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(tmpl_dir))
-            tmpl = jinja_env.get_template("semester_config.py")
+        tmpl_dir = os.path.join(doit_utc.__path__[0], 'templates')
+        jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(tmpl_dir))
+        tmpl = jinja_env.get_template("semester_config.py")
 
-            context = {"UVS": ", ".join(f'"{e}"' for e in args.uv)}
-            content = tmpl.render(context)
-            new_path = os.path.join(base_dir, "config.py")
-            with open(new_path, 'w', encoding='utf-8') as new_file:
-                new_file.write(content)
+        context = {"UVS": ", ".join(f'"{e}"' for e in args.uv)}
+        content = tmpl.render(context)
+        new_path = os.path.join(base_dir, "config.py")
+        with open(new_path, 'w', encoding='utf-8') as new_file:
+            new_file.write(content)
 
-            create_uv_dirs(base_dir, args.uv)
-
-        elif first_arg == "createuv":
-            parser = createuv_parser()
-            args = parser.parse_args()
-            create_uv_dirs(os.getcwd(), args.uv)
-        else:
-            # Run doit without command-line arguments to avoid errors.
-            # Doit tasks can handle sys.argv itself
-            run_doit(sys.argv[1:2])
+        create_uv_dirs(base_dir, args.uv)
+    elif args.command == "createuv":
+        create_uv_dirs(os.getcwd(), args.uv)
+    elif args.command == "tabcompletion":
+        from .zargparse import fake_parse_args
+        fake_parse_args(parser)
+    elif args.command == "doit":
+        run_doit(sys.argv[2:])
+    else:
+        # Run doit without command-line arguments to avoid errors.
+        # Doit tasks can handle sys.argv itself
+        run_doit(sys.argv[1:2])
