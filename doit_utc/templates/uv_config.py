@@ -4,14 +4,14 @@
 # Mode déboguage
 # DEBUG = 1
 
-# Listing issu de l'ENT (requis)
+# Chemin relatif vers l'extraction de l'effectif  issu de l'ENT (requis)
 ENT_LISTING = ""
 
-# Fichier des affectations dans les Cours/TD/TP (requis)
+# Cheming relatif vers les affectations dans les Cours/TD/TP (requis)
 AFFECTATION_LISTING = ""
 
 # Chemin relatif vers le listing provenant de Moodle (optionnel)
-MOODLE_LISTING = ""
+MOODLE_LISTING = None
 
 # Documents supplémentaires à agréger au fichier Excel de l'effectif
 # de l'UV. C'est une liste de couples. Chaque couple est composé du
@@ -34,17 +34,28 @@ AGGREGATE_DOCUMENTS = [
     )
 ]
 
-# Fichier des tiers-temps (optionnel)
-TIERS_TEMPS = ""
+# Chemin relatif vers le fichier des tiers-temps (optionnel)
+# Il s'agit d'une liste d'édudiants, un par ligne bénéficiant d'un
+# tiers temps.
+TIERS_TEMPS = None
 
 # Fichier des changements de TD (optionnel)
-CHANGEMENT_TD = ""
+
+# Il s'agit d'un fichier de prise en compte des changements de groupes
+# de TD. Chaque ligne repère un changement qui est de la forme
+# id1 --- id2
+# Les identifiants peuvent être des adresses email ou des nom prénom
+CHANGEMENT_TD = None
 
 # Fichier des changements de TP (optionnel)
-CHANGEMENT_TP = ""
+# Il s'agit d'un fichier de prise en compte des changements de groupes
+# de TP. Chaque ligne repère un changement qui est de la forme
+# id1 --- id2
+# Les identifiants peuvent être des adresses email ou des nom prénom
+CHANGEMENT_TP = None
 
 # Info supplémenaire par étudiant (optionnel)
-INFO_ETUDIANT = ""
+INFO_ETUDIANT = None
 
 # Correspondance entre le noms des groupes de Cours/TD/TP et leur
 # identifiant Moodle (optionnel)
