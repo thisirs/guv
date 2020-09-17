@@ -112,6 +112,9 @@ class PdfAttendanceList(UVTask, CliArgsMixin):
 class PdfAttendanceFull(UVTask, CliArgsMixin):
     """Fichier pdf de feuilles de présence par groupe et par séance"""
 
+    target_dir = "generated"
+    target_name = "attendance_{group}_full.zip"
+
     always_make = True
     cli_args = (
         argument(
