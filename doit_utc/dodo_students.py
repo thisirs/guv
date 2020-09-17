@@ -135,22 +135,22 @@ class XlsStudentDataMerge(UVTask):
         # Documents to aggregate
         self.docs = []
 
-        if "TIERS_TEMPS" in self.settings and not self.settings.TIERS_TEMPS:
+        if "TIERS_TEMPS" in self.settings and self.settings.TIERS_TEMPS:
             tiers_temps = self.build_dep(self.settings.TIERS_TEMPS)
             if os.path.exists(tiers_temps):
                 self.docs.append((tiers_temps, self.add_tiers_temps))
 
-        if "CHANGEMENT_TD" in self.settings and not self.settings.CHANGEMENT_TD:
+        if "CHANGEMENT_TD" in self.settings and self.settings.CHANGEMENT_TD:
             TD_switches = self.build_dep(self.settings.CHANGEMENT_TD)
             if os.path.exists(TD_switches):
                 self.docs.append((TD_switches, self.add_switches("TD")))
 
-        if "CHANGEMENT_TP" in self.settings and not self.settings.CHANGEMENT_TP:
+        if "CHANGEMENT_TP" in self.settings and self.settings.CHANGEMENT_TP:
             TP_switches = self.build_dep(self.settings.CHANGEMENT_TP)
             if os.path.exists(TP_switches):
                 self.docs.append((TP_switches, self.add_switches("TP")))
 
-        if "INFO_ETUDIANT" in self.settings and not self.settings.INFO_ETUDIANT:
+        if "INFO_ETUDIANT" in self.settings and self.settings.INFO_ETUDIANT:
             info_etu = self.build_dep(self.settings.INFO_ETUDIANT)
             if os.path.exists(info_etu):
                 self.docs.append((info_etu, self.add_student_info))
