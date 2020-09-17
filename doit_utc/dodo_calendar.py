@@ -7,11 +7,10 @@ import os
 import re
 import pandas as pd
 import latex
-import jinja2
 
 from .config import semester_settings
 from .utils_config import Output
-from .utils import argument
+from .utils import argument, LaTeXEnvironment
 from .tasks import UVTask, CliArgsMixin, TaskBase
 from .dodo_instructors import XlsAffectation, AddInstructors
 
@@ -99,19 +98,8 @@ def create_cal_from_dataframe(df, text, target):
 
     blocks = '\n'.join(blocks)
 
-    jinja_dir = os.path.join(os.path.dirname(__file__), 'templates')
-    latex_jinja_env = jinja2.Environment(
-        block_start_string='((*',
-        block_end_string='*))',
-        variable_start_string='(((',
-        variable_end_string=')))',
-        comment_start_string='((=',
-        comment_end_string='=))',
-        loader=jinja2.FileSystemLoader(jinja_dir)
-    )
-
-    template = latex_jinja_env.get_template('calendar_template.tex.jinja2')
-
+    latex_env = LaTeXEnvironment()
+    template = latex_env.get_template('calendar_template.tex.jinja2')
     tex = template.render(blocks=blocks)
 
     # base = os.path.splitext(target)[0]

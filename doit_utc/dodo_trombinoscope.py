@@ -13,12 +13,11 @@ import asyncio
 import aiohttp
 import pandas as pd
 import numpy as np
-import jinja2
 import browser_cookie3
 import latex
 
 from .utils_config import Output
-from .utils import sort_values, escape_tex, argument, check_columns
+from .utils import sort_values, escape_tex, argument, check_columns, LaTeXEnvironment
 from .dodo_students import XlsStudentDataMerge
 from .tasks import UVTask, CliArgsMixin
 
@@ -127,20 +126,9 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
         loop = asyncio.get_event_loop()
         loop.run_until_complete(download_session(loop))
 
-        jinja_dir = os.path.join(os.path.dirname(__file__), "templates")
-        latex_jinja_env = jinja2.Environment(
-            block_start_string="((*",
-            block_end_string="*))",
-            variable_start_string="(((",
-            variable_end_string=")))",
-            comment_start_string="((=",
-            comment_end_string="=))",
-            loader=jinja2.FileSystemLoader(jinja_dir),
-        )
-        latex_jinja_env.filters["escape_tex"] = escape_tex
-
+        latex_env = LaTeXEnvironment()
+        tmpl = latex_env.get_template("trombinoscope_template_2.tex.jinja2")
         temp_dir = tempfile.mkdtemp()
-        tmpl = latex_jinja_env.get_template("trombinoscope_template_2.tex.jinja2")
 
         # Diviser par groupe de TP/TP
         for title, group in df.groupby(self.groupby or (lambda x: "all")):

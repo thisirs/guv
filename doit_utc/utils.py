@@ -2,12 +2,15 @@ import os
 import re
 import string
 import hashlib
-import pandas as pd
-import numpy as np
+import textwrap
 from types import SimpleNamespace
 from datetime import timedelta
+import pandas as pd
+import numpy as np
+import jinja2
 import unidecode
-import textwrap
+
+import doit_utc
 
 
 def rel_to_dir(path, root):
@@ -407,3 +410,18 @@ def sort_values(df, columns):
     df = df.sort_values(sort_cols)
     df = df.drop(columns=drop_cols)
     return df
+
+
+class LaTeXEnvironment(jinja2.Environment):
+    def __init__(self):
+        tmpl_dir = os.path.join(doit_utc.__path__[0], "templates")
+        super().__init__(
+            loader=jinja2.FileSystemLoader(tmpl_dir),
+            block_start_string="((*",
+            block_end_string="*))",
+            variable_start_string="(((",
+            variable_end_string=")))",
+            comment_start_string="((=",
+            comment_end_string="=))",
+        )
+        self.filters["escape_tex"] = escape_tex

@@ -8,32 +8,29 @@ import re
 import zipfile
 import tempfile
 import pandas as pd
-import jinja2
 import latex
 
 from doit.exceptions import TaskFailed
 
 from .utils_config import Output
-from .utils import sort_values, check_columns, escape_tex, argument, pformat
+from .utils import (
+    sort_values,
+    check_columns,
+    escape_tex,
+    argument,
+    pformat,
+    LaTeXEnvironment,
+)
 
 from .tasks import UVTask, CliArgsMixin
 from .dodo_students import XlsStudentDataMerge
 
 
-def pdf_attendance_list_render(df, template, **kwargs):
+def pdf_attendance_list_render(df, tmpl_file, **kwargs):
     """Render LaTeX template and compile it."""
 
-    jinja_dir = os.path.join(os.path.dirname(__file__), "templates")
-    latex_jinja_env = jinja2.Environment(
-        block_start_string="((*",
-        block_end_string="*))",
-        variable_start_string="(((",
-        variable_end_string=")))",
-        comment_start_string="((=",
-        comment_end_string="=))",
-        loader=jinja2.FileSystemLoader(jinja_dir),
-    )
-    template = latex_jinja_env.get_template(template)
+    latex_env = LaTeXEnvironment()
+    template = latex_env.get_template(tmpl_file)
 
     df = sort_values(df, ["Nom", "Prénom"])
     students = [{"name": f'{row["Nom"]} {row["Prénom"]}'} for _, row in df.iterrows()]
@@ -306,18 +303,8 @@ class AttendanceSheet(UVTask, CliArgsMixin):
             elif re.fullmatch("[0-9]+", num):
                 groupby[room] = int(num)
 
-        jinja_dir = os.path.join(os.path.dirname(__file__), "templates")
-        latex_jinja_env = jinja2.Environment(
-            block_start_string="((*",
-            block_end_string="*))",
-            variable_start_string="(((",
-            variable_end_string=")))",
-            comment_start_string="((=",
-            comment_end_string="=))",
-            loader=jinja2.FileSystemLoader(jinja_dir),
-        )
-
-        template = latex_jinja_env.get_template("attendance_list_noname.tex.jinja2")
+        latex_env = LaTeXEnvironment()
+        template = latex_env.get_template("attendance_list_noname.tex.jinja2")
 
         for room, number in groupby.items():
             tex = template.render(number=number, group=f"Salle {room}")
