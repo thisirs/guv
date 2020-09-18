@@ -16,7 +16,6 @@ from .utils_config import Output
 from .utils import (
     sort_values,
     check_columns,
-    escape_tex,
     argument,
     pformat,
     LaTeXEnvironment,
@@ -91,8 +90,11 @@ class PdfAttendanceList(UVTask, CliArgsMixin):
         texs = []
         for gn, group in df.groupby(self.group or (lambda x: "all")):
             group = sort_values(group, ["Nom", "Prénom"])
-            kwargs = {"group": f"Groupe: {escape_tex(gn)}", "filename": f"{gn}.pdf"}
-            pdf, tex = pdf_attendance_list_render(group, template, **kwargs)
+            context = {
+                "group": f"Groupe: {gn}",
+                "filename": f"{gn}.pdf"
+            }
+            pdf, tex = pdf_attendance_list_render(group, template, **context)
             pdfs.append(pdf)
             texs.append(tex)
 
@@ -150,18 +152,21 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
 
         context = {
             "slots_name": [
-                escape_tex(pformat(self.template, group_name=self.group, number=i+1))
+                pformat(self.template, group_name=self.group, number=i+1)
                 for i in range(self.slots)
             ],
             **self.info,
             "nslot": self.slots,
-            "ctype": escape_tex(self.group),
+            "ctype": self.group,
         }
 
         for gn, group in df.groupby(self.group):
             group = sort_values(group, ["Nom", "Prénom"])
-            context["filename"] = gn + ".pdf"
-            pdf, tex = pdf_attendance_list_render(group, template, group=escape_tex(gn), **context)
+            context = {
+                "group": gn,
+                "filename": f"{gn}.pdf"
+            }
+            pdf, tex = pdf_attendance_list_render(group, template, **context)
             pdfs.append(pdf)
 
         with Output(self.target) as target0:

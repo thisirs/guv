@@ -17,7 +17,7 @@
 \begin{minipage}{10cm}
 \noindent\hfill\textbf{Semestre:} \makebox[3cm][l]{\textbf{(((planning)))}}\par
 \noindent\hfill\textbf{UV:} \makebox[3cm][l]{\textbf{(((uv)))}}\par
-\noindent\hfill\textbf{Groupe:} \makebox[3cm][l]{\textbf{(((group)))}}\par
+\noindent\hfill\textbf{Groupe:} \makebox[3cm][l]{\textbf{(((group | escape_tex)))}}\par
 \end{minipage}
 
 \newlength\q
@@ -26,7 +26,7 @@
 \begin{center}
   \begin{tabular}{|p{3cm}|((* for i in range(nslot) *))p{\q}|((* endfor *))}
     \hline
-    Nom ((* for s in slots_name *)) & ((( s )))((* endfor *)) \\ \hline
+    Nom ((* for s in slots_name *)) & ((( s | escape_tex )))((* endfor *)) \\ \hline
     ((* for student in students *))
     \begin{minipage}{3cm}\scriptsize
       ((( student['name'] )))

@@ -20,7 +20,7 @@
   \end{Huge}
   \smallskip
 
-  \textbf{(((group)))}
+  \textbf{(((group | escape_tex)))}
 \end{center}
 \noindent\hrulefill\bigskip
 
@@ -34,7 +34,7 @@
   \setlength\itemsep{1em}
   \item[] \makebox[4.5in][l]{Nom}\makebox[2in][l]{Signature}
   ((* for student in students *))
-  \item \name{(((student['name'])))}{\hrulefill}
+  \item \name{(((student['name'] | escape_tex)))}{\hrulefill}
   ((* endfor *))
 \end{list}
 
