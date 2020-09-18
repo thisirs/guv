@@ -156,7 +156,7 @@ class XlsStudentData(UVTask):
         self.target = self.build_target()
         self.file_dep = [self.extraction_ENT, self.csv_UTC]
 
-        if "MOODLE_LISTING" in self.settings and not self.settings.MOODLE_LISTING:
+        if "MOODLE_LISTING" in self.settings and self.settings.MOODLE_LISTING:
             self.csv_moodle = os.path.join(
                 self.settings.SEMESTER_DIR, self.uv, self.settings.MOODLE_LISTING
             )
