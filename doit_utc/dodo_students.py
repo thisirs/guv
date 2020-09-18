@@ -27,7 +27,6 @@ from .utils import (
     slugrot_string,
 )
 from .tasks import UVTask, CliArgsMixin
-from .scripts.parse_utc_list import parse_UTC_listing
 from .scripts.add_student_data import (
     add_moodle_data,
     add_UTC_data,
@@ -50,8 +49,93 @@ class CsvInscrits(UVTask):
         self.target = self.build_target()
         self.file_dep = [self.utc_listing]
 
+    def parse_UTC_listing(self):
+        """Parse FILENAME into DataFrame"""
+
+        if "RX_STU" in self.settings:
+            RX_STU = self.settings.RX_STU
+        else:
+            # 042   NOM PRENOM            GI02
+            RX_STU = r"^\s*\d{3}\s{3}(.{23})\s{3}([A-Z]{2})([0-9]{2})$"
+
+        if "RX_UV" in self.settings:
+            RX_UV = self.settings.RX_UV
+        else:
+            # SY19       C 1   ,PL.MAX= 73 ,LIBRES=  0 ,INSCRITS= 73  H=MERCREDI 08:00-10:00,F1,S=
+            RX_UV = re.compile(
+                r"^\s*(?P<uv>\w+)\s+(?P<course>[CTD])\s*(?P<number>[0-9]+)\s*(?P<week>[AB])?"
+            )
+
+        with open(self.utc_listing, "r") as fd:
+            course_name = course_type = None
+            rows = []
+            for line in fd:
+                m = RX_UV.match(line)
+                if m:
+                    number = m.group("number") or ""
+                    week = m.group("week") or ""
+                    course = m.group("course") or ""
+                    course_name = course + number + week
+                    course_type = {"C": "Cours", "D": "TD", "T": "TP"}[course]
+                else:
+                    m = RX_STU.match(line)
+                    if m:
+                        name = m.group(1).strip()
+                        spe = m.group(2)
+                        sem = int(m.group(3))
+                        if spe == "HU":
+                            spe = "HuTech"
+                        elif spe == "MT":
+                            spe = "ISC"
+                        if m.group("week"):
+                            week = m.group("week")
+                            course_name = course + number + week
+                        rows.append(
+                            {
+                                "Name": name,
+                                "course_type": course_type,
+                                "course_name": course_name,
+                                "Branche": spe,
+                                "Semestre": sem,
+                            }
+                        )
+
+        df = pd.DataFrame(rows)
+        df = pd.pivot_table(
+            df,
+            columns=["course_type"],
+            index=["Name", "Branche", "Semestre"],
+            values="course_name",
+            aggfunc="first",
+        )
+        df = df.reset_index()
+
+        # Il peut arriver qu'un créneaux A/B ne soit pas marqué comme tel
+        # car il n'a pas de pendant pour l'autre semaine. On le fixe donc
+        # manuellement à A ou B.
+        if "TP" in df.columns:
+            semAB = [i for i in df.TP.unique() if re.match("T[0-9]{,2}[AB]", i)]
+            if semAB:
+                gr = [i for i in df.TP.unique() if re.match("^T[0-9]{,2}$", i)]
+                rep = {}
+                for g in gr:
+                    while True:
+                        try:
+                            choice = input(f"Semaine pour le créneau {g} (A ou B) ? ")
+                            if choice.upper() in ["A", "B"]:
+                                rep[g] = g + choice.upper()
+                            else:
+                                raise ValueError
+                        except ValueError:
+                            continue
+                        else:
+                            break
+
+                df = df.replace({"TP": rep})
+        return df
+
     def run(self):
-        df = parse_UTC_listing(self.utc_listing)
+        df = self.parse_UTC_listing()
         with Output(self.target) as target:
             df.to_csv(target(), index=False)
 
