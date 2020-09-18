@@ -174,12 +174,6 @@ class UVTask(TaskBase):
         )
         return pformat(target, **kw)
 
-    def document(self, fn):
-        return str(Path(semester_settings.SEMESTER_DIR) / self.uv / "documents" / fn)
-
-    def generated(self, fn):
-        return str(Path(semester_settings.SEMESTER_DIR) / self.uv / "generated" / fn)
-
     @property
     def settings(self):
         if self._settings is None:

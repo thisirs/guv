@@ -61,32 +61,6 @@ def get_unique_uv():
         raise NotUVDirectory("La tâche doit être exécutée dans un dossier d'UV")
 
 
-def documents(fn, **info):
-    if "local" in info:
-        base_dir = os.path.basename(semester_settings.SEMESTER_DIR)
-    else:
-        base_dir = semester_settings.SEMESTER_DIR
-
-    if 'uv' in info or 'ue' in info:
-        uv = info.get('uv', info.get('ue'))
-        return os.path.join(base_dir, uv, 'documents', fn)
-    else:
-        return os.path.join(base_dir, 'documents', fn)
-
-
-def generated(fn, **info):
-    if "local" in info:
-        base_dir = ""
-    else:
-        base_dir = semester_settings.SEMESTER_DIR
-
-    if 'uv' in info or 'ue' in info:
-        uv = info.get('uv', info.get('ue'))
-        return os.path.join(base_dir, uv, 'generated', fn)
-    else:
-        return os.path.join(base_dir, 'generated', fn)
-
-
 class Output():
     def __init__(self, target, protected=False):
         self.target = target
