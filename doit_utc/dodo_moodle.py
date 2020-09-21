@@ -322,52 +322,58 @@ Le fichier json contient des restrictions d'accès pour les créneaux de Cours/T
 
             gbe = [group_beg_end(row) for index, row in df.iterrows()]
             dt_min = min(b for g, b, e in gbe)
+            dt_min3 = dt_min - timedelta(days=3)
             dt_max = max(e for g, b, e in gbe)
 
             dt_min_monday = dt_min - timedelta(days=dt_min.weekday())
             dt_min_monday = datetime.combine(dt_min_monday, time.min)
             dt_min_midnight = datetime.combine(dt_min, time.min)
-            after_beg_group = [
-                (CondGroup() == g) & (CondDate() >= b) for g, b, e in gbe
-            ]
-            before_beg_group = [
-                (CondGroup() == g) & (CondDate() < b) for g, b, e in gbe
-            ]
+
+            if len(gbe) > 1:
+                after_beg_group = [
+                    (CondGroup() == g) & (CondDate() >= b) for g, b, e in gbe
+                ]
+                before_beg_group = [
+                    (CondGroup() == g) & (CondDate() < b) for g, b, e in gbe
+                ]
 
             dt_max_friday = dt_max + timedelta(days=6 - dt_max.weekday())
             dt_max_friday = datetime.combine(dt_max_friday, time.max)
             dt_max_midnight = datetime.combine(dt_max, time.max)
-            after_end_group = [
-                (CondGroup() == g) & (CondDate() >= e) for g, b, e in gbe
-            ]
-            before_end_group = [
-                (CondGroup() == g) & (CondDate() < e) for g, b, e in gbe
-            ]
+            if len(gbe) > 1:
+                after_end_group = [
+                    (CondGroup() == g) & (CondDate() >= e) for g, b, e in gbe
+                ]
+                before_end_group = [
+                    (CondGroup() == g) & (CondDate() < e) for g, b, e in gbe
+                ]
 
-            window_group = [
-                (CondGroup() == g) & (CondDate() >= b) & (CondDate() < e)
-                for g, b, e in gbe
-            ]
+                window_group = [
+                    (CondGroup() == g) & (CondDate() >= b) & (CondDate() < e)
+                    for g, b, e in gbe
+                ]
 
-            info = dict(group_id=self.settings.GROUP_ID)
-            return (
-                "Séance " + str(num),
-                {
-                    "visible si: t < min(B)": (CondDate() < dt_min).to_PHP(**info),
-                    "visible si: t >= min(B)": (CondDate() >= dt_min).to_PHP(**info),
-                    "visible si: t >= max(E)": (CondDate() >= dt_max).to_PHP(**info),
-                    "visible si: t < max(E)": (CondDate() < dt_max).to_PHP(**info),
-                    "visible si: t >= previous_monday(min(B))": (CondDate() >= dt_min_monday).to_PHP(**info),
-                    "visible si: t >= next_friday(max(E))": (CondDate() >= dt_max_friday).to_PHP(**info),
-                    "visible si: t >= previous_midnight(min(B))": (CondDate() >= dt_min_midnight).to_PHP(**info),
-                    "visible si: t >= next_midnight(max(E))": (CondDate() >= dt_max_midnight).to_PHP(**info),
+            no_group = {
+                "visible si: t < min(B)": (CondDate() < dt_min).to_PHP(),
+                "visible si: t >= min(B)": (CondDate() >= dt_min).to_PHP(),
+                "visible si: t >= min(B)-3days": (CondDate() >= dt_min3).to_PHP(),
+                "visible si: t >= max(E)": (CondDate() >= dt_max).to_PHP(),
+                "visible si: t < max(E)": (CondDate() < dt_max).to_PHP(),
+                "visible si: t >= previous_monday(min(B))": (CondDate() >= dt_min_monday).to_PHP(),
+                "visible si: t >= next_friday(max(E))": (CondDate() >= dt_max_friday).to_PHP(),
+                "visible si: t >= previous_midnight(min(B))": (CondDate() >= dt_min_midnight).to_PHP(),
+                "visible si: t >= next_midnight(max(E))": (CondDate() >= dt_max_midnight).to_PHP(),
+            }
+            if len(gbe) > 1:
+                info = dict(group_id=self.settings.GROUP_ID)
+                no_group.update({
                     "visible si: t <= B par groupe": CondOr(before_beg_group).to_PHP(**info),
                     "visible si: t > B par groupe": CondOr(after_beg_group).to_PHP(**info),
                     "visible si: t > E par groupe": CondOr(after_end_group).to_PHP(**info),
                     "visible si: t <= E par groupe": CondOr(before_end_group).to_PHP(**info),
                     "visible si: B <= t < E par groupe": CondOr(window_group).to_PHP(**info),
-                },
-            )
+                })
+            return "Séance " + str(num), no_group
 
         moodle_date = dict(get_beg_end_date_each(name, g) for name, g in gb)
 
