@@ -10,7 +10,6 @@ import pandas as pd
 from PyPDF2 import PdfFileReader
 from tabula import read_pdf
 
-from .config import semester_settings
 from .utils_config import Output, selected_uv, compute_slots
 from .utils import argument, rel_to_dir
 from .tasks import CliArgsMixin, TaskBase
@@ -25,12 +24,12 @@ class UtcUvListToCsv(TaskBase):
     def __init__(self):
         super().__init__()
         self.uv_list_filename = os.path.join(
-            semester_settings.SEMESTER_DIR,
-            semester_settings.CRENEAU_UV
+            self.settings.SEMESTER_DIR,
+            self.settings.CRENEAU_UV
         )
 
         self.ue_list_filename = os.path.join(
-            semester_settings.SEMESTER_DIR,
+            self.settings.SEMESTER_DIR,
             "documents",
             "UTC_UE_list.xlsx"
         )
@@ -47,8 +46,8 @@ class UtcUvListToCsv(TaskBase):
         ]
 
         if not self.file_dep:
-            uv_fn = rel_to_dir(self.uv_list_filename, semester_settings.SEMESTER_DIR)
-            ue_fn = rel_to_dir(self.ue_list_filename, semester_settings.SEMESTER_DIR)
+            uv_fn = rel_to_dir(self.uv_list_filename, self.settings.SEMESTER_DIR)
+            ue_fn = rel_to_dir(self.ue_list_filename, self.settings.SEMESTER_DIR)
             msg = f"Au moins un des fichiers {uv_fn} ou {ue_fn} doit être disponible."
             raise Exception(msg)
 
@@ -118,7 +117,7 @@ class UtcUvListToCsv(TaskBase):
                 print(f'Header has {header_height} lines')
                 df = df.iloc[header_height:]
 
-            df['Planning'] = semester_settings.SEMESTER
+            df['Planning'] = self.settings.SEMESTER
             tables.append(df)
 
         return pd.concat(tables)
@@ -188,7 +187,6 @@ class CsvAllCourses(CliArgsMixin, TaskBase):
             "-p",
             "--plannings",
             nargs="+",
-            default=semester_settings.SELECTED_PLANNINGS,
             help="Liste des plannings à considérer",
         ),
     )
@@ -199,6 +197,8 @@ class CsvAllCourses(CliArgsMixin, TaskBase):
         self.csv = AddInstructors.target_from()
         self.target = self.build_target()
         self.file_dep = [self.csv]
+        if self.plannings is None:
+            self.plannings = self.settings.SELECTED_PLANNINGS
 
     def run(self):
         df = pd.read_csv(self.csv)

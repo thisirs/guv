@@ -12,7 +12,7 @@ from pandas.api.types import CategoricalDtype
 from doit.exceptions import TaskFailed
 
 from .dodo_utc import UtcUvListToCsv
-from .utils_config import Output, selected_uv, semester_settings
+from .utils_config import Output, selected_uv
 from .utils import lib_list, rel_to_dir
 from .tasks import UVTask, TaskBase
 from .scripts.excel_hours import create_excel_file
@@ -75,7 +75,7 @@ class XlsInstructors(TaskBase):
         if not os.path.exists(self.target):
             print(
                 "Le fichier '{}' n'existe pas, création d'un fichier vide".format(
-                    rel_to_dir(self.target, semester_settings.SEMESTER_DIR)
+                    rel_to_dir(self.target, self.settings.SEMESTER_DIR)
                 )
             )
             columns = ["Intervenants", "Statut", "Email", "Website"]

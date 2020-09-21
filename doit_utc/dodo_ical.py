@@ -15,14 +15,13 @@ import pandas as pd
 
 from doit.exceptions import TaskFailed
 
-from .config import semester_settings
 from .utils_config import Output, compute_slots
 from .utils import argument
 from .dodo_instructors import AddInstructors
 from .tasks import CliArgsMixin, TaskBase
 
 
-def ical_events(dataframe):
+def ical_events(dataframe, **settings):
     """Retourne les évènements iCal de tous les cours trouvés dans DATAFRAME"""
 
     def timestamp(row):
@@ -45,7 +44,7 @@ def ical_events(dataframe):
     df = dataframe.sort_values("timestamp")
 
     cal = Calendar()
-    cal["summary"] = semester_settings.SEMESTER
+    cal["summary"] = settings["SEMESTER"]
 
     for index, row in df.iterrows():
         event = Event()
@@ -92,14 +91,12 @@ class IcalInst(CliArgsMixin, TaskBase):
             "-p",
             "--plannings",
             nargs="+",
-            default=semester_settings.SELECTED_PLANNINGS,
             help="Liste des plannings à considérer",
         ),
         argument(
             "-i",
             "--insts",
             nargs="+",
-            default=[semester_settings.DEFAULT_INSTRUCTOR],
             help="Liste des intervenants à considérer",
         ),
     )
@@ -107,8 +104,12 @@ class IcalInst(CliArgsMixin, TaskBase):
     def __init__(self):
         super().__init__()
         self.csv_slot_inst = AddInstructors.target_from()
-        self.target = self.build_target(name=f"{'_'.join(self.plannings)}")
         self.file_dep = [self.csv_slot_inst]
+        if self.plannings is None:
+            self.plannings = self.settings.SELECTED_PLANNINGS
+        self.target = self.build_target(name=f"{'_'.join(self.plannings)}")
+        if self.insts is None:
+            self.insts = [self.settings.DEFAULT_INSTRUCTOR]
 
     def run(self):
         tables = [
@@ -122,11 +123,14 @@ class IcalInst(CliArgsMixin, TaskBase):
             self.insts = all_insts
 
         if set(self.insts).issubset(set(all_insts)):
+            settings = {
+                "SEMESTER_DIR": self.settings.SEMESTER_DIR
+            }
             if len(self.insts) == 1:
                 inst = self.insts[0]
                 dfm_inst = dfm.loc[dfm["Intervenants"].astype(str) == inst, :]
                 output = self.build_target(name=f'{inst.replace(" ", "_")}.ics')
-                events = ical_events(dfm_inst)
+                events = ical_events(dfm_inst, **settings)
                 with Output(output) as output:
                     with open(output(), "wb") as fd:
                         fd.write(events)
@@ -134,7 +138,7 @@ class IcalInst(CliArgsMixin, TaskBase):
                 temp_dir = tempfile.mkdtemp()
                 for inst in self.insts:
                     dfm_inst = dfm.loc[dfm["Intervenants"].astype(str) == inst, :]
-                    events = ical_events(dfm_inst)
+                    events = ical_events(dfm_inst, **settings)
 
                     output = f'{inst.replace(" ", "_")}.ics'
                     with open(os.path.join(temp_dir, output), "wb") as fd:

@@ -16,7 +16,6 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 
 from doit.exceptions import TaskFailed
 
-from .config import semester_settings
 from .utils_config import Output
 from .utils import (
     sort_values,
@@ -44,7 +43,7 @@ class CsvInscrits(UVTask):
         super().__init__(planning, uv, info)
         utc_listing_fn = self.settings.AFFECTATION_LISTING
         self.utc_listing = os.path.join(
-            semester_settings.SEMESTER_DIR, self.uv, utc_listing_fn
+            self.settings.SEMESTER_DIR, self.uv, utc_listing_fn
         )
         self.target = self.build_target()
         self.file_dep = [self.utc_listing]
@@ -554,7 +553,7 @@ class CsvMoodleGroups(CliArgsMixin, UVTask):
     def run(self):
         df = pd.read_excel(self.xls_merge)
         check_columns(
-            df, self.course, file=self.xls_merge, base_dir=semester_settings.SEMESTER_DIR
+            df, self.course, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
         )
 
         if self.other_group is not None:

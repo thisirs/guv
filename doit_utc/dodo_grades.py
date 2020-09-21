@@ -12,7 +12,7 @@ import oyaml as yaml            # Ordered yaml
 
 from doit.exceptions import TaskFailed
 
-from .utils_config import Output, semester_settings
+from .utils_config import Output
 from .utils import (
     sort_values,
     argument,
@@ -135,7 +135,7 @@ manuelle."""
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
-        self.xls_sheets = os.path.join(semester_settings.SEMESTER_DIR, self.target_dir, f"{self.exam}.xlsx")
+        self.xls_sheets = os.path.join(self.settings.SEMESTER_DIR, self.target_dir, f"{self.exam}.xlsx")
         self.target = self.build_target()
         self.file_dep = [self.xls_sheets]
 
@@ -175,7 +175,7 @@ class XlsGradeSheet(UVTask):
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
         self.data_file = XlsStudentDataMerge.target_from(**self.info)
-        self.docs = os.path.join(semester_settings.SEMESTER_DIR, self.uv, self.target_dir)
+        self.docs = os.path.join(self.settings.SEMESTER_DIR, self.uv, self.target_dir)
 
     def run(self):
         cmd_args = sys.argv[2:] + ['-o', self.docs, '-d', self.data_file]

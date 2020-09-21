@@ -8,7 +8,6 @@ import re
 import pandas as pd
 import latex
 
-from .config import semester_settings
 from .utils_config import Output
 from .utils import argument, LaTeXEnvironment
 from .tasks import UVTask, CliArgsMixin, TaskBase
@@ -150,14 +149,12 @@ class CalInst(CliArgsMixin, TaskBase):
             "-p",
             "--plannings",
             nargs="+",
-            default=semester_settings.SELECTED_PLANNINGS,
             help="Liste des plannings à considérer",
         ),
         argument(
             "-i",
             "--insts",
             nargs="*",
-            default=[semester_settings.DEFAULT_INSTRUCTOR],
             help="Liste des intervenants à considérer",
         ),
     )
@@ -168,6 +165,11 @@ class CalInst(CliArgsMixin, TaskBase):
         jinja_dir = os.path.join(os.path.dirname(__file__), "templates")
         template = os.path.join(jinja_dir, "calendar_template.tex.jinja2")
         self.file_dep = [self.uv_list, template]
+
+        if self.plannings is None:
+            self.plannings = self.settings.SELECTED_PLANNINGS
+        if self.insts is None:
+            self.insts = [self.settings.DEFAULT_INSTRUCTOR]
 
         def build_prefix(inst):
             return f'{inst.replace(" ", "_")}_{"_".join(self.plannings)}'
