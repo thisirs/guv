@@ -272,6 +272,7 @@ Le fichier json contient des restrictions d'accès pour les créneaux de Cours/T
 
     target_dir = "generated"
     target_name = "moodle_restrictions_{course}{AB}.json"
+    always_make = True 
 
     cli_args = (
         argument(
