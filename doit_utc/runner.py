@@ -32,7 +32,16 @@ class ModulesTaskLoader(NamespaceTaskLoader):
         super().__init__()
         self.namespace = {}
         for module in modules:
-            self.namespace.update(dict(inspect.getmembers(module)))
+            self.namespace.update(
+                dict(
+                    inspect.getmembers(
+                        module,
+                        lambda v: inspect.isclass(v)
+                        and issubclass(v, TaskBase)
+                        and v not in [TaskBase, UVTask, CliArgsMixin],
+                    )
+                )
+            )
 
 
 task_loader = ModulesTaskLoader(
@@ -55,16 +64,7 @@ def run_doit(args):
 
 
 def generate_tasks():
-    namespace = {
-        k: v
-        for k, v in task_loader.namespace.items()
-        if inspect.isclass(v) and issubclass(v, TaskBase)
-    }
-
-    for name, ref in namespace.items():
-        if ref in [TaskBase, UVTask, CliArgsMixin]:
-            continue
-
+    for name, ref in task_loader.namespace.items():
         if ref.__doc__ is None:
             doc = ""
         else:
