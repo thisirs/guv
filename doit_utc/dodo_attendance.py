@@ -155,7 +155,7 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
         template = "attendance_name_full.tex.jinja2"
         pdfs = []
 
-        context = {
+        base_context = {
             "slots_name": [
                 pformat(self.template, group_name=self.group, number=i+1)
                 for i in range(self.slots)
@@ -167,10 +167,11 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
 
         for gn, group in df.groupby(self.group):
             group = sort_values(group, ["Nom", "Prénom"])
-            context = {
+            group_context = {
                 "group": gn,
                 "filename": f"{gn}.pdf"
             }
+            context = {**base_context, **group_context}
             pdf, tex = pdf_attendance_list_render(group, template, **context)
             pdfs.append(pdf)
 
