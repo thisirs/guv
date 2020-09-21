@@ -132,7 +132,12 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
             type=int,
             help="Nombre de colonne dans la feuille de présence",
         ),
-        argument("-t", "--template", default="{group_name}{number}", help=""),
+        argument(
+            "-t",
+            "--template",
+            default="{group_name}{number}",
+            help="Modèle pour le nom des séances (par défaut: '{group_name}{number}')",
+        ),
     )
 
     def __init__(self, planning, uv, info):
