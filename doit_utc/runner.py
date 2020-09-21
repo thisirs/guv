@@ -140,10 +140,11 @@ def main():
         help="Écrit un fichier d'autocomplétion pour zsh"
     )
 
-    subparsers.add_parser(
+    sp = subparsers.add_parser(
         "doit",
         help="Permet d'avoir accès aux commandes doit sous-jacentes"
     )
+    sp.add_argument("args", nargs=argparse.REMAINDER)
 
     for task_name, doc, args in generate_tasks():
         sp = subparsers.add_parser(task_name, help=doc)
