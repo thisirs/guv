@@ -7,7 +7,7 @@ import argparse
 
 from doit.exceptions import TaskFailed
 
-from .config import semester_settings, SettingsUpdate, UVSettings
+from .config import settings, Settings
 from .utils_config import selected_uv, get_unique_uv, NotUVDirectory
 from .utils import pformat
 
@@ -28,12 +28,12 @@ class TaskBase:
 
     @property
     def settings(self):
-        return semester_settings
+        return settings
 
     @classmethod
     def target_from(cls, **kwargs):
         target = os.path.join(
-            semester_settings.SEMESTER_DIR,
+            settings.SEMESTER_DIR,
             cls.target_dir,
             cls.target_name
         )
@@ -45,7 +45,7 @@ class TaskBase:
         kw["target_name"] = self.target_name
         kw.update(kwargs)
         target = os.path.join(
-            semester_settings.SEMESTER_DIR,
+            settings.SEMESTER_DIR,
             kw["target_dir"],
             kw["target_name"],
         )
@@ -132,7 +132,7 @@ class TaskBase:
         except Exception as e:
             # Exception inexpliquée, la construction de la tâche
             # échoue. Donner éventuellement la pile d'appels
-            if semester_settings.DEBUG > 0:
+            if settings.DEBUG > 0:
                 raise e from e
             tf = TaskFailed(e.args)
             kw["actions"] = [lambda: tf]
@@ -151,7 +151,7 @@ class UVTask(TaskBase):
     @classmethod
     def target_from(cls, **kwargs):
         target = os.path.join(
-            semester_settings.SEMESTER_DIR,
+            settings.SEMESTER_DIR,
             kwargs["uv"],
             cls.target_dir,
             cls.target_name,
@@ -167,7 +167,7 @@ class UVTask(TaskBase):
         kw["target_name"] = self.target_name
         kw.update(kwargs)
         target = os.path.join(
-            semester_settings.SEMESTER_DIR,
+            settings.SEMESTER_DIR,
             kw["uv"],
             kw["target_dir"],
             kw["target_name"],
@@ -177,9 +177,7 @@ class UVTask(TaskBase):
     @property
     def settings(self):
         if self._settings is None:
-            uv_config_file = Path(semester_settings.SEMESTER_DIR) / self.uv
-            uv_settings = UVSettings(uv_config_file)
-            self._settings = SettingsUpdate(copy.copy(semester_settings), uv_settings)
+            self._settings = Settings(str(Path(settings.SEMESTER_DIR) / self.uv))
         return self._settings
 
 

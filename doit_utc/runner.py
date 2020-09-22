@@ -13,9 +13,7 @@ from .tasks import TaskBase, UVTask, CliArgsMixin
 from .utils import argument
 
 # Load settings from configuration files
-from .config import semester_settings
-from .config import uv_settings
-
+from .config import settings, ImproperlyConfigured
 from . import dodo_instructors
 from . import dodo_utc
 from . import dodo_grades
@@ -31,22 +29,39 @@ class ModulesTaskLoader(NamespaceTaskLoader):
     def __init__(self, *modules):
         super().__init__()
         self.namespace = {}
+        self.tasks = {}
+        self.variables = {}
+
+    def _load_tasks(self, *modules):
         for module in modules:
-            self.namespace.update(
-                dict(
-                    inspect.getmembers(
-                        module,
-                        lambda v: inspect.isclass(v)
-                        and issubclass(v, TaskBase)
-                        and v not in [TaskBase, UVTask, CliArgsMixin],
-                    )
-                )
+            m = inspect.getmembers(
+                module,
+                lambda v: inspect.isclass(v)
+                and issubclass(v, TaskBase)
+                and v not in [TaskBase, UVTask, CliArgsMixin],
             )
+            self.tasks.update(dict(m))
+            self.namespace.update(dict(m))
+
+    def _load_variables(self, *modules):
+        for module in modules:
+            m = inspect.getmembers(module)
+            m = [(k, v) for k, v in m if k.isupper()]
+            self.variables.update(dict(m))
+            self.namespace.update(dict(m))
 
 
-task_loader = ModulesTaskLoader(
-    semester_settings,
-    uv_settings,
+# On force le chargement des variables dans settings pour qu'elle
+# figure dans le task_loader. Si aucun fichier de configuration n'est
+# trouvé, on continue
+try:
+    settings.setup()
+except ImproperlyConfigured:
+    pass
+
+task_loader = ModulesTaskLoader()
+task_loader._load_variables(settings)
+task_loader._load_tasks(
     dodo_instructors,
     dodo_utc,
     dodo_grades,
@@ -60,11 +75,14 @@ task_loader = ModulesTaskLoader(
 
 
 def run_doit(args):
+    # On force le rechargement des variables pour déclencher une
+    # exception si aucun fichier de configuration n'est trouvé
+    settings.setup()
     sys.exit(DoitMain(task_loader).run(args))
 
 
 def generate_tasks():
-    for name, ref in task_loader.namespace.items():
+    for name, ref in task_loader.tasks.items():
         if ref.__doc__ is None:
             doc = ""
         else:

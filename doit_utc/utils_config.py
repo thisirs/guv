@@ -4,7 +4,7 @@ from datetime import timedelta
 import pandas as pd
 
 from .utils import rel_to_dir
-from .config import semester_settings
+from .config import settings
 
 
 class NotUVDirectory(Exception):
@@ -14,20 +14,20 @@ class NotUVDirectory(Exception):
 def selected_uv(all="dummy"):
     "Génère les UV configurées dans le fichier config.py du semestre"
 
-    if semester_settings.UV_DIR is not None:
+    if settings.UV_DIR is not None:
         yield get_unique_uv()
 
     else:
         uv_to_planning = {
             uv: plng
-            for plng, props in semester_settings.PLANNINGS.items()
+            for plng, props in settings.PLANNINGS.items()
             for uv in props.get("UVS", []) + props.get("UES", [])
         }
 
-        if not set(semester_settings.UVS).issubset(set(uv_to_planning.keys())):
+        if not set(settings.UVS).issubset(set(uv_to_planning.keys())):
             raise ValueError("Des UVS n'ont pas de planning associé")
 
-        for uv in semester_settings.UVS:
+        for uv in settings.UVS:
             plng = uv_to_planning[uv]
             info = {
                 "uv": uv,
@@ -37,14 +37,14 @@ def selected_uv(all="dummy"):
 
 
 def get_unique_uv():
-    if semester_settings.UV_DIR is not None:
-        uv = semester_settings.UV_DIR
-        if uv not in semester_settings.UVS:
+    if settings.UV_DIR is not None:
+        uv = settings.UV_DIR
+        if uv not in settings.UVS:
             raise Exception("L'UV n'est pas enregistrée")
 
         plngs = [
             plng
-            for plng, props in semester_settings.PLANNINGS.items()
+            for plng, props in settings.PLANNINGS.items()
             if uv in props.get("UVS", []) + props.get("UES", [])
         ]
 
@@ -71,7 +71,7 @@ class Output():
             if self.protected:
                 while True:
                     try:
-                        choice = input('Le fichier `%s'' existe déjà. Écraser (d), garder (g), sauvegarder (s), annuler (a) ? ' % rel_to_dir(self.target, semester_settings.SEMESTER_DIR))
+                        choice = input('Le fichier `%s'' existe déjà. Écraser (d), garder (g), sauvegarder (s), annuler (a) ? ' % rel_to_dir(self.target, settings.SEMESTER_DIR))
                         if choice == 'd':
                             os.remove(self.target)
                         elif choice == 's':
@@ -91,7 +91,7 @@ class Output():
                         break
             else:
                 print('Écrasement du fichier `%s\'' %
-                      rel_to_dir(self.target, semester_settings.SEMESTER_DIR))
+                      rel_to_dir(self.target, settings.SEMESTER_DIR))
         else:
             dirname = os.path.dirname(self.target)
             if not os.path.exists(dirname):
@@ -103,7 +103,7 @@ class Output():
         if type is ZeroDivisionError:
             return True
         if type is None:
-            print(f"Wrote `{rel_to_dir(self.target, semester_settings.SEMESTER_DIR)}'")
+            print(f"Wrote `{rel_to_dir(self.target, settings.SEMESTER_DIR)}'")
 
 
 def create_plannings(planning_type):
@@ -155,26 +155,26 @@ def create_plannings(planning_type):
             else:
                 yield d, daynames[d.weekday()], sem, num, numAB, nweek
 
-    beg = semester_settings.PLANNINGS[planning_type]["PL_BEG"]
-    end = semester_settings.PLANNINGS[planning_type]["PL_END"]
+    beg = settings.PLANNINGS[planning_type]["PL_BEG"]
+    end = settings.PLANNINGS[planning_type]["PL_END"]
 
     planning_C = pd.DataFrame(
         generate_days(
-            beg, end, semester_settings.SKIP_DAYS_C, semester_settings.TURN, "C"
+            beg, end, settings.SKIP_DAYS_C, settings.TURN, "C"
         ),
         columns=["date", "dayname", "semaine", "num", "numAB", "nweek"],
     )
 
     planning_D = pd.DataFrame(
         generate_days(
-            beg, end, semester_settings.SKIP_DAYS_D, semester_settings.TURN, "D"
+            beg, end, settings.SKIP_DAYS_D, settings.TURN, "D"
         ),
         columns=["date", "dayname", "semaine", "num", "numAB", "nweek"],
     )
 
     planning_T = pd.DataFrame(
         generate_days(
-            beg, end, semester_settings.SKIP_DAYS_T, semester_settings.TURN, "T"
+            beg, end, settings.SKIP_DAYS_T, settings.TURN, "T"
         ),
         columns=["date", "dayname", "semaine", "num", "numAB", "nweek"],
     )
