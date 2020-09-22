@@ -45,12 +45,6 @@ class UtcUvListToCsv(TaskBase):
             if os.path.exists(fn)
         ]
 
-        if not self.file_dep:
-            uv_fn = rel_to_dir(self.uv_list_filename, self.settings.SEMESTER_DIR)
-            ue_fn = rel_to_dir(self.ue_list_filename, self.settings.SEMESTER_DIR)
-            msg = f"Au moins un des fichiers {uv_fn} ou {ue_fn} doit être disponible."
-            raise Exception(msg)
-
     def read_pdf(self):
         pdf = PdfFileReader(open(self.uv_list_filename, 'rb'))
         npages = pdf.getNumPages()
@@ -123,6 +117,12 @@ class UtcUvListToCsv(TaskBase):
         return pd.concat(tables)
 
     def run(self):
+        if not self.file_dep:
+            uv_fn = rel_to_dir(self.uv_list_filename, self.settings.SEMESTER_DIR)
+            ue_fn = rel_to_dir(self.ue_list_filename, self.settings.SEMESTER_DIR)
+            msg = f"Au moins un des fichiers {uv_fn} ou {ue_fn} doit être disponible."
+            raise Exception(msg)
+
         tables = []
 
         # Lire tous les créneaux par semaine de toute les UVs
