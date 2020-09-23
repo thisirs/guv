@@ -45,10 +45,8 @@ class ModulesTaskLoader(NamespaceTaskLoader):
 
     def _load_variables(self, *modules):
         for module in modules:
-            m = inspect.getmembers(module)
-            m = [(k, v) for k, v in m if k.isupper()]
-            self.variables.update(dict(m))
-            self.namespace.update(dict(m))
+            self.variables.update(module.__dict__)
+            self.namespace.update(module.__dict__)
 
 
 # On force le chargement des variables dans settings pour qu'elle
