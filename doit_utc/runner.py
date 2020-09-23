@@ -119,21 +119,6 @@ def create_uv_dirs(base_dir, uvs):
             new_file.write(content)
 
 
-def createsemester_parser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("createsemester")
-    parser.add_argument("semester")
-    parser.add_argument("--uv", nargs="*", default=[])
-    return parser
-
-
-def createuv_parser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("createuv")
-    parser.add_argument("uv", nargs="+")
-    return parser
-
-
 def main():
     parser = argparse.ArgumentParser(prog="doit-utc", description="")
     subparsers = parser.add_subparsers(dest="command")
