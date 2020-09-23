@@ -133,7 +133,6 @@ def main():
         "createuv",
         help="Crée des dossiers d'UV"
     )
-    createuv_parser.add_argument("createuv")
     createuv_parser.add_argument("uv", nargs="+")
 
     subparsers.add_parser(
