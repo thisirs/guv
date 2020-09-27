@@ -77,7 +77,9 @@ class Settings:
         if name.startswith("__"):  # for copy to succeed ignore __getattr__
             raise AttributeError(name)
 
-        if name in self.__dict__:
+        if name in os.environ:
+            return name
+        elif name in self.__dict__:
             return self.__dict__[name]
         else:
             raise ImproperlyConfigured(f"La variable '{name}' n'a été trouvée dans aucun fichier de configuration")
