@@ -52,17 +52,33 @@ class CsvInscrits(UVTask):
         """Parse FILENAME into DataFrame"""
 
         if "RX_STU" in self.settings:
-            RX_STU = self.settings.RX_STU
+            RX_STU = re.compile(self.settings.RX_STU)
         else:
             # 042   NOM PRENOM            GI02
-            RX_STU = r"^\s*\d{3}\s{3}(.{23})\s{3}([A-Z]{2})([0-9]{2})$"
+            RX_STU = re.compile(
+                r"^\s*"
+                r"\d{3}"
+                r"\s{3}"
+                r"(?P<name>.{23})"
+                r"\s{3}"
+                r"(?P<branche>[A-Z]{2})"
+                r"(?P<semestre>[0-9]{2})"
+                r"$"
+            )
 
         if "RX_UV" in self.settings:
-            RX_UV = self.settings.RX_UV
+            RX_UV = re.compile(self.settings.RX_UV)
         else:
             # SY19       C 1   ,PL.MAX= 73 ,LIBRES=  0 ,INSCRITS= 73  H=MERCREDI 08:00-10:00,F1,S=
             RX_UV = re.compile(
-                r"^\s*(?P<uv>\w+)\s+(?P<course>[CTD])\s*(?P<number>[0-9]+)\s*(?P<week>[AB])?"
+                r"^\s*"
+                r"(?P<uv>\w+)"
+                r"\s+"
+                r"(?P<course>[CTD])"
+                r"\s*"
+                r"(?P<number>[0-9]+)"
+                r"\s*"
+                r"(?P<week>[AB])?"
             )
 
         with open(self.utc_listing, "r") as fd:
@@ -79,16 +95,13 @@ class CsvInscrits(UVTask):
                 else:
                     m = RX_STU.match(line)
                     if m:
-                        name = m.group(1).strip()
-                        spe = m.group(2)
-                        sem = int(m.group(3))
+                        name = m.group("name").strip()
+                        spe = m.group("branche")
+                        sem = int(m.group("semestre"))
                         if spe == "HU":
                             spe = "HuTech"
                         elif spe == "MT":
                             spe = "ISC"
-                        if m.group("week"):
-                            week = m.group("week")
-                            course_name = course + number + week
                         rows.append(
                             {
                                 "Name": name,
