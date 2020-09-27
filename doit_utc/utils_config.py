@@ -40,7 +40,10 @@ def get_unique_uv():
     if settings.UV_DIR is not None:
         uv = settings.UV_DIR
         if uv not in settings.UVS:
-            raise Exception("L'UV n'est pas enregistrée")
+            raise Exception(
+                f"Le dossier courant '{uv}' n'est pas reconnu en tant que "
+                "dossier d'UV car il n'est pas enregistré dans la variable UVS."
+            )
 
         plngs = [
             plng

@@ -120,12 +120,14 @@ class TaskBase:
                 return (t for t in tasks)
 
         except NotUVDirectory as e:
+            # Le dossier courant n'est pas un dossier d'UV
             tf = TaskFailed(e.args)
             kw["actions"] = [lambda: tf]
             return kw
         except DependentTaskParserError as e:
-            # La construction de la tâche a échoué car c'est une tâche
-            # dépendante
+            # La tâche demande des arguments en ligne de commande mais
+            # ce n'est pas la tâche principale spécifiée en ligne de
+            # commande
             tf = TaskFailed(e.args)
             kw["actions"] = [lambda: tf]
             return kw
