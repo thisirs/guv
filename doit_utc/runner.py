@@ -4,6 +4,7 @@ import re
 import inspect
 import argparse
 import jinja2
+import textwrap
 
 from doit.doit_cmd import DoitMain
 from doit.cmd_base import NamespaceTaskLoader
@@ -84,10 +85,14 @@ def run_doit(args):
 def generate_tasks():
     for name, ref in task_loader.tasks.items():
         if ref.__doc__ is None:
-            doc = ""
+            doc = None
+            full_doc = None
         else:
-            # First line
-            doc = ref.__doc__.split("\n")[0]
+            doc, *rest = ref.__doc__.split("\n", maxsplit=1)
+            if rest:
+                full_doc = doc + "\n\n" + textwrap.dedent(rest[0])
+            else:
+                full_doc = doc
 
         task_name = re.sub(r"(?<!^)(?<=[a-z])(?=[A-Z])", "_", name).lower()
 
@@ -95,16 +100,18 @@ def generate_tasks():
             yield (
                 task_name,
                 doc,
+                full_doc,
                 [argument(*arg.args, **arg.kwargs) for arg in ref.cli_args],
             )
         elif ref is XlsGradeSheet:
             yield (
                 task_name,
                 doc,
+                full_doc,
                 [argument("args", nargs=argparse.REMAINDER)]
             )
         else:
-            yield task_name, doc, []
+            yield task_name, doc, full_doc, []
 
 
 def create_uv_dirs(base_dir, uvs):
@@ -154,8 +161,8 @@ def main():
     )
     sp.add_argument("args", nargs=argparse.REMAINDER)
 
-    for task_name, doc, args in generate_tasks():
-        sp = subparsers.add_parser(task_name, help=doc)
+    for task_name, doc, full_doc, args in generate_tasks():
+        sp = subparsers.add_parser(task_name, help=doc, description=full_doc, formatter_class=argparse.RawDescriptionHelpFormatter)
         for arg in args:
             sp.add_argument(*arg.args, **arg.kwargs)
 
