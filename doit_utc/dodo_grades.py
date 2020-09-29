@@ -27,10 +27,10 @@ from .gradebook import run
 class CsvForUpload(CliArgsMixin, UVTask):
     """Fichier csv de notes prêtes à être chargées sur l'ENT.
 
-Crée un fichier csv de notes prêtes à être chargées sur l'ENT. La
-colonne des notes est fixée par l'argument `grade_colname' et est
-prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
-`comment_colname' permet d'ajouter des commentaires.
+    Crée un fichier csv de notes prêtes à être chargées sur l'ENT. La
+    colonne des notes est fixée par l'argument `grade_colname' et est
+    prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
+    `comment_colname' permet d'ajouter des commentaires.
     """
 
     always_make = True
@@ -124,9 +124,10 @@ prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
 class XlsMergeFinalGrade(CliArgsMixin, UVTask):
     """Fichier Excel des notes finales attribuées
 
-Transforme un classeur Excel avec une feuille par correcteur en une
-seule feuille où les notes sont concaténées pour fusion/révision
-manuelle."""
+    Transforme un classeur Excel avec une feuille par correcteur en une
+    seule feuille où les notes sont concaténées pour fusion/révision
+    manuelle.
+    """
 
     target_dir = "documents"
     target_name = "{exam}_notes.xlsx"

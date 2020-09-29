@@ -33,7 +33,7 @@ from .scripts.add_student_data import (
 
 
 class CsvInscrits(UVTask):
-    """Construit un fichier CSV à partir des données brutes de la promo fournies par l'UTC."""
+    """Construit un fichier CSV à partir des données brutes de la promo fournies par l'UTC"""
 
     target_name = "inscrits.csv"
     target_dir = "generated"
@@ -153,7 +153,16 @@ class CsvInscrits(UVTask):
 
 
 class XlsStudentData(UVTask):
-    """Construit le fichier Excel des données étudiants fournies par l'UTC"""
+    """Construit le fichier Excel des données étudiants fournies par l'UTC
+
+    Les données utilisées sont le fichier disponible sur l'ENT de
+    l'effectif officiel de l'UV repéré par la variable ENT_LISTING
+    dans le fichier config.py de l'UV, le fichier des affectations aux
+    créneaux de Cours/TD/TP repéré par la variable AFFECTATION_LISTING
+    dans le fichier config.py de l'UV et le fichier Moodle des
+    inscrits à l'UV (si disponible) repéré par la variable
+    MOODLE_LISTING dans le fichier config.py de l'UV.
+    """
 
     target_dir = "generated"
     target_name = "student_data.xlsx"
@@ -217,7 +226,12 @@ class XlsStudentData(UVTask):
 
 
 class XlsStudentDataMerge(UVTask):
-    """Ajoute toutes les autres informations étudiants"""
+    """Ajoute toutes les autres informations étudiants
+
+    Ajoute les informations de changement de TD/TP, les tiers-temps et
+    des informations par étudiants. Ajoute également les informations
+    spécifiées dans AGGREGATE_DOCUMENTS.
+    """
 
     target_name = "student_data_merge.xlsx"
     target_dir = "generated"
@@ -422,7 +436,7 @@ class XlsStudentDataMerge(UVTask):
 
 
 class CsvExamGroups(UVTask, CliArgsMixin):
-    """Fichier csv des demi-groupe de TP pour le passage des examens de TP."""
+    """Fichier csv des demi-groupe de TP pour le passage des examens de TP"""
 
     target_dir = "generated"
     target_name = "exam_groups.csv"
@@ -484,7 +498,8 @@ class CsvExamGroups(UVTask, CliArgsMixin):
 class CsvGroups(UVTask, CliArgsMixin):
     """Fichiers csv des groupes de Cours/TD/TP/singleton pour Moodle
 
-Crée des fichiers csv pour chaque UV sélectionnées"""
+    Crée des fichiers csv pour chaque UV sélectionnées
+    """
 
     target_dir = "generated"
     target_name = "{ctype}_group_moodle.csv"
@@ -526,7 +541,7 @@ Crée des fichiers csv pour chaque UV sélectionnées"""
 
 
 class CsvMoodleGroups(CliArgsMixin, UVTask):
-    """Fichier csv de sous-groupes (binômes ou trinômes) aléatoires."""
+    """Fichier csv de sous-groupes (binômes ou trinômes) aléatoires"""
 
     target_dir = "generated"
     target_name = "{course}_{project}_binomes.csv"
@@ -713,10 +728,23 @@ class CsvMoodleGroups(CliArgsMixin, UVTask):
 
 
 class CsvGroupsGroupings(UVTask, CliArgsMixin):
-    """Fichier csv de noms de groupes et groupements à charger sur Moodle.
+    """Fichier csv de groupes et groupements à charger sur Moodle pour les créer
 
-    Il faut spécifier le nombre de groupes dans chaque groupement et le
-    nombre de groupements.
+    Il faut spécifier le nombre de groupes dans chaque groupement avec
+    l'argument `ngroups` et le nombre de groupements dans
+    `ngroupings`.
+
+    Le nom des groupements est controlé par un modèle spécifié par
+    l'argument -F (par défault "D##_P1"). Les remplacements
+    disponibles sont :
+    - ## : remplacé par des nombres
+    - @@ : remplacé par des lettres
+
+    Le nom des groupes est controlé par un modèle spécifié par
+    l'argument -f (par défault "D##_P1_@"). Les remplacements
+    disponibles sont :
+    - # : remplacé par des nombres
+    - @ : remplacé par des lettres
     """
 
     target_dir = "generated"

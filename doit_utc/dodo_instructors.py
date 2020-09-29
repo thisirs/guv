@@ -62,7 +62,12 @@ def create_insts_list(df):
 
 
 class XlsInstructors(TaskBase):
-    """Fichier de détails global des intervenants toutes UV confondues"""
+    """Fichier de détails global des intervenants toutes UV confondues
+
+    Il sert à la tâche html_inst pour générer un descriptif des
+    intervenants d'une UV et à la tâche xls_utp pour le calcul des
+    UTP effectuées et des remplacements.
+    """
 
     target_dir = "documents"
     target_name = "intervenants.xlsx"
@@ -145,8 +150,8 @@ def read_xls_details(fn):
 class XlsInstDetails(UVTask):
     """Fichier Excel des intervenants par UV avec détails
 
-Les détails sont pris dans le fichiers de détails global. Les
-affectations sont prises pour chaque UV.
+    Les détails sont pris dans le fichier de détails global. Les
+    affectations sont prises pour chaque UV.
     """
 
     target_dir = "generated"

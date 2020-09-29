@@ -114,7 +114,7 @@ def create_cal_from_dataframe(df, text, target):
 class CalUv(UVTask):
     """Calendrier PDF de la semaine par UV
 
-Crée le calendrier des Cours/TD/TP pour chaque UV sélectionnées.
+    Crée le calendrier des Cours/TD/TP pour chaque UV sélectionnées.
     """
 
     target_dir = "generated"

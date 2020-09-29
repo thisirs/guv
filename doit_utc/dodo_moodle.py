@@ -264,15 +264,20 @@ class HtmlTable(UVTask, CliArgsMixin):
 
 
 class JsonRestriction(UVTask, CliArgsMixin):
-    """Ficher json des restrictions d'accès aux ressources sur Moodle basées sur le début/fin des séances.
+    """Ficher json de restrictions d'accès aux ressources sur Moodle basées sur le début/fin des séances
 
+    Le fichier json contient des restrictions d'accès pour les
+    créneaux de Cours/TD/TP basé sur l'appartenance aux groupes de
+    Cours/TD/TP, sur les début/fin de séance, début/fin de semaine. Si
+    plusieurs groupes de Cours/TD/TP existe, il faut renseigner la
+    variable GROUP_ID dans le fichier config.py de l'UV pour avoir les
+    restrictions par groupe.
 
-Le fichier json contient des restrictions d'accès pour les créneaux de Cours/TD/TP basé sur l'appartenance aux groupes de Cours/TD/TP, sur les début/fin de séance, début/fin de semaine.
-"""
+    """
 
     target_dir = "generated"
     target_name = "moodle_restrictions_{course}{AB}.json"
-    always_make = True 
+    always_make = True
 
     cli_args = (
         argument(
@@ -405,9 +410,13 @@ Le fichier json contient des restrictions d'accès pour les créneaux de Cours/T
 class JsonGroup(UVTask, CliArgsMixin):
     """Fichier json des restrictions d'accès aux ressources sur Moodle par addresse email 
 
-
-
-"""
+    Le fichier Json contient des restrictions d'accès à copier dans
+    Moodle. L'argument `group` permet de construire des restrictions
+    par groupe. L'intérêt par rapport à une restriction classique à
+    base d'appartenance à un groupe dans Moodle est qu'il n'est pas
+    nécessaire de charger ce groupe sur Moodle et que l'étudiant ne
+    peut pas savoir à quel groupe il appartient.
+    """
 
     target_dir = "generated"
     target_name = "{group}_group_moodle.json"
@@ -461,13 +470,38 @@ class JsonGroup(UVTask, CliArgsMixin):
 
 
 class CsvCreateGroups(UVTask, CliArgsMixin):
-    """Création de groupes prêt à charger sous Moodle
+    """Création de groupes d'étudiants prêt à charger sous Moodle
 
-Si `grouping` est spécifié les groupes sont créés à l'intérieur des
-sous-groupes. Le nom des groupes est controlé par `template` et
-`names`. Le nombre de groupes est controlé par `num-groups`,
-`group-size` et `proportions`.
+    Cette tâche crée un fichier csv d'affection des étudiants à un
+    groupe. Si `grouping` est spécifié les groupes sont créés à
+    l'intérieur de chaque sous-groupe (de TP/TD par exemple).
 
+    Le nombre de groupes créés (au total ou par sous-groupes) est
+    controlé par `num-groups`, `group-size` et `proportions`.
+
+    Le nom des groupes est controlé par `template` et `names`. Les
+    remplacements suivants sont disponibles à l'intérieur de
+    `template` :
+    - {title} : remplacé par le titre (premier argument)
+    - {grouping_name} : remplacé par le nom du sous-groupe à
+      l'intérieur duquel on construit des groupes (si on a spécifié
+      `grouping`)
+    - {group_name} : nom du groupe en construction (si on a spécifié
+      `names`)
+    - # : numérotation du groupe en construction (si `names` n'est pas
+      spécifié)
+    - @ : lettre du groupe en construction (si `names` n'est pas
+      spécifié)
+    L'argument `names` peut être une liste de noms à utiliser ou un
+    fichier contenant une liste de noms ligne par ligne. Il sont pris
+    aléatoirement si on spécifie le drapeau `random`.
+
+    Le drapeau `global` permet de remettre à zéro la génération des
+    noms de groupes lorsqu'on change le groupe à l'intérieur duquel on
+    construit des sous-groupes (si on a spécifié `grouping`).
+
+    Les groupes sont aléatoires par défaut. Pour créer des groupes par
+    ordre alphabétique, il faut spécifier le drapeau `ordered`.
     """
 
     always_make = True

@@ -25,7 +25,17 @@ URL = 'https://demeter.utc.fr/portal/pls/portal30/portal30.get_photo_utilisateur
 
 
 class PdfTrombinoscope(UVTask, CliArgsMixin):
-    """Fichier PDF des trombinoscopes par groupes et/ou sous-groupes"""
+    """Fichier PDF des trombinoscopes par groupes et/ou sous-groupes
+
+    L'argument `group` désigne la colonne utilisée pour réaliser le
+    groupement. Un fichier pdf est généré pour chaque groupe. Lorsque
+    le nom de groupe est "all", il y a un seul groupe (donc un seul
+    fichier pdf) comportant la totalité des étudiants.
+
+    L'argument `subgroup` permet de distinguer des sous-groupes dans
+    chaque groupe (donc dans chaque fichier), par exemple des groupes
+    de projet.
+    """
 
     always_make = True
     target_dir = "generated"
@@ -130,7 +140,7 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
         tmpl = latex_env.get_template("trombinoscope_template_2.tex.jinja2")
         temp_dir = tempfile.mkdtemp()
 
-        # Diviser par groupe de TP/TP
+        # Diviser par groupe de TD/TP
         for title, group in df.groupby(self.groupby or (lambda x: "all")):
 
             # Diviser par binomes, sous-groupes

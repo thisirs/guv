@@ -53,7 +53,7 @@ def pdf_attendance_list_render(df, tmpl_file, **kwargs):
 
 
 class PdfAttendanceList(UVTask, CliArgsMixin):
-    """Fichier pdf de feuilles de présence par groupes"""
+    """Fichier pdf de feuilles de présence nominatives par groupes"""
 
     always_make = True
     target_dir = "generated"
@@ -112,7 +112,7 @@ class PdfAttendanceList(UVTask, CliArgsMixin):
 
 
 class PdfAttendanceFull(UVTask, CliArgsMixin):
-    """Fichier pdf de feuilles de présence par groupe et par séance"""
+    """Fichier zip de feuilles de présence nominatives par groupe et par semestre"""
 
     target_dir = "generated"
     target_name = "attendance_{group}_full.zip"
@@ -182,7 +182,7 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
 
 
 class AttendanceSheetRoom(UVTask):
-    """Feuille de présence par taille des salles"""
+    """Fichier zip de feuilles de présence nominatives par taille des salles"""
 
     always_make = True
     target_dir = "documents"
