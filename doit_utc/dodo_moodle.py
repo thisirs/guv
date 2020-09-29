@@ -515,43 +515,10 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
     cli_args = (
         argument("title", help="Nom associé à l'ensemble des groupes créés"),
         argument(
-            "-o",
-            "--ordered",
-            action="store_true",
-            help="Ordonner la liste des étudiants par ordre alphabétique",
-        ),
-        argument(
             "-G",
             "--grouping",
             required=False,
             help="Pré-groupes dans lesquels faire des sous-groupes",
-        ),
-        argument(
-            "-g",
-            "--global",
-            dest="global_",
-            action="store_true",
-            help="Remettre à zéro la suite des noms de sous-groupes",
-        ),
-        argument(
-            "-r",
-            "--random",
-            dest="random",
-            action="store_true",
-            help="Permuter aléatoirement les noms de groupes",
-        ),
-        argument(
-            "-t",
-            "--template",
-            required=False,
-            help="Modèle pour donner des noms aux groupes",
-        ),
-        argument(
-            "-l",
-            "--names",
-            nargs="+",
-            required=False,
-            help="Liste de mots clés pour construire les noms des groupes",
         ),
         argument(
             "-n",
@@ -574,6 +541,39 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             type=int,
             required=False,
             help="Nombre de groupes et proportions des ces groupes",
+        ),
+        argument(
+            "-t",
+            "--template",
+            required=False,
+            help="Modèle pour donner des noms aux groupes",
+        ),
+        argument(
+            "-l",
+            "--names",
+            nargs="+",
+            required=False,
+            help="Liste de mots clés pour construire les noms des groupes",
+        ),
+        argument(
+            "-o",
+            "--ordered",
+            action="store_true",
+            help="Ordonner la liste des étudiants par ordre alphabétique",
+        ),
+        argument(
+            "-g",
+            "--global",
+            dest="global_",
+            action="store_true",
+            help="Remettre à zéro la suite des noms de sous-groupes",
+        ),
+        argument(
+            "-r",
+            "--random",
+            dest="random",
+            action="store_true",
+            help="Permuter aléatoirement les noms de groupes",
         ),
     )
 
