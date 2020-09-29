@@ -52,7 +52,6 @@ def ical_events(dataframe, **settings):
         uv = row["Code enseig."]
         name = row["Lib. créneau"].replace(" ", "")
         week = row["Semaine"]
-        room = row["Locaux"].replace(" ", "").replace("BF", "F")
         num = row["num"]
         activity = row["Activité"]
         numAB = row["numAB"]
@@ -62,7 +61,10 @@ def ical_events(dataframe, **settings):
         else:
             summary = f"{uv} {activity}{num}"
 
-        event.add("location", f"{room}")
+        room_raw = row["Locaux"]
+        if isinstance(room_raw, str):
+            room = room_raw.replace(" ", "").replace("BF", "F")
+            event.add("location", f"{room}")
 
         event.add("summary", summary)
 
@@ -124,7 +126,7 @@ class IcalInst(CliArgsMixin, TaskBase):
 
         if set(self.insts).issubset(set(all_insts)):
             settings = {
-                "SEMESTER_DIR": self.settings.SEMESTER_DIR
+                "SEMESTER": self.settings.SEMESTER
             }
             if len(self.insts) == 1:
                 inst = self.insts[0]
