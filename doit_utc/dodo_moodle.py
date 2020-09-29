@@ -633,7 +633,10 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             else:
                 raise Exception("Le fichier de noms n'existe pas")
         else:
-            for n in self.names:
+            names = self.names.copy()
+            if self.random:
+                random.shuffle(names)
+            for n in names:
                 yield pformat(tmpl, group_name=n)
 
     def run(self):
