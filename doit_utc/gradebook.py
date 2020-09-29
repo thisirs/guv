@@ -111,7 +111,7 @@ class ConfigCliOpt(CliArgsMixin):
 
     def add_arguments(self):
         super().add_arguments()
-        self.add_argument(self.config_argname, dest="config_file")
+        self.add_argument(self.config_argname, dest="config_file", required=True)
 
     @property
     def config(self):
