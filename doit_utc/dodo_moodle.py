@@ -370,15 +370,20 @@ class JsonRestriction(UVTask, CliArgsMixin):
                 "visible si: t >= previous_midnight(min(B))": (CondDate() >= dt_min_midnight).to_PHP(),
                 "visible si: t >= next_midnight(max(E))": (CondDate() >= dt_max_midnight).to_PHP(),
             }
+
             if len(gbe) > 1:
-                info = dict(group_id=self.settings.GROUP_ID)
-                no_group.update({
-                    "visible si: t <= B par groupe": CondOr(before_beg_group).to_PHP(**info),
-                    "visible si: t > B par groupe": CondOr(after_beg_group).to_PHP(**info),
-                    "visible si: t > E par groupe": CondOr(after_end_group).to_PHP(**info),
-                    "visible si: t <= E par groupe": CondOr(before_end_group).to_PHP(**info),
-                    "visible si: B <= t < E par groupe": CondOr(window_group).to_PHP(**info),
-                })
+                if "GROUP_ID" not in self.settings or not self.settings.GROUP_ID:
+                    print("WARNING: Plusieurs groupes de Cours/TD/TP et GROUP_ID non spécifié")
+                else:
+                    info = dict(group_id=self.settings.GROUP_ID)
+                    no_group.update({
+                        "visible si: t <= B par groupe": CondOr(before_beg_group).to_PHP(**info),
+                        "visible si: t > B par groupe": CondOr(after_beg_group).to_PHP(**info),
+                        "visible si: t > E par groupe": CondOr(after_end_group).to_PHP(**info),
+                        "visible si: t <= E par groupe": CondOr(before_end_group).to_PHP(**info),
+                        "visible si: B <= t < E par groupe": CondOr(window_group).to_PHP(**info),
+                    })
+
             return "Séance " + str(num), no_group
 
         moodle_date = dict(get_beg_end_date_each(name, g) for name, g in gb)
