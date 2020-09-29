@@ -24,6 +24,8 @@ from . import dodo_ical
 from . import dodo_calendar
 from . import dodo_attendance
 
+from .dodo_grades import XlsGradeSheet
+
 
 class ModulesTaskLoader(NamespaceTaskLoader):
     def __init__(self, *modules):
@@ -94,6 +96,12 @@ def generate_tasks():
                 task_name,
                 doc,
                 [argument(*arg.args, **arg.kwargs) for arg in ref.cli_args],
+            )
+        elif ref is XlsGradeSheet:
+            yield (
+                task_name,
+                doc,
+                [argument("args", nargs=argparse.REMAINDER)]
             )
         else:
             yield task_name, doc, []
