@@ -1029,7 +1029,7 @@ questions structurées."""
         gradesheet = self.workbook.create_sheet(title=name)
 
 
-WRITERS = [GradeSheetNoGroup, GradeSheetGroup]
+WRITERS = [GradeSheetNoGroup, GradeSheetGroup, GradeSheetJury]
 
 
 def run(argv=sys.argv[1:], prog=os.path.basename(__file__), description=None):
