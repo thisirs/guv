@@ -273,6 +273,8 @@ class JsonRestriction(UVTask, CliArgsMixin):
     variable GROUP_ID dans le fichier config.py de l'UV pour avoir les
     restrictions par groupe.
 
+    Le drapeau -a permet de grouper les séances par deux semaines dans
+    le cas où il y a des semaines A et B.
     """
 
     target_dir = "generated"
