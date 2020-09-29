@@ -147,6 +147,10 @@ class CsvInscrits(UVTask):
         return df
 
     def run(self):
+        if not os.path.exists(self.utc_listing):
+            raise Exception("Le fichier '{0}' n'existe pas".format(
+                rel_to_dir(self.utc_listing, self.settings.SEMESTER_DIR)
+            ))
         df = self.parse_UTC_listing()
         with Output(self.target) as target:
             df.to_csv(target(), index=False)
@@ -188,8 +192,6 @@ class XlsStudentData(UVTask):
     def run(self):
         if not os.path.exists(self.extraction_ENT):
             raise Exception("Le fichier '{}' n'existe pas".format(self.extraction_ENT))
-        if not os.path.exists(self.csv_UTC):
-            raise Exception("Le fichier '{}' n'existe pas".format(self.csv_UTC))
 
         print("Chargement de données issues de l'ENT")
         df = pd.read_csv(self.extraction_ENT, sep="\t", encoding='ISO_8859_1')
