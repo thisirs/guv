@@ -253,7 +253,10 @@ class XlsStudentDataMerge(UVTask):
 
         agg_docs = (
             self.settings.AGGREGATE_DOCUMENTS
-            if "AGGREGATE_DOCUMENTS" in self.settings
+            if (
+                "AGGREGATE_DOCUMENTS" in self.settings
+                and self.settings.AGGREGATE_DOCUMENTS
+            )
             else []
         )
         if isinstance(agg_docs, list):
