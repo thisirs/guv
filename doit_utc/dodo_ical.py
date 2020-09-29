@@ -13,8 +13,6 @@ from icalendar import Event, Calendar
 import numpy as np
 import pandas as pd
 
-from doit.exceptions import TaskFailed
-
 from .utils_config import Output, compute_slots
 from .utils import argument
 from .dodo_instructors import AddInstructors
@@ -153,4 +151,4 @@ class IcalInst(CliArgsMixin, TaskBase):
 
         else:
             unknown = set(self.insts).difference(all_insts)
-            return TaskFailed(f"Intervenant(s) inconnu(s): {', '.join(unknown)}")
+            raise Exception(f"Intervenant(s) inconnu(s): {', '.join(unknown)}")

@@ -9,8 +9,6 @@ import re
 import pandas as pd
 from pandas.api.types import CategoricalDtype
 
-from doit.exceptions import TaskFailed
-
 from .dodo_utc import UtcUvListToCsv
 from .utils_config import Output, selected_uv
 from .utils import lib_list, rel_to_dir
@@ -197,7 +195,7 @@ class XlsUTP(UVTask):
         df_details = read_xls_details(self.insts)
 
         if df["Intervenants"].isnull().all():
-            return TaskFailed(
+            raise Exception(
                 "Pas d'intervenants renseignés dans le fichier %s" % self.xls
             )
         else:

@@ -10,8 +10,6 @@ import tempfile
 import pandas as pd
 import latex
 
-from doit.exceptions import TaskFailed
-
 from .utils_config import Output
 from .utils import (
     sort_values,
@@ -313,7 +311,7 @@ class AttendanceSheet(UVTask, CliArgsMixin):
                         print("Liste des salles: \n%s" % groupby)
                         break
                     else:
-                        return TaskFailed("Il faut au moins une salle")
+                        raise Exception("Il faut au moins une salle")
             elif re.fullmatch("[0-9]+", num):
                 groupby[room] = int(num)
 

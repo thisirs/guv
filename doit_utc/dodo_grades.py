@@ -10,8 +10,6 @@ import numpy as np
 import pandas as pd
 import oyaml as yaml            # Ordered yaml
 
-from doit.exceptions import TaskFailed
-
 from .utils_config import Output
 from .utils import (
     sort_values,

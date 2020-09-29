@@ -14,8 +14,6 @@ from openpyxl import Workbook
 from openpyxl import utils
 from openpyxl.utils.dataframe import dataframe_to_rows
 
-from doit.exceptions import TaskFailed
-
 from .utils_config import Output
 from .utils import (
     sort_values,
@@ -596,7 +594,7 @@ class CsvMoodleGroups(CliArgsMixin, UVTask):
             diff = set(self.other_group) - set(df.columns.values)
             if diff:
                 s = "s" if len(diff) > 1 else ""
-                return TaskFailed(
+                raise Exception(
                     f"Colonne{s} inconnue{s} : `{', '.join(diff)}'; les colonnes sont : {', '.join(df.columns)}"
                 )
 
