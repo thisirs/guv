@@ -641,11 +641,12 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
 
     def run(self):
         df = pd.read_excel(self.xls_merge)
-        df = sort_values(df, ["Nom", "Prénom"])
 
-        # Shuffle rows
+        # Shuffled or ordered rows according to `ordered`
         if not self.ordered:
             df = df.sample(frac=1).reset_index(drop=True)
+        else:
+            df = sort_values(df, ["Nom", "Prénom"])
 
         if self.grouping is not None:
             check_columns(df, self.grouping, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
