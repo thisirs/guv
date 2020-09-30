@@ -735,7 +735,6 @@ class FetchGroupId(CliArgsMixin, TaskBase):
 
     def group_id(self, html_page):
         soup = BeautifulSoup(html_page, "html.parser")
-        select = soup.find("select", {"id": "groups"})
 
         group_id = {}
         for select in soup.find_all("select"):
