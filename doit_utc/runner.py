@@ -182,7 +182,10 @@ def main():
         jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(tmpl_dir))
         tmpl = jinja_env.get_template("semester_config.py")
 
-        context = {"UVS": ", ".join(f'"{e}"' for e in args.uv)}
+        if args.uv:
+            context = {"UVS": ", ".join(f'"{e}"' for e in args.uv)}
+        else:
+            context = {"UVS": ","}
         content = tmpl.render(context)
         new_path = os.path.join(base_dir, "config.py")
         with open(new_path, 'w', encoding='utf-8') as new_file:
