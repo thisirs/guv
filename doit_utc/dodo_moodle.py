@@ -712,23 +712,29 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             return pd.Series(make_groups(n, proportions, name_gen0()), index=df.index)
 
 
-class FetchGroupId(TaskBase):
-    """ """
+class FetchGroupId(CliArgsMixin, TaskBase):
+    """"""
 
     target_dir = "documents"
     target_name = "group_id_{id}.py"
     url = "https://moodle.utc.fr/group/overview.php?id={id}"
+    cli_args = (
+        argument(
+            "ident_list",
+            nargs="+",
+            help="Liste des identifiants des UV sur Moodle (id=???? dans l'url)"
+        ),
+    )
 
     def __init__(self):
         super().__init__()
 
-    def run(self):
-        id = input("Identifiant du cours : ")
-        self.target = self.build_target(id=id)
+    def cookies(self):
         cj = browser_cookie3.firefox()
-        cookies = {c.name: c.value for c in cj if "utc.fr" in c.domain}
-        req = requests.post(pformat(self.url, id=id), cookies=cookies)
-        soup = BeautifulSoup(req.text, "html.parser")
+        return {c.name: c.value for c in cj if "utc.fr" in c.domain}
+
+    def group_id(self, html_page):
+        soup = BeautifulSoup(html_page, "html.parser")
         select = soup.find("select", {"id": "groups"})
 
         group_id = {}
@@ -738,8 +744,15 @@ class FetchGroupId(TaskBase):
                     value = option["value"]
                     if int(value) > 0:
                         group_id[option.text] = option["value"]
+        return group_id
 
-        with Output(self.target) as target:
-            with open(target(), "w") as f:
-                f.write("# Copier le dictionnaire suivant dans le fichier config.py de l'UV\n\n")
-                f.write(yapf.FormatCode("GROUP_ID = " + pprint.pformat(group_id))[0])
+    def run(self):
+        cookies = self.cookies()
+        for id in self.ident_list:
+            req = requests.post(pformat(self.url, id=id), cookies=cookies)
+            group_id = self.group_id(req.text)
+
+            with Output(self.build_target(id=id)) as target:
+                with open(target(), "w") as f:
+                    f.write("# Copier le dictionnaire suivant dans le fichier config.py de l'UV\n\n")
+                    f.write(yapf.FormatCode("GROUP_ID = " + pprint.pformat(group_id))[0])
