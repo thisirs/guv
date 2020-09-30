@@ -6,60 +6,60 @@ UVS = ({{ UVS }})
 # Un dictionnaire listant des plannings (A2020, Master2Sem1,
 # Master2Sem2...) et leurs caractéristiques correspondantes (UV en
 # faisant partie, début et fin...)
-from datetime import date
-PLANNINGS = {
-    "P2020": {
-        "UVS": ["SY09", "SY02"],
-        "PL_BEG": date(2020, 2, 24),
-        "PL_END": date(2020, 6, 27)
-    }
-}
+# Par exemple :
+# from datetime import date
+# PLANNINGS = {
+#     "P2020": {
+#         "UVS": ["SY09", "SY02"],
+#         "PL_BEG": date(2020, 2, 24),
+#         "PL_END": date(2020, 6, 27)
+#     }
+# }
+PLANNINGS = None
 
-# Personne par défaut pour les fichier iCal et les calendrier
-DEFAULT_INSTRUCTOR = "Sylvain Rousseau"
+# Personne par défaut pour les fichiers iCal et les calendriers
+DEFAULT_INSTRUCTOR = None
 
-# Chemin relatif vers le fichier pdf de tous les créneaux de toutes
-# les UVs
-CRENEAU_UV = "documents/Creneaux-UV_P20.pdf"
+# Chemin relatif vers le fichier pdf de tous les créneaux et de toutes
+# les UVs disponible sur l'ENT
+CRENEAU_UV = None
 
-SELECTED_PLANNINGS = list(PLANNINGS.keys())
+# Liste des plannings activés
+SELECTED_PLANNINGS = None
 
 
-# Information pour l'élaboration du planning du semestre: jours
+# Informations pour l'élaboration du planning du semestre: jours
 # fériés, jours changés en d'autres... Il faut renseigner les
 # variables TURN, SKIP_DAYS_C, SKIP_DAYS_D et SKIP_DAYS_T
 
 # La variable TURN contient un dictionnaire des journées qui sont
-# changées en d'autres jours
-TURN = {
-    date(2020, 5, 4): 'Vendredi',
-    date(2020, 5, 12): 'Vendredi',
-    date(2020, 5, 20): 'Jeudi',
-    date(2020, 6, 4): 'Lundi'
-}
+# changées en d'autres jours :
+# Par exemple :
+# TURN = {
+#   date(2020, 5, 4): "Vendredi"
+# }
+# Le 4 main 2020 est transformé en vendredi
+TURN = None
 
-
-from doit_utc.utils import skip_week, skip_range
-
-# Jours fériés
-ferie = [date(2020, 5, 1),
-         date(2020, 5, 8),
-         date(2020, 5, 21),
-         date(2020, 6, 1)]
-
-# Première semaine sans TD/TP
-debut = skip_week(PLANNINGS["P2020"]['PL_BEG'])
-
-# Semaine des médians
-median = skip_range(date(2020, 4, 27), date(2020, 5, 4))
-
-# Vacances
-vacances_printemps = skip_range(date(2020, 4, 13), date(2020, 4, 18))
-
-# Semaine des finals
-final = skip_range(date(2020, 6, 19), date(2020, 6, 27))
-
-# Liste des journées où il n'y a pas Cours/TD/TP
-SKIP_DAYS_C = ferie + vacances_printemps + median + final
-SKIP_DAYS_D = ferie + vacances_printemps + debut + median + final
-SKIP_DAYS_T = ferie + vacances_printemps + debut + final
+# Liste des journées où il n'y a pas Cours/TD/TP. Le plus simple est
+# d'utiliser des variables intermédiaires telles que `ferie` pour
+# lister les jours fériés, `median` et `final` pour les semaines
+# d'examens ou `debut` pour la première semaine du semestre où il n'y
+# a ni TD ni TP. On peut utiliser les fonctions `skip_week` et
+# `skip_range`. Par exemple :
+# from doit_utc.utils import skip_week, skip_range
+# debut = skip_week(PLANNINGS["P2020"]['PL_BEG'])
+# median = skip_range(date(2020, 4, 27), date(2020, 5, 4))
+# final = skip_range(date(2020, 6, 19), date(2020, 6, 27))
+# ferie = [date(2020, 5, 1),
+#          date(2020, 5, 8),
+#          date(2020, 5, 21),
+#          date(2020, 6, 1)]
+# vacances_printemps = skip_range(date(2020, 4, 13), date(2020, 4, 18))
+# On définit alors
+# SKIP_DAYS_C = ferie + vacances_printemps + median + final
+# SKIP_DAYS_D = ferie + vacances_printemps + debut + median + final
+# SKIP_DAYS_T = ferie + vacances_printemps + debut + final
+SKIP_DAYS_C = None
+SKIP_DAYS_D = None
+SKIP_DAYS_T = None

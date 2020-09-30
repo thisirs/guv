@@ -18,7 +18,7 @@ MOODLE_LISTING = None
 # chemin du fichier à agréger et d'une fonction qui réalise
 # l'agrégation. Cette fonction prend en argument un DataFrame existant
 # ainsi que le chemin du fichier à agréger et renvoie le DataFrame mis
-# à jour. Plusieurs fonction d'aide sont disponibles: aggregate,
+# à jour. Plusieurs fonctions d'aide sont disponibles: aggregate,
 # aggregate_org, fillna_column, replace_regex, replace_column.
 
 from doit_utc.utils import aggregate
@@ -31,7 +31,6 @@ AGGREGATE_DOCUMENTS = None
 TIERS_TEMPS = None
 
 # Fichier des changements de TD (optionnel)
-
 # Il s'agit d'un fichier de prise en compte des changements de groupes
 # de TD. Chaque ligne repère un changement qui est de la forme
 # id1 --- id2
@@ -45,7 +44,13 @@ CHANGEMENT_TD = None
 # Les identifiants peuvent être des adresses email ou des nom prénom
 CHANGEMENT_TP = None
 
-# Info supplémenaire par étudiant (optionnel)
+# Fichier contenant des informations supplémentaires sous forme de
+# texte libre par étudiant (optionnel)
+# C'est fichier au format "org" avec la structure suivante :
+# * Mycroft Canner
+#   blah blah foo
+# * Jo Crisse
+#   blah foo bar
 INFO_ETUDIANT = None
 
 # Correspondance entre le noms des groupes de Cours/TD/TP et leur
