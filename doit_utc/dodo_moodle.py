@@ -19,10 +19,15 @@ import numpy as np
 import pynliner
 import jinja2
 import markdown
+import browser_cookie3
+import yapf.yapflib.yapf_api as yapf
+import pprint
+from bs4 import BeautifulSoup
+import requests
 
 from .utils_config import Output, compute_slots
 from .utils import argument, check_columns, lib_list, sort_values
-from .tasks import CliArgsMixin, UVTask
+from .tasks import CliArgsMixin, UVTask, TaskBase
 from .utils import pformat, make_groups
 from .dodo_students import XlsStudentDataMerge
 from .dodo_utc import CsvAllCourses
@@ -705,3 +710,36 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         elif self.num_groups is not None:
             proportions = np.ones(self.num_groups)
             return pd.Series(make_groups(n, proportions, name_gen0()), index=df.index)
+
+
+class FetchGroupId(TaskBase):
+    """ """
+
+    target_dir = "documents"
+    target_name = "group_id_{id}.py"
+    url = "https://moodle.utc.fr/group/overview.php?id={id}"
+
+    def __init__(self):
+        super().__init__()
+
+    def run(self):
+        id = input("Identifiant du cours : ")
+        self.target = self.build_target(id=id)
+        cj = browser_cookie3.firefox()
+        cookies = {c.name: c.value for c in cj if "utc.fr" in c.domain}
+        req = requests.post(pformat(self.url, id=id), cookies=cookies)
+        soup = BeautifulSoup(req.text, "html.parser")
+        select = soup.find("select", {"id": "groups"})
+
+        group_id = {}
+        for select in soup.find_all("select"):
+            if select["name"] in ["group", "grouping"]:
+                for option in select.find_all("option"):
+                    value = option["value"]
+                    if int(value) > 0:
+                        group_id[option.text] = option["value"]
+
+        with Output(self.target) as target:
+            with open(target(), "w") as f:
+                f.write("# Copier le dictionnaire suivant dans le fichier config.py de l'UV\n\n")
+                f.write(yapf.FormatCode("GROUP_ID = " + pprint.pformat(group_id))[0])
