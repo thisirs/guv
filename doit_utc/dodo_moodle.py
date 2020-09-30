@@ -731,7 +731,7 @@ class FetchGroupId(CliArgsMixin, TaskBase):
 
     def cookies(self):
         cj = browser_cookie3.firefox()
-        return {c.name: c.value for c in cj if "utc.fr" in c.domain}
+        return {c.name: c.value for c in cj if "moodle.utc.fr" in c.domain}
 
     def group_id(self, html_page):
         soup = BeautifulSoup(html_page, "html.parser")
