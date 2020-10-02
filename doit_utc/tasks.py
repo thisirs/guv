@@ -7,7 +7,7 @@ import argparse
 
 from doit.exceptions import TaskFailed
 
-from .config import settings, Settings
+from .config import settings, Settings, ImproperlyConfigured
 from .utils_config import selected_uv, get_unique_uv, NotUVDirectory
 from .utils import pformat
 
@@ -119,21 +119,19 @@ class TaskBase:
                 ]
                 return (t for t in tasks)
 
-        except NotUVDirectory as e:
-            # Le dossier courant n'est pas un dossier d'UV
-            tf = TaskFailed(e.args)
-            kw["actions"] = [lambda: tf]
-            return kw
-        except DependentTaskParserError as e:
-            # La tâche demande des arguments en ligne de commande mais
-            # ce n'est pas la tâche principale spécifiée en ligne de
-            # commande
+        except (NotUVDirectory, DependentTaskParserError, ImproperlyConfigured) as e:
+            # Retourner une tâche dont la construction a échouée si le
+            # dossier courant n'est pas un dossier d'UV, la tâche
+            # demande des arguments en ligne de commande mais ce n'est
+            # pas la tâche principale spécifiée en ligne de commande,
+            # la construction de la tâche demande une valeur
+            # incorrectement configurée
             tf = TaskFailed(e.args)
             kw["actions"] = [lambda: tf]
             return kw
         except Exception as e:
             # Exception inexpliquée, la construction de la tâche
-            # échoue. Donner éventuellement la pile d'appels
+            # échoue. Progager l'exception si DEBUG.
             if settings.DEBUG > 0:
                 raise e from e
             tf = TaskFailed(e.args)
