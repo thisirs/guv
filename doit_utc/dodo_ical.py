@@ -28,14 +28,8 @@ def ical_events(dataframe, **settings):
         h = int(hm[0])
         m = int(hm[1])
         timetuple = (d.year, d.month, d.day, h, m)
-
-        # Get current timezone and use it
-        tz = datetime.datetime.utcnow().astimezone().tzinfo
-        dt = datetime.datetime(*timetuple).replace(tzinfo=tz)
-
-        # Return as UTC timezone for datetime to be exported with a
-        # trailing Z (no other timezone info in ics)
-        return dt.astimezone(pytz.utc)
+        local_tz = pytz.timezone("Europe/Paris")
+        return datetime.datetime(*timetuple).astimezone(local_tz).astimezone(pytz.utc)
 
     ts = dataframe.apply(timestamp, axis=1)
     dataframe = dataframe.assign(timestamp=ts)
