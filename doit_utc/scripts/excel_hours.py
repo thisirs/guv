@@ -2,47 +2,14 @@ __doc__ = """
 Create Excel files
 """
 
+from .. import openpyxl_patched as openpyxl
+from ..openpyxl_utils import row_and_col
+
 from openpyxl import Workbook
-from openpyxl.cell import Cell
 from openpyxl import utils
 from openpyxl.styles import PatternFill
 
 import numpy as np
-
-
-def row_and_col(cell1, cell2):
-    assert cell1.parent == cell2.parent
-    parent = cell1.parent
-    return parent.cell(row=cell1.row, column=cell2.column)
-
-
-# Custom navigation functions
-def left(self, step=1):
-    return self.offset(0, -step)
-
-
-def right(self, step=1):
-    return self.offset(0, step)
-
-
-def above(self, step=1):
-    return self.offset(-step, 0)
-
-
-def below(self, step=1):
-    return self.offset(step, 0)
-
-
-def text(self, value):
-    self.value = value
-    return self
-
-
-Cell.left = left
-Cell.right = right
-Cell.above = above
-Cell.below = below
-Cell.text = text
 
 
 def create_excel_file(filename, df):
