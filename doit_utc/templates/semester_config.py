@@ -15,7 +15,11 @@ UVS = ({{ UVS }})
 #         "PL_END": date(2020, 6, 27)
 #     }
 # }
-PLANNINGS = None
+PLANNINGS = {
+    "{{ SEMESTER }}": {
+        "UVS": [{{ UVS }}],
+    }
+}
 
 # Personne par défaut pour les fichiers iCal et les calendriers
 DEFAULT_INSTRUCTOR = None
@@ -25,7 +29,7 @@ DEFAULT_INSTRUCTOR = None
 CRENEAU_UV = None
 
 # Liste des plannings activés
-SELECTED_PLANNINGS = None
+SELECTED_PLANNINGS = ()
 
 
 # Informations pour l'élaboration du planning du semestre: jours
