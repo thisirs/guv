@@ -606,7 +606,7 @@ class CsvMoodleGroups(CliArgsMixin, UVTask):
                 group_names = [f"%(gn)s_{e}" for e in group_names]
         else:
             shuffle = False
-            group_names = [
+            self.group_names = [
                 f"%(gn)s_{self.project}_{e}" for e in list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
             ]
 
