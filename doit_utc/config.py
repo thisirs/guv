@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import importlib
+from schema import Schema, Or, And, Use, SchemaError
 
 SEMESTER_VARIABLE = "DOIT_UTC_SEMESTER_PATH"
 
@@ -13,6 +14,25 @@ class Settings:
     def __init__(self, cwd):
         self.cwd = cwd
         self.semester_directory = None
+        self.settings = {}
+        self.validation_schemes = {
+            "PLANNINGS": (
+                Schema({str: dict}),
+                "La variable 'PLANNINGS' est incorrecte",
+            ),
+            "SELECTED_PLANNINGS": (
+                Schema([str]),
+                "La variable 'SELECTED_PLANNINGS' est incorrecte",
+            ),
+            "DEFAULT_INSTRUCTOR": (
+                Schema(str),
+                "La variable 'DEFAULT_INSTRUCTOR' est incorrecte",
+            ),
+            "DEBUG": (
+                Schema(Or(And(str, Use(int)), int)),
+                "La variable 'DEBUG' est incorrecte",
+            ),
+        }
         self._setup = False
 
     def setup(self):
@@ -24,7 +44,7 @@ class Settings:
                     str(Path(self.cwd).parent / "config.py")
                 ]
                 self.semester_directory = str(Path(self.cwd).parent)
-                self.UV_DIR = os.path.basename(self.cwd)
+                self.settings["UV_DIR"] = os.path.basename(self.cwd)
                 self._load_default_semester_settings()
                 self._load(Path(self.cwd).parent / "config.py")
                 self._load_default_uv_settings()
@@ -35,24 +55,24 @@ class Settings:
                     str(Path(self.cwd) / "config.py"),
                 ]
                 self.semester_directory = str(Path(self.cwd))
-                self.UV_DIR = None
+                self.settings["UV_DIR"] = None
                 self._load_default_semester_settings()
                 self._load(Path(self.cwd) / "config.py")
         else:
             raise ImproperlyConfigured("Pas dans un dossier d'UV ou de semestre")
 
     def _load_default_semester_settings(self):
-        self.SEMESTER = os.path.basename(self.semester_directory)
-        self.SEMESTER_DIR = self.semester_directory
-        self.DOIT_CONFIG = {
+        self.settings["SEMESTER"] = os.path.basename(self.semester_directory)
+        self.settings["SEMESTER_DIR"] = self.semester_directory
+        self.settings["DOIT_CONFIG"] = {
             "dep_file": os.path.join(self.semester_directory, ".doit.db"),
             "verbosity": 2,
             "default_tasks": ["utc_uv_list_to_csv"],
         }
-        self.DEBUG = 0
+        self.settings["DEBUG"] = 0
 
     def _load_default_uv_settings(self):
-        self.DOIT_CONFIG = {
+        self.settings["DOIT_CONFIG"] = {
             "dep_file": os.path.join(self.semester_directory, ".doit.db"),
             "verbosity": 2,
             "default_tasks": ["utc_uv_list_to_csv", "xls_student_data_merge"],
@@ -67,31 +87,38 @@ class Settings:
         settings = [s for s in dir(module) if s.isupper()]
         for setting in settings:
             setting_value = getattr(module, setting)
-            setattr(self, setting, setting_value)
+            self.settings[setting] = setting_value
 
     def __getattr__(self, name):
-        if not self._setup:
-            self.setup()
-            self._setup = True
         if name.startswith("__"):  # for copy to succeed ignore __getattr__
             raise AttributeError(name)
 
+        # Load attributes from configuration files
+        if not self._setup:
+            self.setup()
+            self._setup = True
+
         if name in os.environ:
-            return name
-        elif name in self.__dict__:
-            return self.__dict__[name]
+            value = os.environ[name]
+        elif name in self.settings:
+            value = self.settings[name]
         else:
             raise ImproperlyConfigured(f"La variable '{name}' n'a été trouvée dans aucun fichier de configuration")
+
+        if name in self.validation_schemes:
+            try:
+                schema, msg = self.validation_schemes[name]
+                return schema.validate(value)
+            except SchemaError as e:
+                raise ImproperlyConfigured(msg)
+        else:
+            return value
 
     def __contains__(self, e):
         if not self._setup:
             self.setup()
             self._setup = True
-        try:
-            self.__getattr__(e)
-            return True
-        except (AttributeError, ImproperlyConfigured):
-            return False
+        return e in self.settings
 
 
 if SEMESTER_VARIABLE in os.environ:
