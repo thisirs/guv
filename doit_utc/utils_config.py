@@ -4,7 +4,7 @@ from datetime import timedelta
 import pandas as pd
 
 from .utils import rel_to_dir
-from .config import settings
+from .config import settings, ImproperlyConfigured
 
 
 class NotUVDirectory(Exception):
@@ -40,7 +40,7 @@ def get_unique_uv():
     if settings.UV_DIR is not None:
         uv = settings.UV_DIR
         if uv not in settings.UVS:
-            raise Exception(
+            raise NotUVDirectory(
                 f"Le dossier courant '{uv}' n'est pas reconnu en tant que "
                 "dossier d'UV car il n'est pas enregistré dans la variable UVS."
             )
@@ -52,10 +52,10 @@ def get_unique_uv():
         ]
 
         if not plngs:
-            raise Exception("L'UV ne fait partie d'aucun planning")
+            raise ImproperlyConfigured("L'UV ne fait partie d'aucun planning")
 
         if len(plngs) >= 2:
-            raise Exception("L'UV fait partie de plusieurs plannings")
+            raise ImproperlyConfigured("L'UV fait partie de plusieurs plannings")
 
         plng = plngs[0]
         info = {"uv": uv, "planning": plng}
