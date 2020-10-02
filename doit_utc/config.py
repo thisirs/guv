@@ -20,6 +20,10 @@ class Settings:
                 Schema({str: dict}),
                 "La variable 'PLANNINGS' est incorrecte",
             ),
+            "CRENEAU_UV": (
+                Schema(str),
+                "La variable 'CRENEAU_UV' est incorrecte",
+            ),
             "SELECTED_PLANNINGS": (
                 Schema([str]),
                 "La variable 'SELECTED_PLANNINGS' est incorrecte",
