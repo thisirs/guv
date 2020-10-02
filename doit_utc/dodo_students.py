@@ -210,11 +210,6 @@ class XlsStudentData(UVTask):
         df = self.add_UTC_data(df, self.csv_UTC)
 
         if self.csv_moodle is not None:
-            fn = self.csv_moodle
-            if fn.endswith('.csv'):
-                df = pd.read_csv(fn)
-            elif fn.endswith('.xlsx') or fn.endswith('.xls'):
-                df = pd.read_excel(fn)
             print("Ajout des données issues de Moodle")
             df = self.add_moodle_data(df, self.csv_moodle)
 
