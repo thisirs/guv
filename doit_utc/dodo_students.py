@@ -235,7 +235,7 @@ class XlsStudentData(UVTask):
             fullnames = df["Nom"] + " " + df["Prénom"]
 
             def slug(e):
-                return unidecode.unidecode(e.upper()[:23].strip())
+                return unidecode(e.upper()[:23].strip())
 
             df["fullname_slug"] = fullnames.apply(slug)
 
