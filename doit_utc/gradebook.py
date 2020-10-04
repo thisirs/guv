@@ -1049,34 +1049,3 @@ def run(argv=sys.argv[1:], prog=os.path.basename(__file__), description=None):
     writer.write()
 
 
-if __name__ == "__main__":
-    # argv = ["--name", "Note TP", "-d", "scripts/tests", "--worksheets", "TP", "--order-by", "Prénom_moodle"]
-    # a = GradeSheetSimpleWriter(argv=argv)
-    # a.write()
-
-    # argv = ["--name", "Note TP", "-d", "scripts/tests", "--worksheets", "TP", "--order-by", "Prénom_moodle", "--struct", "scripts/tests/config_test.yaml"]
-    # a = GradeSheetNoGroup(argv=argv)
-    # a.write()
-
-    # argv = ["--name", "Note TP", "-d", "scripts/tests", "--worksheets", "TD", "--groups", "TP", "--struct", "scripts/tests/config_test.yaml"]
-    # a = GradeSheetGroup(argv=argv)
-    # a.write()
-
-    # argv = ["--name", "Note TP", "-d", "scripts/tests", "--worksheets", "TD", "--groups", "TP", "--struct", "scripts/tests/config_test.yaml"]
-    # a = GradeSheetGroup(argv=argv)
-    # a.write()
-
-    argv = [
-        "--name",
-        "Rapport",
-        "-d",
-        "/home/sylvain/CloudStation/Sylvain/enseignements/P2020/SY09/generated/student_data_merge.xlsx",
-        "--worksheets",
-        "group",
-        "--groups",
-        "dataset",
-        "--struct",
-        "scripts/tests/config_test3.yaml",
-    ]
-    a = GradeSheetGroup(argv=argv)
-    a.write()
