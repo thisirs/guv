@@ -126,7 +126,7 @@ class TaskBase:
             # pas la tâche principale spécifiée en ligne de commande,
             # la construction de la tâche demande une valeur
             # incorrectement configurée
-            tf = TaskFailed(e.args)
+            tf = TaskFailed(str(e))
             kw["actions"] = [lambda: tf]
             return kw
         except Exception as e:
@@ -134,7 +134,7 @@ class TaskBase:
             # échoue. Progager l'exception si DEBUG.
             if settings.DEBUG > 0:
                 raise e from e
-            tf = TaskFailed(e.args)
+            tf = TaskFailed(str(e))
             kw["actions"] = [lambda: tf]
             return kw
 
