@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import importlib
+from datetime import datetime
 from schema import Schema, Or, And, Use, SchemaError
 
 SEMESTER_VARIABLE = "DOIT_UTC_SEMESTER_PATH"
@@ -16,6 +17,10 @@ class Settings:
         self.semester_directory = None
         self.settings = {}
         self.validation_schemes = {
+            "UVS": (
+                Schema(Or([str], (str,))),
+                "La variable 'UVS' est incorrecte",
+            ),
             "PLANNINGS": (
                 Schema({str: dict}),
                 "La variable 'PLANNINGS' est incorrecte",
@@ -23,6 +28,18 @@ class Settings:
             "CRENEAU_UV": (
                 Schema(str),
                 "La variable 'CRENEAU_UV' est incorrecte",
+            ),
+            "ENT_LISTING": (
+                Schema(str),
+                "La variable 'ENT_LISTING' est incorrecte",
+            ),
+            "AFFECTATION_LISTING": (
+                Schema(str),
+                "La variable 'AFFECTATION_LISTING' est incorrecte",
+            ),
+            "MOODLE_LISTING": (
+                Schema(str),
+                "La variable 'MOODLE_LISTING' est incorrecte",
             ),
             "SELECTED_PLANNINGS": (
                 Schema([str]),
@@ -36,6 +53,22 @@ class Settings:
                 Schema(Or(And(str, Use(int)), int)),
                 "La variable 'DEBUG' est incorrecte",
             ),
+            "SKIP_DAYS_C": (
+                Schema([datetime]),
+                "La variable 'SKIP_DAYS_C' est incorrecte",
+            ),
+            "SKIP_DAYS_D": (
+                Schema(Or([datetime], (datetime,))),
+                "La variable 'SKIP_DAYS_D' est incorrecte",
+            ),
+            "SKIP_DAYS_T": (
+                Schema(Or([datetime], (datetime,))),
+                "La variable 'SKIP_DAYS_T' est incorrecte",
+            ),
+            "TURN": (
+                Schema({datetime: str}),
+                "La variable 'TURN' est incorrecte",
+            )
         }
         self._setup = False
 
