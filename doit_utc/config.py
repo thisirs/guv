@@ -54,7 +54,7 @@ class Settings:
                 "La variable 'DEBUG' est incorrecte",
             ),
             "SKIP_DAYS_C": (
-                Schema([datetime]),
+                Schema(Or([datetime], (datetime,))),
                 "La variable 'SKIP_DAYS_C' est incorrecte",
             ),
             "SKIP_DAYS_D": (
