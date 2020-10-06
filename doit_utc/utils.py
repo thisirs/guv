@@ -66,7 +66,7 @@ def replace_regex(colname, *reps, new_colname=None):
 
     def func(df, path=None):
         check_columns(df, colname)
-        s = df[colname]
+        s = df[colname].copy()
         for rep in reps:
             s.replace(*rep, regex=True, inplace=True)
         cn = new_colname if new_colname is not None else colname
