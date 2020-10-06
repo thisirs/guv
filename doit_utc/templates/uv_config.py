@@ -5,10 +5,10 @@
 # DEBUG = 1
 
 # Chemin relatif vers l'extraction de l'effectif  issu de l'ENT (requis)
-ENT_LISTING = ""
+ENT_LISTING = None
 
 # Cheming relatif vers les affectations dans les Cours/TD/TP (requis)
-AFFECTATION_LISTING = ""
+AFFECTATION_LISTING = None
 
 # Chemin relatif vers le listing provenant de Moodle (optionnel)
 MOODLE_LISTING = None
