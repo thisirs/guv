@@ -46,10 +46,9 @@ class ModulesTaskLoader(NamespaceTaskLoader):
             self.tasks.update(dict(m))
             self.namespace.update(dict(m))
 
-    def _load_variables(self, *modules):
-        for module in modules:
-            self.variables.update(module.__dict__)
-            self.namespace.update(module.__dict__)
+    def _load_variables(self, dictionary):
+        self.variables.update(dictionary)
+        self.namespace.update(dictionary)
 
 
 # On force le chargement des variables dans settings pour qu'elle
@@ -61,7 +60,7 @@ except ImproperlyConfigured:
     pass
 
 task_loader = ModulesTaskLoader()
-task_loader._load_variables(settings)
+task_loader._load_variables(settings.settings)
 task_loader._load_tasks(
     dodo_instructors,
     dodo_utc,
