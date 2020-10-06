@@ -3,6 +3,7 @@ from pathlib import Path
 import importlib
 from datetime import datetime
 from schema import Schema, Or, And, Use, SchemaError
+from .schema_utils import Iterable
 
 SEMESTER_VARIABLE = "DOIT_UTC_SEMESTER_PATH"
 
@@ -17,22 +18,13 @@ class Settings:
         self.semester_directory = None
         self.settings = {}
         self.validation_schemes = {
-            "UVS": (
-                Schema(Or([str], (str,))),
-                "La variable 'UVS' est incorrecte",
-            ),
+            "UVS": (Schema(Or([str], (str,))), "La variable 'UVS' est incorrecte",),
             "PLANNINGS": (
                 Schema({str: dict}),
                 "La variable 'PLANNINGS' est incorrecte",
             ),
-            "CRENEAU_UV": (
-                Schema(str),
-                "La variable 'CRENEAU_UV' est incorrecte",
-            ),
-            "ENT_LISTING": (
-                Schema(str),
-                "La variable 'ENT_LISTING' est incorrecte",
-            ),
+            "CRENEAU_UV": (Schema(str), "La variable 'CRENEAU_UV' est incorrecte",),
+            "ENT_LISTING": (Schema(str), "La variable 'ENT_LISTING' est incorrecte",),
             "AFFECTATION_LISTING": (
                 Schema(str),
                 "La variable 'AFFECTATION_LISTING' est incorrecte",
@@ -65,11 +57,24 @@ class Settings:
                 Schema(Or([datetime], (datetime,))),
                 "La variable 'SKIP_DAYS_T' est incorrecte",
             ),
-            "TURN": (
-                Schema({datetime: str}),
-                "La variable 'TURN' est incorrecte",
-            )
+            "TURN": (Schema({datetime: str}), "La variable 'TURN' est incorrecte",),
+            "AGGREGATE_DOCUMENTS": (
+                Schema(
+                    Or(
+                        And(None, Use(lambda x: [])),
+                        (Iterable(Or(None, str), callable)),
+                        [Iterable(Or(None, str), callable)],
+                        And(
+                            {Or(None, str): callable},
+                            Use(lambda x: [[k, v] for k, v in x.items()]),
+                        ),
+                    )
+                ),
+                "La variable 'AGGREGATE_DOCUMENTS' est incorrecte",
+            ),
         }
+
+
         self._setup = False
 
     def setup(self):

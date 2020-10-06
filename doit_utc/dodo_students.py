@@ -435,20 +435,15 @@ class XlsStudentDataMerge(UVTask):
                 self.docs.append((info_etu, self.add_student_info))
 
         agg_docs = (
-            self.settings.AGGREGATE_DOCUMENTS
-            if (
-                "AGGREGATE_DOCUMENTS" in self.settings
-                and self.settings.AGGREGATE_DOCUMENTS
-            )
+            [
+                [self.build_dep(k) if k is not None else None, v]
+                for k, v in self.settings.AGGREGATE_DOCUMENTS
+            ]
+            if "AGGREGATE_DOCUMENTS" in self.settings
             else []
         )
-        if isinstance(agg_docs, list):
-            self.docs = self.docs + agg_docs
-        elif isinstance(agg_docs, dict):
-            self.docs = self.docs + [(key, value) for key, value in agg_docs.items()]
-        else:
-            raise Exception("Format de AGGREGATE_DOCUMENTS incorrect")
 
+        self.docs = self.docs + agg_docs
         deps = [path for path, _ in self.docs if path is not None]
         self.file_dep = deps + [self.student_data] + self.settings.config_files
 
