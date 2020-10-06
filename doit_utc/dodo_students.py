@@ -532,6 +532,7 @@ class XlsStudentDataMerge(UVTask):
             tf_df = slugrot("Nom", "Prénom")
             df["fullname_slug"] = tf_df(df)
             df[f'{ctype}_orig'] = df[ctype]
+            names = df[ctype].unique()
 
             with open(fn, 'r') as fd:
                 for line in fd:
@@ -554,7 +555,7 @@ class XlsStudentDataMerge(UVTask):
                             raise Exception('Nombre d\'enregistrement != 1', len(stu1row), stu1)
                         stu1idx = stu1row.index[0]
 
-                    if re.match('^[TD][0-9]+', stu2):
+                    if stu2 in names:
                         df.loc[stu1idx, ctype] = stu2
                     elif '@etu' in stu2:
                         stu2row = df.loc[df['Courriel'] == stu2]
