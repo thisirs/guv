@@ -460,10 +460,10 @@ class XlsStudentDataMerge(UVTask):
                 print("File is None, aggregating without file")
                 df = aggregater(df, None)
             elif os.path.exists(path):
-                print("Aggregating %s" % rel_to_dir(path, self.settings.SEMESTER_DIR))
+                print("Aggregating '%s'" % rel_to_dir(self.build_dep(path), self.settings.SEMESTER_DIR))
                 df = aggregater(df, path)
             else:
-                print("WARNING: File %s not found!" % rel_to_dir(path, self.settings.SEMESTER_DIR))
+                print("WARNING: File '%s' not found!" % rel_to_dir(self.build_dep(path), self.settings.SEMESTER_DIR))
 
         dff = sort_values(df, ["Nom", "Prénom"])
 
