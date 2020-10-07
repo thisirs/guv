@@ -1052,5 +1052,3 @@ def run(argv=sys.argv[1:], prog=os.path.basename(__file__), description=None):
     writer_class = name_to_writer[args.sub_command]
     writer = writer_class(argv=argv[1:])
     writer.write()
-
-
