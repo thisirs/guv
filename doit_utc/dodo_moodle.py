@@ -14,14 +14,14 @@ import random
 import argparse
 import json
 from datetime import timedelta, datetime, time
+import pprint
+import markdown
 import pandas as pd
 import numpy as np
 import pynliner
 import jinja2
-import markdown
 import browser_cookie3
 import yapf.yapflib.yapf_api as yapf
-import pprint
 from bs4 import BeautifulSoup
 import requests
 
