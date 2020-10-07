@@ -119,7 +119,7 @@ class CsvInscrits(UVTask):
         )
         df = df.reset_index()
 
-        # Il peut arriver qu'un créneaux A/B ne soit pas marqué comme tel
+        # Il peut arriver qu'un créneau A/B ne soit pas marqué comme tel
         # car il n'a pas de pendant pour l'autre semaine. On le fixe donc
         # manuellement à A ou B.
         if "TP" in df.columns:
