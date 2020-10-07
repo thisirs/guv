@@ -418,21 +418,45 @@ class XlsStudentDataMerge(UVTask):
             tiers_temps = self.build_dep(self.settings.TIERS_TEMPS)
             if os.path.exists(tiers_temps):
                 self.docs.append((tiers_temps, self.add_tiers_temps))
+            else:
+                fn = rel_to_dir(tiers_temps, self.settings.semester_directory)
+                raise ImproperlyConfigured(
+                    "La variable 'TIERS_TEMPS' spécifie le fichier "
+                    f"{fn} qui n'existe pas"
+                )
 
         if "CHANGEMENT_TD" in self.settings and self.settings.CHANGEMENT_TD:
             TD_switches = self.build_dep(self.settings.CHANGEMENT_TD)
             if os.path.exists(TD_switches):
                 self.docs.append((TD_switches, self.add_switches("TD")))
+            else:
+                fn = rel_to_dir(TD_switches, self.settings.semester_directory)
+                raise ImproperlyConfigured(
+                    "La variable 'CHANGEMENT_TD' spécifie le fichier "
+                    f"{fn} qui n'existe pas"
+                )
 
         if "CHANGEMENT_TP" in self.settings and self.settings.CHANGEMENT_TP:
             TP_switches = self.build_dep(self.settings.CHANGEMENT_TP)
             if os.path.exists(TP_switches):
                 self.docs.append((TP_switches, self.add_switches("TP")))
+            else:
+                fn = rel_to_dir(TP_switches, self.settings.semester_directory)
+                raise ImproperlyConfigured(
+                    "La variable 'CHANGEMENT_TP' spécifie le fichier "
+                    f"{fn} qui n'existe pas"
+                )
 
         if "INFO_ETUDIANT" in self.settings and self.settings.INFO_ETUDIANT:
             info_etu = self.build_dep(self.settings.INFO_ETUDIANT)
             if os.path.exists(info_etu):
                 self.docs.append((info_etu, self.add_student_info))
+            else:
+                fn = rel_to_dir(info_etu, self.settings.semester_directory)
+                raise ImproperlyConfigured(
+                    "La variable 'INFO_ETUDIANT' spécifie le fichier "
+                    f"{fn} qui n'existe pas"
+                )
 
         agg_docs = (
             [
