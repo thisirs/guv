@@ -12,11 +12,16 @@ import numpy as np
 import pandas as pd
 from unidecode import unidecode
 
-from . import openpyxl_patched as openpyx
+# Patch openpyxl
+import openpyxl
+from .openpyxl_patched import fixit
+fixit(openpyxl)
+
 from openpyxl import Workbook
-from openpyxl import utils
+from openpyxl.utils import get_column_letter
 from openpyxl.utils.dataframe import dataframe_to_rows
 
+from .config import ImproperlyConfigured
 from .utils_config import Output
 from .utils import (
     sort_values,
@@ -498,7 +503,7 @@ class XlsStudentDataMerge(UVTask):
         max_column = ws.max_column
         max_row = ws.max_row
         ws.auto_filter.ref = 'A1:{}{}'.format(
-            utils.get_column_letter(max_column),
+            get_column_letter(max_column),
             max_row)
 
         # On fige la première ligne

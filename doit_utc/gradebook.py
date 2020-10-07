@@ -12,12 +12,16 @@ from collections import OrderedDict
 
 from schema import Schema, And, Use, Or, Optional
 
-from . import openpyxl_patched as openpyxl
+import openpyxl
+from .openpyxl_patched import fixit
+fixit(openpyxl)
 
 from openpyxl import Workbook
-from openpyxl import utils
-from openpyxl.styles import Alignment, PatternFill
+from openpyxl.utils import get_column_letter
+from openpyxl.styles import Alignment
+from openpyxl.styles import PatternFill
 from openpyxl.formatting.rule import CellIsRule
+
 from .openpyxl_utils import (
     frame_range,
     get_address_of_cell,
@@ -25,6 +29,7 @@ from .openpyxl_utils import (
     get_segment,
     row_and_col,
     fit_cells_at_col,
+    generate_ranges
 )
 
 import pandas as pd
@@ -229,7 +234,7 @@ class BaseGradeSheet(CliArgsMixin):
                         self.first_ws.cell(i + 2, idx).value = value
 
                 # Get cells
-                cells = self.first_ws[utils.get_column_letter(idx)][1 : (N + 1)]
+                cells = self.first_ws[get_column_letter(idx)][1 : (N + 1)]
 
                 # Fit width of column to actual content
                 fit_cells_at_col(self.first_ws.cell(1, idx), *cells)
@@ -265,7 +270,7 @@ class BaseGradeSheet(CliArgsMixin):
 
         # Sort all columns
         self.first_ws.auto_filter.ref = "A1:{}{}".format(
-            utils.get_column_letter(idx - 1), N + 1
+            get_column_letter(idx - 1), N + 1
         )
 
         if N >= 10:
@@ -941,7 +946,7 @@ class GradeSheetJury(ConfigCliOpt, BaseGradeSheet):
         max_column = self.first_ws.max_column
         max_row = self.first_ws.max_row
         self.first_ws.auto_filter.ref = "A1:{}{}".format(
-            utils.get_column_letter(max_column), max_row
+            get_column_letter(max_column), max_row
         )
         range = self.get_column_range("Note ECTS")
         self.first_ws.auto_filter.add_sort_condition(range)
@@ -1001,7 +1006,7 @@ class GradeSheetSimpleWriter(GradeSheetMultiple):
 
         for i in range(len(group)):
             gradesheet.column_dimensions[
-                utils.get_column_letter(col + i + 1)
+                get_column_letter(col + i + 1)
             ].width = max_len
 
         # On fige la première ligne

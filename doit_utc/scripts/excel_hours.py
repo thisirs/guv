@@ -2,12 +2,15 @@ __doc__ = """
 Create Excel files
 """
 
-from .. import openpyxl_patched as openpyxl
-from ..openpyxl_utils import row_and_col
+import openpyxl
+from ..openpyxl_patched import fixit
+fixit(openpyxl)
 
 from openpyxl import Workbook
-from openpyxl import utils
+from openpyxl.utils import get_column_letter
 from openpyxl.styles import PatternFill
+
+from ..openpyxl_utils import row_and_col
 
 import numpy as np
 
@@ -48,10 +51,10 @@ def create_double_entry_table(ws, cell_ref, df, title):
         cell_ref.below(i + 1).right(i + 1).fill = solid
 
     # En-tête ligne et colonne
-    ws.column_dimensions[utils.get_column_letter(cell_ref.col_idx)].width = 20
+    ws.column_dimensions[get_column_letter(cell_ref.col_idx)].width = 20
 
     for i, instructor in enumerate(instructors):
-        ws.column_dimensions[utils.get_column_letter(cell_ref.col_idx + 1 + i)].width = 20
+        ws.column_dimensions[get_column_letter(cell_ref.col_idx + 1 + i)].width = 20
         cell_ref.below(i + 1).value = instructor
         cell_ref.right(i + 1).value = instructor
 
