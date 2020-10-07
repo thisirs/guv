@@ -127,3 +127,18 @@ def fit_cells_at_col(*cells):
         if lengths:
             max_len = max(lengths)
             worksheet.column_dimensions[utils.get_column_letter(k)].width = 1.3*max_len
+
+
+def generate_ranges(ref_cell, by="col", length=None, nranges=None):
+    if by == "col":
+        for i in range(nranges):
+            yield list(
+                get_segment(ref_cell.right(i), ref_cell.right(i).below(length - 1))
+            )
+    elif by == "row":
+        for i in range(nranges):
+            yield list(
+                get_segment(ref_cell.below(i), ref_cell.below(i).right(length - 1))
+            )
+    else:
+        raise Exception("Wrong 'by' argument")
