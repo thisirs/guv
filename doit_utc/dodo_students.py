@@ -227,13 +227,13 @@ class XlsStudentData(UVTask):
         # Drop unamed columns
         df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
 
-        if self.csv_UTC is not None:
-            print("Ajout des affectations aux Cours/TD/TP")
-            df = self.add_UTC_data(df, self.csv_UTC)
-
         if self.csv_moodle is not None:
             print("Ajout des données issues de Moodle")
             df = self.add_moodle_data(df, self.csv_moodle)
+
+        if self.csv_UTC is not None:
+            print("Ajout des affectations aux Cours/TD/TP")
+            df = self.add_UTC_data(df, self.csv_UTC)
 
         dff = sort_values(df, ["Nom", "Prénom"])
 
