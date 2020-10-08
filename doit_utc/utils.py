@@ -116,20 +116,24 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
 
         # Columns that will be removed after merging
         drop_cols = []
+
+        # Flag if left_on is a computed column
         left_on_is_added = False
 
-        # Add column if callable, check if it exists
+        # Add column if callable, callable should return of pandas
+        # Series
         if callable(left_on):
             left_on = left_on(left_df)
             left_df = left_df.assign(**{left_on.name: left_on.values})
             left_on = left_on.name
             left_on_is_added = True
 
+        # Check if it exists
         if isinstance(left_on, str):
             # Check that left_on column exists
             check_columns(left_df, left_on)
         else:
-            raise Exception("Unsupported type for left_on")
+            raise Exception("L'argument 'left_on' doit être un callable ou une chaine de caractères")
 
         # Infer a read method if not provided
         if read_method is None:
@@ -145,14 +149,14 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
         if preprocessing is not None:
             right_df = preprocessing(right_df)
 
-        # Add column if callable, check if it exists
+        # Add column if callable
         if callable(right_on):
             right_on = right_on(right_df)
             right_df = right_df.assign(**{right_on.name: right_on.values})
             right_on = right_on.name
 
+        # Check if it exists
         if isinstance(right_on, str):
-            # Check that right_on column exists
             check_columns(right_df, right_on)
         else:
             raise Exception("Unsupported type for right_on")
@@ -177,7 +181,10 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
                 raise Exception('Pas de renommage de la clé possible')
             right_df = right_df.rename(columns=rename)
 
-        # Columns to drop after merge
+        # Columns to drop after merge: primary key of right dataframe
+        # only if name is different, _merge column added by pandas
+        # during merge, programmatically added column is
+        # left_on_is_added is set
         drop_cols = ['_merge']
         if right_on != left_on:
             if right_on in left_df.columns:
@@ -188,7 +195,8 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
         if left_on_is_added:
             drop_cols += [left_on]
 
-        # Record duplicated columns to be eventually merged later
+        # Record same column name between right_df and left_df to
+        # merge them eventually
         duplicated_columns = set(left_df.columns).intersection(set(right_df.columns))
         duplicated_columns = duplicated_columns.difference(set([left_on, right_on]))
 
@@ -219,7 +227,7 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
         # Try to merge columns
         for c in duplicated_columns:
             c_y = c + '_y'
-            print('Trying to merge columns %s and %s...' % (c, c_y), end='')
+            print("Trying to merge columns '%s' and '%s'..." % (c, c_y), end='')
             if any(agg_df[c_y].notna() & agg_df[c].notna()):
                 print('failed')
                 continue
