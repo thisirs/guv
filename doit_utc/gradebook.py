@@ -96,21 +96,13 @@ class GroupCliOpt(CliArgsMixin):
 
     def add_arguments(self):
         super().add_arguments()
-        self.add_argument("--worksheets", dest="group_by")
+        self.add_argument("--group", dest="subgroup_by")
 
     def get_columns(self, **kwargs):
         columns = super().get_columns(**kwargs)
 
-        if self.args.group_by is not None:
-            columns.append((self.args.group_by, "raw", 5))
-
-        return columns
-
-
-class GroupCliOpt(CliArgsMixin):
-    def add_arguments(self):
-        super().add_arguments()
-        self.add_argument("--group", dest="group_by")
+        if self.args.subgroup_by is not None:
+            columns.append((self.args.subgroup_by, "raw", 6))
 
 
 class ConfigCliOpt(CliArgsMixin):
@@ -159,6 +151,13 @@ class FirstGradeSheet(CliArgsMixin):
             help="Colonne utilisée pour ordonner la liste des étudiants "
             "dans les feuilles de notations",
         )
+        self.add_argument(
+            "--worksheets",
+            dest="group_by",
+            required=False,
+            help="Colonne utilisée pour faire des groupes d'étudiants "
+            "sur plusieurs feuilles de calculs différentes",
+        )
 
     def setup(self):
         # Setting source of grades
@@ -196,6 +195,9 @@ class FirstGradeSheet(CliArgsMixin):
         # include it in worksheet
         if self.args.order_by is not None:
             columns.append((self.args.order_by, "hide", 5))
+
+        if self.args.group_by is not None:
+            columns.append((self.args.group_by, "raw", 5))
 
         # Add column for grades
         columns.append((self.args.name, "cell", 100))
@@ -295,21 +297,6 @@ class FirstGradeSheet(CliArgsMixin):
         self.workbook.save(self.output_file)
 
     def create_worksheets(self):
-        pass
-
-    def write(self):
-        self.add_arguments()
-        self.parse_arguments()
-        self.setup()
-        self.create_first_worksheet()
-        self.create_worksheets()
-        self.write_workbook()
-
-
-class GradeSheetMultiple(MultipleCliOpt, BaseGradeSheet):
-    """Classe abstraite pour la création de plusieurs feuilles de notes"""
-
-    def create_worksheets(self):
         """Create one or more worksheets based on `worksheets` argument."""
 
         if self.args.group_by is not None:
@@ -329,6 +316,14 @@ class GradeSheetMultiple(MultipleCliOpt, BaseGradeSheet):
 
     def create_worksheet(self, name, group):
         pass
+
+    def write(self):
+        self.add_arguments()
+        self.parse_arguments()
+        self.setup()
+        self.create_first_worksheet()
+        self.create_worksheets()
+        self.write_workbook()
 
 
 class MarkingScheme:
@@ -491,9 +486,6 @@ class GradeSheetGroup(GroupCliOpt, ConfigCliOpt, FirstGradeSheet):
     def add_arguments(self):
         super().add_arguments()
 
-        # Make groups inside each worksheet
-        self.add_argument("--groups", dest="subgroup_by", default=lambda x: 0)
-
         # FIXME: Use it or delete it
         self.add_argument(
             "-t",
@@ -510,9 +502,6 @@ class GradeSheetGroup(GroupCliOpt, ConfigCliOpt, FirstGradeSheet):
 
     def get_columns(self):
         columns = super().get_columns()
-
-        if not callable(self.args.subgroup_by):
-            columns.append((self.args.subgroup_by, "raw", 6))
 
         if self.args.grade_type == "num":
             columns.append((self.args.name + " brut", "cell", 9))
