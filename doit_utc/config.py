@@ -26,11 +26,11 @@ class Settings:
             "CRENEAU_UV": (Schema(str), "La variable 'CRENEAU_UV' est incorrecte",),
             "ENT_LISTING": (Schema(str), "La variable 'ENT_LISTING' est incorrecte",),
             "AFFECTATION_LISTING": (
-                Schema(str),
+                Schema(Or(None, str)),
                 "La variable 'AFFECTATION_LISTING' est incorrecte",
             ),
             "MOODLE_LISTING": (
-                Schema(str),
+                Schema(Or(None, str)),
                 "La variable 'MOODLE_LISTING' est incorrecte",
             ),
             "SELECTED_PLANNINGS": (
