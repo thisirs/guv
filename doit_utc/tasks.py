@@ -119,16 +119,16 @@ class TaskBase:
                 ]
                 return (t for t in tasks)
 
-        except (NotUVDirectory, DependentTaskParserError, ImproperlyConfigured) as e:
+        except (NotUVDirectory, DependentTaskParserError) as e:
             # Retourner une tâche dont la construction a échouée si le
             # dossier courant n'est pas un dossier d'UV, la tâche
             # demande des arguments en ligne de commande mais ce n'est
-            # pas la tâche principale spécifiée en ligne de commande,
-            # la construction de la tâche demande une valeur
-            # incorrectement configurée
+            # pas la tâche principale spécifiée en ligne de commande.
             tf = TaskFailed(str(e))
             kw["actions"] = [lambda: tf]
             return kw
+        except ImproperlyConfigured as e:
+            raise e from e
         except Exception as e:
             # Exception inexpliquée, la construction de la tâche
             # échoue. Progager l'exception si DEBUG.
