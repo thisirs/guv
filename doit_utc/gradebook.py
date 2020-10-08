@@ -953,7 +953,7 @@ class GradeSheetJury(ConfigCliOpt, FirstGradeSheet):
         self.first_ws.auto_filter.add_sort_condition(range)
 
 
-class GradeSheetSimpleWriter(GradeSheetMultiple):
+class GradeSheetSimpleWriter(FirstGradeSheet):
     """Feuille de notes simple par étudiant et sans barème."""
 
     name = "simple"
@@ -1014,7 +1014,7 @@ class GradeSheetSimpleWriter(GradeSheetMultiple):
         gradesheet.freeze_panes = ref_list.top()
 
 
-class GradeSheetExamWriter(ConfigCliOpt, GradeSheetMultiple):
+class GradeSheetExamWriter(ConfigCliOpt, FirstGradeSheet):
     """Feuille de notes pour un examen type médian/final avec des
 questions structurées."""
 
