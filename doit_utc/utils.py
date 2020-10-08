@@ -179,10 +179,11 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
 
         # Columns to drop after merge
         drop_cols = ['_merge']
-        if right_on in left_df.columns:
-            drop_cols += [right_on + "_y"]
-        else:
-            drop_cols += [right_on]
+        if right_on != left_on:
+            if right_on in left_df.columns:
+                drop_cols += [right_on + "_y"]
+            else:
+                drop_cols += [right_on]
 
         if left_on_is_added:
             drop_cols += [left_on]
@@ -204,10 +205,9 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
 
         # Select right only and report
         merged_df_ro = merged_df[merged_df["_merge"] == 'right_only']
-        if right_on in left_df.columns:
-            key = right_on + "_y"
-        else:
-            key = right_on
+        key = right_on
+        if (right_on != left_on and right_on in left_df.columns):
+            key = key + "_y"
 
         for index, row in merged_df_ro.iterrows():
             print("WARNING: identifiant présent dans le document à aggréger mais introuvable dans la base de données :", row[key])
