@@ -92,6 +92,8 @@ class CliArgsMixin:
 
 
 class MultipleCliOpt(CliArgsMixin):
+    """Classe pour ajouter l'option 'worksheets'"""
+
     def add_arguments(self):
         super().add_arguments()
         self.add_argument("--worksheets", dest="group_by")
@@ -139,15 +141,21 @@ class ConfigCliOpt(CliArgsMixin):
 
 
 class BaseGradeSheet(CliArgsMixin):
+    """Classe de base pour la création d'une feuille de notes"""
+
     def __init__(self, argv=sys.argv[1:]):
         self.argv = argv
 
     def add_arguments(self):
         super().add_arguments()
-        self.add_argument("--name", required=True)
-        self.add_argument("-d", "--data", dest="data_file"),
+        self.add_argument("--name", required=True, help="Nom de la feuille de notes")
+        self.add_argument("-d", "--data", dest="data_file", help=""),
         self.add_argument("-o", "--output-file")
-        self.add_argument("--order-by", required=False)
+        self.add_argument(
+            "--order-by",
+            required=False,
+            help="Colonne utilisée pour ordonner la liste des étudiants dans les feuilles de notations",
+        )
 
     def setup(self):
         # Setting source of grades
@@ -296,12 +304,13 @@ class BaseGradeSheet(CliArgsMixin):
 
 
 class GradeSheetMultiple(MultipleCliOpt, BaseGradeSheet):
-    """Abstract class for workbook with multiple worksheets"""
+    """Classe abstraite pour la création de plusieurs feuilles de notes"""
 
     def create_worksheets(self):
         """Create one or more worksheets based on `worksheets` argument."""
 
         if self.args.group_by is not None:
+            # On groupe avec group_by issu de l'option --worksheets
             gb = self.first_df.sort_values(self.args.group_by).groupby(
                 self.args.group_by
             )
