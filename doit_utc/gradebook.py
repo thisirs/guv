@@ -140,7 +140,7 @@ class ConfigCliOpt(CliArgsMixin):
             return config
 
 
-class BaseGradeSheet(CliArgsMixin):
+class FirstGradeSheet(CliArgsMixin):
     """Classe de base pour la création d'une feuille de notes"""
 
     def __init__(self, argv=sys.argv[1:]):
@@ -426,7 +426,7 @@ class MarkingScheme:
         self.bottom_right = worksheet.cell(row + self.height, col + self.width)
 
 
-class GradeSheetNoGroup(ConfigCliOpt, GradeSheetMultiple):
+class GradeSheetNoGroup(ConfigCliOpt, FirstGradeSheet):
     name = "simple"
     config_argname = "--marking-scheme"
 
@@ -479,7 +479,7 @@ class GradeSheetNoGroup(ConfigCliOpt, GradeSheetMultiple):
             insert_record(ref_cell, record)
 
 
-class GradeSheetGroup(GroupCliOpt, ConfigCliOpt, GradeSheetMultiple):
+class GradeSheetGroup(GroupCliOpt, ConfigCliOpt, FirstGradeSheet):
     """Base class for workbook with grades by group of students"""
 
     name = "group"
@@ -617,7 +617,7 @@ class GradeSheetGroup(GroupCliOpt, ConfigCliOpt, GradeSheetMultiple):
         return return_cell
 
 
-class GradeSheetJury(ConfigCliOpt, BaseGradeSheet):
+class GradeSheetJury(ConfigCliOpt, FirstGradeSheet):
     name = "jury"
     config_argname = "--config"
 
