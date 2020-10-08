@@ -44,11 +44,15 @@ class CsvInscrits(UVTask):
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
         utc_listing_fn = self.settings.AFFECTATION_LISTING
-        self.utc_listing = os.path.join(
-            self.settings.SEMESTER_DIR, self.uv, utc_listing_fn
-        )
+        if utc_listing_fn is not None:
+            self.utc_listing = os.path.join(
+                self.settings.SEMESTER_DIR, self.uv, utc_listing_fn
+            )
+            self.file_dep = [self.utc_listing]
+        else:
+            self.utc_listing = None
+            self.file_dep = []
         self.target = self.build_target()
-        self.file_dep = [self.utc_listing]
 
     def parse_UTC_listing(self):
         """Parse FILENAME into DataFrame"""
@@ -149,6 +153,10 @@ class CsvInscrits(UVTask):
         return df
 
     def run(self):
+        if self.utc_listing is None:
+            raise ImproperlyConfigured(
+                "La variable 'AFFECTATION_LISTING' n'est pas renseignée"
+            )
         if not os.path.exists(self.utc_listing):
             raise Exception("Le fichier '{0}' n'existe pas".format(
                 rel_to_dir(self.utc_listing, self.settings.SEMESTER_DIR)
@@ -176,12 +184,18 @@ class XlsStudentData(UVTask):
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
+        self.file_dep = []
+
         self.extraction_ENT = os.path.join(
             self.settings.SEMESTER_DIR, self.uv, self.settings.ENT_LISTING
         )
-        self.csv_UTC = CsvInscrits.target_from(**self.info)
-        self.target = self.build_target()
-        self.file_dep = [self.extraction_ENT, self.csv_UTC]
+        self.file_dep.append(self.extraction_ENT)
+
+        if self.settings.AFFECTATION_LISTING is not None:
+            self.csv_UTC = CsvInscrits.target_from(**self.info)
+            self.file_dep.append(self.csv_UTC)
+        else:
+            self.csv_UTC = None
 
         if "MOODLE_LISTING" in self.settings and self.settings.MOODLE_LISTING:
             self.csv_moodle = os.path.join(
@@ -190,6 +204,8 @@ class XlsStudentData(UVTask):
             self.file_dep += [self.csv_moodle]
         else:
             self.csv_moodle = None
+
+        self.target = self.build_target()
 
     def run(self):
         if not os.path.exists(self.extraction_ENT):
@@ -211,8 +227,9 @@ class XlsStudentData(UVTask):
         # Drop unamed columns
         df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
 
-        print("Ajout des affectations aux Cours/TD/TP")
-        df = self.add_UTC_data(df, self.csv_UTC)
+        if self.csv_UTC is not None:
+            print("Ajout des affectations aux Cours/TD/TP")
+            df = self.add_UTC_data(df, self.csv_UTC)
 
         if self.csv_moodle is not None:
             print("Ajout des données issues de Moodle")
