@@ -225,7 +225,7 @@ class XlsAffectation(UVTask):
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
         self.uvlist_csv = UtcUvListToCsv.target_from()
-        self.target = self.build_target(**self.info)
+        self.target = self.build_target()
         self.file_dep = [self.uvlist_csv]
 
     def run(self):
