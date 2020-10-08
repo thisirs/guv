@@ -91,8 +91,8 @@ class CliArgsMixin:
         self.args = self._parser.parse_args(self.argv)
 
 
-class MultipleCliOpt(CliArgsMixin):
-    """Classe pour ajouter l'option 'worksheets'"""
+class GroupCliOpt(CliArgsMixin):
+    """Classe pour la spécification d'une colonne dénotant des sous-groupes"""
 
     def add_arguments(self):
         super().add_arguments()
@@ -114,6 +114,8 @@ class GroupCliOpt(CliArgsMixin):
 
 
 class ConfigCliOpt(CliArgsMixin):
+    """Classe pour la spécification d'un fichier de configuration"""
+
     config_argname = "--config"
 
     def add_arguments(self):
@@ -154,7 +156,8 @@ class FirstGradeSheet(CliArgsMixin):
         self.add_argument(
             "--order-by",
             required=False,
-            help="Colonne utilisée pour ordonner la liste des étudiants dans les feuilles de notations",
+            help="Colonne utilisée pour ordonner la liste des étudiants "
+            "dans les feuilles de notations",
         )
 
     def setup(self):
