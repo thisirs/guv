@@ -25,7 +25,7 @@ def selected_uv(all="dummy"):
         }
 
         if not set(settings.UVS).issubset(set(uv_to_planning.keys())):
-            raise ValueError("Des UVS n'ont pas de planning associé")
+            raise ImproperlyConfigured("Des UVS n'ont pas de planning associé")
 
         for uv in settings.UVS:
             plng = uv_to_planning[uv]
