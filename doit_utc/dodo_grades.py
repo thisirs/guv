@@ -61,8 +61,8 @@ class CsvForUpload(CliArgsMixin, UVTask):
         ),
     )
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
+    def setup(self):
+        super().setup()
 
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
         self.target = self.build_target()
@@ -132,10 +132,13 @@ class XlsMergeFinalGrade(CliArgsMixin, UVTask):
     cli_args = (argument("-e", "--exam", required=True, help="Nom de l'examen"),)
     unique_uv = True
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
-        self.xls_sheets = os.path.join(self.settings.SEMESTER_DIR, self.target_dir, f"{self.exam}.xlsx")
+    def setup(self):
+        super().setup()
         self.target = self.build_target()
+
+    def setup(self):
+        super().setup()
+        self.xls_sheets = os.path.join(self.settings.SEMESTER_DIR, self.target_dir, f"{self.exam}.xlsx")
         self.file_dep = [self.xls_sheets]
 
     def run(self):
@@ -171,8 +174,8 @@ class XlsGradeSheet(UVTask):
     always_make = True
     target_dir = "documents"
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
+    def setup(self):
+        super().setup()
         self.data_file = XlsStudentDataMerge.target_from(**self.info)
         self.docs = os.path.join(self.settings.SEMESTER_DIR, self.uv, self.target_dir)
 
@@ -189,8 +192,8 @@ class YamlQCM(UVTask):
     target_dir = "generated"
     target_name = "QCM.yaml"
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
+    def setup(self):
+        super().setup()
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
         self.target = self.build_target()
         self.file_dep = [self.xls_merge]
@@ -223,8 +226,8 @@ class XlsAssignmentGrade(CliArgsMixin, UVTask):
     cli_args = (argument("-e", "--exam", required=True, help="Nom de l'examen"),)
     always_make = True
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
+    def setup(self):
+        super().setup()
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
         self.inst_uv = XlsAffectation.target_from(**self.info)
         self.target = self.build_target()

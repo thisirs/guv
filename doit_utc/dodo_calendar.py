@@ -120,8 +120,8 @@ class CalUv(UVTask):
     target_dir = "generated"
     target_name = "calendrier.pdf"
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
+    def setup(self):
+        super().setup()
         self.uv_list = XlsAffectation.target_from(**self.info)
         self.target = self.build_target()
         jinja_dir = os.path.join(os.path.dirname(__file__), "templates")
@@ -159,8 +159,8 @@ class CalInst(CliArgsMixin, TaskBase):
         ),
     )
 
-    def __init__(self):
-        super().__init__()
+    def setup(self):
+        super().setup()
         self.uv_list = AddInstructors.target_from()
         jinja_dir = os.path.join(os.path.dirname(__file__), "templates")
         template = os.path.join(jinja_dir, "calendar_template.tex.jinja2")

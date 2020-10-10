@@ -95,8 +95,8 @@ class IcalInst(CliArgsMixin, TaskBase):
         ),
     )
 
-    def __init__(self):
-        super().__init__()
+    def setup(self):
+        super().setup()
         self.csv_slot_inst = AddInstructors.target_from()
         self.file_dep = [self.csv_slot_inst]
         if self.plannings is None:

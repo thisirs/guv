@@ -41,8 +41,8 @@ class CsvInscrits(UVTask):
     target_dir = "generated"
     unique_uv = False
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
+    def setup(self):
+        super().setup()
         utc_listing_fn = self.settings.AFFECTATION_LISTING
         if utc_listing_fn is not None:
             self.utc_listing = os.path.join(
@@ -182,9 +182,10 @@ class XlsStudentData(UVTask):
     target_name = "student_data.xlsx"
     unique_uv = False
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
+    def setup(self):
+        super().setup()
         self.file_dep = []
+        self.target = self.build_target()
 
         self.extraction_ENT = os.path.join(
             self.settings.SEMESTER_DIR, self.uv, self.settings.ENT_LISTING
@@ -205,7 +206,6 @@ class XlsStudentData(UVTask):
         else:
             self.csv_moodle = None
 
-        self.target = self.build_target()
 
     def run(self):
         if not os.path.exists(self.extraction_ENT):
@@ -428,8 +428,8 @@ class XlsStudentDataMerge(UVTask):
     target_dir = "generated"
     unique_uv = False
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
+    def setup(self):
+        super().setup()
         self.student_data = XlsStudentData.target_from(**self.info)
         self.target = self.build_target()
 
@@ -668,8 +668,8 @@ class CsvExamGroups(UVTask, CliArgsMixin):
         ),
     )
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
+    def setup(self):
+        super().setup()
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
         self.target = self.build_target()
         target_name = os.path.splitext(self.target_name)[0] + '_moodle.csv'
@@ -725,8 +725,8 @@ class CsvGroups(UVTask, CliArgsMixin):
         ),
     )
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
+    def setup(self):
+        super().setup()
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
         self.targets = [
             self.build_target(ctype=ctype)
@@ -782,8 +782,8 @@ class CsvMoodleGroups(CliArgsMixin, UVTask):
         ),
     )
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
+    def setup(self):
+        super().setup()
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
         self.target_csv = self.build_target(**self.info)
         self.target_moodle = os.path.splitext(self.target_csv)[0] + '_moodle.csv'
@@ -989,8 +989,8 @@ class CsvGroupsGroupings(UVTask, CliArgsMixin):
         ),
     )
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
+    def setup(self):
+        super().setup()
         self.target = self.build_target(**self.info)
 
     def run(self):

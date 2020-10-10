@@ -21,10 +21,14 @@ class TaskBase:
     def __init__(self):
         name = self.__class__.__name__
         task_name = re.sub(r'(?<!^)(?<=[a-z])(?=[A-Z])', '_', name).lower()
-        if task_name.startswith("task_"):
-            task_name = task_name[5:]
         self.task_name = task_name
         self.doc = self.__class__.__doc__
+
+    def setup(self):
+        pass
+
+    def run(self):
+        pass
 
     @property
     def settings(self):
@@ -51,92 +55,108 @@ class TaskBase:
         )
         return pformat(target, **kw)
 
+    def to_doit_task(self, **kwargs):
+        """Build a doit task from current instance"""
+
+        doit_task = {
+            "doc": self.doc,
+            "basename": self.task_name,
+            "verbosity": 2
+        }
+        doit_task.update(kwargs)
+
+        try:
+            self.setup()
+        except (ImproperlyConfigured, DependentTaskParserError, NotUVDirectory) as e:
+            if hasattr(self, "targets"):
+                doit_task["targets"] = self.targets
+            elif hasattr(self, "target"):
+                doit_task["targets"] = [self.target]
+
+            tf = TaskFailed(str(e))
+            doit_task["actions"] = [lambda: tf]
+            return doit_task
+
+        doit_task.update(dict(
+            (a, getattr(self, a))
+            for a in ["targets", "file_dep", "uptodate", "verbosity"]
+            if a in dir(self)
+        ))
+
+        # Allow always_make attr
+        if hasattr(self, "always_make"):
+            doit_task["uptodate"] = [False]
+
+        # Allow targets attr specified as single
+        # target in target attr
+        if "targets" not in doit_task:
+            if hasattr(self, "target"):
+                doit_task["targets"] = [self.target]
+
+        # Catch any exception an action might trigger
+        def action():
+            try:
+                return self.run()
+            except Exception as e:
+                if self.settings.DEBUG > 0:
+                    raise e from e
+                msg = " ".join(str(o) for o in e.args)
+                return TaskFailed(msg)
+
+        doit_task["actions"] = [action]
+        return doit_task
+
     @classmethod
     def create_doit_tasks(cls):
         if cls in [TaskBase, UVTask, CliArgsMixin]:
             return  # avoid create tasks from base class 'Task'
 
-        # Convert task name to snake-case
         task_name = re.sub(r'(?<!^)(?<=[a-z])(?=[A-Z])', '_', cls.__name__).lower()
-        if task_name.startswith("task_"):
-            task_name = task_name[5:]
-
-        kw = {
-            "doc": cls.__doc__,
-            "basename": task_name,
-            "verbosity": 2
-        }
-
-        def build_task(obj, **kwargs):
-            kwargs.update(dict(
-                (a, getattr(obj, a))
-                for a in ["targets", "file_dep", "uptodate", "verbosity"]
-                if a in dir(obj)
-            ))
-
-            # Allow always_make attr
-            if hasattr(obj, "always_make"):
-                kwargs["uptodate"] = [False]
-
-            # Allow targets attr specified as single
-            # target in target attr
-            if "targets" not in kwargs:
-                if hasattr(obj, "target"):
-                    kwargs["targets"] = [obj.target]
-
-            # Catch any exception an action might trigger
-            def wrapper(*args, **kwargs):
-                try:
-                    return obj.run(*args, **kwargs)
-                except Exception as e:
-                    if obj.settings.DEBUG > 0:
-                        raise e from e
-                    msg = " ".join(str(o) for o in e.args)
-                    return TaskFailed(msg)
-
-            kwargs["actions"] = [wrapper]
-
-            return kwargs
+        doc = cls.__doc__
 
         try:
-
             if UVTask not in cls.__mro__:
                 # La tâche n'est pas liée à une UV
                 instance = cls()
-                return build_task(instance, **kw)
+                return instance.to_doit_task()
             elif cls.unique_uv:
                 # La tâche ne s'applique qu'à une seule UV
                 planning, uv, info = get_unique_uv()
                 instance = cls(planning, uv, info)
-                return build_task(instance, **kw)
+                return instance.to_doit_task()
             else:
                 # La tâche s'applique à un ensemble d'UV
                 # Return a generator but make sure all build_task
                 # functions are executed first.
-                tasks = [
-                    build_task(cls(planning, uv, info), **kw, name=f"{planning}_{uv}")
+                instances = [
+                    cls(planning, uv, info)
                     for planning, uv, info in selected_uv()
                 ]
+                tasks = [
+                    instance.to_doit_task(name=f"{instance.planning}_{instance.uv}")
+                    for instance in instances
+                ]
+
                 return (t for t in tasks)
 
-        except (NotUVDirectory, DependentTaskParserError) as e:
-            # Retourner une tâche dont la construction a échouée si le
-            # dossier courant n'est pas un dossier d'UV, la tâche
-            # demande des arguments en ligne de commande mais ce n'est
-            # pas la tâche principale spécifiée en ligne de commande.
+        except NotUVDirectory as e:
             tf = TaskFailed(str(e))
-            kw["actions"] = [lambda: tf]
-            return kw
-        except ImproperlyConfigured as e:
-            raise e from e
+            return {
+                "basename": task_name,
+                "actions": [lambda: tf],
+                "doc": doc
+            }
         except Exception as e:
             # Exception inexpliquée, la construction de la tâche
             # échoue. Progager l'exception si DEBUG.
             if settings.DEBUG > 0:
                 raise e from e
             tf = TaskFailed(str(e))
-            kw["actions"] = [lambda: tf]
-            return kw
+            return {
+                "basename": task_name,
+                "actions": [lambda: tf],
+                "doc": doc
+            }
 
 
 class UVTask(TaskBase):
@@ -186,8 +206,8 @@ class DependentTaskParserError(Exception):
 
 
 class CliArgsMixin(TaskBase):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def setup(self):
+        super().setup()
         self.parse_args()
 
     def parse_args(self):

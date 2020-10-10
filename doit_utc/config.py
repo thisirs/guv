@@ -74,7 +74,6 @@ class Settings:
             ),
         }
 
-
         self._setup = False
 
     def setup(self):

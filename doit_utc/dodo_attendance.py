@@ -70,8 +70,8 @@ class PdfAttendanceList(UVTask, CliArgsMixin):
         )
     )
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
+    def setup(self):
+        super().setup()
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
         self.target = self.build_target()
         self.file_dep = [self.xls_merge]
@@ -138,8 +138,8 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
         ),
     )
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
+    def setup(self):
+        super().setup()
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
         self.target = self.build_target()
         self.kwargs = {**self.info, "nslot": self.slots, "ctype": self.group}
@@ -186,8 +186,8 @@ class AttendanceSheetRoom(UVTask):
     target_dir = "documents"
     target_name = "attendance_rooms.zip"
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
+    def setup(self):
+        super().setup()
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
         self.target = self.build_target()
         self.file_dep = [self.xls_merge]
@@ -296,8 +296,8 @@ class AttendanceSheet(UVTask, CliArgsMixin):
         )
     )
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
+    def setup(self):
+        super().setup()
         self.target = self.build_target()
 
     def run(self):

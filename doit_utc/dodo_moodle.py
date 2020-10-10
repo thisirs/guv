@@ -51,8 +51,8 @@ class HtmlInst(UVTask):
     target_dir = "generated"
     target_name = "intervenants.html"
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
+    def setup(self):
+        super().setup()
         self.insts_details = XlsInstructors.target_from()
         self.insts_uv = XlsAffectation.target_from(**self.info)
         self.target = self.build_target()
@@ -138,8 +138,8 @@ class HtmlTable(UVTask, CliArgsMixin):
         ),
     )
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
+    def setup(self):
+        super().setup()
         self.csv_inst_list = AddInstructors.target_from()
         self.file_dep = [self.csv_inst_list]
 
@@ -299,8 +299,8 @@ class JsonRestriction(UVTask, CliArgsMixin):
         ),
     )
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
+    def setup(self):
+        super().setup()
         self.all_courses = CsvAllCourses.target_from()
         AB = "_AB" if self.AB else ""
         self.target = self.build_target(AB=AB)
@@ -441,8 +441,8 @@ class JsonGroup(UVTask, CliArgsMixin):
         ),
     )
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
+    def setup(self):
+        super().setup()
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
         self.target = self.build_target()
         self.file_dep = [self.xls_merge]
@@ -584,8 +584,8 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         ),
     )
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
+    def setup(self):
+        super().setup()
 
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
         self.target = self.build_target()
@@ -725,9 +725,6 @@ class FetchGroupId(CliArgsMixin, TaskBase):
             help="Liste des identifiants des UV sur Moodle (id=???? dans l'url)"
         ),
     )
-
-    def __init__(self):
-        super().__init__()
 
     def cookies(self):
         cj = browser_cookie3.firefox()

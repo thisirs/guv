@@ -70,8 +70,8 @@ class XlsInstructors(TaskBase):
     target_dir = "documents"
     target_name = "intervenants.xlsx"
 
-    def __init__(self):
-        super().__init__()
+    def setup(self):
+        super().setup()
         self.target = self.build_target()
 
     def run(self):
@@ -92,8 +92,8 @@ class AddInstructors(TaskBase):
     target_dir = "generated"
     target_name = "UTC_UV_list_instructors.csv"
 
-    def __init__(self):
-        super().__init__()
+    def setup(self):
+        super().setup()
         self.uv_list = UtcUvListToCsv.target_from()
         self.target = self.build_target()
         self.affectations = [
@@ -155,8 +155,8 @@ class XlsInstDetails(UVTask):
     target_dir = "generated"
     target_name = "intervenants_details.xlsx"
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
+    def setup(self):
+        super().setup()
         self.insts_details = XlsInstructors.target_from()
         self.inst_uv = XlsAffectation.target_from(**self.info)
         self.target = self.build_target()
@@ -181,8 +181,8 @@ class XlsUTP(UVTask):
     target_dir = "generated"
     target_name = "remplacement.xlsx"
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
+    def setup(self):
+        super().setup()
         self.xls = XlsAffectation.target_from(**self.info)
         self.insts = XlsInstructors.target_from()
         self.target = self.build_target()
@@ -222,8 +222,8 @@ class XlsAffectation(UVTask):
     target_name = "intervenants.xlsx"
     target_dir = "documents"
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
+    def setup(self):
+        super().setup()
         self.uvlist_csv = UtcUvListToCsv.target_from()
         self.target = self.build_target()
         self.file_dep = [self.uvlist_csv]
@@ -257,8 +257,8 @@ class XlsEmploiDuTemps(UVTask):
     target_dir = "generated"
     target_name = "emploi_du_temps.xlsx"
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
+    def setup(self):
+        super().setup()
         self.xls_details = XlsAffectation.target_from(**self.info)
         self.target = self.build_target()
         self.file_dep = [self.xls_details]

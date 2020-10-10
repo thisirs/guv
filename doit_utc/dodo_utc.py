@@ -191,8 +191,8 @@ class CsvAllCourses(CliArgsMixin, TaskBase):
         ),
     )
 
-    def __init__(self):
-        super().__init__()
+    def setup(self):
+        super().setup()
         from .dodo_instructors import AddInstructors
         self.csv = AddInstructors.target_from()
         self.target = self.build_target()

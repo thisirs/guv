@@ -57,8 +57,8 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
         ),
     )
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
+    def setup(self):
+        super().setup()
 
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
         if self.groupby == "all":
