@@ -1021,3 +1021,32 @@ class CsvGroupsGroupings(UVTask, CliArgsMixin):
         df_groups = pd.DataFrame({"groupname": groups, 'groupingname': self.groupings})
         with Output(self.target, protected=True) as target:
             df_groups.to_csv(target(), index=False)
+
+
+class ZoomBreakoutRooms(UVTask, CliArgsMixin):
+    target_dir = "generated"
+    target_name = "zoom_breakout_rooms_{group}.csv"
+    cli_args = (
+        argument(
+            "group",
+            help="Le nom de la colonne des groupes",
+        ),
+    )
+
+    def setup(self):
+        super().setup()
+        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.target = self.build_target()
+
+    def run(self):
+        df = pd.read_excel(self.xls_merge)
+        check_columns(
+            df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
+        )
+
+        df_group = pd.DataFrame({
+            "Pre-assign Room Name": df[self.group],
+            "Email Address": df["Courriel"]
+        })
+        with Output(self.target, protected=True) as target:
+            df_group.to_csv(target(), index=False)
