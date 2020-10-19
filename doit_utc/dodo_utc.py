@@ -21,8 +21,8 @@ class UtcUvListToCsv(TaskBase):
     target_dir = "documents"
     target_name = "UTC_UV_list.csv"
 
-    def __init__(self):
-        super().__init__()
+    def setup(self):
+        super().setup()
         self.uv_list_filename = os.path.join(
             self.settings.SEMESTER_DIR,
             self.settings.CRENEAU_UV
