@@ -123,7 +123,11 @@ class IcalInst(CliArgsMixin, TaskBase):
             if len(self.insts) == 1:
                 inst = self.insts[0]
                 dfm_inst = dfm.loc[dfm["Intervenants"].astype(str) == inst, :]
-                output = self.build_target(name=f'{inst.replace(" ", "_")}.ics')
+                output = self.build_target(
+                    name=f'{inst.replace(" ", "_")}',
+                    plannings=f"{'_'.join(self.plannings)}",
+                    target_name="{name}_{plannings}.ics"
+                )
                 events = ical_events(dfm_inst, **settings)
                 with Output(output) as output:
                     with open(output(), "wb") as fd:
@@ -145,4 +149,4 @@ class IcalInst(CliArgsMixin, TaskBase):
 
         else:
             unknown = set(self.insts).difference(all_insts)
-            raise Exception(f"Intervenant(s) inconnu(s): {', '.join(unknown)}")
+            raise Exception(f"Intervenant(s) inconnu(s): {', '.join(unknown)}, intervenant(s) enregistré(s): {', '.join(all_insts)}")
