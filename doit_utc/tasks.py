@@ -18,12 +18,6 @@ class TaskBase:
     target_dir = "."
     target_name = None
 
-    def __init__(self):
-        name = self.__class__.__name__
-        task_name = re.sub(r'(?<!^)(?<=[a-z])(?=[A-Z])', '_', name).lower()
-        self.task_name = task_name
-        self.doc = self.__class__.__doc__
-
     def setup(self):
         pass
 
@@ -59,8 +53,8 @@ class TaskBase:
         """Build a doit task from current instance"""
 
         doit_task = {
-            "doc": self.doc,
-            "basename": self.task_name,
+            "doc": self.doc(),
+            "basename": self.task_name(),
             "verbosity": 2
         }
         doit_task.update(kwargs)
@@ -107,12 +101,17 @@ class TaskBase:
         return doit_task
 
     @classmethod
+    def task_name(cls):
+        return re.sub(r'(?<!^)(?<=[a-z])(?=[A-Z])', '_', cls.__name__).lower()
+
+    @classmethod
+    def doc(cls):
+        return cls.__doc__
+
+    @classmethod
     def create_doit_tasks(cls):
         if cls in [TaskBase, UVTask, CliArgsMixin]:
             return  # avoid create tasks from base class 'Task'
-
-        task_name = re.sub(r'(?<!^)(?<=[a-z])(?=[A-Z])', '_', cls.__name__).lower()
-        doc = cls.__doc__
 
         try:
             if UVTask not in cls.__mro__:
@@ -142,9 +141,9 @@ class TaskBase:
         except NotUVDirectory as e:
             tf = TaskFailed(str(e))
             return {
-                "basename": task_name,
+                "basename": cls.task_name(),
                 "actions": [lambda: tf],
-                "doc": doc
+                "doc": cls.doc()
             }
         except Exception as e:
             # Exception inexpliquée, la construction de la tâche
@@ -153,9 +152,9 @@ class TaskBase:
                 raise e from e
             tf = TaskFailed(str(e))
             return {
-                "basename": task_name,
+                "basename": cls.task_name(),
                 "actions": [lambda: tf],
-                "doc": doc
+                "doc": cls.doc()
             }
 
 
@@ -212,8 +211,8 @@ class CliArgsMixin(TaskBase):
 
     def parse_args(self):
         parser = argparse.ArgumentParser(
-            description=self.doc,
-            prog=f"doit-utc {self.task_name}"
+            description=self.doc(),
+            prog=f"doit-utc {self.task_name()}"
         )
 
         for arg in self.cli_args:
@@ -225,7 +224,7 @@ class CliArgsMixin(TaskBase):
 
         # Teste si la tâche courante est la tâche principale spécifiée
         # dans la ligne de commande ou une tâche dépendante.
-        if len(argv) >= 2 and argv[1] == self.task_name:
+        if len(argv) >= 2 and argv[1] == self.task_name():
             # Tâche principale
             sargv = argv[2:]
             args = self.parser.parse_args(sargv)
