@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 import importlib
-from datetime import datetime
+from datetime import date
 from schema import Schema, Or, And, Use, SchemaError
 from .schema_utils import Iterable
 
@@ -46,18 +46,18 @@ class Settings:
                 "La variable 'DEBUG' est incorrecte",
             ),
             "SKIP_DAYS_C": (
-                Schema(Or([datetime], (datetime,))),
+                Schema(Or([Or(date)], (Or(date)))),
                 "La variable 'SKIP_DAYS_C' est incorrecte",
             ),
             "SKIP_DAYS_D": (
-                Schema(Or([datetime], (datetime,))),
+                Schema(Or([date], (date,))),
                 "La variable 'SKIP_DAYS_D' est incorrecte",
             ),
             "SKIP_DAYS_T": (
-                Schema(Or([datetime], (datetime,))),
+                Schema(Or([date], (date,))),
                 "La variable 'SKIP_DAYS_T' est incorrecte",
             ),
-            "TURN": (Schema({datetime: str}), "La variable 'TURN' est incorrecte",),
+            "TURN": (Schema({date: str}), "La variable 'TURN' est incorrecte",),
             "AGGREGATE_DOCUMENTS": (
                 Schema(
                     Or(
