@@ -5,6 +5,7 @@ import hashlib
 import textwrap
 from types import SimpleNamespace
 from datetime import timedelta
+from schema import Schema, Or, And, Use
 import pandas as pd
 import numpy as np
 import jinja2
@@ -112,7 +113,7 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
     """
 
     def aggregate0(left_df, path):
-        nonlocal left_on, right_on, subset, drop
+        nonlocal left_on, right_on, subset, drop, rename
 
         # Columns that will be removed after merging
         drop_cols = []
@@ -163,22 +164,23 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
 
         # Extract subset of columns, right_on included
         if subset is not None:
-            if isinstance(subset, str):
-                subset = [subset]
+            sc_columns = Or(*right_df.columns)
+            subset = Schema(Or(And(sc_columns, Use(lambda x: [x])), [sc_columns])).validate(subset)
             right_df = right_df[list(set([right_on] + subset))]
 
         # Allow to drop columns, right_on not allowed
         if drop is not None:
-            if isinstance(drop, str):
-                drop = [drop]
+            sc_columns = Or(*right_df.columns)
+            drop = Schema(Or(And(sc_columns, Use(lambda x: [x])), [sc_columns])).validate(drop)
             if right_on in drop:
                 raise Exception('On enlève pas la clé')
-            right_df = right_df.drop(drop, axis=1, errors='ignore')
+            right_df = right_df.drop(drop, axis=1)
 
         # Rename columns in data to be merged
         if rename is not None:
             if right_on in rename:
                 raise Exception('Pas de renommage de la clé possible')
+            rename = Schema({str: str}).validate(rename)
             right_df = right_df.rename(columns=rename)
 
         # Columns to drop after merge: primary key of right dataframe
