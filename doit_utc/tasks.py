@@ -7,8 +7,9 @@ import argparse
 
 from doit.exceptions import TaskFailed
 
-from .config import settings, Settings, ImproperlyConfigured
-from .utils_config import selected_uv, get_unique_uv, NotUVDirectory
+from .exceptions import ImproperlyConfigured, NotUVDirectory, DependentTaskParserError
+from .config import settings, Settings
+from .utils_config import selected_uv, get_unique_uv
 from .utils import pformat
 
 
@@ -198,10 +199,6 @@ class UVTask(TaskBase):
         if self._settings is None:
             self._settings = Settings(str(Path(settings.SEMESTER_DIR) / self.uv))
         return self._settings
-
-
-class DependentTaskParserError(Exception):
-    pass
 
 
 class CliArgsMixin(TaskBase):

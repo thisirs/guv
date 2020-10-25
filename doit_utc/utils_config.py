@@ -3,12 +3,9 @@ import time
 from datetime import timedelta
 import pandas as pd
 
+from .exceptions import NotUVDirectory, ImproperlyConfigured
 from .utils import rel_to_dir
-from .config import settings, ImproperlyConfigured
-
-
-class NotUVDirectory(Exception):
-    pass
+from .config import settings
 
 
 def selected_uv(all="dummy"):

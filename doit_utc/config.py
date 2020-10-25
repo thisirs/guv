@@ -3,13 +3,10 @@ from pathlib import Path
 import importlib
 from datetime import date
 from schema import Schema, Or, And, Use, SchemaError
+from .exceptions import ImproperlyConfigured
 from .schema_utils import Iterable
 
 SEMESTER_VARIABLE = "DOIT_UTC_SEMESTER_PATH"
-
-
-class ImproperlyConfigured(Exception):
-    pass
 
 
 class Settings:

@@ -10,11 +10,12 @@ from doit.doit_cmd import DoitMain
 from doit.cmd_base import NamespaceTaskLoader
 import doit_utc
 
+from .exceptions import ImproperlyConfigured
 from .tasks import TaskBase, UVTask, CliArgsMixin
 from .utils import argument
 
 # Load settings from configuration files
-from .config import settings, ImproperlyConfigured
+from .config import settings
 from . import dodo_instructors
 from . import dodo_utc
 from . import dodo_grades

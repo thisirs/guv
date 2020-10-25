@@ -21,7 +21,7 @@ from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.utils.dataframe import dataframe_to_rows
 
-from .config import ImproperlyConfigured
+from .exceptions import ImproperlyConfigured
 from .utils_config import Output
 from .utils import (
     sort_values,
