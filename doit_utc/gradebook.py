@@ -104,6 +104,8 @@ class GroupCliOpt(CliArgsMixin):
         if self.args.subgroup_by is not None:
             columns.append((self.args.subgroup_by, "raw", 6))
 
+        return columns
+
 
 class ConfigCliOpt(CliArgsMixin):
     """Classe pour la spécification d'un fichier de configuration"""
