@@ -243,8 +243,6 @@ class XlsStudentData(UVTask):
     def add_UTC_data(self, df, fn):
         "Incorpore les données Cours/TD/TP des inscrits UTC"
 
-        print("Chargement du fichier de répartition des étudiants dans les créneaux")
-
         # Données issues du fichier des affectations au Cours/TD/TP
         dfu = pd.read_csv(fn)
 
@@ -315,7 +313,6 @@ class XlsStudentData(UVTask):
     def add_moodle_data(self, df, fn):
         """Incorpore les données du fichier extrait de Moodle"""
 
-        print("Chargement de données issues de Moodle")
         if fn.endswith(".csv"):
             dfm = pd.read_csv(fn)
         elif fn.endswith(".xlsx") or fn.endswith(".xls"):
