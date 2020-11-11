@@ -7,7 +7,7 @@
 # Chemin relatif vers l'extraction de l'effectif  issu de l'ENT (requis)
 ENT_LISTING = None
 
-# Cheming relatif vers les affectations dans les Cours/TD/TP (requis)
+# Chemin relatif vers les affectations dans les Cours/TD/TP (optionnel)
 AFFECTATION_LISTING = None
 
 # Chemin relatif vers le listing provenant de Moodle (optionnel)
