@@ -1,5 +1,10 @@
 """Fichier de configuration du semestre"""
 
+
+# Chemin relatif vers le fichier pdf de tous les créneaux et de toutes
+# les UVs disponible sur l'ENT
+CRENEAU_UV = None
+
 # Sous-dossiers représentant les UV gérées lors du semestre
 UVS = ({{ UVS }})
 
@@ -21,16 +26,11 @@ PLANNINGS = {
     }
 }
 
-# Personne par défaut pour les fichiers iCal et les calendriers
-DEFAULT_INSTRUCTOR = None
-
-# Chemin relatif vers le fichier pdf de tous les créneaux et de toutes
-# les UVs disponible sur l'ENT
-CRENEAU_UV = None
-
 # Liste des plannings activés
 SELECTED_PLANNINGS = ()
 
+# Personne par défaut pour les fichiers iCal et les calendriers
+DEFAULT_INSTRUCTOR = None
 
 # Informations pour l'élaboration du planning du semestre: jours
 # fériés, jours changés en d'autres... Il faut renseigner les

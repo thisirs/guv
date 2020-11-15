@@ -4,7 +4,7 @@
 # Mode déboguage
 # DEBUG = 1
 
-# Chemin relatif vers l'extraction de l'effectif  issu de l'ENT (requis)
+# Chemin relatif vers l'extraction de l'effectif issu de l'ENT (requis)
 ENT_LISTING = None
 
 # Chemin relatif vers les affectations dans les Cours/TD/TP (optionnel)
