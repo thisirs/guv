@@ -52,6 +52,9 @@ def fillna_column(colname, na_value="ABS"):
         check_columns(df, [colname])
         df[colname].fillna(na_value, inplace=True)
         return df
+
+    func.__name__ = f"Fill NA in column `{colname}`"
+
     return func
 
 
@@ -73,6 +76,8 @@ def replace_regex(colname, *reps, new_colname=None):
         cn = new_colname if new_colname is not None else colname
         df = df.assign(**{cn: s})
         return df
+
+    func.__name__ = f"Regex replacements in column `{colname}`"
     return func
 
 
@@ -92,6 +97,9 @@ def replace_column(colname, rep_dict, new_colname=None):
         cn = new_colname if new_colname is not None else colname
         df = df.assign(**{cn: col_ref})
         return df
+
+    func.__name__ = f"Replacements in column `{colname}`"
+
     return func
 
 
