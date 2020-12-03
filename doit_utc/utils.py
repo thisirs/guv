@@ -38,22 +38,42 @@ def check_columns(dataframe, columns, **kwargs):
         raise Exception(msg)
 
 
-def fillna_column(colname, na_value="ABS"):
+def fillna_column(colname, na_value=None, group_column=None):
     """Renvoie une fonction qui remplace les valeurs non définies dans la
-    colonne `colname' par `na_value'.
+    colonne `colname'. Une seule des options `na_value` et
+    `group_column` doit être spécifiée. Si `na_value` est spécifiée,
+    on remplace inconditionnellement par la valeur fournie. Si
+    `group_column` est spécifiée, on complète en groupant par
+    `group_column` en prenant la seule valeur valide par groupe.
 
     Utilisable avec l'argument `postprocessing' ou `preprocessing'
     dans la fonction `aggregate' ou directement à la place de la
     fonction `aggregate' dans `AGGREGATE_DOCUMENTS'.
 
     """
+    if not((na_value is None) ^ (group_column is None)):
+        raise Exception("Une seule option doit être spécifiée")
 
-    def func(df, path=None):
-        check_columns(df, [colname])
-        df[colname].fillna(na_value, inplace=True)
-        return df
+    if na_value is not None:
+        def func(df, path=None):
+            check_columns(df, [colname])
+            df[colname].fillna(na_value, inplace=True)
+            return df
 
-    func.__name__ = f"Fill NA in column `{colname}`"
+        func.__name__ = f"Fill NA in column `{colname}` with `{na_value}`"
+
+    else:
+        def fill_by_group(g):
+            idx = g[colname].first_valid_index()
+            if idx is not None:
+                g[colname] = g.loc[idx, colname]
+            return g
+
+        def func(df, path=None):
+            check_columns(df, [colname, group_column])
+            return df.groupby(group_column).apply(fill_by_group)
+
+        func.__name__ = f"Fill NA in column `{colname}` by `{group_column}`"
 
     return func
 
