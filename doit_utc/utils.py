@@ -148,6 +148,10 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
             right_df = read_method(path, **kw_read)
 
         if preprocessing is not None:
+            if hasattr(preprocessing, "__name__"):
+                print(f"Preprocessing: {preprocessing.__name__}")
+            else:
+                print("Preprocessing")
             right_df = preprocessing(right_df)
 
         # Add column if callable
@@ -223,7 +227,10 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
             print("WARNING: identifiant présent dans le document à aggréger mais introuvable dans la base de données :", row[key])
 
         if postprocessing is not None:
-            print("Postprocessing")
+            if hasattr(postprocessing, "__name__"):
+                print(f"Postprocessing: {postprocessing.__name__}")
+            else:
+                print("Postprocessing")
             agg_df = postprocessing(agg_df)
 
         # Try to merge columns
