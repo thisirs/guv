@@ -64,9 +64,13 @@ def fillna_column(colname, na_value=None, group_column=None):
 
     else:
         def fill_by_group(g):
-            idx = g[colname].first_valid_index()
-            if idx is not None:
-                g[colname] = g.loc[idx, colname]
+            idx_first = g[colname].first_valid_index()
+            idx_last = g[colname].last_valid_index()
+            if idx_first is not None:
+                if idx_first == idx_last:
+                    g[colname] = g.loc[idx_first, colname]
+                else:
+                    raise Exception("Plusieurs valeurs non-NA dans le groupe")
             return g
 
         def func(df, path=None):
