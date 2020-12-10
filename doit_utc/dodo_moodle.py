@@ -273,13 +273,19 @@ class JsonRestriction(UVTask, CliArgsMixin):
 
     Le fichier json contient des restrictions d'accès pour les
     créneaux de Cours/TD/TP basé sur l'appartenance aux groupes de
-    Cours/TD/TP, sur les début/fin de séance, début/fin de semaine. Si
-    plusieurs groupes de Cours/TD/TP existe, il faut renseigner la
-    variable GROUP_ID dans le fichier config.py de l'UV pour avoir les
-    restrictions par groupe.
+    Cours/TD/TP, sur les début/fin de séance, début/fin de semaine.
 
-    Le drapeau -a permet de grouper les séances par deux semaines dans
-    le cas où il y a des semaines A et B.
+    Pour les contraintes par créneaux, il est nécessaire de renseigner
+    la variable `GROUP_ID` qui relie le nom des groupes dans les
+    activités Cours/TD/TP à leur identifiant Moodle.
+
+    L'argument "-c" permet de spécifier les activités considérées, à
+    choisir parmi Cours, TD ou TP.
+
+    Le drapeau "-a" permet de grouper les séances par deux semaines
+    dans le cas où il y a des semaines A et B. La fin d'une activité
+    est alors identifiée à la fin de la semaine B.
+
     """
 
     target_dir = "generated"
