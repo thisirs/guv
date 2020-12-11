@@ -490,7 +490,7 @@ class JsonGroup(UVTask, CliArgsMixin):
 class CsvCreateGroups(UVTask, CliArgsMixin):
     """Création de groupes d'étudiants prêt à charger sous Moodle
 
-    Cette tâche crée un fichier csv d'affection des étudiants à un
+    Cette tâche crée un fichier csv d'affectation des étudiants à un
     groupe. Si `grouping` est spécifié les groupes sont créés à
     l'intérieur de chaque sous-groupe (de TP/TD par exemple).
 
