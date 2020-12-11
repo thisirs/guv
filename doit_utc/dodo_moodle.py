@@ -745,7 +745,7 @@ class FetchGroupId(CliArgsMixin, TaskBase):
                 for option in select.find_all("option"):
                     value = option["value"]
                     if int(value) > 0:
-                        group_id[option.text] = option["value"]
+                        group_id[option.text] = int(value)
         return group_id
 
     def run(self):
