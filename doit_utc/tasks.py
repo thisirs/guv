@@ -1,7 +1,6 @@
 import os
 import sys
 import re
-import copy
 from pathlib import Path
 import argparse
 
