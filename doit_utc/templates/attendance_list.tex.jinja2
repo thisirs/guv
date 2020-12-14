@@ -24,10 +24,10 @@
 \end{center}
 \noindent\hrulefill\bigskip
 
-\noindent\hfill\textbf{Semestre:} \makebox[3cm][l]{\hrulefill}\par
-\noindent\hfill\textbf{UV:} \makebox[3cm][l]{\hrulefill}\par
-\noindent\hfill\textbf{Date:} \makebox[3cm][l]{\hrulefill}\par
-\noindent\hfill\textbf{Examen:} \makebox[3cm][l]{\hrulefill}\par
+\noindent\hfill\textbf{Semestre:} \makebox[3cm][l]{((* if semester *))(((semester)))((* else *))\hrulefill((* endif *))}\par
+\noindent\hfill\textbf{UV:} \makebox[3cm][l]{((* if uv *))(((uv)))((* else *))\hrulefill((* endif *))}\par
+\noindent\hfill\textbf{Date:} \makebox[3cm][l]{((* if date *))(((date)))((* else *))\hrulefill((* endif *))}\par
+\noindent\hfill\textbf{Examen:} \makebox[3cm][l]{((* if exam *))(((exam)))((* else *))\hrulefill((* endif *))}\par
 
 \newcounter{stunum}
 \begin{list}{\arabic{stunum}.}{\usecounter{stunum}}

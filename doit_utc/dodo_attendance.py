@@ -7,6 +7,7 @@ import os
 import re
 import zipfile
 import tempfile
+import json
 import pandas as pd
 import latex
 
@@ -67,6 +68,12 @@ class PdfAttendanceList(UVTask, CliArgsMixin):
             "--save-tex",
             action="store_true",
             help="Met le(s) fichier(s) .tex généré(s) à disposition"
+        ),
+        argument(
+            "--context",
+            "-c",
+            type=json.loads,
+            default={}
         )
     )
 
@@ -88,10 +95,9 @@ class PdfAttendanceList(UVTask, CliArgsMixin):
         texs = []
         for gn, group in df.groupby(self.group or (lambda x: "all")):
             group = sort_values(group, ["Nom", "Prénom"])
-            context = {
-                "group": f"Groupe: {gn}",
-                "filename": f"{gn}.pdf"
-            }
+            context = self.context
+            context["group"] = f"Groupe: {gn}"
+            context["filename"] = f"{gn}.pdf"
             pdf, tex = pdf_attendance_list_render(group, template, **context)
             pdfs.append(pdf)
             texs.append(tex)
