@@ -30,6 +30,14 @@ class TaskBase:
 
     @classmethod
     def target_from(cls, **kwargs):
+        """Return a target from the class of the task and keywords arguments
+
+        The class attributes `target_dir` and `target_name` are used.
+        They might contain variables in braces that are expanded by
+        keyword arguments. Mainly used by other classes to refer to
+        target of that class as a dependency.
+        """
+
         target = os.path.join(
             settings.SEMESTER_DIR,
             cls.target_dir,
@@ -38,6 +46,13 @@ class TaskBase:
         return pformat(target, **kwargs)
 
     def build_target(self, **kwargs):
+        """Return a target from current task and keywords arguments
+
+        The class attributes `target_dir` and `target_name` are used.
+        They might contain variables in braces that are expanded by
+        keyword arguments.
+        """
+
         kw = self.__dict__
         kw["target_dir"] = self.target_dir
         kw["target_name"] = self.target_name
@@ -110,6 +125,8 @@ class TaskBase:
 
     @classmethod
     def create_doit_tasks(cls):
+        """Called by doit to retrieve a task or a generator"""
+
         if cls in [TaskBase, UVTask, CliArgsMixin]:
             return  # avoid create tasks from base class 'Task'
 
@@ -169,6 +186,8 @@ class UVTask(TaskBase):
 
     @classmethod
     def target_from(cls, **kwargs):
+        """Return a target from the class of the task and keywords arguments"""
+
         target = os.path.join(
             settings.SEMESTER_DIR,
             kwargs["uv"],
@@ -178,9 +197,12 @@ class UVTask(TaskBase):
         return pformat(target, **kwargs)
 
     def build_dep(self, fn):
+        """Return pathname of a dependency relative to UV directory"""
         return os.path.join(self.settings.SEMESTER_DIR, self.uv, fn)
 
     def build_target(self, **kwargs):
+        """Return a pathname of the target"""
+
         kw = self.__dict__
         kw["target_dir"] = self.target_dir
         kw["target_name"] = self.target_name
