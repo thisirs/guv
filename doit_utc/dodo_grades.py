@@ -26,9 +26,9 @@ class CsvForUpload(CliArgsMixin, UVTask):
     """Fichier csv de notes prêtes à être chargées sur l'ENT.
 
     Crée un fichier csv de notes prêtes à être chargées sur l'ENT. La
-    colonne des notes est fixée par l'argument `grade_colname' et est
+    colonne des notes est fixée par l'argument `grade_colname` et est
     prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
-    `comment_colname' permet d'ajouter des commentaires.
+    `comment_colname` permet d'ajouter des commentaires.
     """
 
     always_make = True

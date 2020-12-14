@@ -20,7 +20,7 @@ def rel_to_dir(path, root):
 
 
 def check_columns(dataframe, columns, **kwargs):
-    """Vérifie que la ou les colonnes `columns' sont dans `dataframe'"""
+    """Vérifie que la ou les colonnes `columns` sont dans `dataframe`"""
 
     if isinstance(columns, str):
         columns = [columns]
@@ -114,11 +114,11 @@ def replace_regex(colname, *reps, new_colname=None):
 
 def replace_column(colname, rep_dict, new_colname=None):
     """Renvoie une fonction qui remplace les valeurs renseignées dans
-    `rep_dict' dans la colonne `colname'.
+    `rep_dict` dans la colonne `colname`.
 
-    Utilisable avec l'argument `postprocessing' ou `preprocessing'
-    dans la fonction `aggregate' ou directement à la place de la
-    fonction `aggregate' dans `AGGREGATE_DOCUMENTS'.
+    Utilisable avec l'argument `postprocessing` ou `preprocessing`
+    dans la fonction `aggregate` ou directement à la place de la
+    fonction `aggregate` dans `AGGREGATE_DOCUMENTS`.
 
     Exemple :
     > replace_column("group", {"TD 1": "TD1", "TD 2": "TD2"})
