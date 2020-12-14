@@ -677,7 +677,7 @@ class CsvExamGroups(UVTask, CliArgsMixin):
         df = pd.read_excel(self.xls_merge)
 
         def exam_split(df):
-            if self.tiers_temps_col in df.columns:
+            if self.tiers_temps in df.columns:
                 dff = df.sort_values(self.tiers_temps, ascending=False)
             else:
                 dff = df
