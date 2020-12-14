@@ -40,15 +40,20 @@ def check_columns(dataframe, columns, **kwargs):
 
 def fillna_column(colname, na_value=None, group_column=None):
     """Renvoie une fonction qui remplace les valeurs non définies dans la
-    colonne `colname'. Une seule des options `na_value` et
+    colonne `colname`. Une seule des options `na_value` et
     `group_column` doit être spécifiée. Si `na_value` est spécifiée,
     on remplace inconditionnellement par la valeur fournie. Si
     `group_column` est spécifiée, on complète en groupant par
-    `group_column` en prenant la seule valeur valide par groupe.
+    `group_column` en prenant la seule valeur valide par groupe dans
+    cette colonne.
 
-    Utilisable avec l'argument `postprocessing' ou `preprocessing'
-    dans la fonction `aggregate' ou directement à la place de la
-    fonction `aggregate' dans `AGGREGATE_DOCUMENTS'.
+    Utilisable avec l'argument `postprocessing` ou `preprocessing`
+    dans la fonction `aggregate` ou directement à la place de la
+    fonction `aggregate` dans `AGGREGATE_DOCUMENTS`.
+
+    Exemple :
+    > fillna_column("group", na_value="ABS")
+    > fillna_column("group", group_column="choix")
 
     """
     if not((na_value is None) ^ (group_column is None)):
@@ -84,12 +89,14 @@ def fillna_column(colname, na_value=None, group_column=None):
 
 def replace_regex(colname, *reps, new_colname=None):
     """Renvoie une fonction qui remplace les expressions régulières
-    renseignées dans `reps' dans la colonne `colname'.
+    renseignées dans `reps` dans la colonne `colname`.
 
-    Utilisable avec l'argument `postprocessing' ou `preprocessing'
-    dans la fonction `aggregate' ou directement à la place de la
-    fonction `aggregate' dans `AGGREGATE_DOCUMENTS'.
+    Utilisable avec l'argument `postprocessing` ou `preprocessing`
+    dans la fonction `aggregate` ou directement à la place de la
+    fonction `aggregate` dans `AGGREGATE_DOCUMENTS`.
 
+    Par exemple :
+    > replace_regex("group", ((r"group([0-9])", r"G\1"),))
     """
 
     def func(df, path=None):
@@ -113,6 +120,8 @@ def replace_column(colname, rep_dict, new_colname=None):
     dans la fonction `aggregate' ou directement à la place de la
     fonction `aggregate' dans `AGGREGATE_DOCUMENTS'.
 
+    Exemple :
+    > replace_column("group", {"TD 1": "TD1", "TD 2": "TD2"})
     """
 
     def func(df, path=None):
@@ -128,19 +137,19 @@ def replace_column(colname, rep_dict, new_colname=None):
 
 
 def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset=None, drop=None, rename=None, read_method=None, kw_read={}):
-    """Renvoie une fonction qui réalise l'aggrégation d'un DataFrame avec
+    """Renvoie une fonction qui réalise l'agrégation d'un DataFrame avec
     un fichier.
 
-    Les arguments `left_on' et `right_on' sont les clés pour réaliser
-    la jointure. `left_on' est la clé du DataFrame existant et
-    `right_on' est la clé du DataFrame à aggréger présent dans le
+    Les arguments `left_on` et `right_on` sont les clés pour réaliser
+    une jointure : `left_on` est la clé du DataFrame existant et
+    `right_on` est la clé du DataFrame à agréger présent dans le
     fichier. `subset` est une liste des colonnes à garder, `drop` une
-    liste des colonnes à enlever. `rename' est un dictionnaire des
-    colonnes à renommer. `read_method' est un callable appelé avec
-    `kw_read' pour lire le fichier contenant le DataFrame à aggréger.
-    `preprocessing' et `postprocessing' sont des callable qui prennent
+    liste des colonnes à enlever. `rename` est un dictionnaire des
+    colonnes à renommer. `read_method` est un callable appelé avec
+    `kw_read` pour lire le fichier contenant le DataFrame à agréger.
+    `preprocessing` et `postprocessing` sont des callable qui prennent
     en argument un DataFrame et en renvoie un et qui réalise un pré ou
-    post traitement sur l'aggrégation.
+    post traitement sur l'agrégation.
 
     """
 
