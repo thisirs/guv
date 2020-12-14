@@ -37,5 +37,6 @@ setup(
         "browser_cookie3",
         "xlrd",
         "schema",
+        "yapf"
     ],
 )
