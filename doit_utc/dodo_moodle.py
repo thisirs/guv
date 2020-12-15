@@ -698,31 +698,111 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             df_groups.to_csv(target(), index=False)
 
     def make_groups(self, name, df, name_gen):
-        """Faire des groupes avec le dataframe `df` nommé `name`"""
+        """Try to make subgroups in `df`"""
 
-        n = df.shape[0]
+        for i in range(1000):
+            try:
+                groups = self.make_groups_index(df)
+                self.check_valid_groups(df, groups)
+                print(f"{i+1} configuration(s) testé(es)")
+                return self.add_names_to_grouping(groups, name, name_gen)
+            except Exception:
+                continue
+        raise Exception(f"Aucune des {i+1} configurations testées n'est valide")
+
+    def make_groups_index(self, df):
+        """Use index of `df` to make groups"""
+
+        index = df.index
+
+        if self.proportions is not None:
+            return make_groups(index, self.proportions)
+
+        elif self.group_size is not None:
+            size = self.group_size
+            if size > 3:
+                n = len(index)
+                n_groups = math.ceil(n / size)
+                proportions = np.ones(n_groups)
+                return make_groups(index, proportions)
+            else:
+                raise Exception
+
+        elif self.num_groups is not None:
+            proportions = np.ones(self.num_groups)
+            return make_groups(index, proportions)
+
+    def check_valid_groups(self, df, groups):
+        """Check that groups are valid"""
+
+        for idxs in groups:
+            if len(groups) == 2:
+                if not self.check_valid_group_2(df, idxs):
+                    raise InvalidGroups
+            elif len(groups) == 3:
+                if not self.check_valid_group_3(df, idxs):
+                    raise InvalidGroups
+
+    def check_valid_group_2(self, df, group):
+        idx1, idx2 = group
+        etu1, etu2 = df.loc[idx1], df.loc[idx2]
+
+        e = [
+            "DIPLOME ETAB ETRANGER SECONDAIRE",
+            "DIPLOME ETAB ETRANGER SUPERIEUR",
+            "AUTRE DIPLOME UNIVERSITAIRE DE 1ER CYCLE HORS DUT",
+        ]
+
+        # 2 étrangers == catastrophe
+        if (
+            etu1["Dernier diplôme obtenu"] in e
+            and etu2["Dernier diplôme obtenu"] in e
+        ):
+            return False
+
+        # 2 GB == catastrophe
+        if etu1["Branche"] == "GB" and etu2["Branche"] == "GB":
+            return False
+
+        # Binomes précédents
+        if other_groups is not None:
+            for gp in other_groups:
+                if etu1[gp] == etu2[gp]:
+                    return False
+
+        return True
+
+    def check_valid_group_3(self, df, group):
+        idx1, idx2, idx3 = group
+
+        a = self.check_valid_group_2(df, [idx1, idx2])
+        b = self.check_valid_group_2(df, [idx1, idx3])
+        c = self.check_valid_group_2(df, [idx2, idx3])
+
+        if other_groups is not None:
+            etu1 = df.loc[idx1]
+            etu2 = df.loc[idx2]
+            etu3 = df.loc[idx3]
+
+            for gp in other_groups:
+                if len(set([etu1[gp], etu2[gp], etu3[gp]])) != 3:
+                    return False
+
+        return a or b or c
+
+    def add_names_to_grouping(groups, name, name_gen):
+        """Give names to `groups`"""
 
         def name_gen0():
             for n in name_gen:
                 yield pformat(n, grouping_name=name)
 
-        if self.proportions is not None:
-            return pd.Series(
-                make_groups(n, self.proportions, name_gen0()), index=df.index
-            )
+        series_list = [
+            pd.Series([group_name]*len(groups), index=groups)
+            for group_name, group in zip(name_gen0, groups)
+        ]
 
-        elif self.group_size is not None:
-            size = self.group_size
-            if size > 3:
-                n_groups = math.ceil(n / size)
-                proportions = np.ones(n_groups)
-                return pd.Series(
-                    make_groups(n, proportions, name_gen0()), index=df.index
-                )
-
-        elif self.num_groups is not None:
-            proportions = np.ones(self.num_groups)
-            return pd.Series(make_groups(n, proportions, name_gen0()), index=df.index)
+        return pd.concat(series_list)
 
 
 class FetchGroupId(CliArgsMixin, TaskBase):

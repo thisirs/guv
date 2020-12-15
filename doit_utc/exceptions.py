@@ -8,3 +8,7 @@ class ImproperlyConfigured(Exception):
 
 class NotUVDirectory(Exception):
     pass
+
+
+class InvalidGroups(Exception):
+    pass

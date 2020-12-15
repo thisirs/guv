@@ -430,24 +430,31 @@ def pformat(s, **kwargs):
     return formatter.vformat(s, (), mapping)
 
 
-def make_groups(n, proportions, name_gen):
+def make_groups(collection, proportions):
+    n = len(collection)
     n_groups = len(proportions)
-    names = [next(name_gen) for i in range(n_groups)]
 
-    frequency = make_groups0(n, proportions)
-    return np.repeat(names, frequency)
-
-
-def make_groups0(n, proportions):
+    # Array that sum to one
     proportions = np.array(proportions)
     proportions = proportions / sum(proportions)
 
+    # Rough frequency
     frequency = np.floor(n * proportions).astype(int)
+
+    # Add remaining items
     order = np.argsort(frequency)
     rest = n - sum(frequency)
     frequency[order[:rest]] += 1
 
-    return frequency
+    assert(sum(frequency) == n)
+    assert(len(frequency) == n_groups)
+
+    groups = []
+    cs = np.concatenate(([0], np.cumsum(frequency)))
+    for i in range(len(cs)-1):
+        groups.append(collection[cs[i]:cs[i+1]])
+
+    return groups
 
 
 def sort_values(df, columns):
