@@ -664,10 +664,11 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         if self.grouping is not None:
             check_columns(df, self.grouping, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
 
-        # Ajouter le titre à la template
+        # Add title to template
         tmpl = self.template
         tmpl = pformat(tmpl, title=self.title)
 
+        # Set grouping key from grouping cli argument
         key = (lambda x: True) if self.grouping is None else self.grouping
 
         # Diviser le dataframe en morceaux d'après `key` et faire des
@@ -675,11 +676,17 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         def df_gen():
             name_gen = self.create_name_gen(tmpl)
             for name, df_group in df.groupby(key):
+                # Reset name generation for a new group
                 if not self.global_:
                     name_gen = self.create_name_gen(tmpl)
+
+                # Make sub-groups for group `name`
                 yield self.make_groups(name, df_group, name_gen)
 
+        # Concatenate sub-groups for each grouping
         s_groups = pd.concat(df_gen())
+
+        # Add Courriel column, use index to merge
         df_out = pd.concat((df["Courriel"], s_groups), axis=1)
 
         with Output(self.targets[0]) as target:
