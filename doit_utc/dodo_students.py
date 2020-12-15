@@ -773,6 +773,7 @@ class CsvMoodleGroups(CliArgsMixin, UVTask):
         argument(
             "-o",
             "--other-group",
+            nargs="+",
             required=False,
             default=None,
             help="Nom de colonne d'un autre groupement",
@@ -860,6 +861,16 @@ class CsvMoodleGroups(CliArgsMixin, UVTask):
             c = binome_match(
                 df_group, idx2, idx3, other_groups=other_groups, foreign=foreign
             )
+
+            if other_groups is not None:
+                etu1 = df_group.loc[idx1]
+                etu2 = df_group.loc[idx2]
+                etu3 = df_group.loc[idx3]
+
+                for gp in other_groups:
+                    if len(set([etu1[gp], etu2[gp], etu3[gp]])) != 3:
+                        return False
+
             return a or b or c
 
         class Ooops(Exception):
@@ -901,7 +912,7 @@ class CsvMoodleGroups(CliArgsMixin, UVTask):
                     groups = make_random_groups(index, num=3)
 
                     # On vérifie que tous les groupes sont bons
-                    if not valid_groups(df_group, groups):
+                    if not valid_groups(df_group, groups, other_groups=other_groups):
                         raise Ooops
 
                     if len(groups) > len(group_names):
