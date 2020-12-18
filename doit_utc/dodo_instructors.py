@@ -108,7 +108,7 @@ class AddInstructors(TaskBase):
         df_csv.Semaine = df_csv.Semaine.astype(object)
 
         df_affs = [
-            pd.read_excel(xls_aff).assign(**{"Code enseig.": uv})
+            pd.read_excel(xls_aff, engine="openpyxl").assign(**{"Code enseig.": uv})
             for uv, xls_aff in self.affectations
         ]
 
@@ -140,7 +140,7 @@ def read_xls_details(fn):
     sts = ["MCF", "PR", "PRAG", "PRCE", "PAST", "ECC", "Doct", "ATER", "Vacataire"]
     status_type = CategoricalDtype(categories=sts, ordered=True)
 
-    return pd.read_excel(fn, dtype={
+    return pd.read_excel(fn, engine="openpyxl", dtype={
         'Statut': status_type
     })
 
@@ -163,8 +163,8 @@ class XlsInstDetails(UVTask):
         self.file_dep = [self.inst_uv, self.insts_details]
 
     def run(self):
-        inst_uv = pd.read_excel(self.inst_uv)
-        insts_details = pd.read_excel(self.insts_details)
+        inst_uv = pd.read_excel(self.inst_uv, engine="openpyxl")
+        insts_details = pd.read_excel(self.insts_details, engine="openpyxl")
 
         # Add details from inst_details
         df = inst_uv.merge(
@@ -189,7 +189,7 @@ class XlsUTP(UVTask):
         self.file_dep = [self.xls, self.insts]
 
     def run(self):
-        df = pd.read_excel(self.xls)
+        df = pd.read_excel(self.xls, engine="openpyxl")
 
         # Add details
         df_details = read_xls_details(self.insts)
@@ -264,7 +264,7 @@ class XlsEmploiDuTemps(UVTask):
         self.file_dep = [self.xls_details]
 
     def run(self):
-        df = pd.read_excel(self.xls_details)
+        df = pd.read_excel(self.xls_details, engine="openpyxl")
         selected_columns = [
             "Jour",
             "Heure début",

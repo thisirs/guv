@@ -316,7 +316,7 @@ class XlsStudentData(UVTask):
         if fn.endswith(".csv"):
             dfm = pd.read_csv(fn)
         elif fn.endswith(".xlsx") or fn.endswith(".xls"):
-            dfm = pd.read_excel(fn)
+            dfm = pd.read_excel(fn, engine="openpyxl")
 
         # On laisse tomber les colonnes inintéressantes
         dfm = dfm.drop(
@@ -491,7 +491,7 @@ class XlsStudentDataMerge(UVTask):
         self.file_dep = deps + [self.student_data] + self.settings.config_files
 
     def run(self):
-        df = pd.read_excel(self.student_data)
+        df = pd.read_excel(self.student_data, engine="openpyxl")
 
         for path, aggregater in self.docs:
             if path is None:
@@ -674,7 +674,7 @@ class CsvExamGroups(UVTask, CliArgsMixin):
         self.file_dep = [self.xls_merge]
 
     def run(self):
-        df = pd.read_excel(self.xls_merge)
+        df = pd.read_excel(self.xls_merge, engine="openpyxl")
 
         def exam_split(df):
             if self.tiers_temps in df.columns:
@@ -732,7 +732,7 @@ class CsvGroups(UVTask, CliArgsMixin):
         self.file_dep = [self.xls_merge]
 
     def run(self):
-        df = pd.read_excel(self.xls_merge)
+        df = pd.read_excel(self.xls_merge, engine="openpyxl")
 
         for ctype, target in zip(self.groups, self.targets):
             if ctype == "singleton":
@@ -791,7 +791,7 @@ class CsvMoodleGroups(CliArgsMixin, UVTask):
         self.file_dep = [self.xls_merge]
 
     def run(self):
-        df = pd.read_excel(self.xls_merge)
+        df = pd.read_excel(self.xls_merge, engine="openpyxl")
         check_columns(
             df, self.course, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
         )
@@ -1047,7 +1047,7 @@ class ZoomBreakoutRooms(UVTask, CliArgsMixin):
         self.target = self.build_target()
 
     def run(self):
-        df = pd.read_excel(self.xls_merge)
+        df = pd.read_excel(self.xls_merge, engine="openpyxl")
         check_columns(
             df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
         )

@@ -59,7 +59,7 @@ class HtmlInst(UVTask):
         self.file_dep = [self.insts_details, self.insts_uv]
 
     def run(self):
-        df_uv = pd.read_excel(self.insts_uv)
+        df_uv = pd.read_excel(self.insts_uv, engine="openpyxl")
         df_uv = create_insts_list(df_uv)
         df_details = read_xls_details(self.insts_details)
 
@@ -454,7 +454,7 @@ class JsonGroup(UVTask, CliArgsMixin):
         self.file_dep = [self.xls_merge]
 
     def run(self):
-        df = pd.read_excel(self.xls_merge)
+        df = pd.read_excel(self.xls_merge, engine="openpyxl")
 
         check_columns(df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
         dff = df[["Adresse de courriel", self.group]]
@@ -653,7 +653,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                 yield pformat(tmpl, group_name=n)
 
     def run(self):
-        df = pd.read_excel(self.xls_merge)
+        df = pd.read_excel(self.xls_merge, engine="openpyxl")
 
         # Shuffled or ordered rows according to `ordered`
         if not self.ordered:

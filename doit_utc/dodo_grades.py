@@ -72,7 +72,7 @@ class CsvForUpload(CliArgsMixin, UVTask):
         if self.ects and self.comment_colname:
             raise Exception("No comment column required when uploading ECTS")
 
-        df = pd.read_excel(self.xls_merge)
+        df = pd.read_excel(self.xls_merge, engine="openpyxl")
 
         check_columns(df, self.grade_colname, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
 
@@ -199,7 +199,7 @@ class YamlQCM(UVTask):
         self.file_dep = [self.xls_merge]
 
     def run(self):
-        df = pd.read_excel(self.xls_merge)
+        df = pd.read_excel(self.xls_merge, engine="openpyxl")
         dff = df[["Nom", "Prénom", "Courriel"]]
         d = dff.to_dict(orient="index")
         rec = [
@@ -234,12 +234,12 @@ class XlsAssignmentGrade(CliArgsMixin, UVTask):
         self.file_dep = [self.inst_uv, self.xls_merge]
 
     def run(self):
-        inst_uv = pd.read_excel(self.inst_uv)
+        inst_uv = pd.read_excel(self.inst_uv, engine="openpyxl")
         TD = inst_uv['Lib. créneau'].str.contains('^D')
         inst_uv_TD = inst_uv.loc[TD]
         insts = inst_uv_TD['Intervenants'].unique()
 
-        df = pd.read_excel(self.xls_merge)
+        df = pd.read_excel(self.xls_merge, engine="openpyxl")
         df = df[['Nom', 'Prénom', 'Courriel']]
         df = sort_values(df, ['Nom', 'Prénom'])
         df = df.assign(Note=np.nan)

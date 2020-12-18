@@ -84,7 +84,7 @@ class PdfAttendanceList(UVTask, CliArgsMixin):
         self.file_dep = [self.xls_merge]
 
     def run(self):
-        df = pd.read_excel(self.xls_merge)
+        df = pd.read_excel(self.xls_merge, engine="openpyxl")
 
         if self.group:
             check_columns(df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
@@ -151,7 +151,7 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
         self.kwargs = {**self.info, "nslot": self.slots, "ctype": self.group}
 
     def run(self):
-        df = pd.read_excel(self.xls_merge)
+        df = pd.read_excel(self.xls_merge, engine="openpyxl")
         check_columns(
             df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
         )
@@ -241,7 +241,7 @@ class AttendanceSheetRoom(UVTask):
 
             return breaks
 
-        df = pd.read_excel(self.xls_merge)
+        df = pd.read_excel(self.xls_merge, engine="openpyxl")
         if "Tiers-temps" in df.columns:
             df0 = df.loc[df["Tiers-temps"] == 0]
             dftt = df.loc[df["Tiers-temps"] != 0]

@@ -129,7 +129,7 @@ class CalUv(UVTask):
         self.file_dep = [self.uv_list, template]
 
     def run(self):
-        df = pd.read_excel(self.uv_list)
+        df = pd.read_excel(self.uv_list, engine="openpyxl")
         # df_uv_real = df.loc[~pd.isnull(df['Intervenants']), :]
         df_uv_real = df
         df_uv_real["Code enseig."] = self.uv
