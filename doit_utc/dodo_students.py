@@ -1032,6 +1032,8 @@ class CsvGroupsGroupings(UVTask, CliArgsMixin):
 
 
 class ZoomBreakoutRooms(UVTask, CliArgsMixin):
+    """Crée un fichier csv prêt à charger sur Zoom pour faire des groupes"""
+
     target_dir = "generated"
     target_name = "zoom_breakout_rooms_{group}.csv"
     cli_args = (
