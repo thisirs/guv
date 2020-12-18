@@ -1058,5 +1058,6 @@ class ZoomBreakoutRooms(UVTask, CliArgsMixin):
             "Pre-assign Room Name": df[self.group],
             "Email Address": df["Courriel"]
         })
+        df_group = df_group.sort_values("Pre-assign Room Name")
         with Output(self.target, protected=True) as target:
             df_group.to_csv(target(), index=False)
