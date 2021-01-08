@@ -130,6 +130,8 @@ def create_uv_dirs(base_dir, uvs):
         context = {}
         content = tmpl.render(context)
         new_path = os.path.join(uv_dir, "config.py")
+        if os.path.exists(new_path):
+            raise Exception("File config.py already exists")
         with open(new_path, 'w', encoding='utf-8') as new_file:
             new_file.write(content)
 
@@ -188,6 +190,8 @@ def main():
         }
         content = tmpl.render(context)
         new_path = os.path.join(base_dir, "config.py")
+        if os.path.exists(new_path):
+            raise Exception("File config.py already exists")
         with open(new_path, 'w', encoding='utf-8') as new_file:
             new_file.write(content)
 
