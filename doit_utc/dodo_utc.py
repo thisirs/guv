@@ -54,26 +54,31 @@ class UtcUvListToCsv(TaskBase):
                          'Lib. créneau', 'Responsable enseig.']
 
         tables = []
-        pdo = {'header': None}
+        pdo = {"header": None}
         for i in range(npages):
             print(f'Processing page ({i+1}/{npages})')
             page = i + 1
             tabula_args = {'pages': page}
-            df = read_pdf(self.uv_list_filename, **tabula_args, pandas_options=pdo)[0]
+            # Use pdo.copy(): pdo is changed by read_pdf
+            df = read_pdf(self.uv_list_filename, **tabula_args, pandas_options=pdo.copy())[0]
 
             if page == 1:
-                # Detect if header has not been properly detected
+                # Detect header (might be a two-line header)
                 header_height = ((re.match('[A-Z]{,3}[0-9]+', str(df.iloc[0, 0])) is None) +
                                  (re.match('[A-Z]{,3}[0-9]+', str(df.iloc[1, 0])) is None))
-                print(f'Header has {header_height} lines')
+                if header_height == 0:
+                    raise Exception("No header detected")
+                print(f'Detected header has {header_height} lines')
 
                 # Compute single line/multiline header
                 header = df.iloc[:header_height].fillna('').agg(['sum']).iloc[0]
+                print("Header is:")
+                print(" ".join(header))
 
-                # Strip header
+                # Extract real data
                 df = df.iloc[header_height:]
 
-                # Set name of column from header
+                # Set name of columns from header
                 df = df.rename(columns=header)
 
                 # Rename incorrectly parsed headers
@@ -82,27 +87,40 @@ class UtcUvListToCsv(TaskBase):
                     'Type cr neau': 'Type créneau',
                     'Lib. cr': 'Lib. créneau',
                     'Lib.créneau': 'Lib. créneau',
+                    'Lib.': 'Lib. créneau',
                     'Lib.\rcréneau': 'Lib. créneau',
                     'Heuredébut': 'Heure début',
                     'Heure d': 'Heure début',
                     'Heurefin': 'Heure fin'
                 })
 
-                unordered_cols = list(set(df.columns).intersection(set(possible_cols)))
-                cols_order = {k: i for i, k in enumerate(df.columns)}
-                cols = sorted(unordered_cols, key=lambda x: cols_order[x])
+                unknown_cols = list(set(df.columns) - set(possible_cols))
+                if unknown_cols:
+                    raise Exception("Colonnes inconnues détectées:", " ".join(unknown_cols))
 
+                # Get list of detected columns
+                cols = df.columns.to_list()
+
+                # 'Semaine' is the only column that might not be
+                # detected is next pages because it can be empty.
+                # Store its index to insert a blank column if needed
                 if "Semaine" in cols:
                     week_idx = cols.index('Semaine')
                 else:
                     week_idx = cols.index('Heure fin') + 1
 
-                df = df[cols]
                 print('%d columns found' % len(df.columns))
+                print(" ".join(df.columns))
             else:
                 print('%d columns found' % len(df.columns))
-                if len(df.columns) == len(cols) - 1:
+
+                # Semaine column might be empty and not detected
+                if len(df.columns) == len(cols):
+                    pass
+                elif len(df.columns) == len(cols) - 1:
                     df.insert(week_idx, 'Semaine', np.nan)
+                else:
+                    raise Exception("Mauvais nombre de colonnes détectées")
                 df.columns = cols
 
                 # Detect possible multiline header
