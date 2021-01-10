@@ -51,7 +51,7 @@ def fillna_column(colname, na_value=None, group_column=None):
     dans la fonction `aggregate` ou directement à la place de la
     fonction `aggregate` dans `AGGREGATE_DOCUMENTS`.
 
-    Exemple :
+    Exemples :
     > fillna_column("group", na_value="ABS")
     > fillna_column("group", group_column="choix")
 
@@ -88,15 +88,17 @@ def fillna_column(colname, na_value=None, group_column=None):
 
 
 def replace_regex(colname, *reps, new_colname=None):
-    """Renvoie une fonction qui remplace les expressions régulières
-    renseignées dans `reps` dans la colonne `colname`.
+    """Renvoie une fonction qui remplace les occurrences de toutes les
+    expressions régulières renseignées dans `reps` dans la colonne
+    `colname`.
 
     Utilisable avec l'argument `postprocessing` ou `preprocessing`
     dans la fonction `aggregate` ou directement à la place de la
     fonction `aggregate` dans `AGGREGATE_DOCUMENTS`.
 
     Par exemple :
-    > replace_regex("group", ((r"group([0-9])", r"G\1"),))
+    > replace_regex("group", (r"group([0-9])", r"G\1"), (r"g([0-9])", r"G\1"))
+
     """
 
     def func(df, path=None):
@@ -113,8 +115,8 @@ def replace_regex(colname, *reps, new_colname=None):
 
 
 def replace_column(colname, rep_dict, new_colname=None):
-    """Renvoie une fonction qui remplace les valeurs renseignées dans
-    `rep_dict` dans la colonne `colname`.
+    """Renvoie une fonction qui remplace les valeurs exactes renseignées
+    dans `rep_dict` dans la colonne `colname`.
 
     Utilisable avec l'argument `postprocessing` ou `preprocessing`
     dans la fonction `aggregate` ou directement à la place de la
@@ -122,6 +124,7 @@ def replace_column(colname, rep_dict, new_colname=None):
 
     Exemple :
     > replace_column("group", {"TD 1": "TD1", "TD 2": "TD2"})
+
     """
 
     def func(df, path=None):
