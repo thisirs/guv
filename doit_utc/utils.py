@@ -103,7 +103,7 @@ def replace_regex(colname, *reps, new_colname=None):
         check_columns(df, colname)
         s = df[colname].copy()
         for rep in reps:
-            s.replace(*rep, regex=True, inplace=True)
+            s = s.str.replace(*rep, regex=True)
         cn = new_colname if new_colname is not None else colname
         df = df.assign(**{cn: s})
         return df
