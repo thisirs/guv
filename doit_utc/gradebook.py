@@ -694,7 +694,18 @@ class GradeSheetJury(ConfigCliOpt, FirstGradeSheet):
             )
         )
 
-        return sc.validate(config)
+        # Validate config
+        validated_config = sc.validate(config)
+
+        # Validation does not preserve order
+        old_columns = validated_config["columns"].copy()
+        new_columns = {}
+        for name in list(config["columns"].keys()):
+            new_columns[name] = old_columns.pop(name)
+        new_columns.update(old_columns)
+        validated_config["columns"] = new_columns
+
+        return validated_config
 
     def get_columns(self, **kwargs):
         "Les colonnes à utiliser dans la feuille Excel"

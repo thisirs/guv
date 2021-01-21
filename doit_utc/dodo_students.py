@@ -495,11 +495,7 @@ class XlsStudentDataMerge(UVTask):
 
         for path, aggregater in self.docs:
             if path is None:
-                if hasattr(aggregater, "__name__"):
-                    print(f"File is None, using aggregater: {aggregater.__name__}")
-                else:
-                    print("File is None, aggregating without file")
-
+                print("File is None, aggregating without file")
                 df = aggregater(df, None)
             elif os.path.exists(path):
                 print("Aggregating '%s'" % rel_to_dir(self.build_dep(path), self.settings.SEMESTER_DIR))

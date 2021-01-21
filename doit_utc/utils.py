@@ -214,7 +214,8 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
         if subset is not None:
             sc_columns = Or(*right_df.columns)
             subset = Schema(Or(And(sc_columns, Use(lambda x: [x])), [sc_columns])).validate(subset)
-            right_df = right_df[list(set([right_on] + subset))]
+            subset0 = list({s: 1 for s in [right_on] + subset}.keys())
+            right_df = right_df[subset0]
 
         # Allow to drop columns, right_on not allowed
         if drop is not None:
