@@ -285,7 +285,7 @@ class FirstGradeSheet(CliArgsMixin):
                         raise Exception("Type is `{type}` but ")
                     self.first_df[name] = cells
                 else:
-                    raise Exception("Unkown type of column ", type)
+                    raise Exception("Unknown type of column ", type)
             else:
                 if type in ["grade", "cell"]:
                     self.first_df[name] = cells
