@@ -15,6 +15,13 @@ from .utils import lib_list, rel_to_dir
 from .tasks import UVTask, TaskBase
 from .scripts.excel_hours import create_excel_file
 
+import openpyxl
+from .openpyxl_patched import fixit
+fixit(openpyxl)
+
+from openpyxl import Workbook
+from .openpyxl_utils import get_range_from_cells, fill_row, get_value
+
 
 def create_insts_list(df):
     "Agrège les données d'affectation des Cours/TD/TP"
@@ -240,15 +247,109 @@ class XlsAffectation(UVTask):
             "Semaine",
             "Lib. créneau",
         ]
-        df_uv = df_uv[selected_columns]
-        df_uv = df_uv.sort_values(["Lib. créneau", "Semaine"])
+        df_uv_select = df_uv[selected_columns]
+        df_uv_select = df_uv_select.sort_values(["Lib. créneau", "Semaine"])
 
-        df_uv["Intervenants"] = ""
-        df_uv["Responsable"] = ""
+        df_uv_select["Intervenants"] = ""
+        df_uv_select["Responsable"] = ""
 
         # Copy for modifications
         with Output(self.target, protected=True) as target:
-            df_uv.to_excel(target(), sheet_name="Intervenants", index=False)
+            df_uv_select.to_excel(target(), sheet_name="Intervenants", index=False)
+
+        N = 10
+        workbook = openpyxl.load_workbook(target())
+        worksheet = workbook.create_sheet("Décompte des heures")
+
+        ref_cell = worksheet.cell(2, 2)
+
+        keywords = [
+            "Intervenants",
+            "Statut",
+            "Cours",
+            "TD",
+            "TP",
+            "Heures Cours prév",
+            "Heures TD prév",
+            "Heures TP prév",
+            "UTP",
+            "Heure équivalent TD",
+            "Heure brute"
+        ]
+
+        fill_row(ref_cell, *keywords)
+
+        def get_cell_in_row(ref_cell, *keywords):
+            def func(cell, keyword):
+                if keyword in keywords:
+                    return cell.parent.cell(
+                        row=cell.row,
+                        column=ref_cell.col_idx + keywords.index(keyword)
+                    )
+                else:
+                    raise Exception
+
+            return func
+
+        cell_in_row = get_cell_in_row(ref_cell, *keywords)
+
+        for i in range(N):
+            cell = ref_cell.below(i + 1)
+            elts = [
+                None,
+                None,
+                None,
+                None,
+                None,
+                lambda cell: "=2*16*{}".format(cell_in_row(cell, "Cours").coordinate),
+                lambda cell: "=2*16*{}".format(cell_in_row(cell, "TD").coordinate),
+                lambda cell: "=2*16*{}".format(cell_in_row(cell, "TP").coordinate),
+                lambda cell: "=2*16*2.25*{}+2*16*1.5*{}+2*16*{}*{}".format(
+                    cell_in_row(cell, "Cours").coordinate,
+                    cell_in_row(cell, "TD").coordinate,
+                    cell_in_row(cell, "TP").coordinate,
+                    cell_in_row(cell, "Statut").coordinate,
+                ),
+                lambda cell: "=2/3*{}".format(
+                    cell_in_row(cell, "UTP").coordinate,
+                ),
+                lambda cell: "=2*16*{}+2*16*{}+2*16*{}".format(
+                    cell_in_row(cell, "Cours").coordinate,
+                    cell_in_row(cell, "TD").coordinate,
+                    cell_in_row(cell, "TP").coordinate,
+                )
+            ]
+            fill_row(cell, *elts)
+
+        total_cell = ref_cell.below(N+1)
+        expected_cell = ref_cell.below(N+2)
+
+        n_cours = len(df_uv.loc[df["Activité"] == "Cours"])
+        n_TD = len(df_uv.loc[df["Activité"] == "TD"])
+        n_TP = len(df_uv.loc[df["Activité"] == "TP"])
+
+        first_cours = ref_cell.below().right(2)
+        first_TD = ref_cell.below().right(3)
+        first_TP = ref_cell.below().right(4)
+
+        last_cours = ref_cell.below(N).right(2)
+        last_TD = ref_cell.below(N).right(3)
+        last_TP = ref_cell.below(N).right(4)
+
+        range_ = get_range_from_cells(first_cours, last_cours)
+        total_cell.right(2).text(f"=SUM({range_})")
+
+        range_ = get_range_from_cells(first_TD, last_TD)
+        total_cell.right(3).text(f"=SUM({range_})")
+
+        range_ = get_range_from_cells(first_TP, last_TP)
+        total_cell.right(4).text(f"=SUM({range_})")
+
+        expected_cell.right().text(n_cours)
+        expected_cell.right(2).text(n_TD)
+        expected_cell.right(3).text(n_TP)
+
+        workbook.save(target())
 
 
 class XlsEmploiDuTemps(UVTask):

@@ -142,3 +142,16 @@ def generate_ranges(ref_cell, by="col", length=None, nranges=None):
             )
     else:
         raise Exception("Wrong 'by' argument")
+
+
+def get_value(cell, elt):
+    if callable(elt):
+        return elt(cell)
+    return elt
+
+
+def fill_row(refcell, *elements):
+    for i, elt in enumerate(elements):
+        cell = refcell.right(i)
+        cell.value = get_value(cell, elt)
+
