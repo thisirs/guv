@@ -188,7 +188,22 @@ class FirstGradeSheet(CliArgsMixin):
             self.output_file = f"{self.args.name}_gradebook.xlsx"
 
     def get_columns(self, **kwargs):
-        "Renvoie les colonnes à utiliser dans la première feuille de calculs"
+        """Renvoie les colonnes à créer dans la première feuille de calcul
+
+        On spécifie le nom de la colonne, son type et sa priorité. Le
+        nom est utilisé pour copier la colonne si elle existe dans la
+        feuille de calcul originale. Le type est utilisé pour savoir
+        le statut de la colonne. Si le type est `raw`, la colonne est
+        copiée si elle existe ou alors juste créée. Le type `cell` est
+        similaire à la différence que les cellules de la colonne sont
+        gardées en mémoire pour être utilisées dans des formules. Le
+        type `hide` permet de ne pas copier la colonne dans la feuille
+        de calcul mais la rend néanmoins disponible pour effectuer des
+        calculs. Le type `grade` est identique. Il rajoute un drapeau
+        pour identifier la colonne comme une note (utilisé dans la
+        classe `GradeSheetJury`).
+
+        """
 
         # Default columns
         columns = [("Nom", "raw", 0), ("Prénom", "raw", 0), ("Courriel", "raw", 0)]
@@ -616,7 +631,16 @@ class GradeSheetJury(ConfigCliOpt, FirstGradeSheet):
     config_argname = "--config"
 
     def validate_config(self, config):
-        """Validation du fichier de configuration"""
+        """Validation du fichier de configuration
+
+        columns:
+          grade1:
+            type: raw
+          grade2:
+            type: grade
+            note éliminatoire: 8
+        options:
+        """
 
         def validate_grade2(data):
             if data.get("type", "grade") == "grade":
