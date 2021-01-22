@@ -146,13 +146,16 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
     Les arguments `left_on` et `right_on` sont les clés pour réaliser
     une jointure : `left_on` est la clé du DataFrame existant et
     `right_on` est la clé du DataFrame à agréger présent dans le
-    fichier. `subset` est une liste des colonnes à garder, `drop` une
-    liste des colonnes à enlever. `rename` est un dictionnaire des
-    colonnes à renommer. `read_method` est un callable appelé avec
-    `kw_read` pour lire le fichier contenant le DataFrame à agréger.
-    `preprocessing` et `postprocessing` sont des callable qui prennent
-    en argument un DataFrame et en renvoie un et qui réalise un pré ou
-    post traitement sur l'agrégation.
+    fichier. `left_on` et `right_on` peuvent aussi être des callable
+    prenant en argument le DataFrame correspondant et renvoyant une
+    nouvelle colonne avec laquelle faire la jointure. `subset` est une
+    liste des colonnes à garder, `drop` une liste des colonnes à
+    enlever. `rename` est un dictionnaire des colonnes à renommer.
+    `read_method` est un callable appelé avec `kw_read` pour lire le
+    fichier contenant le DataFrame à agréger. `preprocessing` et
+    `postprocessing` sont des callable qui prennent en argument un
+    DataFrame et en renvoie un et qui réalise un pré ou post
+    traitement sur l'agrégation.
 
     """
 
