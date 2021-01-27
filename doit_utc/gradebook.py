@@ -33,7 +33,7 @@ from .openpyxl_utils import (
 )
 
 import pandas as pd
-import oyaml as yaml  # Ordered yaml
+import yaml
 
 from .utils import sort_values
 
