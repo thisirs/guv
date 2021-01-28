@@ -421,8 +421,8 @@ class XlsStudentDataMerge(UVTask):
     spécifiées dans AGGREGATE_DOCUMENTS.
     """
 
-    target_name = "student_data_merge.xlsx"
-    target_dir = "generated"
+    target_name = "effectif.xlsx"
+    target_dir = "."
     unique_uv = False
 
     def setup(self):
