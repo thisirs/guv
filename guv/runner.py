@@ -135,7 +135,10 @@ def create_uv_dirs(base_dir, uvs):
         with open(new_path, 'w', encoding='utf-8') as new_file:
             new_file.write(content)
 
+
 def get_parser():
+    """Return an `argparse` parser by iterating on available tasks"""
+
     parser = argparse.ArgumentParser(prog="guv", description="")
     subparsers = parser.add_subparsers(dest="command")
 

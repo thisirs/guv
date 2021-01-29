@@ -806,7 +806,16 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
 
 
 class FetchGroupId(CliArgsMixin, TaskBase):
-    """"""
+    """Crée un fichier de correspondance entre le nom des groupes Moodle et leur id
+
+    Pour utiliser certaines fonctionnalités de `guv` (notamment
+    `json_restriction` et `json_group`), il faut connaitre les
+    identifiants des groupes enregistrés sur Moodle. Cette tâche
+    permet de télécharger la correspondance en indiquant l'identifiant
+    de l'UV/UE (l'entier figurant à la fin de l'url principale:
+    id=????)
+
+    """
 
     target_dir = "documents"
     target_name = "group_id_{id}.py"
