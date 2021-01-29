@@ -212,7 +212,7 @@ class CsvAllCourses(CliArgsMixin, TaskBase):
 
     def setup(self):
         super().setup()
-        from .dodo_instructors import AddInstructors
+        from .instructors import AddInstructors
         self.csv = AddInstructors.target_from()
         self.target = self.build_target()
         self.file_dep = [self.csv]

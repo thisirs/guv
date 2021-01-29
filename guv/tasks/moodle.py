@@ -29,9 +29,9 @@ from ..utils_config import Output, compute_slots
 from ..utils import argument, check_columns, lib_list, sort_values, pformat, make_groups
 from ..exceptions import InvalidGroups
 from .base import CliArgsMixin, UVTask, TaskBase
-from .dodo_students import XlsStudentDataMerge
-from .dodo_utc import CsvAllCourses
-from .dodo_instructors import (
+from .students import XlsStudentDataMerge
+from .utc import CsvAllCourses
+from .instructors import (
     XlsInstructors,
     AddInstructors,
     create_insts_list,

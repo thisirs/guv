@@ -15,7 +15,7 @@ import pandas as pd
 
 from ..utils_config import Output, compute_slots
 from ..utils import argument
-from .dodo_instructors import AddInstructors
+from .instructors import AddInstructors
 from .base import CliArgsMixin, TaskBase
 
 

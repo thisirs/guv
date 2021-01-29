@@ -11,7 +11,7 @@ import latex
 from ..utils_config import Output
 from ..utils import argument, LaTeXEnvironment
 from .base import UVTask, CliArgsMixin, TaskBase
-from .dodo_instructors import XlsAffectation, AddInstructors
+from .instructors import XlsAffectation, AddInstructors
 
 
 def create_cal_from_dataframe(df, text, target):

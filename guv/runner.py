@@ -16,17 +16,17 @@ from .utils import argument
 
 # Load settings from configuration files
 from .config import settings
-from .tasks import dodo_instructors
-from .tasks import dodo_utc
-from .tasks import dodo_grades
-from .tasks import dodo_students
-from .tasks import dodo_trombinoscope
-from .tasks import dodo_moodle
-from .tasks import dodo_ical
-from .tasks import dodo_calendar
-from .tasks import dodo_attendance
+from .tasks import instructors
+from .tasks import utc
+from .tasks import grades
+from .tasks import students
+from .tasks import trombinoscope
+from .tasks import moodle
+from .tasks import ical
+from .tasks import calendar
+from .tasks import attendance
 
-from .tasks.dodo_grades import XlsGradeSheet
+from .tasks.grades import XlsGradeSheet
 
 
 class ModulesTaskLoader(NamespaceTaskLoader):
@@ -63,15 +63,15 @@ except ImproperlyConfigured:
 task_loader = ModulesTaskLoader()
 task_loader._load_variables(settings.settings)
 task_loader._load_tasks(
-    dodo_instructors,
-    dodo_utc,
-    dodo_grades,
-    dodo_students,
-    dodo_trombinoscope,
-    dodo_moodle,
-    dodo_ical,
-    dodo_calendar,
-    dodo_attendance,
+    instructors,
+    utc,
+    grades,
+    students,
+    trombinoscope,
+    moodle,
+    ical,
+    calendar,
+    attendance,
 )
 
 

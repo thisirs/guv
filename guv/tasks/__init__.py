@@ -1,29 +1,29 @@
-from .dodo_utc import (
+from .utc import (
     UtcUvListToCsv,
     CsvAllCourses,
 )
 
-from .dodo_ical import (
+from .ical import (
     IcalInst,
 )
 
-from .dodo_trombinoscope import (
+from .trombinoscope import (
     PdfTrombinoscope,
 )
 
-from .dodo_attendance import (
+from .attendance import (
     PdfAttendanceList,
     PdfAttendanceFull,
     AttendanceSheetRoom,
     AttendanceSheet,
 )
 
-from .dodo_calendar import (
+from .calendar import (
     CalUv,
     CalInst,
 )
 
-from .dodo_students import (
+from .students import (
     CsvInscrits,
     XlsStudentData,
     XlsStudentDataMerge,
@@ -34,7 +34,7 @@ from .dodo_students import (
     ZoomBreakoutRooms,
 )
 
-from .dodo_grades import (
+from .grades import (
     CsvForUpload,
     XlsMergeFinalGrade,
     XlsGradeSheet,
@@ -42,7 +42,7 @@ from .dodo_grades import (
     XlsAssignmentGrade,
 )
 
-from .dodo_instructors import (
+from .instructors import (
     XlsInstructors,
     AddInstructors,
     XlsInstDetails,
@@ -50,7 +50,7 @@ from .dodo_instructors import (
     XlsAffectation,
 )
 
-from .dodo_moodle import (
+from .moodle import (
     HtmlInst,
     HtmlTable,
     JsonRestriction,

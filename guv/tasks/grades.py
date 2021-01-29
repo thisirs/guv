@@ -17,8 +17,8 @@ from ..utils import (
     check_columns,
 )
 from .base import CliArgsMixin, UVTask
-from .dodo_students import XlsStudentDataMerge
-from .dodo_instructors import XlsAffectation
+from .students import XlsStudentDataMerge
+from .instructors import XlsAffectation
 from ..gradebook import run
 
 

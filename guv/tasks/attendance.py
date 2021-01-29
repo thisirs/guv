@@ -21,7 +21,7 @@ from ..utils import (
 )
 
 from .base import UVTask, CliArgsMixin
-from .dodo_students import XlsStudentDataMerge
+from .students import XlsStudentDataMerge
 
 
 def pdf_attendance_list_render(df, tmpl_file, **kwargs):
