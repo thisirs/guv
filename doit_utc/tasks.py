@@ -230,7 +230,7 @@ class CliArgsMixin(TaskBase):
     def parse_args(self):
         parser = argparse.ArgumentParser(
             description=self.doc(),
-            prog=f"doit-utc {self.task_name()}"
+            prog=f"guv {self.task_name()}"
         )
 
         for arg in self.cli_args:

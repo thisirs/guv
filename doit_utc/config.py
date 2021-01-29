@@ -6,7 +6,7 @@ from schema import Schema, Or, And, Use, SchemaError
 from .exceptions import ImproperlyConfigured
 from .schema_utils import Iterable
 
-SEMESTER_VARIABLE = "DOIT_UTC_SEMESTER_PATH"
+SEMESTER_VARIABLE = "GUV_SEMESTER_PATH"
 
 
 class Settings:

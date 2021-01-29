@@ -51,7 +51,7 @@ TURN = None
 # d'examens ou `debut` pour la première semaine du semestre où il n'y
 # a ni TD ni TP. On peut utiliser les fonctions `skip_week` et
 # `skip_range`. Par exemple :
-# from doit_utc.utils import skip_week, skip_range
+# from guv.utils import skip_week, skip_range
 # debut = skip_week(PLANNINGS["P2020"]['PL_BEG'])
 # median = skip_range(date(2020, 4, 27), date(2020, 5, 4))
 # final = skip_range(date(2020, 6, 19), date(2020, 6, 27))

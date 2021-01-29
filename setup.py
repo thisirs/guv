@@ -7,16 +7,16 @@ with open(path.join(this_directory, "README.md"), encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
-    name="doit_utc",
+    name="guv",
     version="0.1",
     author="Sylvain Rousseau",
     author_email="sylvain.rousseau@hds.utc.fr",
     description="Programme d'aide à la gestion d'une UV",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    entry_points={"console_scripts": ["doit-utc=doit_utc.runner:main"]},
+    entry_points={"console_scripts": ["guv=guv.runner:main"]},
     license="MIT",
-    packages=["doit_utc"],
+    packages=["guv"],
     zip_safe=False,
     install_requires=[
         "datetime",

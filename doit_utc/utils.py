@@ -11,7 +11,7 @@ import numpy as np
 import jinja2
 import unidecode
 
-import doit_utc
+import guv
 
 
 def rel_to_dir(path, root):
@@ -486,7 +486,7 @@ def sort_values(df, columns):
 
 class LaTeXEnvironment(jinja2.Environment):
     def __init__(self):
-        tmpl_dir = os.path.join(doit_utc.__path__[0], "templates")
+        tmpl_dir = os.path.join(guv.__path__[0], "templates")
         super().__init__(
             loader=jinja2.FileSystemLoader(tmpl_dir),
             block_start_string="((*",

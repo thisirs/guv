@@ -1,2 +1,2 @@
-include doit_utc/templates/*
-include doit_utc/images/*
+include guv/templates/*
+include guv/images/*

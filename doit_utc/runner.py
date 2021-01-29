@@ -8,7 +8,7 @@ import textwrap
 
 from doit.doit_cmd import DoitMain
 from doit.cmd_base import NamespaceTaskLoader
-import doit_utc
+import guv
 
 from .exceptions import ImproperlyConfigured
 from .tasks import TaskBase, UVTask, CliArgsMixin
@@ -123,7 +123,7 @@ def create_uv_dirs(base_dir, uvs):
         os.makedirs(doc_dir, exist_ok=True)
         os.makedirs(gen_dir, exist_ok=True)
 
-        tmpl_dir = os.path.join(doit_utc.__path__[0], 'templates')
+        tmpl_dir = os.path.join(guv.__path__[0], 'templates')
         jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(tmpl_dir))
         tmpl = jinja_env.get_template("uv_config.py")
 
@@ -137,7 +137,7 @@ def create_uv_dirs(base_dir, uvs):
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="doit-utc", description="")
+    parser = argparse.ArgumentParser(prog="guv", description="")
     subparsers = parser.add_subparsers(dest="command")
 
     createsemester_parser = subparsers.add_parser(
@@ -180,7 +180,7 @@ def main():
         os.makedirs(doc_dir, exist_ok=True)
         os.makedirs(gen_dir, exist_ok=True)
 
-        tmpl_dir = os.path.join(doit_utc.__path__[0], 'templates')
+        tmpl_dir = os.path.join(guv.__path__[0], 'templates')
         jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(tmpl_dir))
         tmpl = jinja_env.get_template("semester_config.py")
 

@@ -182,7 +182,7 @@ class XlsGradeSheet(UVTask):
     def run(self):
         cmd_args = sys.argv[2:] + ['-o', self.docs, '-d', self.data_file]
         run(cmd_args,
-            prog="doit_utc xls_grades_sheet",
+            prog="guv xls_grades_sheet",
             description=XlsGradeSheet.__doc__)
 
 
