@@ -91,7 +91,8 @@ class UtcUvListToCsv(TaskBase):
                     'Lib.\rcréneau': 'Lib. créneau',
                     'Heuredébut': 'Heure début',
                     'Heure d': 'Heure début',
-                    'Heurefin': 'Heure fin'
+                    'Heurefin': 'Heure fin',
+                    'Locaux hybrides': "Locaux"
                 })
 
                 unknown_cols = list(set(df.columns) - set(possible_cols))
