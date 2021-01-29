@@ -350,32 +350,3 @@ class XlsAffectation(UVTask):
         expected_cell.right(3).text(n_TP)
 
         workbook.save(target())
-
-
-class XlsEmploiDuTemps(UVTask):
-    "Sélection des créneaux pour envoi aux intervenants"
-
-    target_dir = "generated"
-    target_name = "emploi_du_temps.xlsx"
-
-    def setup(self):
-        super().setup()
-        self.xls_details = XlsAffectation.target_from(**self.info)
-        self.target = self.build_target()
-        self.file_dep = [self.xls_details]
-
-    def run(self):
-        df = pd.read_excel(self.xls_details, engine="openpyxl")
-        selected_columns = [
-            "Jour",
-            "Heure début",
-            "Heure fin",
-            "Locaux",
-            "Semaine",
-            "Lib. créneau",
-            "Intervenants",
-        ]
-        dfs = df[selected_columns]
-
-        with Output(self.target, protected=True) as target:
-            dfs.to_excel(target(), sheet_name="Emploi du temps", index=False)
