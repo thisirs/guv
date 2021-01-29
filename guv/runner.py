@@ -162,7 +162,10 @@ def get_parser():
     )
     sp.add_argument("args", nargs=argparse.REMAINDER)
 
-    for task_name, doc, full_doc, args in generate_tasks():
+    tasks = list(generate_tasks())
+    tasks = sorted(tasks, key=lambda e: e[0])
+
+    for task_name, doc, full_doc, args in tasks:
         sp = subparsers.add_parser(task_name, help=doc, description=full_doc, formatter_class=argparse.RawDescriptionHelpFormatter)
         for arg in args:
             sp.add_argument(*arg.args, **arg.kwargs)
