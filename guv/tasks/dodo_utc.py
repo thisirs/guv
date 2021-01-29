@@ -10,9 +10,9 @@ import pandas as pd
 from PyPDF2 import PdfFileReader
 from tabula import read_pdf
 
-from .utils_config import Output, selected_uv, compute_slots
-from .utils import argument, rel_to_dir
-from .tasks import CliArgsMixin, TaskBase
+from ..utils_config import Output, selected_uv, compute_slots
+from ..utils import argument, rel_to_dir
+from .base import CliArgsMixin, TaskBase
 
 
 class UtcUvListToCsv(TaskBase):

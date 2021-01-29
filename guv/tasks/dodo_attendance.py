@@ -11,8 +11,8 @@ import json
 import pandas as pd
 import latex
 
-from .utils_config import Output
-from .utils import (
+from ..utils_config import Output
+from ..utils import (
     sort_values,
     check_columns,
     argument,
@@ -20,7 +20,7 @@ from .utils import (
     LaTeXEnvironment,
 )
 
-from .tasks import UVTask, CliArgsMixin
+from .base import UVTask, CliArgsMixin
 from .dodo_students import XlsStudentDataMerge
 
 

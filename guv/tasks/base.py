@@ -6,10 +6,10 @@ import argparse
 
 from doit.exceptions import TaskFailed
 
-from .exceptions import ImproperlyConfigured, NotUVDirectory, DependentTaskParserError
-from .config import settings, Settings
-from .utils_config import selected_uv, get_unique_uv
-from .utils import pformat
+from ..exceptions import ImproperlyConfigured, NotUVDirectory, DependentTaskParserError
+from ..config import settings, Settings
+from ..utils_config import selected_uv, get_unique_uv
+from ..utils import pformat
 
 
 class TaskBase:

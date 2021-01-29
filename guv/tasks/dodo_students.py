@@ -14,16 +14,16 @@ from unidecode import unidecode
 
 # Patch openpyxl
 import openpyxl
-from .openpyxl_patched import fixit
+from ..openpyxl_patched import fixit
 fixit(openpyxl)
 
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.utils.dataframe import dataframe_to_rows
 
-from .exceptions import ImproperlyConfigured
-from .utils_config import Output
-from .utils import (
+from ..exceptions import ImproperlyConfigured
+from ..utils_config import Output
+from ..utils import (
     sort_values,
     argument,
     check_columns,
@@ -31,7 +31,7 @@ from .utils import (
     slugrot,
     slugrot_string,
 )
-from .tasks import UVTask, CliArgsMixin
+from .base import UVTask, CliArgsMixin
 
 
 class CsvInscrits(UVTask):

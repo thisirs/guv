@@ -10,16 +10,16 @@ import numpy as np
 import pandas as pd
 import oyaml as yaml            # Ordered yaml
 
-from .utils_config import Output
-from .utils import (
+from ..utils_config import Output
+from ..utils import (
     sort_values,
     argument,
     check_columns,
 )
-from .tasks import CliArgsMixin, UVTask
+from .base import CliArgsMixin, UVTask
 from .dodo_students import XlsStudentDataMerge
 from .dodo_instructors import XlsAffectation
-from .gradebook import run
+from ..gradebook import run
 
 
 class CsvForUpload(CliArgsMixin, UVTask):
@@ -135,9 +135,6 @@ class XlsMergeFinalGrade(CliArgsMixin, UVTask):
     def setup(self):
         super().setup()
         self.target = self.build_target()
-
-    def setup(self):
-        super().setup()
         self.xls_sheets = os.path.join(self.settings.SEMESTER_DIR, self.target_dir, f"{self.exam}.xlsx")
         self.file_dep = [self.xls_sheets]
 

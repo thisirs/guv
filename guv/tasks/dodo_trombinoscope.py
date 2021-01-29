@@ -16,10 +16,10 @@ import numpy as np
 import browser_cookie3
 import latex
 
-from .utils_config import Output
-from .utils import sort_values, argument, check_columns, LaTeXEnvironment
+from ..utils_config import Output
+from ..utils import sort_values, argument, check_columns, LaTeXEnvironment
 from .dodo_students import XlsStudentDataMerge
-from .tasks import UVTask, CliArgsMixin
+from .base import UVTask, CliArgsMixin
 
 URL = 'https://demeter.utc.fr/portal/pls/portal30/portal30.get_photo_utilisateur?username='
 

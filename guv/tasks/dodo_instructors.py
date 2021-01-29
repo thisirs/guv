@@ -10,17 +10,16 @@ import pandas as pd
 from pandas.api.types import CategoricalDtype
 
 from .dodo_utc import UtcUvListToCsv
-from .utils_config import Output, selected_uv
-from .utils import lib_list, rel_to_dir
-from .tasks import UVTask, TaskBase
-from .scripts.excel_hours import create_excel_file
+from ..utils_config import Output, selected_uv
+from ..utils import lib_list, rel_to_dir
+from .base import UVTask, TaskBase
+from ..scripts.excel_hours import create_excel_file
 
 import openpyxl
-from .openpyxl_patched import fixit
+from ..openpyxl_patched import fixit
 fixit(openpyxl)
 
-from openpyxl import Workbook
-from .openpyxl_utils import get_range_from_cells, fill_row, get_value
+from ..openpyxl_utils import get_range_from_cells, fill_row
 
 
 def create_insts_list(df):

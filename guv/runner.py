@@ -11,22 +11,22 @@ from doit.cmd_base import NamespaceTaskLoader
 import guv
 
 from .exceptions import ImproperlyConfigured
-from .tasks import TaskBase, UVTask, CliArgsMixin
+from .tasks.base import TaskBase, UVTask, CliArgsMixin
 from .utils import argument
 
 # Load settings from configuration files
 from .config import settings
-from . import dodo_instructors
-from . import dodo_utc
-from . import dodo_grades
-from . import dodo_students
-from . import dodo_trombinoscope
-from . import dodo_moodle
-from . import dodo_ical
-from . import dodo_calendar
-from . import dodo_attendance
+from .tasks import dodo_instructors
+from .tasks import dodo_utc
+from .tasks import dodo_grades
+from .tasks import dodo_students
+from .tasks import dodo_trombinoscope
+from .tasks import dodo_moodle
+from .tasks import dodo_ical
+from .tasks import dodo_calendar
+from .tasks import dodo_attendance
 
-from .dodo_grades import XlsGradeSheet
+from .tasks.dodo_grades import XlsGradeSheet
 
 
 class ModulesTaskLoader(NamespaceTaskLoader):

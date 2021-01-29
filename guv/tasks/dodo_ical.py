@@ -13,10 +13,10 @@ from icalendar import Event, Calendar
 import numpy as np
 import pandas as pd
 
-from .utils_config import Output, compute_slots
-from .utils import argument
+from ..utils_config import Output, compute_slots
+from ..utils import argument
 from .dodo_instructors import AddInstructors
-from .tasks import CliArgsMixin, TaskBase
+from .base import CliArgsMixin, TaskBase
 
 
 def ical_events(dataframe, **settings):

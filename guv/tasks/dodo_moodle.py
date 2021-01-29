@@ -25,10 +25,10 @@ import yapf.yapflib.yapf_api as yapf
 from bs4 import BeautifulSoup
 import requests
 
-from .utils_config import Output, compute_slots
-from .utils import argument, check_columns, lib_list, sort_values, pformat, make_groups
-from .exceptions import InvalidGroups
-from .tasks import CliArgsMixin, UVTask, TaskBase
+from ..utils_config import Output, compute_slots
+from ..utils import argument, check_columns, lib_list, sort_values, pformat, make_groups
+from ..exceptions import InvalidGroups
+from .base import CliArgsMixin, UVTask, TaskBase
 from .dodo_students import XlsStudentDataMerge
 from .dodo_utc import CsvAllCourses
 from .dodo_instructors import (
@@ -39,7 +39,7 @@ from .dodo_instructors import (
     XlsAffectation,
 )
 
-from .scripts.moodle_date import CondDate, CondGroup, CondOr, CondProfil
+from ..scripts.moodle_date import CondDate, CondGroup, CondOr, CondProfil
 
 DATE_FORMAT = "%Y-%m-%d"
 TIME_FORMAT = "%H:%M"
@@ -426,7 +426,7 @@ class JsonRestriction(UVTask, CliArgsMixin):
 
 
 class JsonGroup(UVTask, CliArgsMixin):
-    """Fichier json des restrictions d'accès aux ressources sur Moodle par addresse email 
+    """Fichier json des restrictions d'accès aux ressources sur Moodle par addresse email
 
     Le fichier Json contient des restrictions d'accès à copier dans
     Moodle. L'argument `group` permet de construire des restrictions

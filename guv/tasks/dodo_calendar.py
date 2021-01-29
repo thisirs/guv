@@ -8,9 +8,9 @@ import re
 import pandas as pd
 import latex
 
-from .utils_config import Output
-from .utils import argument, LaTeXEnvironment
-from .tasks import UVTask, CliArgsMixin, TaskBase
+from ..utils_config import Output
+from ..utils import argument, LaTeXEnvironment
+from .base import UVTask, CliArgsMixin, TaskBase
 from .dodo_instructors import XlsAffectation, AddInstructors
 
 

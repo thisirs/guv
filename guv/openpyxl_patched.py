@@ -6,7 +6,6 @@ def fixit(openpyxl):
     from openpyxl.styles import Side as _Side
     from openpyxl.styles import Border as _Border
 
-
     # Custom navigation functions
     def _left(self, step=1):
         return self.offset(0, -step)
@@ -43,7 +42,6 @@ def fixit(openpyxl):
         border = _Border(top=thin, left=thin, right=thin, bottom=thin)
         self.border += border
         return self
-
 
     # Add offset function to MergedCell
     def _offset(self, row=0, column=0):

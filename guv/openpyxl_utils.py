@@ -154,4 +154,3 @@ def fill_row(refcell, *elements):
     for i, elt in enumerate(elements):
         cell = refcell.right(i)
         cell.value = get_value(cell, elt)
-
