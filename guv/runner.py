@@ -135,8 +135,7 @@ def create_uv_dirs(base_dir, uvs):
         with open(new_path, 'w', encoding='utf-8') as new_file:
             new_file.write(content)
 
-
-def main():
+def get_parser():
     parser = argparse.ArgumentParser(prog="guv", description="")
     subparsers = parser.add_subparsers(dest="command")
 
@@ -168,6 +167,11 @@ def main():
         for arg in args:
             sp.add_argument(*arg.args, **arg.kwargs)
 
+    return parser
+
+
+def main():
+    parser = get_parser()
     args = parser.parse_args()
 
     if args.command is None:
