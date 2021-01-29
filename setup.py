@@ -1,5 +1,4 @@
-from setuptools import setup
-
+from setuptools import setup, find_packages
 from os import path
 
 this_directory = path.abspath(path.dirname(__file__))
@@ -11,12 +10,14 @@ setup(
     version="0.1",
     author="Sylvain Rousseau",
     author_email="sylvain.rousseau@hds.utc.fr",
-    description="Programme d'aide à la gestion d'une UV",
+    description="Programme d'aide à la gestion d'UV",
     long_description=long_description,
     long_description_content_type="text/markdown",
+    packages=find_packages('src'),
+    package_dir={'': 'src'},
     entry_points={"console_scripts": ["guv=guv.runner:main"]},
+    include_package_data=True,
     license="MIT",
-    packages=["guv"],
     zip_safe=False,
     install_requires=[
         "datetime",
