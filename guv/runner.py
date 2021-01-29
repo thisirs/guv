@@ -140,25 +140,25 @@ def get_parser():
     subparsers = parser.add_subparsers(dest="command")
 
     createsemester_parser = subparsers.add_parser(
-        "createsemester", help="Crée un dossier de semestre"
+        "createsemester", description="Crée un dossier de semestre"
     )
     createsemester_parser.add_argument("semester")
     createsemester_parser.add_argument("--uv", nargs="*", default=[])
 
     createuv_parser = subparsers.add_parser(
         "createuv",
-        help="Crée des dossiers d'UV"
+        description="Crée des dossiers d'UV"
     )
     createuv_parser.add_argument("uv", nargs="+")
 
     subparsers.add_parser(
         "tabcompletion",
-        help="Écrit un fichier d'autocomplétion pour zsh"
+        description="Écrit un fichier d'autocomplétion pour zsh",
     )
 
     sp = subparsers.add_parser(
         "doit",
-        help="Permet d'avoir accès aux commandes doit sous-jacentes"
+        description="Permet d'avoir accès aux commandes doit sous-jacentes"
     )
     sp.add_argument("args", nargs=argparse.REMAINDER)
 
