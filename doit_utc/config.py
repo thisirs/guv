@@ -15,59 +15,71 @@ class Settings:
         self.semester_directory = None
         self.settings = {}
         self.validation_schemes = {
-            "UVS": (Schema(Or([str], (str,))), "La variable 'UVS' est incorrecte",),
+            "UVS": (
+                Schema(Or([str], (str,))),
+                "La variable 'UVS' est incorrecte : une liste des UV gérées est attendue",
+            ),
             "PLANNINGS": (
                 Schema({str: dict}),
-                "La variable 'PLANNINGS' est incorrecte",
+                "La variable 'PLANNINGS' est incorrecte: il faut que ce soit un dictionnaire dont les clés sont des plannings et les valeurs un dictionnaire de propriétés",
             ),
-            "CRENEAU_UV": (Schema(str), "La variable 'CRENEAU_UV' est incorrecte",),
-            "ENT_LISTING": (Schema(str), "La variable 'ENT_LISTING' est incorrecte",),
+            "CRENEAU_UV": (
+                Schema(str),
+                "La variable 'CRENEAU_UV' est incorrecte : un chemin relatif vers le fichier des créneaux est attendu",
+            ),
+            "ENT_LISTING": (
+                Schema(str),
+                "La variable 'ENT_LISTING' est incorrecte : un chemin relatif vers l'effectif de l'UV disponible sur l'ENT est attendu",
+            ),
             "AFFECTATION_LISTING": (
                 Schema(Or(None, str)),
-                "La variable 'AFFECTATION_LISTING' est incorrecte",
+                "La variable 'AFFECTATION_LISTING' est incorrecte : un chemin relatif vers les affectations aux Cours/TD/TP fourni par l'administration est attendu",
             ),
             "MOODLE_LISTING": (
                 Schema(Or(None, str)),
-                "La variable 'MOODLE_LISTING' est incorrecte",
+                "La variable 'MOODLE_LISTING' est incorrecte : un chemin relatif vers l'effectif fourni par Moodle est attendu",
             ),
             "SELECTED_PLANNINGS": (
                 Schema([str]),
-                "La variable 'SELECTED_PLANNINGS' est incorrecte",
+                "La variable 'SELECTED_PLANNINGS' est incorrecte : une liste des plannings actifs est attendue",
             ),
             "DEFAULT_INSTRUCTOR": (
                 Schema(str),
-                "La variable 'DEFAULT_INSTRUCTOR' est incorrecte",
+                "La variable 'DEFAULT_INSTRUCTOR' est incorrecte : une chaîne de caractères est attendue",
             ),
             "DEBUG": (
                 Schema(Or(And(str, Use(int)), int)),
-                "La variable 'DEBUG' est incorrecte",
+                "La variable 'DEBUG' est incorrecte : un entier est attendu",
             ),
             "SKIP_DAYS_C": (
                 Schema(Or([Or(date)], (Or(date)))),
-                "La variable 'SKIP_DAYS_C' est incorrecte",
+                "La variable 'SKIP_DAYS_C' est incorrecte : une liste d'objets `date` est attendue",
             ),
             "SKIP_DAYS_D": (
                 Schema(Or([date], (date,))),
-                "La variable 'SKIP_DAYS_D' est incorrecte",
+                "La variable 'SKIP_DAYS_D' est incorrecte : une liste d'objets `date` est attendue",
             ),
             "SKIP_DAYS_T": (
                 Schema(Or([date], (date,))),
-                "La variable 'SKIP_DAYS_T' est incorrecte",
+                "La variable 'SKIP_DAYS_T' est incorrecte : une liste d'objets `date` est attendu",
             ),
-            "TURN": (Schema({date: str}), "La variable 'TURN' est incorrecte",),
+            "TURN": (
+                Schema({date: str}),
+                "La variable 'TURN' est incorrecte : un dictionnaire d'objets vers un jour est attendu",
+            ),
             "AGGREGATE_DOCUMENTS": (
                 Schema(
                     Or(
-                        And(None, Use(lambda x: [])),
-                        (Iterable(Or(None, str), callable)),
-                        [Iterable(Or(None, str), callable)],
+                        And(None, Use(lambda x: [])),  # None -> []
+                        (Iterable(Or(None, str), callable)),  # Tuple of pairs
+                        [Iterable(Or(None, str), callable)],  # List of pairs
                         And(
                             {Or(None, str): callable},
                             Use(lambda x: [[k, v] for k, v in x.items()]),
                         ),
                     )
                 ),
-                "La variable 'AGGREGATE_DOCUMENTS' est incorrecte",
+                "La variable 'AGGREGATE_DOCUMENTS' est incorrecte : un itérable de paires est attendu",
             ),
         }
 
