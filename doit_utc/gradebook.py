@@ -282,7 +282,7 @@ class FirstGradeSheet(CliArgsMixin):
                     self.first_df[name] = self.data_df[name]
                 elif type in ["grade", "cell"]:
                     if cells is None:
-                        raise Exception("Type is `{type}` but ")
+                        raise ValueError("Logical error")
                     self.first_df[name] = cells
                 else:
                     raise Exception("Unknown type of column ", type)
