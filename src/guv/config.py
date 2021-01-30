@@ -147,18 +147,24 @@ class Settings:
         if name.startswith("__"):  # for copy to succeed ignore __getattr__
             raise AttributeError(name)
 
-        # Load attributes from configuration files
-        if not self._setup:
-            self.setup()
-            self._setup = True
-
+        # Get value in environ or settings
         if name in os.environ:
             value = os.environ[name]
-        elif name in self.settings:
-            value = self.settings[name]
         else:
-            raise ImproperlyConfigured(f"La variable '{name}' n'a été trouvée dans aucun fichier de configuration")
+            # Load attributes from configuration files
+            if not self._setup:
+                self.setup()
+                self._setup = True
 
+            if name in self.settings:
+                value = self.settings[name]
+            else:
+                raise ImproperlyConfigured(
+                    f"La variable '{name}' n'a été trouvée dans"
+                    " aucun fichier de configuration"
+                )
+
+        # Validate value
         if name in self.validation_schemes:
             try:
                 schema, msg = self.validation_schemes[name]
