@@ -51,6 +51,10 @@ class Settings:
                 Schema(Or(And(str, Use(int)), int)),
                 "La variable 'DEBUG' est incorrecte : un entier est attendu",
             ),
+            "TASKS": (
+                Schema([str]),
+                "La variable 'TASKS' est incorrecte : une liste de chemin vers des fichiers est attendue"
+            ),
             "SKIP_DAYS_C": (
                 Schema(Or([Or(date)], (Or(date)))),
                 "La variable 'SKIP_DAYS_C' est incorrecte : une liste d'objets `date` est attendue",

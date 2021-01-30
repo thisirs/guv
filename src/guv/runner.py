@@ -1,5 +1,6 @@
 import os
 import sys
+import importlib
 import re
 import inspect
 import argparse
@@ -52,16 +53,17 @@ class ModulesTaskLoader(NamespaceTaskLoader):
         self.namespace.update(dictionary)
 
 
+task_loader = ModulesTaskLoader()
+
 # On force le chargement des variables dans settings pour qu'elle
 # figure dans le task_loader. Si aucun fichier de configuration n'est
 # trouvé, on continue
 try:
     settings.setup()
+    task_loader._load_variables(settings.settings)
 except ImproperlyConfigured:
     pass
 
-task_loader = ModulesTaskLoader()
-task_loader._load_variables(settings.settings)
 task_loader._load_tasks(
     instructors,
     utc,
@@ -73,6 +75,22 @@ task_loader._load_tasks(
     calendar,
     attendance,
 )
+
+# Load custom tasks
+try:
+    for fn in settings.TASKS:
+        fp = os.path.join(settings.cwd, fn)
+        if os.path.exists(fn):
+            module_name = os.path.splitext(os.path.basename(fp))[0]
+            spec = importlib.util.spec_from_file_location(module_name, fp)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            sys.modules[spec.name] = module
+            task_loader._load_tasks(module)
+        else:
+            raise Exception("Le fichier de tâches n'existe pas:", fp)
+except ImproperlyConfigured:
+    pass
 
 
 def run_doit(args):
