@@ -720,9 +720,9 @@ class CsvGroups(UVTask, CliArgsMixin):
         argument(
             "-g",
             "--groups",
-            nargs="*",
+            nargs="+",
             default=["Cours", "TD", "TP", "singleton"],
-            help="Liste des groupements à considérer",
+            help="Liste des groupements à considérer (par défault %(default)s)",
         ),
     )
 
