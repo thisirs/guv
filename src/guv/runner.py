@@ -172,11 +172,6 @@ def get_parser():
     )
     createuv_parser.add_argument("uv", nargs="+")
 
-    subparsers.add_parser(
-        "tabcompletion",
-        description="Écrit un fichier d'autocomplétion pour zsh",
-    )
-
     sp = subparsers.add_parser(
         "doit",
         description="Permet d'avoir accès aux commandes doit sous-jacentes"
@@ -226,9 +221,6 @@ def main():
         create_uv_dirs(base_dir, args.uv)
     elif args.command == "createuv":
         create_uv_dirs(os.getcwd(), args.uv)
-    elif args.command == "tabcompletion":
-        from .zargparse import fake_parse_args
-        fake_parse_args(parser)
     elif args.command == "doit":
         run_doit(sys.argv[2:])
     else:
