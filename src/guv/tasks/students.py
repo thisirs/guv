@@ -269,7 +269,7 @@ class XlsStudentData(UVTask):
             )
 
         else:
-            raise Exception("")
+            raise Exception("Pas de colonnes 'Nom' et 'Prénom' pour agréger les données")
 
         dfr_clean = dfr.loc[dfr["_merge"] == "both"]
 
