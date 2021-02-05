@@ -206,12 +206,27 @@ class XlsStudentData(UVTask):
         else:
             self.csv_moodle = None
 
-
     def run(self):
         if not os.path.exists(self.extraction_ENT):
             raise Exception("Le fichier '{}' n'existe pas".format(self.extraction_ENT))
 
         print("Chargement de données issues de l'ENT")
+        df = self.load_ENT_data()
+
+        if self.csv_moodle is not None:
+            print("Ajout des données issues de Moodle")
+            df = self.add_moodle_data(df, self.csv_moodle)
+
+        if self.csv_UTC is not None:
+            print("Ajout des affectations aux Cours/TD/TP")
+            df = self.add_UTC_data(df, self.csv_UTC)
+
+        dff = sort_values(df, ["Nom", "Prénom"])
+
+        with Output(self.target) as target:
+            dff.to_excel(target(), index=False)
+
+    def load_ENT_data(self):
         df = pd.read_csv(self.extraction_ENT, sep="\t", encoding='ISO_8859_1')
 
         # Split information in 2 columns
@@ -227,18 +242,7 @@ class XlsStudentData(UVTask):
         # Drop unamed columns
         df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
 
-        if self.csv_moodle is not None:
-            print("Ajout des données issues de Moodle")
-            df = self.add_moodle_data(df, self.csv_moodle)
-
-        if self.csv_UTC is not None:
-            print("Ajout des affectations aux Cours/TD/TP")
-            df = self.add_UTC_data(df, self.csv_UTC)
-
-        dff = sort_values(df, ["Nom", "Prénom"])
-
-        with Output(self.target) as target:
-            dff.to_excel(target(), index=False)
+        return df
 
     def add_UTC_data(self, df, fn):
         "Incorpore les données Cours/TD/TP des inscrits UTC"
