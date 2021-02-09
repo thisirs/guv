@@ -82,7 +82,7 @@ try:
             sys.modules[spec.name] = module
             task_loader._load_tasks(module)
         else:
-            raise Exception("Le fichier de tâches n'existe pas:", fp)
+            raise Exception("Le fichier de tâches n'existe pas :", fp)
 except ImproperlyConfigured:
     pass
 

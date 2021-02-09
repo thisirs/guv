@@ -275,9 +275,10 @@ class JsonRestriction(UVTask, CliArgsMixin):
     créneaux de Cours/TD/TP basé sur l'appartenance aux groupes de
     Cours/TD/TP, sur les début/fin de séance, début/fin de semaine.
 
-    Pour les contraintes par créneaux, il est nécessaire de renseigner
-    la variable `GROUP_ID` qui relie le nom des groupes dans les
-    activités Cours/TD/TP à leur identifiant Moodle.
+    Pour les contraintes par créneaux qui s'appuie sur l'appartenance
+    à un groupe, il est nécessaire de renseigner la variable
+    `GROUP_ID` qui relie le nom des groupes dans les activités
+    Cours/TD/TP à leur identifiant Moodle.
 
     L'argument "-c" permet de spécifier les activités considérées, à
     choisir parmi Cours, TD ou TP.
