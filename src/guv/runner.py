@@ -54,16 +54,7 @@ class ModulesTaskLoader(NamespaceTaskLoader):
 
 
 task_loader = ModulesTaskLoader()
-
-# On force le chargement des variables dans settings pour qu'elle
-# figure dans le task_loader. Si aucun fichier de configuration n'est
-# trouvé, on continue
-try:
-    settings.setup()
-    task_loader._load_variables(settings.settings)
-except ImproperlyConfigured:
-    pass
-
+task_loader._load_variables(settings.settings)
 task_loader._load_tasks(
     instructors,
     utc,
@@ -94,10 +85,14 @@ except ImproperlyConfigured:
 
 
 def run_doit(args):
-    # On force le rechargement des variables pour déclencher une
-    # exception si aucun fichier de configuration n'est trouvé
-    settings.setup()
-    sys.exit(DoitMain(task_loader).run(args))
+    try:
+        sys.exit(DoitMain(task_loader).run(args))
+    except Exception as e:
+        if settings.DEBUG > 0:
+            raise e from e
+        else:
+            print(e)
+            sys.exit()
 
 
 def generate_tasks():
