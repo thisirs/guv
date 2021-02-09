@@ -7,7 +7,7 @@ import argparse
 from doit.exceptions import TaskFailed
 
 from ..exceptions import ImproperlyConfigured, NotUVDirectory, DependentTaskParserError
-from ..config import settings, Settings
+from ..config import settings, Settings, logger
 from ..utils_config import selected_uv, get_unique_uv
 from ..utils import pformat
 
@@ -19,13 +19,15 @@ class TaskBase:
     target_name = None
 
     def setup(self):
-        pass
+        logger.info("Setting up task `{}`".format(self.task_name()))
 
     def run(self):
         pass
 
     @property
     def settings(self):
+        logger.info("Get settings for TaskBase {}".format(self.task_name()))
+
         return settings
 
     @classmethod
@@ -217,6 +219,8 @@ class UVTask(TaskBase):
 
     @property
     def settings(self):
+        logger.info("Get settings for UVTask {}".format(self.uv))
+
         if self._settings is None:
             self._settings = Settings(str(Path(settings.SEMESTER_DIR) / self.uv))
         return self._settings

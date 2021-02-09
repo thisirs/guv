@@ -16,7 +16,7 @@ from .tasks.base import TaskBase, UVTask, CliArgsMixin
 from .utils import argument
 
 # Load settings from configuration files
-from .config import settings
+from .config import settings, logger
 from .tasks import instructors
 from .tasks import utc
 from .tasks import grades
@@ -45,6 +45,7 @@ class ModulesTaskLoader(NamespaceTaskLoader):
                 and issubclass(v, TaskBase)
                 and v not in [TaskBase, UVTask, CliArgsMixin],
             )
+            logger.info("{} tasks loaded from module {}".format(len(m), module))
             self.tasks.update(dict(m))
             self.namespace.update(dict(m))
 
@@ -66,6 +67,8 @@ task_loader._load_tasks(
     calendar,
     attendance,
 )
+logger.info("{} tasks loaded".format(len(task_loader.tasks)))
+logger.info("{} variables loaded".format(len(task_loader.variables)))
 
 # Load custom tasks
 try:
