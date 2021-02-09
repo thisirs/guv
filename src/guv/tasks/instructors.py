@@ -90,7 +90,7 @@ class XlsInstructors(TaskBase):
             )
             columns = ["Intervenants", "Statut", "Email", "Website"]
             with Output(self.target) as target:
-                pd.DataFrame(columns=columns).to_excel(target())
+                pd.DataFrame(columns=columns).to_excel(target(), index=False)
 
 
 class AddInstructors(TaskBase):
