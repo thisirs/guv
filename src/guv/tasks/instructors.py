@@ -10,6 +10,7 @@ import pandas as pd
 from pandas.api.types import CategoricalDtype
 
 from .utc import UtcUvListToCsv
+from ..config import logger
 from ..utils_config import Output, selected_uv
 from ..utils import lib_list, rel_to_dir
 from .base import UVTask, TaskBase
@@ -163,22 +164,34 @@ class XlsInstDetails(UVTask):
 
     def setup(self):
         super().setup()
-        self.insts_details = XlsInstructors.target_from()
+        self.insts = XlsInstructors.target_from()
         self.inst_uv = XlsAffectation.target_from(**self.info)
         self.target = self.build_target()
-        self.file_dep = [self.inst_uv, self.insts_details]
+        self.file_dep = [self.inst_uv, self.insts]
 
     def run(self):
         inst_uv = pd.read_excel(self.inst_uv, engine="openpyxl")
-        insts_details = pd.read_excel(self.insts_details, engine="openpyxl")
+        insts = pd.read_excel(self.insts, engine="openpyxl")
 
         # Add details from inst_details
-        df = inst_uv.merge(
-            insts_details, how="left", left_on="Intervenants", right_on="Intervenants"
+        df_outer = inst_uv.merge(
+            insts,
+            how="outer",
+            left_on="Intervenants",
+            right_on="Intervenants",
+            indicator=True,
         )
 
+        df_left = df_outer[df_outer["_merge"].isin(["left_only", "both"])]
+        df_left = df_left.drop(["_merge"], axis=1)
+
+        df_missing = df_outer[df_outer["_merge"].isin(["left_only"])]
+        inst_missing = df_missing["Intervenants"].unique()
+        for inst in inst_missing:
+            logger.warning(f"Pas d'informations détaillées sur l'intervenant: {inst}")
+
         with Output(self.target) as target:
-            df.to_excel(target(), index=False)
+            df_left.to_excel(target(), index=False)
 
 
 class XlsUTP(UVTask):
