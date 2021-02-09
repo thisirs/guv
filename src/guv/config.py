@@ -202,7 +202,7 @@ class Settings:
             self._settings["DOIT_CONFIG"] = {
                 "dep_file": os.path.join(self.semester_directory, ".doit.db"),
                 "verbosity": 2,
-                "default_tasks": ["utc_uv_list_to_csv"],
+                "default_tasks": ["xls_affectation"],
             }
             self.load_file(Path(self.cwd) / "config.py")
 
