@@ -3,6 +3,7 @@ import sys
 import re
 from pathlib import Path
 import argparse
+import logging
 
 from doit.exceptions import TaskFailed
 
@@ -109,7 +110,7 @@ class TaskBase:
             try:
                 return self.run()
             except Exception as e:
-                if self.settings.DEBUG > 0:
+                if settings.DEBUG < logging.WARNING:
                     raise e from e
                 msg = " ".join(str(o) for o in e.args)
                 return TaskFailed(msg)
@@ -167,7 +168,7 @@ class TaskBase:
         except Exception as e:
             # Exception inexpliquée, la construction de la tâche
             # échoue. Progager l'exception si DEBUG.
-            if settings.DEBUG > 0:
+            if settings.DEBUG < logging.WARNING:
                 raise e from e
             tf = TaskFailed(str(e))
             return {

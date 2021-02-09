@@ -6,6 +6,7 @@ import inspect
 import argparse
 import jinja2
 import textwrap
+import logging
 
 from doit.doit_cmd import DoitMain
 from doit.cmd_base import NamespaceTaskLoader
@@ -91,7 +92,7 @@ def run_doit(args):
     try:
         sys.exit(DoitMain(task_loader).run(args))
     except Exception as e:
-        if settings.DEBUG > 0:
+        if settings.DEBUG < logging.WARNING:
             raise e from e
         else:
             print(e)
