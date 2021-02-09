@@ -120,6 +120,7 @@ class CalUv(UVTask):
 
     target_dir = "generated"
     target_name = "calendrier.pdf"
+    unique_uv=False
 
     def setup(self):
         super().setup()
