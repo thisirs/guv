@@ -15,6 +15,7 @@ import pandas as pd
 import numpy as np
 import browser_cookie3
 import latex
+import guv
 
 from ..utils_config import Output
 from ..utils import sort_values, argument, check_columns, LaTeXEnvironment
@@ -96,7 +97,7 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
                 )
                 if len(content) < 100:
                     shutil.copyfile(
-                        os.path.join(os.path.dirname(__file__), "images/inconnu.jpg"),
+                        os.path.join(guv.__path__[0], "images", "inconnu.jpg"),
                         fp
                     )
                 else:
@@ -116,7 +117,7 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
             cookies = {c.name: c.value for c in cj if "demeter.utc.fr" in c.domain}
             async with aiohttp.ClientSession(loop=loop, cookies=cookies) as session:
                 md5_inconnu = md5(
-                    os.path.join(os.path.dirname(__file__), "images/inconnu.jpg")
+                    os.path.join(guv.__path__[0], "images", "inconnu.jpg")
                 )
                 for login in df.Login:
                     fp = os.path.join(

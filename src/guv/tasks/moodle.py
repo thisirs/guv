@@ -24,6 +24,7 @@ import browser_cookie3
 import yapf.yapflib.yapf_api as yapf
 from bs4 import BeautifulSoup
 import requests
+import guv
 
 from ..utils_config import Output, compute_slots
 from ..utils import argument, check_columns, lib_list, sort_values, pformat, make_groups
@@ -92,8 +93,8 @@ class HtmlInst(UVTask):
             else:
                 return info["inst"]
 
-        jinja_dir = os.path.join(os.path.dirname(__file__), "templates")
-        env = jinja2.Environment(loader=jinja2.FileSystemLoader(jinja_dir))
+        tmpl_dir = os.path.join(guv.__path__[0], "templates")
+        env = jinja2.Environment(loader=jinja2.FileSystemLoader(tmpl_dir))
         # env.globals.update(contact=contact)
         template = env.get_template("instructors.html.jinja2")
         md = template.render(insts=insts, contact=contact)

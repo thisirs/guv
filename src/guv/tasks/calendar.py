@@ -7,6 +7,7 @@ import os
 import re
 import pandas as pd
 import latex
+import guv
 
 from ..utils_config import Output
 from ..utils import argument, LaTeXEnvironment
@@ -124,8 +125,8 @@ class CalUv(UVTask):
         super().setup()
         self.uv_list = XlsAffectation.target_from(**self.info)
         self.target = self.build_target()
-        jinja_dir = os.path.join(os.path.dirname(__file__), "templates")
-        template = os.path.join(jinja_dir, "calendar_template.tex.jinja2")
+        tmpl_dir = os.path.join(guv.__path__[0], "templates")
+        template = os.path.join(tmpl_dir, "calendar_template.tex.jinja2")
         self.file_dep = [self.uv_list, template]
 
     def run(self):
@@ -162,8 +163,8 @@ class CalInst(CliArgsMixin, TaskBase):
     def setup(self):
         super().setup()
         self.uv_list = AddInstructors.target_from()
-        jinja_dir = os.path.join(os.path.dirname(__file__), "templates")
-        template = os.path.join(jinja_dir, "calendar_template.tex.jinja2")
+        tmpl_dir = os.path.join(guv.__path__[0], "templates")
+        template = os.path.join(tmpl_dir, "calendar_template.tex.jinja2")
         self.file_dep = [self.uv_list, template]
 
         if self.plannings is None:
