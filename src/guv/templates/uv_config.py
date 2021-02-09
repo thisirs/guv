@@ -2,7 +2,7 @@
 
 
 # Mode déboguage
-# DEBUG = 1
+# DEBUG = "INFO"
 
 # Chemin relatif vers l'extraction de l'effectif issu de l'ENT (requis)
 ENT_LISTING = None
