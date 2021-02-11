@@ -6,7 +6,7 @@
 CRENEAU_UV = None
 
 # Sous-dossiers représentant les UV gérées lors du semestre
-UVS = ({{ UVS }})
+UVS = [{{ UVS }}]
 
 # Un dictionnaire listant des plannings (A2020, Master2Sem1,
 # Master2Sem2...) et leurs caractéristiques correspondantes (UV en
@@ -27,7 +27,7 @@ PLANNINGS = {
 }
 
 # Liste des plannings activés
-SELECTED_PLANNINGS = ()
+SELECTED_PLANNINGS = [{{ SEMESTER }}]
 
 # Personne par défaut pour les fichiers iCal et les calendriers
 DEFAULT_INSTRUCTOR = None
@@ -42,7 +42,7 @@ DEFAULT_INSTRUCTOR = None
 # TURN = {
 #   date(2020, 5, 4): "Vendredi"
 # }
-# Le 4 main 2020 est transformé en vendredi
+# Le 4 mai 2020 est transformé en vendredi
 TURN = None
 
 # Liste des journées où il n'y a pas Cours/TD/TP. Le plus simple est
