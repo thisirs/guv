@@ -158,6 +158,13 @@ class TaskBase:
 
                 return (t for t in tasks)
 
+        except NotUVDirectory as e:
+            tf = TaskFailed(str(e))
+            return {
+                "basename": cls.task_name(),
+                "actions": [lambda: tf],
+                "doc": cls.doc()
+            }
         except Exception as e:
             # Exception inexpliquée, la construction de la tâche
             # échoue. Progager l'exception si DEBUG.
