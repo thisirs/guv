@@ -153,15 +153,23 @@ class Settings:
     def __contains__(self, name):
         return name in self.settings
 
+    def SELECTED_PLANNINGS_default(self):
+        return list(self.PLANNINGS.keys())
+
     def __getattr__(self, name):
         if name.startswith("__"):  # for copy to succeed ignore __getattr__
             raise AttributeError(name)
 
-        # Get value in environ or settings
+        # Values from environ have precedence
         if name in os.environ:
             value = os.environ[name]
+        # Next look at loaded settings
         elif name in self.settings:
             value = self.settings[name]
+        # Look at dynamic default
+        elif getattr(self, name + "_default", None):
+            value = getattr(self, name + "_default")
+        # Look at static default
         elif name in DEFAULT_SETTINGS:
             value = DEFAULT_SETTINGS[name]
         else:
