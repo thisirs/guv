@@ -270,7 +270,7 @@ class XlsAffectation(UVTask):
             df_uv_select.to_excel(target(), sheet_name="Intervenants", index=False)
 
         N = 10
-        workbook = openpyxl.load_workbook(target())
+        workbook = openpyxl.load_workbook(self.target)
         worksheet = workbook.create_sheet("Décompte des heures")
 
         ref_cell = worksheet.cell(2, 2)
@@ -361,4 +361,4 @@ class XlsAffectation(UVTask):
         expected_cell.right(2).text(n_TD)
         expected_cell.right(3).text(n_TP)
 
-        workbook.save(target())
+        workbook.save(self.target)
