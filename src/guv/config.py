@@ -71,7 +71,7 @@ _SETTING_LIST = [
     Setting(
         "SELECTED_PLANNINGS",
         schema=Schema([str]),
-        help="La variable 'SELECTED_PLANNINGS' est incorrecte : une liste des plannings actifs est attendue",
+        help="La variable 'SELECTED_PLANNINGS' est incorrecte : une liste des plannings actifs est attendue et la variable vaut '{value}'",
     ),
     Setting(
         "DEFAULT_INSTRUCTOR",
