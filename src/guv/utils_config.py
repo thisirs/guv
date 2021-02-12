@@ -112,9 +112,9 @@ def create_plannings(planning_type):
     def generate_days(beg, end, skip, turn, course):
         """Generate working days from BEG to END"""
 
-        daynames = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"]
+        daynames = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"]
         delta = end - beg
-        semaine = {"Lundi": 0, "Mardi": 0, "Mercredi": 0, "Jeudi": 0, "Vendredi": 0}
+        semaine = {day: 0 for day in daynames}
 
         nweek = 0
 
