@@ -23,16 +23,22 @@ class UtcUvListToCsv(TaskBase):
 
     def setup(self):
         super().setup()
-        self.uv_list_filename = os.path.join(
-            self.settings.SEMESTER_DIR,
-            self.settings.CRENEAU_UV
-        )
 
-        self.ue_list_filename = os.path.join(
-            self.settings.SEMESTER_DIR,
-            "documents",
-            "UTC_UE_list.xlsx"
-        )
+        if "CRENEAU_UV" in self.settings:
+            self.uv_list_filename = os.path.join(
+                self.settings.SEMESTER_DIR,
+                self.settings.CRENEAU_UV
+            )
+        else:
+            self.uv_list_filename = None
+
+        if "CRENEAU_UV_ALT" in self.settings:
+            self.ue_list_filename = os.path.join(
+                self.settings.SEMESTER_DIR,
+                self.settings["CRENEAU_UV_ALT"]
+            )
+        else:
+            self.ue_list_filename = None
 
         self.target = self.build_target()
 
@@ -42,7 +48,7 @@ class UtcUvListToCsv(TaskBase):
                 self.uv_list_filename,
                 self.ue_list_filename
             ]
-            if os.path.exists(fn)
+            if fn
         ]
 
     def read_pdf(self):
@@ -136,21 +142,26 @@ class UtcUvListToCsv(TaskBase):
         return pd.concat(tables)
 
     def run(self):
-        if not self.file_dep:
-            uv_fn = rel_to_dir(self.uv_list_filename, self.settings.SEMESTER_DIR)
-            ue_fn = rel_to_dir(self.ue_list_filename, self.settings.SEMESTER_DIR)
-            msg = f"Au moins un des fichiers {uv_fn} ou {ue_fn} doit être disponible."
-            raise Exception(msg)
+        if self.uv_list_filename is None and self.ue_list_filename is None:
+            raise Exception("Au moins une des variables `CRENEAU_UV` ou `CRENEAU_UV_ALT` doit être définie")
 
         tables = []
 
-        # Lire tous les créneaux par semaine de toute les UVs
-        if os.path.exists(self.uv_list_filename):
-            tables.append(self.read_pdf())
+        # Lire tous les créneaux par semaine de toutes les UVs
+        if self.uv_list_filename is not None:
+            if os.path.exists(self.uv_list_filename):
+                tables.append(self.read_pdf())
+            else:
+                uv_fn = rel_to_dir(self.uv_list_filename, self.settings.SEMESTER_DIR)
+                raise Exception(f"Le fichier n'existe pas: {uv_fn}")
 
         # Lire les créneaux par semaine pour les masters
-        if os.path.exists(self.ue_list_filename):
-            tables.append(pd.read_excel(self.ue_list_filename, engine="openpyxl"))
+        if self.ue_list_filename is not None:
+            if os.path.exists(self.ue_list_filename):
+                tables.append(pd.read_excel(self.ue_list_filename, engine="openpyxl"))
+            else:
+                ue_fn = rel_to_dir(self.ue_list_filename, self.settings.SEMESTER_DIR)
+                raise Exception(f"Le fichier n'existe pas: {ue_fn}")
 
         df = pd.concat(tables)
 
