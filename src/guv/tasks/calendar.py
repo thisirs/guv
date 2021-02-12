@@ -118,8 +118,8 @@ class CalUv(UVTask):
     Crée le calendrier des Cours/TD/TP pour chaque UV sélectionnées.
     """
 
-    target_dir = "generated"
-    target_name = "calendrier.pdf"
+    target_dir = "documents"
+    target_name = "calendrier_hebdomadaire.pdf"
     unique_uv=False
 
     def setup(self):

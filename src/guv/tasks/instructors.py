@@ -238,7 +238,7 @@ class XlsAffectation(UVTask):
     """Fichier Excel des créneaux de toutes les UV configurées."""
 
     unique_uv = False
-    target_name = "intervenants.xlsx"
+    target_name = "planning_hebdomadaire.xlsx"
     target_dir = "documents"
 
     def setup(self):
