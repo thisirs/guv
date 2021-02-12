@@ -6,6 +6,7 @@ import logging
 from schema import Schema, Or, And, Use, SchemaError
 from .exceptions import ImproperlyConfigured
 from .schema_utils import Iterable
+from .utils import pformat
 
 SEMESTER_VARIABLE = "GUV_SEMESTER_PATH"
 
@@ -32,7 +33,8 @@ class Setting:
         try:
             return self.schema.validate(value)
         except SchemaError as e:
-            raise ImproperlyConfigured(self.help) from e
+            msg = pformat(self.help, value=value)
+            raise ImproperlyConfigured(msg) from e
 
 
 _SETTING_LIST = [
