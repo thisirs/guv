@@ -167,8 +167,8 @@ class Settings:
         elif name in self.settings:
             value = self.settings[name]
         # Look at dynamic default
-        elif (name + "_default") in self.__dict__:
-            value = self.__dict__(name + "_default")
+        elif (name + "_default") in Settings.__dict__:
+            value = Settings.__dict__[name + "_default"](self)
         # Look at static default
         elif name in DEFAULT_SETTINGS:
             value = DEFAULT_SETTINGS[name]
