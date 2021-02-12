@@ -159,6 +159,8 @@ class Settings:
         return list(self.PLANNINGS.keys())
 
     def __getattr__(self, name):
+        logger.info(f"Accessing setting '{name}'")
+
         if name.startswith("__"):  # for copy to succeed ignore __getattr__
             raise AttributeError(name)
 
