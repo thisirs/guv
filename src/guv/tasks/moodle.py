@@ -270,7 +270,7 @@ class HtmlTable(UVTask, CliArgsMixin):
 
 
 class JsonRestriction(UVTask, CliArgsMixin):
-    """Ficher json de restrictions d'accès aux ressources sur Moodle basées sur le début/fin des séances
+    """Fichier json de restrictions d'accès aux ressources sur Moodle basées sur le début/fin des séances
 
     Le fichier json contient des restrictions d'accès pour les
     créneaux de Cours/TD/TP basé sur l'appartenance aux groupes de
