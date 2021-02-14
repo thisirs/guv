@@ -16,7 +16,7 @@ from .base import CliArgsMixin, TaskBase
 
 
 class UtcUvListToCsv(TaskBase):
-    """Crée un fichier CSV à partir de la liste d'UV au format PDF"""
+    """Crée un fichier CSV des créneaux de toutes les UVs à partir du PDF"""
 
     target_dir = "documents"
     target_name = "UTC_UV_list.csv"
