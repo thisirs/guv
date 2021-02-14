@@ -711,51 +711,6 @@ class CsvExamGroups(UVTask, CliArgsMixin):
             dff.to_csv(target(), index=False, header=False)
 
 
-class CsvGroups(UVTask, CliArgsMixin):
-    """Fichiers csv des groupes de Cours/TD/TP/singleton pour Moodle
-
-    Crée des fichiers csv pour chaque UV sélectionnées
-    """
-
-    target_dir = "generated"
-    target_name = "{ctype}_group_moodle.csv"
-
-    cli_args = (
-        argument(
-            "-g",
-            "--groups",
-            nargs="+",
-            default=["Cours", "TD", "TP", "singleton"],
-            help="Liste des groupements à considérer (par défault %(default)s)",
-        ),
-    )
-
-    def setup(self):
-        super().setup()
-        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
-        self.targets = [
-            self.build_target(ctype=ctype)
-            for ctype in self.groups
-        ]
-        self.file_dep = [self.xls_merge]
-
-    def run(self):
-        df = pd.read_excel(self.xls_merge, engine="openpyxl")
-
-        for ctype, target in zip(self.groups, self.targets):
-            if ctype == "singleton":
-                dff = df[["Courriel", "Login"]]
-
-                with Output(target) as target:
-                    dff.to_csv(target(), index=False, header=False)
-            else:
-                check_columns(df, ctype, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
-                dff = df[["Courriel", ctype]]
-
-                with Output(target) as target:
-                    dff.to_csv(target(), index=False, header=False)
-
-
 class CsvMoodleGroups(CliArgsMixin, UVTask):
     """Fichier csv de sous-groupes (binômes ou trinômes) aléatoires"""
 
