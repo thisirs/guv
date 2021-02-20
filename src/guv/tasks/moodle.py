@@ -26,6 +26,7 @@ from bs4 import BeautifulSoup
 import requests
 import guv
 
+from ..config import logger
 from ..utils_config import Output, compute_slots
 from ..utils import argument, check_columns, lib_list, sort_values, pformat, make_groups
 from ..exceptions import InvalidGroups
@@ -736,13 +737,14 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         # Add Courriel column, use index to merge
         df_out = pd.concat((df["Courriel"], s_groups), axis=1)
 
-        with Output(self.targets[0]) as target:
+        with Output(self.target) as target:
             df_out.to_csv(target(), index=False, header=False)
 
         df_groups = pd.DataFrame({"groupname": df["Login"], 'groupingname': s_groups})
-        csv_target = os.path.splitext(self.targets[0])[0] + '_secret.csv'
+        csv_target = os.path.splitext(self.target)[0] + '_secret.csv'
         with Output(csv_target) as target:
             df_groups.to_csv(target(), index=False)
+            logger.warning(str(df_groups.head()))
 
     def make_groups(self, name, df, name_gen):
         """Try to make subgroups in `df`"""
@@ -751,10 +753,12 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             try:
                 groups = self.make_groups_index(df)
                 self.check_valid_groups(df, groups)
-                print(f"{i+1} configuration(s) testé(es)")
-                return self.add_names_to_grouping(groups, name, name_gen)
-            except Exception:
+            except InvalidGroups:
                 continue
+
+            logger.warning(f"{i+1} configuration(s) testée(s)")
+            return self.add_names_to_grouping(groups, name, name_gen)
+
         raise Exception(f"Aucune des {i+1} configurations testées n'est valide")
 
     def make_groups_index(self, df):
@@ -783,10 +787,10 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         """Check that groups are valid"""
 
         for idxs in groups:
-            if len(groups) == 2:
+            if len(idxs) == 2:
                 if not self.check_valid_group_2(df, idxs):
                     raise InvalidGroups
-            elif len(groups) == 3:
+            elif len(idxs) == 3:
                 if not self.check_valid_group_3(df, idxs):
                     raise InvalidGroups
 
@@ -837,7 +841,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
 
         return a or b or c
 
-    def add_names_to_grouping(groups, name, name_gen):
+    def add_names_to_grouping(self, groups, name, name_gen):
         """Give names to `groups`"""
 
         def name_gen0():
@@ -845,8 +849,8 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                 yield pformat(n, grouping_name=name)
 
         series_list = [
-            pd.Series([group_name]*len(groups), index=groups)
-            for group_name, group in zip(name_gen0, groups)
+            pd.Series([group_name]*len(group), index=group)
+            for group_name, group in zip(name_gen0(), groups)
         ]
 
         return pd.concat(series_list)
