@@ -30,6 +30,7 @@ from ..utils import (
     rel_to_dir,
     slugrot,
     slugrot_string,
+    switch
 )
 from .base import UVTask, CliArgsMixin
 
@@ -451,7 +452,7 @@ class XlsStudentDataMerge(UVTask):
         if "CHANGEMENT_COURS" in self.settings and self.settings.CHANGEMENT_COURS:
             cours_switches = self.build_dep(self.settings.CHANGEMENT_COURS)
             if os.path.exists(cours_switches):
-                self.docs.append((cours_switches, self.add_switches("Cours")))
+                self.docs.append((cours_switches, switch("Cours", backup=True)))
             else:
                 fn = rel_to_dir(cours_switches, self.settings.semester_directory)
                 raise ImproperlyConfigured(
@@ -462,7 +463,7 @@ class XlsStudentDataMerge(UVTask):
         if "CHANGEMENT_TD" in self.settings and self.settings.CHANGEMENT_TD:
             TD_switches = self.build_dep(self.settings.CHANGEMENT_TD)
             if os.path.exists(TD_switches):
-                self.docs.append((TD_switches, self.add_switches("TD")))
+                self.docs.append((TD_switches, switch("TD", backup=True)))
             else:
                 fn = rel_to_dir(TD_switches, self.settings.semester_directory)
                 raise ImproperlyConfigured(
@@ -473,7 +474,7 @@ class XlsStudentDataMerge(UVTask):
         if "CHANGEMENT_TP" in self.settings and self.settings.CHANGEMENT_TP:
             TP_switches = self.build_dep(self.settings.CHANGEMENT_TP)
             if os.path.exists(TP_switches):
-                self.docs.append((TP_switches, self.add_switches("TP")))
+                self.docs.append((TP_switches, switch("TP", backup=True)))
             else:
                 fn = rel_to_dir(TP_switches, self.settings.semester_directory)
                 raise ImproperlyConfigured(
@@ -577,60 +578,6 @@ class XlsStudentDataMerge(UVTask):
 
         df = df.drop('fullname_slug', axis=1)
         return df
-
-    def add_switches(self, ctype):
-        def add_switches_ctype(df, fn):
-            def swap_record(df, idx1, idx2, col):
-                tmp = df.loc[idx1, col]
-                df.loc[idx1, col] = df.loc[idx2, col]
-                df.loc[idx2, col] = tmp
-
-            # Add column that acts as a primary key
-            tf_df = slugrot("Nom", "Prénom")
-            df["fullname_slug"] = tf_df(df)
-            df[f'{ctype}_orig'] = df[ctype]
-            names = df[ctype].unique()
-
-            with open(fn, 'r') as fd:
-                for line in fd:
-                    if line.strip().startswith('#'):
-                        continue
-                    if not line.strip():
-                        continue
-
-                    stu1, stu2, *t = [e.strip() for e in line.split('---')]
-                    assert len(t) == 0
-
-                    if '@etu' in stu1:
-                        stu1row = df.loc[df['Courriel'] == stu1]
-                        if len(stu1row) != 1:
-                            raise Exception('Nombre d\'enregistrement != 1', len(stu1row), stu1)
-                        stu1idx = stu1row.index[0]
-                    else:
-                        stu1row = df.loc[df.fullname_slug == slugrot_string(stu1)]
-                        if len(stu1row) != 1:
-                            raise Exception('Nombre d\'enregistrement != 1', len(stu1row), stu1)
-                        stu1idx = stu1row.index[0]
-
-                    if stu2 in names:
-                        df.loc[stu1idx, ctype] = stu2
-                    elif '@etu' in stu2:
-                        stu2row = df.loc[df['Courriel'] == stu2]
-                        if len(stu2row) != 1:
-                            raise Exception('Nombre d\'enregistrement != 1', len(stu2row), stu2)
-                        stu2idx = stu2row.index[0]
-                        swap_record(df, stu1idx, stu2idx, ctype)
-                    else:
-                        stu2row = df.loc[df.fullname_slug == slugrot_string(stu2)]
-                        if len(stu2row) != 1:
-                            raise Exception('Nombre d\'enregistrement != 1', len(stu2row), stu2)
-                        stu2idx = stu2row.index[0]
-                        swap_record(df, stu1idx, stu2idx, ctype)
-
-            df = df.drop('fullname_slug', axis=1)
-            return df
-
-        return add_switches_ctype
 
     def add_student_info(self, df, fn):
         df['Info'] = ""

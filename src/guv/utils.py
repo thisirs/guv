@@ -355,6 +355,76 @@ def slugrot(*columns):
     return func
 
 
+def switch(colname, backup=False):
+    """Renvoie une fonction qui réalise l'agrégation d'un DataFrame avec
+    un fichier.
+
+    """
+
+    def switch_func(df, path):
+        """Apply switches specified in `fn` in DataFrame `df`"""
+
+        # Check that column exists
+        check_columns(df, columns=[colname])
+
+        # Add slugname column
+        tf_df = slugrot("Nom", "Prénom")
+        df["fullname_slug"] = tf_df(df)
+
+        if backup:
+            df[f'{colname}_orig'] = df[colname]
+
+        names = df[colname].unique()
+
+        def swap_record(df, idx1, idx2, col):
+            tmp = df.loc[idx1, col]
+            df.loc[idx1, col] = df.loc[idx2, col]
+            df.loc[idx2, col] = tmp
+
+        with open(path, 'r') as fd:
+            for line in fd:
+                if line.strip().startswith('#'):
+                    continue
+                if not line.strip():
+                    continue
+
+                try:
+                    stu1, stu2, = [e.strip() for e in line.split('---')]
+                except ValueError:
+                    raise Exception("etu1 --- etu2")
+
+                if '@etu' in stu1:
+                    stu1row = df.loc[df['Courriel'] == stu1]
+                    if len(stu1row) != 1:
+                        raise Exception('Nombre d\'enregistrement != 1', len(stu1row), stu1)
+                    stu1idx = stu1row.index[0]
+                else:
+                    stu1row = df.loc[df.fullname_slug == slugrot_string(stu1)]
+                    if len(stu1row) != 1:
+                        raise Exception('Nombre d\'enregistrement != 1', len(stu1row), stu1)
+                    stu1idx = stu1row.index[0]
+
+                if stu2 in names:
+                    df.loc[stu1idx, colname] = stu2
+                elif '@etu' in stu2:
+                    stu2row = df.loc[df['Courriel'] == stu2]
+                    if len(stu2row) != 1:
+                        raise Exception('Nombre d\'enregistrement != 1', len(stu2row), stu2)
+                    stu2idx = stu2row.index[0]
+                    swap_record(df, stu1idx, stu2idx, colname)
+                else:
+                    stu2row = df.loc[df.fullname_slug == slugrot_string(stu2)]
+                    if len(stu2row) != 1:
+                        raise Exception('Nombre d\'enregistrement != 1', len(stu2row), stu2)
+                    stu2idx = stu2row.index[0]
+                    swap_record(df, stu1idx, stu2idx, colname)
+
+        df = df.drop('fullname_slug', axis=1)
+        return df
+
+    return switch_func
+
+
 def aggregate_org(colname):
     """Renvoie une fonction d'agrégation d'un fichier .org à utiliser dans
 AGGREGATE_DOCUMENTS.
