@@ -448,6 +448,17 @@ class XlsStudentDataMerge(UVTask):
                     f"{fn} qui n'existe pas"
                 )
 
+        if "CHANGEMENT_COURS" in self.settings and self.settings.CHANGEMENT_COURS:
+            cours_switches = self.build_dep(self.settings.CHANGEMENT_COURS)
+            if os.path.exists(cours_switches):
+                self.docs.append((cours_switches, self.add_switches("Cours")))
+            else:
+                fn = rel_to_dir(cours_switches, self.settings.semester_directory)
+                raise ImproperlyConfigured(
+                    "La variable 'CHANGEMENT_COURS' spécifie le fichier "
+                    f"{fn} qui n'existe pas"
+                )
+
         if "CHANGEMENT_TD" in self.settings and self.settings.CHANGEMENT_TD:
             TD_switches = self.build_dep(self.settings.CHANGEMENT_TD)
             if os.path.exists(TD_switches):

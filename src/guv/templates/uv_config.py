@@ -30,6 +30,13 @@ AGGREGATE_DOCUMENTS = None
 # tiers temps.
 TIERS_TEMPS = None
 
+# Fichier des changements de Cours
+# Il s'agit d'un fichier de prise en compte des changements de groupes
+# de Cours. Chaque ligne repère un changement qui est de la forme
+# id1 --- id2
+# Les identifiants peuvent être des adresses email ou des nom prénom
+CHANGEMENT_COURS = None
+
 # Fichier des changements de TD
 # Il s'agit d'un fichier de prise en compte des changements de groupes
 # de TD. Chaque ligne repère un changement qui est de la forme
