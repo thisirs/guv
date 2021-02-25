@@ -391,17 +391,19 @@ def switch(colname, backup=False):
                 try:
                     stu1, stu2, = [e.strip() for e in line.split('---')]
                 except ValueError:
-                    raise Exception("etu1 --- etu2")
+                    raise Exception(f"Ligne incorrecte: `{line.strip()}`")
+                if not stu1 or not stu2:
+                    raise Exception(f"Ligne incorrecte: `{line.strip()}`")
 
                 if '@etu' in stu1:
                     stu1row = df.loc[df['Courriel'] == stu1]
                     if len(stu1row) != 1:
-                        raise Exception('Nombre d\'enregistrement != 1', len(stu1row), stu1)
+                        raise Exception(f'Adresse courriel `{stu1}` non présente dans la base de données')
                     stu1idx = stu1row.index[0]
                 else:
                     stu1row = df.loc[df.fullname_slug == slugrot_string(stu1)]
                     if len(stu1row) != 1:
-                        raise Exception('Nombre d\'enregistrement != 1', len(stu1row), stu1)
+                        raise Exception(f'Étudiant de nom `{stu1}` non présent ou reconnu dans la base de données')
                     stu1idx = stu1row.index[0]
 
                 if stu2 in names:
@@ -409,13 +411,13 @@ def switch(colname, backup=False):
                 elif '@etu' in stu2:
                     stu2row = df.loc[df['Courriel'] == stu2]
                     if len(stu2row) != 1:
-                        raise Exception('Nombre d\'enregistrement != 1', len(stu2row), stu2)
+                        raise Exception(f'Adresse courriel `{stu2}` non présente dans la base de données')
                     stu2idx = stu2row.index[0]
                     swap_record(df, stu1idx, stu2idx, colname)
                 else:
                     stu2row = df.loc[df.fullname_slug == slugrot_string(stu2)]
                     if len(stu2row) != 1:
-                        raise Exception('Nombre d\'enregistrement != 1', len(stu2row), stu2)
+                        raise Exception(f'Étudiant ou nom de séance `{stu2}` non reconnu dans la base de données')
                     stu2idx = stu2row.index[0]
                     swap_record(df, stu1idx, stu2idx, colname)
 
