@@ -310,6 +310,10 @@ class XlsStudentData(UVTask):
                 row_merge = lo.loc[index, :].combine_first(ro.iloc[int(choice), :])
                 row_merge["_merge"] = "both"
                 dfr_clean = dfr_clean.append(row_merge)
+            else:
+                row_merge = lo.loc[index, :].copy()
+                row_merge["_merge"] = "both"
+                dfr_clean = dfr_clean.append(row_merge)
 
         dfr_clean = dfr_clean.drop(["_merge", "fullname_slug"], axis=1)
 
