@@ -456,8 +456,7 @@ class JsonRestriction(UVTask, CliArgsMixin):
             return "Séance " + str(num), no_group
 
         moodle_date = dict(get_beg_end_date_each(name, g) for name, g in gb)
-
-        max_len = len("visible si: t >= previous_midnight(min(B))")
+        max_len = max(len(s) for s in list(moodle_date.values())[0])
         with Output(self.target, protected=True) as target:
             with open(target(), "w") as fd:
                 s = (
