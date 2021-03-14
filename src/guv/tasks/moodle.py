@@ -407,18 +407,6 @@ class JsonRestriction(UVTask, CliArgsMixin):
             dt_max_friday = dt_max + timedelta(days=6 - dt_max.weekday())
             dt_max_friday = datetime.combine(dt_max_friday, time.max)
             dt_max_midnight = datetime.combine(dt_max, time.max)
-            if len(gbe) > 1:
-                after_end_group = [
-                    (CondGroup() == g) & (CondDate() >= e) for g, b, e in gbe
-                ]
-                before_end_group = [
-                    (CondGroup() == g) & (CondDate() < e) for g, b, e in gbe
-                ]
-
-                window_group = [
-                    (CondGroup() == g) & (CondDate() >= b) & (CondDate() < e)
-                    for g, b, e in gbe
-                ]
 
             no_group = {
                 "visible si: t < min(B)": (CondDate() < dt_min).to_PHP(),
@@ -433,6 +421,24 @@ class JsonRestriction(UVTask, CliArgsMixin):
             }
 
             if len(gbe) > 1:
+                after_end_group = [
+                    (CondGroup() == g) & (CondDate() >= e) for g, b, e in gbe
+                ]
+                before_end_group = [
+                    (CondGroup() == g) & (CondDate() < e) for g, b, e in gbe
+                ]
+
+                def window_group_start(g, b, e, p=0, q=0):
+                    (CondGroup() == g) & (CondDate() >= b + timedelta(minutes=p)) & (CondDate() < b + timedelta(minutes=q))
+
+                def window_group(g, b, e, p=0, q=0):
+                    (CondGroup() == g) & (CondDate() >= b + timedelta(minutes=p)) & (CondDate() < e + timedelta(minutes=q))
+
+                def windows(func, gbe, p=0, q=0):
+                    return [
+                        func(g, b, e, p, q) for g, b, e in gbe
+                    ]
+
                 if "GROUP_ID" not in self.settings or not self.settings.GROUP_ID:
                     print("WARNING: Plusieurs groupes de Cours/TD/TP et GROUP_ID non spécifié")
                 else:
@@ -442,8 +448,10 @@ class JsonRestriction(UVTask, CliArgsMixin):
                         "visible si: t > B par groupe": CondOr(after_beg_group).to_PHP(**info),
                         "visible si: t > E par groupe": CondOr(after_end_group).to_PHP(**info),
                         "visible si: t <= E par groupe": CondOr(before_end_group).to_PHP(**info),
-                        "visible si: B <= t < E par groupe": CondOr(window_group).to_PHP(**info),
+                        "visible si: B <= t < E par groupe": CondOr(windows(window_group, gbe)).to_PHP(**info),
                     })
+                    for p, q in ((-3, 5),):
+                        no_group[f"visible si: B + {p}min <= t < B + {q}min par groupe"] = CondOr(windows(window_group_start, gbe, p, q)).to_PHP(**info)
 
             return "Séance " + str(num), no_group
 
