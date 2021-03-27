@@ -139,6 +139,33 @@ def replace_column(colname, rep_dict, new_colname=None):
     return func
 
 
+def compute_new_column(*cols, func=None, colname=None):
+    """Renvoie une fonction qui calcule une nouvelle note à partir
+    d'autres colonnes. Les colonnes utilisées sont renseignées dans
+    `cols`. La fonction `func` qui réalise l'agrégation reçoit une
+    Series Pandas.
+
+    Utilisable avec l'argument `postprocessing` ou `preprocessing`
+    dans la fonction `aggregate` ou directement à la place de la
+    fonction `aggregate` dans `AGGREGATE_DOCUMENTS`.
+
+    Par exemple:
+    > def myfunc(s):
+    >     return max(s["Note1"], s["Note2"])
+    > compute_new_column("Note1", "Note2", func=myfunc, colname="Note max")
+
+    """
+    def func2(df, path=None):
+        check_columns(df, cols)
+        new_col = df.apply(lambda x: func(x.loc[list(cols)]), axis=1)
+        df = df.assign(**{colname: new_col})
+        return df
+
+    func2.__name__ = f"Creating new column `{colname}`"
+
+    return func2
+
+
 def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset=None, drop=None, rename=None, read_method=None, kw_read={}):
     """Renvoie une fonction qui réalise l'agrégation d'un DataFrame avec
     un fichier.
