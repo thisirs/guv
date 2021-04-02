@@ -91,7 +91,7 @@ class IcalInst(CliArgsMixin, TaskBase):
             "-i",
             "--insts",
             nargs="+",
-            help="Liste des intervenants à considérer",
+            help="Liste des intervenants à considérer (all pour tous les intervenants)",
         ),
     )
 
