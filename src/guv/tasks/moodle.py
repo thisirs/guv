@@ -429,10 +429,10 @@ class JsonRestriction(UVTask, CliArgsMixin):
                 ]
 
                 def window_group_start(g, b, e, p=0, q=0):
-                    (CondGroup() == g) & (CondDate() >= b + timedelta(minutes=p)) & (CondDate() < b + timedelta(minutes=q))
+                    return (CondGroup() == g) & (CondDate() >= b + timedelta(minutes=p)) & (CondDate() < b + timedelta(minutes=q))
 
                 def window_group(g, b, e, p=0, q=0):
-                    (CondGroup() == g) & (CondDate() >= b + timedelta(minutes=p)) & (CondDate() < e + timedelta(minutes=q))
+                    return (CondGroup() == g) & (CondDate() >= b + timedelta(minutes=p)) & (CondDate() < e + timedelta(minutes=q))
 
                 def windows(func, gbe, p=0, q=0):
                     return [
