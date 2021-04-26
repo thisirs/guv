@@ -742,12 +742,15 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         s_groups = pd.concat(df_gen())
 
         # Add Courriel column, use index to merge
-        df_out = pd.concat((df["Courriel"], s_groups), axis=1)
+        df_out = pd.DataFrame({"Courriel": df["Courriel"], "group": s_groups})
+        df_out = df_out.sort_values(["group", "Courriel"])
 
         with Output(self.target) as target:
             df_out.to_csv(target(), index=False, header=False)
 
         df_groups = pd.DataFrame({"groupname": df["Login"], 'groupingname': s_groups})
+        df_groups = df_groups.sort_values(["groupingname", "groupname"])
+
         csv_target = os.path.splitext(self.target)[0] + '_secret.csv'
         with Output(csv_target) as target:
             df_groups.to_csv(target(), index=False)
