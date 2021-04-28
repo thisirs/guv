@@ -65,7 +65,7 @@ def fillna_column(colname, na_value=None, group_column=None):
             df[colname].fillna(na_value, inplace=True)
             return df
 
-        func.__name__ = f"Fill NA in column `{colname}` with `{na_value}`"
+        func.__name__ = f"Remplace les NA dans la colonne `{colname}` par la valeur `{na_value}`"
 
     else:
         def fill_by_group(g):
@@ -82,7 +82,7 @@ def fillna_column(colname, na_value=None, group_column=None):
             check_columns(df, [colname, group_column])
             return df.groupby(group_column).apply(fill_by_group)
 
-        func.__name__ = f"Fill NA in column `{colname}` by `{group_column}`"
+        func.__name__ = f"Remplace les NA dans la colonne `{colname}` en groupant par `{group_column}`"
 
     return func
 
@@ -537,6 +537,15 @@ def pformat(s, **kwargs):
 
 
 def make_groups(collection, proportions):
+    """Renvoie une partition en groupes de `collection` guidées par `proportions`.
+
+    La longueur de `proportions` fixe le nombre de groupes et la
+    valeur correspondante est la taille du groupe en proportion. Par
+    exemple, `[1, 1, 1]` correspond à trois groupes de même taille. Les
+    groupes sont constitués de manière contigue.
+
+    """
+
     n = len(collection)
     n_groups = len(proportions)
 
