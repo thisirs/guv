@@ -13,7 +13,8 @@ import math
 import random
 import argparse
 import json
-from datetime import timedelta, datetime, time
+import time
+import datetime as dt
 import pprint
 import markdown
 import pandas as pd
@@ -260,7 +261,7 @@ class HtmlTable(UVTask, CliArgsMixin):
 
         def mondays(beg, end):
             while beg <= end:
-                nbeg = beg + timedelta(days=7)
+                nbeg = beg + dt.timedelta(days=7)
                 yield (beg, nbeg)
                 beg = nbeg
 
@@ -287,7 +288,7 @@ class HtmlTable(UVTask, CliArgsMixin):
         ):
             weeks.append(
                 "{}-{}".format(
-                    mon.strftime("%d/%m"), (nmon - timedelta(days=1)).strftime("%d/%m")
+                    mon.strftime("%d/%m"), (nmon - dt.timedelta(days=1)).strftime("%d/%m")
                 )
             )
 
@@ -378,10 +379,10 @@ class JsonRestriction(UVTask, CliArgsMixin):
                 date = row["date"]
                 hd = row["Heure début"]
                 hf = row["Heure fin"]
-                dtd = datetime.strptime(
+                dtd = dt.datetime.strptime(
                     date + "_" + hd, DATE_FORMAT + "_" + TIME_FORMAT
                 )
-                dtf = datetime.strptime(
+                dtf = dt.datetime.strptime(
                     date + "_" + hf, DATE_FORMAT + "_" + TIME_FORMAT
                 )
 
@@ -389,12 +390,12 @@ class JsonRestriction(UVTask, CliArgsMixin):
 
             gbe = [group_beg_end(row) for index, row in df.iterrows()]
             dt_min = min(b for g, b, e in gbe)
-            dt_min3 = dt_min - timedelta(days=3)
+            dt_min3 = dt_min - dt.timedelta(days=3)
             dt_max = max(e for g, b, e in gbe)
 
-            dt_min_monday = dt_min - timedelta(days=dt_min.weekday())
-            dt_min_monday = datetime.combine(dt_min_monday, time.min)
-            dt_min_midnight = datetime.combine(dt_min, time.min)
+            dt_min_monday = dt_min - dt.timedelta(days=dt_min.weekday())
+            dt_min_monday = dt.datetime.combine(dt_min_monday, dt.time.min)
+            dt_min_midnight = dt.datetime.combine(dt_min, dt.time.min)
 
             if len(gbe) > 1:
                 after_beg_group = [
@@ -404,9 +405,9 @@ class JsonRestriction(UVTask, CliArgsMixin):
                     (CondGroup() == g) & (CondDate() < b) for g, b, e in gbe
                 ]
 
-            dt_max_friday = dt_max + timedelta(days=6 - dt_max.weekday())
-            dt_max_friday = datetime.combine(dt_max_friday, time.max)
-            dt_max_midnight = datetime.combine(dt_max, time.max)
+            dt_max_friday = dt_max + dt.timedelta(days=6 - dt_max.weekday())
+            dt_max_friday = dt.datetime.combine(dt_max_friday, dt.time.max)
+            dt_max_midnight = dt.datetime.combine(dt_max, dt.time.max)
 
             no_group = {
                 "visible si: t < min(B)": (CondDate() < dt_min).to_PHP(),
@@ -429,10 +430,10 @@ class JsonRestriction(UVTask, CliArgsMixin):
                 ]
 
                 def window_group_start(g, b, e, p=0, q=0):
-                    return (CondGroup() == g) & (CondDate() >= b + timedelta(minutes=p)) & (CondDate() < b + timedelta(minutes=q))
+                    return (CondGroup() == g) & (CondDate() >= b + dt.timedelta(minutes=p)) & (CondDate() < b + dt.timedelta(minutes=q))
 
                 def window_group(g, b, e, p=0, q=0):
-                    return (CondGroup() == g) & (CondDate() >= b + timedelta(minutes=p)) & (CondDate() < e + timedelta(minutes=q))
+                    return (CondGroup() == g) & (CondDate() >= b + dt.timedelta(minutes=p)) & (CondDate() < e + dt.timedelta(minutes=q))
 
                 def windows(func, gbe, p=0, q=0):
                     return [
