@@ -38,7 +38,7 @@ def check_columns(dataframe, columns, **kwargs):
         raise Exception(msg)
 
 
-def replace_regex(colname, *reps, new_colname=None):
+def replace_regex(colname, *reps, new_colname=None, msg=None):
     """Renvoie une fonction qui remplace les occurrences de toutes les
     expressions régulières renseignées dans `reps` dans la colonne
     `colname`.
@@ -61,7 +61,12 @@ def replace_regex(colname, *reps, new_colname=None):
         df = df.assign(**{cn: s})
         return df
 
-    func.__name__ = f"Regex replacements in column `{colname}`"
+    if msg is not None:
+        func.__name__ = msg
+    elif new_colname is None:
+        func.__name__ = f"Remplacement regex colonne `{colname}`"
+    else:
+        func.__name__ = f"Création colonne `{new_colname}` + replacement regex colonne `{colname}`"
     return func
 
 
