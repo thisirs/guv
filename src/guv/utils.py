@@ -338,14 +338,38 @@ def slugrot(*columns):
     return func
 
 
-def switch(colname, backup=False):
-    """Renvoie une fonction qui réalise l'agrégation d'un DataFrame avec
-    un fichier.
+def switch(colname, backup=False, path=None):
+    """Renvoie une fonction qui réalise des échanges dans une colonne.
 
+    L'argument `colname` est la colonne dans laquelle opérer les
+    échanges. L'argument `backup` spécifie si la colonne doit être
+    sauvegardée avant de faire les échanges.
+
+    Utilisable avec l'argument `postprocessing` ou `preprocessing`
+    dans la fonction `aggregate` en spécifiant l'argument `path` ou
+    directement à la place de la fonction `aggregate` dans
+    `AGGREGATE_DOCUMENTS`.
+
+    Exemples :
+    > AGGREGATE_DOCUMENTS = [
+        ("fichier_échange_TP", switch("TP"))
+    ]
+    > AGGREGATE_DOCUMENTS = [
+        ("fichier_à_agréger", aggregate(
+            ...,
+            postprocessing=switch("TP", path="fichier_échange_TP")
+        ))
+    ]
     """
 
-    def switch_func(df, path):
+    def switch_func(df, agg_path):
         """Apply switches specified in `fn` in DataFrame `df`"""
+
+        if path is None and agg_path is None:
+            raise Exception("Il faut spécifier un chemin avec l'argument `path` ou dans `AGGREGATE_DOCUMENTS`.")
+
+        if agg_path is None:
+            agg_path = path
 
         # Check that column exists
         check_columns(df, columns=[colname])
@@ -364,7 +388,7 @@ def switch(colname, backup=False):
             df.loc[idx1, col] = df.loc[idx2, col]
             df.loc[idx2, col] = tmp
 
-        with open(path, 'r') as fd:
+        with open(agg_path, 'r') as fd:
             for line in fd:
                 if line.strip().startswith('#'):
                     continue
