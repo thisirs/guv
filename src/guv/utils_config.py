@@ -4,8 +4,8 @@ from datetime import timedelta
 import pandas as pd
 
 from .exceptions import NotUVDirectory, ImproperlyConfigured
-from .utils import rel_to_dir
-from .config import settings
+from .utils import rel_to_dir, check_columns
+from .config import settings, logger
 
 
 def selected_uv(all="dummy"):
@@ -218,3 +218,55 @@ def compute_slots(csv_inst_list, planning_type, empty_instructor=True, filter_uv
 
     dfm = pd.concat([df_Cm, df_Dm, df_Tm], ignore_index=True)
     return dfm
+
+
+def fillna_column(colname, na_value=None, group_column=None):
+    """Renvoie une fonction qui remplace les valeurs non définies dans la
+    colonne `colname`. Une seule des options `na_value` et
+    `group_column` doit être spécifiée. Si `na_value` est spécifiée,
+    on remplace inconditionnellement par la valeur fournie. Si
+    `group_column` est spécifiée, on complète en groupant par
+    `group_column` en prenant la seule valeur valide par groupe dans
+    cette colonne.
+
+    Utilisable avec l'argument `postprocessing` ou `preprocessing`
+    dans la fonction `aggregate` ou directement à la place de la
+    fonction `aggregate` dans `AGGREGATE_DOCUMENTS`.
+
+    Exemples :
+    > fillna_column("group", na_value="ABS")
+    > fillna_column("group", group_column="choix")
+
+    """
+    if not((na_value is None) ^ (group_column is None)):
+        raise Exception("Une seule option doit être spécifiée")
+
+    if na_value is not None:
+        def func(df, path=None):
+            check_columns(df, [colname])
+            df[colname].fillna(na_value, inplace=True)
+            return df
+
+        func.__name__ = f"Remplace les NA dans la colonne `{colname}` par la valeur `{na_value}`"
+
+    else:
+        def fill_by_group(g):
+            idx_first = g[colname].first_valid_index()
+            idx_last = g[colname].last_valid_index()
+            if idx_first is not None:
+                if idx_first == idx_last:
+                    g[colname] = g.loc[idx_first, colname]
+                else:
+                    logger.warning("Plusieurs valeurs non-NA dans le groupe")
+                    print(g[["Nom", "Prénom", colname]])
+            else:
+                logger.warning("Aucune valeur non-NA dans le groupe")
+            return g
+
+        def func(df, path=None):
+            check_columns(df, [colname, group_column])
+            return df.groupby(group_column).apply(fill_by_group)
+
+        func.__name__ = f"Remplace les NA dans la colonne `{colname}` en groupant par `{group_column}`"
+
+    return func
