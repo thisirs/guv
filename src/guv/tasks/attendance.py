@@ -66,7 +66,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
             "-t",
             "--title",
             default="Feuille de présence",
-            help="Titre utilisé pour les feuilles de présence"
+            help="Titre utilisé dans les feuilles de présence"
         ),
         argument(
             "-b",
@@ -77,7 +77,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
         argument(
             "-g",
             "--group",
-            help="Nom de la colonne du groupement à considérer",
+            help="Nom de la colonne utilisée pour faire des groupes",
         ),
         argument(
             "--save-tex",
@@ -90,20 +90,20 @@ class PdfAttendance(UVTask, CliArgsMixin):
             "--count",
             type=int,
             nargs="*",
-            help="Les effectifs des groupes"
+            help="Spécifie les effectifs des groupes à utiliser"
         ),
         argument(
             "-n",
             "--names",
             nargs="*",
-            help="Les noms des groupes"
+            help="Spécifie le nom des groupes correspondants à --count"
         ),
         argument(
             "-e",
             "--extra",
             type=int,
             default=0,
-            help=""
+            help="Nombre de places supplémentaires dans les feuilles de présence"
         ),
         argument(
             "--tiers-temps",
