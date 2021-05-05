@@ -12,10 +12,8 @@ from .trombinoscope import (
 )
 
 from .attendance import (
-    PdfAttendanceList,
+    PdfAttendance,
     PdfAttendanceFull,
-    AttendanceSheetRoom,
-    AttendanceSheet,
 )
 
 from .calendar import (

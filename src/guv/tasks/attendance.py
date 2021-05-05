@@ -4,10 +4,9 @@ présence.
 """
 
 import os
-import re
 import zipfile
 import tempfile
-import json
+import shutil
 import pandas as pd
 import latex
 
@@ -18,6 +17,7 @@ from ..utils import (
     argument,
     pformat,
     LaTeXEnvironment,
+    make_groups
 )
 
 from .base import UVTask, CliArgsMixin
@@ -51,14 +51,29 @@ def pdf_attendance_list_render(df, tmpl_file, **kwargs):
     return filepath, tex_filepath
 
 
-class PdfAttendanceList(UVTask, CliArgsMixin):
-    """Fichier pdf de feuilles de présence nominatives par groupes"""
+class PdfAttendance(UVTask, CliArgsMixin):
+    """Fichier pdf de feuilles de présence
+
+    """
 
     always_make = True
     target_dir = "generated"
-    target_name = "attendance_{group}.zip"
+    target_name = "attendance2_{group}.zip"
+    template_file = "attendance.tex.jinja2"
 
     cli_args = (
+        argument(
+            "-t",
+            "--title",
+            default="Feuille de présence",
+            help="Titre utilisé pour les feuilles de présence"
+        ),
+        argument(
+            "-b",
+            "--blank",
+            default=False,
+            help="Ne pas faire apparaitre de noms"
+        ),
         argument(
             "-g",
             "--group",
@@ -67,13 +82,34 @@ class PdfAttendanceList(UVTask, CliArgsMixin):
         argument(
             "--save-tex",
             action="store_true",
+            default=False,
             help="Met le(s) fichier(s) .tex généré(s) à disposition"
         ),
         argument(
-            "--context",
             "-c",
-            type=json.loads,
-            default={}
+            "--count",
+            type=int,
+            nargs="*",
+            help="Les effectifs des groupes"
+        ),
+        argument(
+            "-n",
+            "--names",
+            nargs="*",
+            help="Les noms des groupes"
+        ),
+        argument(
+            "-e",
+            "--extra",
+            type=int,
+            default=0,
+            help=""
+        ),
+        argument(
+            "--tiers-temps",
+            action="store_true",
+            default=False,
+            help="Met les tiers-temps dans un groupe à part"
         )
     )
 
@@ -82,41 +118,142 @@ class PdfAttendanceList(UVTask, CliArgsMixin):
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
         self.target = self.build_target()
         self.file_dep = [self.xls_merge]
+        latex_env = LaTeXEnvironment()
+        self.template = latex_env.get_template(self.template_file)
+
+    def pdf_attendance_render(self, **context):
+        # Render template with context
+        tex = self.template.render(**context)
+
+        temp_dir = tempfile.mkdtemp()
+
+        filename = context["filename"]
+        pdf = latex.build_pdf(tex)
+        filepath = os.path.join(temp_dir, filename)
+        pdf.save_to(filepath)
+
+        tex_filename = os.path.splitext(filename)[0] + '.tex'
+        tex_filepath = os.path.join(temp_dir, tex_filename)
+        with open(tex_filepath, "w") as fd:
+            fd.write(tex)
+
+        return filepath, tex_filepath
+
+    def generate_contexts(self):
+        if self.group and (self.count or self.names):
+            raise Exception("Les options --group et --count ou --names sont incompatibles")
+
+        context = {
+            "title": self.title,
+            "extra": self.extra
+        }
+
+        if self.count:
+            if self.names:
+                if len(self.count) != len(self.names):
+                    raise Exception("Les options --count et --names doivent être de même longueur")
+            else:
+                self.names = [f"Groupe_{i+1}" for i in range(len(self.count))]
+
+            if self.blank:
+                context["blank"] = True
+                for num, name in zip(self.count, self.names):
+                    context["group"] = name
+                    context["num"] = num
+                    context["filename"] = f"{name}.pdf"
+                    yield context
+            else:
+                df = pd.read_excel(self.xls_merge, engine="openpyxl")
+                df = sort_values(df, ["Nom", "Prénom"])
+                context["blank"] = False
+
+                if self.tiers_temps:
+                    check_columns(df, "Tiers-temps", file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
+                    df_tt = df[df["Tiers-temps"] == 1]
+                    df = df[df["Tiers-temps"] != 1]
+                    context["group"] = "Tiers-temps"
+                    context["filename"] = "Tiers_temps.pdf"
+                    students = [{"name": f'{row["Nom"]} {row["Prénom"]}'} for _, row in df_tt.iterrows()]
+                    context["students"] = students
+                    yield context
+
+                groups = make_groups(df.index, self.count)
+                for name, idxs in zip(self.names, groups):
+                    group = df.loc[idxs]
+                    print(name, ":", " ".join(group.iloc[0][["Nom", "Prénom"]]), "--",
+                          " ".join(group.iloc[-1][["Nom", "Prénom"]]))
+                    students = [{"name": f'{row["Nom"]} {row["Prénom"]}'} for _, row in group.iterrows()]
+                    context["students"] = students
+                    context["filename"] = f"{name}.pdf"
+                    context["group"] = name
+                    yield context
+
+        else:
+            df = pd.read_excel(self.xls_merge, engine="openpyxl")
+            df = sort_values(df, ["Nom", "Prénom"])
+
+            if self.tiers_temps:
+                check_columns(df, "Tiers-temps", file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
+                df_tt = df[df["Tiers-temps"] == 1]
+                df = df[df["Tiers-temps"] != 1]
+                context["group"] = "Tiers-temps"
+                context["blank"] = self.blank
+                context["num"] = len(df_tt)
+                context["filename"] = "Tiers_temps.pdf"
+                students = [{"name": f'{row["Nom"]} {row["Prénom"]}'} for _, row in df_tt.iterrows()]
+                context["students"] = students
+                yield context
+
+            if self.group is not None:
+                check_columns(df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
+
+            for gn, group in df.groupby(self.group or (lambda x: "all")):
+                context["group"] = gn
+                context["blank"] = self.blank
+                context["num"] = len(group)
+                context["filename"] = f"{gn}.pdf"
+                students = [{"name": f'{row["Nom"]} {row["Prénom"]}'} for _, row in group.iterrows()]
+                context["students"] = students
+                yield context
 
     def run(self):
-        df = pd.read_excel(self.xls_merge, engine="openpyxl")
-
-        if self.group:
-            check_columns(df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
-
-        template = "attendance_list.tex.jinja2"
-
         pdfs = []
         texs = []
-        for gn, group in df.groupby(self.group or (lambda x: "all")):
-            group = sort_values(group, ["Nom", "Prénom"])
-            context = self.context
-            context["group"] = f"Groupe: {gn}"
-            context["filename"] = f"{gn}.pdf"
-            pdf, tex = pdf_attendance_list_render(group, template, **context)
+        for context in self.generate_contexts():
+            pdf, tex = self.pdf_attendance_render(**context)
             pdfs.append(pdf)
             texs.append(tex)
 
+        # Écriture du pdf dans un zip si plusieurs
         with Output(self.target) as target0:
-            with zipfile.ZipFile(target0(), "w") as z:
-                for filepath in pdfs:
-                    z.write(filepath, os.path.basename(filepath))
+            if len(pdfs) == 1:
+                shutil.move(pdfs[0], target0())
+            else:
+                with zipfile.ZipFile(target0(), "w") as z:
+                    for filepath in pdfs:
+                        z.write(filepath, os.path.basename(filepath))
 
+        # Écriture du tex dans un zip si plusieurs
         if self.save_tex:
             target = os.path.splitext(self.target)[0] + "_source.zip"
             with Output(target) as target0:
-                with zipfile.ZipFile(target0(), "w") as z:
-                    for filepath in texs:
-                        z.write(filepath, os.path.basename(filepath))
+                if len(pdfs) == 1:
+                    shutil.move(pdfs[0], target0())
+                else:
+                    with zipfile.ZipFile(target0(), "w") as z:
+                        for filepath in texs:
+                            z.write(filepath, os.path.basename(filepath))
 
 
 class PdfAttendanceFull(UVTask, CliArgsMixin):
-    """Fichier zip de feuilles de présence nominatives par groupe et par semestre"""
+    """Fichier zip de feuilles de présence nominatives par groupe et par semestre
+
+    Permet d'avoir un seule feuille de présence pour tout le semestre.
+    L'option -g permet de spécifier une colonne de groupes pour faire
+    des feuilles de présence par groupes. L'option --slots permet de
+    spécifier le nombre de séances pour le semestre.
+
+    """
 
     target_dir = "generated"
     target_name = "attendance_{group}_full.zip"
@@ -183,157 +320,3 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
             with zipfile.ZipFile(target0(), "w") as z:
                 for filepath in pdfs:
                     z.write(filepath, os.path.basename(filepath))
-
-
-class AttendanceSheetRoom(UVTask):
-    """Fichier zip de feuilles de présence nominatives par taille des salles"""
-
-    always_make = True
-    target_dir = "documents"
-    target_name = "attendance_rooms.zip"
-
-    def setup(self):
-        super().setup()
-        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
-        self.target = self.build_target()
-        self.file_dep = [self.xls_merge]
-
-    def rooms(self):
-        groupby = {}
-        while True:
-            room = input("Salle: ")
-            num = input("Nombre: ")
-            if not room:
-                if not num:
-                    if groupby:
-                        print("Liste des salles: \n%s" % groupby)
-                        break
-                    else:
-                        raise Exception("Il faut au moins une salle")
-            elif re.fullmatch("[0-9]+", num):
-                groupby[room] = int(num)
-        return groupby
-
-    def run(self):
-        groupby = self.rooms()
-
-        def breaks(total, rooms):
-            assert sum(rooms) >= total
-            rest = sum(rooms) - total
-            n = len(rooms)
-            q = rest // n
-            r = rest % n
-            index = sorted(range(len(rooms)), key=lambda k: rooms[k])
-            roomss = sorted(rooms)
-            nrooms = [0] * n
-            for i in range(n):
-                eps = 1 if i + 1 <= r else 0
-                nrooms[index[i]] = rooms[index[i]] - (q + eps)
-
-            breaks = []
-            nrooms0 = [0] + nrooms + [total - 1]
-            curr = 0
-            for i in range(len(nrooms0) - 2):
-                breaks.append(
-                    (curr + nrooms0[i], curr + nrooms0[i] + nrooms0[i + 1] - 1)
-                )
-                curr += nrooms0[i]
-
-            return breaks
-
-        df = pd.read_excel(self.xls_merge, engine="openpyxl")
-        if "Tiers-temps" in df.columns:
-            df0 = df.loc[df["Tiers-temps"] == 0]
-            dftt = df.loc[df["Tiers-temps"] != 0]
-            if len(df.index) == 0:
-                dftt = None
-        else:
-            df0 = df
-            dftt = None
-
-        total = len(df0.index)
-        rooms_nums = [n for _, n in groupby.items()]
-        rooms_name = [n for n, _ in groupby.items()]
-
-        breaks = breaks(total, rooms_nums)
-        pdfs = []
-        for n, (i, j) in enumerate(breaks):
-            stu1 = df0.iloc[i]["Nom"]
-            stu2 = df0.iloc[j]["Nom"]
-            filename = f"{rooms_name[n]}.pdf"
-            pdf, tex = pdf_attendance_list_render(
-                df0.iloc[i : (j + 1)], "attendance_list.tex.jinja2", filename=filename
-            )
-            pdfs.append(pdf)
-            print(f"{stu1}--{stu2}")
-
-        if dftt is not None:
-            filename = "tiers-temps.pdf"
-            pdf, tex = pdf_attendance_list_render(
-                dftt, "attendance_list.tex.jinja2", filename=filename
-            )
-            pdfs.append(pdf)
-
-        with Output(self.target) as target0:
-            with zipfile.ZipFile(target0(), "w") as z:
-                for filepath in pdfs:
-                    z.write(filepath, os.path.basename(filepath))
-
-
-class AttendanceSheet(UVTask, CliArgsMixin):
-    """Fichiers pdf de feuilles de présence sans les noms des étudiants."""
-
-    target_name = "{exam}_présence_%s.pdf"
-    target_dir = "generated"
-    unique_uv = True
-
-    cli_args = (
-        argument(
-            "-e",
-            "--exam",
-            required=True,
-            help="Nom de la colonne du groupement à considérer",
-        ),
-        argument(
-            "-l",
-            "--latex",
-            action="store_true",
-            help="Écrire le fichier LaTeX"
-        )
-    )
-
-    def setup(self):
-        super().setup()
-        self.target = self.build_target()
-
-    def run(self):
-        groupby = {}
-        while True:
-            room = input("Salle: ")
-            num = input("Nombre: ")
-            if not room:
-                if not num:
-                    if groupby:
-                        print("Liste des salles: \n%s" % groupby)
-                        break
-                    else:
-                        raise Exception("Il faut au moins une salle")
-            elif re.fullmatch("[0-9]+", num):
-                groupby[room] = int(num)
-
-        latex_env = LaTeXEnvironment()
-        template = latex_env.get_template("attendance_list_noname.tex.jinja2")
-
-        for room, number in groupby.items():
-            tex = template.render(number=number, group=f"Salle {room}")
-
-            target0 = self.target % room
-            if self.latex:
-                tex_filename = os.path.splitext(target0)[0] + '.tex'
-                with Output(tex_filename) as target:
-                    with open(target(), 'w') as fd:
-                        fd.write(tex)
-
-            pdf = latex.build_pdf(tex)
-            with Output(target0) as target0:
-                pdf.save_to(target0())
