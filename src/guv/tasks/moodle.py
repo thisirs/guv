@@ -783,13 +783,20 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
 
         elif self.group_size is not None:
             size = self.group_size
-            if size > 3:
+            if size > 2:
+                # When size is > 2, prefer groups of size size-1 rather
+                # than groups of size size+1
                 n = len(index)
                 n_groups = math.ceil(n / size)
                 proportions = np.ones(n_groups)
                 return make_groups(index, proportions)
             else:
-                raise Exception
+                # When size is 2, prefer groups of size 3 rather
+                # than groups of size 1
+                n = len(index)
+                n_groups = math.floor(n / size)
+                proportions = np.ones(n_groups)
+                return make_groups(index, proportions)
 
         elif self.num_groups is not None:
             proportions = np.ones(self.num_groups)
