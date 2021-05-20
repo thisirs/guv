@@ -760,7 +760,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
     def make_groups(self, name, df, name_gen):
         """Try to make subgroups in `df`"""
 
-        for i in range(1000):
+        for i in range(100000):
             try:
                 groups = self.make_groups_index(df)
                 self.check_valid_groups(df, groups)
