@@ -765,6 +765,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                 groups = self.make_groups_index(df)
                 self.check_valid_groups(df, groups)
             except InvalidGroups:
+                df = df.sample(frac=1)
                 continue
 
             logger.warning(f"{i+1} configuration(s) testée(s)")
