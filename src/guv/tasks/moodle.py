@@ -762,7 +762,11 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
 
         for i in range(100000):
             try:
+                # Make groups based on proportions, num_groups or
+                # group_size.
                 groups = self.make_groups_index(df)
+
+                # Check validity (group sizes of 2 and 3 only)
                 self.check_valid_groups(df, groups)
             except InvalidGroups:
                 df = df.sample(frac=1)
