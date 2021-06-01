@@ -352,7 +352,7 @@ def aggregate_org(colname, postprocessing=None):
     return aggregate_org0
 
 
-def switch(colname, backup=False, path=None):
+def switch(colname, backup=False, path=None, new_colname=None):
     """Renvoie une fonction qui réalise des échanges dans une colonne.
 
     L'argument `colname` est la colonne dans laquelle opérer les
@@ -376,6 +376,9 @@ def switch(colname, backup=False, path=None):
     ]
     """
 
+    if backup is True and new_colname is not None:
+        raise Exception("Il faut soit un backup de la colonne (avec suffixe _orig), soit un nouveau nom de colonne")
+
     def switch_func(df, agg_path):
         """Apply switches specified in `fn` in DataFrame `df`"""
 
@@ -394,8 +397,14 @@ def switch(colname, backup=False, path=None):
 
         if backup:
             df[f'{colname}_orig'] = df[colname]
+            target_colname = colname
+        elif new_colname is not None:
+            df[new_colname] = df[colname]
+            target_colname = new_colname
+        else:
+            target_colname = colname
 
-        names = df[colname].unique()
+        names = df[target_colname].unique()
 
         def swap_record(df, idx1, idx2, col):
             tmp = df.loc[idx1, col]
@@ -428,19 +437,19 @@ def switch(colname, backup=False, path=None):
                     stu1idx = stu1row.index[0]
 
                 if stu2 in names:
-                    df.loc[stu1idx, colname] = stu2
+                    df.loc[stu1idx, target_colname] = stu2
                 elif '@etu' in stu2:
                     stu2row = df.loc[df['Courriel'] == stu2]
                     if len(stu2row) != 1:
                         raise Exception(f'Adresse courriel `{stu2}` non présente dans la base de données')
                     stu2idx = stu2row.index[0]
-                    swap_record(df, stu1idx, stu2idx, colname)
+                    swap_record(df, stu1idx, stu2idx, target_colname)
                 else:
                     stu2row = df.loc[df.fullname_slug == slugrot_string(stu2)]
                     if len(stu2row) != 1:
                         raise Exception(f'Étudiant ou nom de séance `{stu2}` non reconnu dans la base de données')
                     stu2idx = stu2row.index[0]
-                    swap_record(df, stu1idx, stu2idx, colname)
+                    swap_record(df, stu1idx, stu2idx, target_colname)
 
         df = df.drop('fullname_slug', axis=1)
         return df
