@@ -324,6 +324,9 @@ class FirstGradeSheet(CliArgsMixin):
             for name, group in gb:
                 if self.args.order_by is not None:
                     group = sort_values(group, [self.args.order_by])
+
+                # Illegal character in sheet name
+                name = name.replace("/", " ")
                 self.create_worksheet(name, group)
         else:
             group = self.first_df
