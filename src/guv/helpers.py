@@ -305,9 +305,9 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
 
     return aggregate0
 
-def aggregate_org(colname):
     """Renvoie une fonction d'agrégation d'un fichier .org à utiliser dans
 AGGREGATE_DOCUMENTS.
+def aggregate_org(colname, postprocessing=None):
     """
 
     def aggregate_org0(left_df, path):
@@ -339,6 +339,15 @@ AGGREGATE_DOCUMENTS.
                 left_df.loc[res.index[0], colname] = text
 
         df = left_df.drop('fullname_slug', axis=1)
+
+        if postprocessing is not None:
+            if hasattr(postprocessing, "__name__"):
+                print(f"Postprocessing: {postprocessing.__name__}")
+            else:
+                print("Postprocessing")
+
+            df = postprocessing(df)
+
         return df
     return aggregate_org0
 
