@@ -454,6 +454,9 @@ class JsonRestriction(UVTask, CliArgsMixin):
                     for p, q in ((-3, 5),):
                         no_group[f"visible si: B + {p}min <= t < B + {q}min par groupe"] = CondOr(windows(window_group_start, gbe, p, q)).to_PHP(**info)
 
+                    for p, q in ((0, 15),):
+                        no_group[f"visible si: B + {p}min <= t < E + {q}min par groupe"] = CondOr(windows(window_group, gbe, p, q)).to_PHP(**info)
+
             return "Séance " + str(num), no_group
 
         moodle_date = dict(get_beg_end_date_each(name, g) for name, g in gb)
