@@ -27,7 +27,7 @@ PLANNINGS = {
 }
 
 # Liste des plannings activés
-SELECTED_PLANNINGS = [{{ SEMESTER }}]
+SELECTED_PLANNINGS = ["{{ SEMESTER }}"]
 
 # Personne par défaut pour les fichiers iCal et les calendriers
 DEFAULT_INSTRUCTOR = None
