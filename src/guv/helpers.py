@@ -133,6 +133,11 @@ def compute_new_column(*cols, func=None, colname=None):
     > compute_new_column("Note1", "Note2", func=myfunc, colname="Note max")
 
     """
+    if func is None:
+        raise Exception("Fonction non spécifiée")
+    if colname is None:
+        raise Exception("Nom de colonne non spécifié")
+
     def func2(df, path=None):
         check_columns(df, cols)
         new_col = df.apply(lambda x: func(x.loc[list(cols)]), axis=1)
