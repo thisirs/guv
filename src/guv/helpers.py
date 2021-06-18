@@ -9,13 +9,13 @@ from .utils import check_columns, slugrot, slugrot_string
 
 
 def fillna_column(colname, na_value=None, group_column=None):
-    """Renvoie une fonction qui remplace les valeurs non définies dans la
-    colonne `colname`. Une seule des options `na_value` et
-    `group_column` doit être spécifiée. Si `na_value` est spécifiée,
-    on remplace inconditionnellement par la valeur fournie. Si
-    `group_column` est spécifiée, on complète en groupant par
-    `group_column` en prenant la seule valeur valide par groupe dans
-    cette colonne.
+    """Renvoie une fonction qui remplace les valeurs non définies dans la colonne `colname`.
+
+    Une seule des options `na_value` et `group_column` doit être
+    spécifiée. Si `na_value` est spécifiée, on remplace
+    inconditionnellement par la valeur fournie. Si `group_column` est
+    spécifiée, on complète en groupant par `group_column` en prenant
+    la seule valeur valide par groupe dans cette colonne.
 
     Utilisable avec l'argument `postprocessing` ou `preprocessing`
     dans la fonction `aggregate` ou directement à la place de la
@@ -27,7 +27,7 @@ def fillna_column(colname, na_value=None, group_column=None):
 
     """
     if not((na_value is None) ^ (group_column is None)):
-        raise Exception("Une seule option doit être spécifiée")
+        raise Exception("Une seule des options `na_value` et `group_column` doit être spécifiée")
 
     if na_value is not None:
         def func(df, path=None):
@@ -150,8 +150,7 @@ def compute_new_column(*cols, func=None, colname=None):
 
 
 def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset=None, drop=None, rename=None, read_method=None, kw_read={}):
-    """Renvoie une fonction qui réalise l'agrégation d'un DataFrame avec
-    un fichier.
+    """Renvoie une fonction qui réalise l'agrégation d'un DataFrame avec un fichier.
 
     Les arguments `left_on` et `right_on` sont les clés pour réaliser
     une jointure : `left_on` est la clé du DataFrame existant et
@@ -310,9 +309,17 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
 
     return aggregate0
 
-    """Renvoie une fonction d'agrégation d'un fichier .org à utiliser dans
-AGGREGATE_DOCUMENTS.
+
 def aggregate_org(colname, postprocessing=None):
+    """Renvoie une fonction d'agrégation d'un fichier Org.
+
+    Le document à agréger est au format Org avec un nom d'étudiant par
+    headline. Par exemple,
+    * Bob Morane
+      Souvent absent
+    * Untel
+      Voir email d'excuse
+
     """
 
     def aggregate_org0(left_df, path):
