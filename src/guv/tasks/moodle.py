@@ -832,10 +832,16 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             etu1["Dernier diplôme obtenu"] in e
             and etu2["Dernier diplôme obtenu"] in e
         ):
+            nom1 = etu1["Nom"] + " " + etu1["Prénom"]
+            nom2 = etu2["Nom"] + " " + etu2["Prénom"]
+            logger.warning(f"Binôme {nom1} et {nom2} invalide : étrangers")
             return False
 
         # 2 GB == catastrophe
         if etu1["Branche"] == "GB" and etu2["Branche"] == "GB":
+            nom1 = etu1["Nom"] + " " + etu1["Prénom"]
+            nom2 = etu2["Nom"] + " " + etu2["Prénom"]
+            logger.warning(f"Binôme {nom1} et {nom2} invalide : GB")
             return False
 
         # Binomes précédents

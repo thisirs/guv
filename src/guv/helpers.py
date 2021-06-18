@@ -419,6 +419,10 @@ def switch(colname, backup=False, path=None, new_colname=None):
         names = df[target_colname].unique()
 
         def swap_record(df, idx1, idx2, col):
+            nom1 = " ".join(df.loc[idx1, ["Nom", "Prénom"]])
+            nom2 = " ".join(df.loc[idx2, ["Nom", "Prénom"]])
+            logger.warning(f"Swapping '{nom1}' and '{nom2}' in column '{col}'")
+
             tmp = df.loc[idx1, col]
             df.loc[idx1, col] = df.loc[idx2, col]
             df.loc[idx2, col] = tmp
