@@ -542,8 +542,14 @@ class XlsStudentDataMerge(UVTask):
             get_column_letter(max_column),
             max_row)
 
-        # On fige la première ligne
-        ws.freeze_panes = "A2"
+        # On fige la première ligne et les deux premières colonnes
+        ws.freeze_panes = "C2"
+
+        # On redimensionne les colonnes d'après la taille de l'en-tête
+        for cell in ws[1]:
+            header_value = cell.value
+            if header_value:
+                ws.column_dimensions[cell.column_letter].width = 1.3*len(header_value)
 
         with Output(self.target) as target0:
             wb.save(target0())
