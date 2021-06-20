@@ -160,20 +160,24 @@ def get_parser():
     subparsers = parser.add_subparsers(dest="command")
 
     createsemester_parser = subparsers.add_parser(
-        "createsemester", description="Crée un dossier de semestre"
+        "createsemester",
+        description="Crée un dossier de semestre",
+        help="Crée un dossier de semestre",
     )
     createsemester_parser.add_argument("semester")
     createsemester_parser.add_argument("--uv", nargs="*", default=[])
 
     createuv_parser = subparsers.add_parser(
         "createuv",
-        description="Crée des dossiers d'UV"
+        description="Crée des dossiers d'UV",
+        help="Crée des dossiers d'UV"
     )
     createuv_parser.add_argument("uv", nargs="+")
 
     sp = subparsers.add_parser(
         "doit",
-        description="Permet d'avoir accès aux commandes doit sous-jacentes"
+        description="Permet d'avoir accès aux commandes doit sous-jacentes",
+        help="Permet d'avoir accès aux commandes doit sous-jacentes"
     )
     sp.add_argument("args", nargs=argparse.REMAINDER)
 
