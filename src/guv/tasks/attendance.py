@@ -98,21 +98,15 @@ class PdfAttendance(UVTask, CliArgsMixin):
             help="Titre utilisé dans les feuilles de présence"
         ),
         argument(
-            "-b",
-            "--blank",
-            default=False,
-            help="Ne pas faire apparaitre de noms"
-        ),
-        argument(
             "-g",
             "--group",
             help="Nom de la colonne utilisée pour faire des groupes",
         ),
         argument(
-            "--save-tex",
-            action="store_true",
+            "-b",
+            "--blank",
             default=False,
-            help="Met le(s) fichier(s) .tex généré(s) à disposition"
+            help="Ne pas faire apparaitre de noms (utile seulement avec --group)"
         ),
         argument(
             "-c",
@@ -139,6 +133,12 @@ class PdfAttendance(UVTask, CliArgsMixin):
             action="store_true",
             default=False,
             help="Met les tiers-temps dans un groupe à part"
+        ),
+        argument(
+            "--save-tex",
+            action="store_true",
+            default=False,
+            help="Met le(s) fichier(s) .tex généré(s) à disposition"
         )
     )
 
