@@ -74,6 +74,13 @@ class IcalInst(CliArgsMixin, TaskBase):
 
     Crée un fichier iCal de tous les créneaux de Cours/TP/TD du ou des
     plannings renseignés pour les intervenants renseignés.
+
+    L'option `--plannings` est une liste de planning à inclure des les
+    fichiers iCal. Par défaut, on utilise `SELECTED_PLANNINGS`.
+
+    L'option `--insts` est une liste des intervenants à inclure dans
+    les fichiers iCal. Par défault, `DEFAULT_INSTRUCTOR` est utilisée.
+
     """
 
     target_dir = "generated"
