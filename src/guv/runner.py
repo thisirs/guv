@@ -115,6 +115,7 @@ def generate_tasks():
 
         if issubclass(ref, CliArgsMixin):
             yield (
+                ref,
                 task_name,
                 doc,
                 full_doc,
@@ -122,13 +123,14 @@ def generate_tasks():
             )
         elif ref is XlsGradeSheet:
             yield (
+                ref,
                 task_name,
                 doc,
                 full_doc,
                 [argument("args", nargs=argparse.REMAINDER)]
             )
         else:
-            yield task_name, doc, full_doc, []
+            yield ref, task_name, doc, full_doc, []
 
 
 def create_uv_dirs(base_dir, uvs):
@@ -153,7 +155,7 @@ def create_uv_dirs(base_dir, uvs):
             new_file.write(content)
 
 
-def get_parser():
+def get_parser(add_hidden=False):
     """Return an `argparse` parser by iterating on available tasks"""
 
     parser = argparse.ArgumentParser(prog="guv", description="")
@@ -168,24 +170,31 @@ def get_parser():
     createsemester_parser.add_argument("--uv", nargs="*", default=[])
 
     createuv_parser = subparsers.add_parser(
-        "createuv",
-        description="Crée des dossiers d'UV",
-        help="Crée des dossiers d'UV"
+        "createuv", description="Crée des dossiers d'UV", help="Crée des dossiers d'UV"
     )
     createuv_parser.add_argument("uv", nargs="+")
 
     sp = subparsers.add_parser(
         "doit",
         description="Permet d'avoir accès aux commandes doit sous-jacentes",
-        help="Permet d'avoir accès aux commandes doit sous-jacentes"
+        help="Permet d'avoir accès aux commandes doit sous-jacentes",
     )
     sp.add_argument("args", nargs=argparse.REMAINDER)
 
+    # Sort tasks by task_name
     tasks = list(generate_tasks())
-    tasks = sorted(tasks, key=lambda e: e[0])
+    tasks = sorted(tasks, key=lambda e: e[1])
 
-    for task_name, doc, full_doc, args in tasks:
-        sp = subparsers.add_parser(task_name, help=doc, description=full_doc, formatter_class=argparse.RawDescriptionHelpFormatter)
+    for ref, task_name, doc, full_doc, args in tasks:
+        # Don't add hidden tasks (completion)
+        if hasattr(ref, "hidden") and ref.hidden:
+            continue
+        sp = subparsers.add_parser(
+            task_name,
+            help=doc,
+            description=full_doc,
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+        )
         for arg in args:
             sp.add_argument(*arg.args, **arg.kwargs)
 
@@ -193,7 +202,7 @@ def get_parser():
 
 
 def main():
-    parser = get_parser()
+    parser = get_parser(add_hidden=True)
     args = parser.parse_args()
 
     if args.command is None:
