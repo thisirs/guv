@@ -74,6 +74,7 @@ class XlsInstructors(TaskBase):
     UTP effectuées et des remplacements.
     """
 
+    hidden = True
     target_dir = "documents"
     target_name = "intervenants.xlsx"
 
@@ -96,6 +97,7 @@ class XlsInstructors(TaskBase):
 class AddInstructors(TaskBase):
     """Ajoute les intervenants dans la liste csv des créneaux"""
 
+    hidden = True
     target_dir = "generated"
     target_name = "UTC_UV_list_instructors.csv"
 
@@ -159,6 +161,7 @@ class XlsInstDetails(UVTask):
     affectations sont prises pour chaque UV.
     """
 
+    hidden = True
     target_dir = "generated"
     target_name = "intervenants_details.xlsx"
 

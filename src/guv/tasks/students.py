@@ -36,6 +36,7 @@ from .base import UVTask, CliArgsMixin
 class CsvInscrits(UVTask):
     """Construit un fichier CSV à partir des données brutes de la promo fournies par l'UTC"""
 
+    hidden = True
     target_name = "inscrits.csv"
     target_dir = "generated"
     unique_uv = False
@@ -177,6 +178,7 @@ class XlsStudentData(UVTask):
     MOODLE_LISTING dans le fichier config.py de l'UV.
     """
 
+    hidden = True
     target_dir = "generated"
     target_name = "student_data.xlsx"
     unique_uv = False
@@ -428,6 +430,7 @@ class XlsStudentDataMerge(UVTask):
     spécifiées dans AGGREGATE_DOCUMENTS.
     """
 
+    hidden = True
     target_name = "effectif.xlsx"
     target_dir = "."
     unique_uv = False

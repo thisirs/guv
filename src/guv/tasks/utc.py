@@ -18,6 +18,7 @@ from .base import CliArgsMixin, TaskBase
 class UtcUvListToCsv(TaskBase):
     """Crée un fichier CSV des créneaux de toutes les UVs à partir du PDF"""
 
+    hidden = True
     target_dir = "documents"
     target_name = "UTC_UV_list.csv"
 
@@ -209,6 +210,7 @@ class UtcUvListToCsv(TaskBase):
 class CsvAllCourses(CliArgsMixin, TaskBase):
     "Fichier csv de tous les créneaux du semestre"
 
+    hidden = True
     unique_uv = False
     target_dir = "generated"
     target_name = "UTC_UV_list_créneau.csv"
