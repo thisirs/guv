@@ -187,7 +187,7 @@ def get_parser(add_hidden=False):
 
     for ref, task_name, doc, full_doc, args in tasks:
         # Don't add hidden tasks (completion)
-        if hasattr(ref, "hidden") and ref.hidden:
+        if not add_hidden and hasattr(ref, "hidden") and ref.hidden:
             continue
         sp = subparsers.add_parser(
             task_name,
