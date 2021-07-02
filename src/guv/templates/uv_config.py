@@ -21,7 +21,7 @@ MOODLE_LISTING = None
 # à jour. Plusieurs fonctions d'aide sont disponibles: aggregate,
 # aggregate_org, fillna_column, replace_regex, replace_column.
 
-from guv.utils import aggregate
+from guv.helpers import aggregate
 
 AGGREGATE_DOCUMENTS = None
 
