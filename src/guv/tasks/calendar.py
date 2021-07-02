@@ -123,7 +123,7 @@ class CalUv(UVTask):
 
     target_dir = "documents"
     target_name = "calendrier_hebdomadaire.pdf"
-    unique_uv=False
+    unique_uv = False
 
     def setup(self):
         super().setup()
