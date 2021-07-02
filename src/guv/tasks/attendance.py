@@ -87,7 +87,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
 
     always_make = True
     target_dir = "generated"
-    target_name = "attendance2_{group}.zip"
+    target_name = "attendance_{group}.zip"
     template_file = "attendance.tex.jinja2"
 
     cli_args = (
