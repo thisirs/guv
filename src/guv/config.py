@@ -153,7 +153,7 @@ class Settings:
         self._settings = None
 
     def __contains__(self, name):
-        return name in self.settings
+        return name in self.settings and self.settings[name] is not None
 
     def SELECTED_PLANNINGS_default(self):
         return list(self.PLANNINGS.keys())
