@@ -55,7 +55,7 @@ class CsvInscrits(UVTask):
         self.target = self.build_target()
 
     def parse_UTC_listing(self):
-        """Parse FILENAME into DataFrame"""
+        """Parse `utc_listing` into DataFrame"""
 
         if "RX_STU" in self.settings:
             RX_STU = re.compile(self.settings.RX_STU)
