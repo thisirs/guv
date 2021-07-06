@@ -51,7 +51,10 @@ TIME_FORMAT = "%H:%M"
 class CsvGroups(UVTask, CliArgsMixin):
     """Fichiers csv des groupes de Cours/TD/TP/singleton pour Moodle
 
-    Crée des fichiers csv pour chaque UV sélectionnées
+    Crée des fichiers csv des groupes de Cours/TD/TP pour chaque UV
+    sélectionnée. Avec l'option `-g`, on peut spécifier d'autres
+    groupes à exporter sous Moodle.
+
     """
 
     target_dir = "generated"
