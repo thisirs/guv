@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 import argparse
 import logging
+import pprint
 
 from doit.exceptions import TaskFailed
 
@@ -87,6 +88,8 @@ class TaskBase:
 
             tf = TaskFailed(str(e))
             doit_task["actions"] = [lambda: tf]
+
+            logger.info("Task `{}` failed: {}".format(self.task_name(), e))
             return doit_task
 
         doit_task.update(dict(
@@ -116,6 +119,11 @@ class TaskBase:
                 return TaskFailed(msg)
 
         doit_task["actions"] = [action]
+
+        def format_task(doit_task):
+            return "\n".join(f"{key}: {value}" for key, value in doit_task.items())
+        logger.info(f"Task properties are:\n{format_task(doit_task)}")
+
         return doit_task
 
     @classmethod
