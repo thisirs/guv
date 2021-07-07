@@ -33,10 +33,10 @@ class UtcUvListToCsv(TaskBase):
         else:
             self.uv_list_filename = None
 
-        if "CRENEAU_UV_ALT" in self.settings:
+        if "CRENEAU_UE" in self.settings:
             self.ue_list_filename = os.path.join(
                 self.settings.SEMESTER_DIR,
-                self.settings["CRENEAU_UV_ALT"]
+                self.settings["CRENEAU_UE"]
             )
         else:
             self.ue_list_filename = None
@@ -144,7 +144,7 @@ class UtcUvListToCsv(TaskBase):
 
     def run(self):
         if self.uv_list_filename is None and self.ue_list_filename is None:
-            raise Exception("Au moins une des variables `CRENEAU_UV` ou `CRENEAU_UV_ALT` doit être définie")
+            raise Exception("Au moins une des variables `CRENEAU_UV` ou `CRENEAU_UE` doit être définie")
 
         tables = []
 
