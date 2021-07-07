@@ -254,6 +254,9 @@ class XlsAffectation(UVTask):
         df = pd.read_csv(self.uvlist_csv)
         df_uv = df.loc[df["Code enseig."] == self.uv, :]
 
+        if len(df_uv) == 0:
+            raise Exception("L'UV/UE `{self.uv}` n'est pas reconnue dans le fichier `CRENEAU_UV` ou `CRENEAU_UE`")
+
         selected_columns = [
             "Jour",
             "Heure début",
