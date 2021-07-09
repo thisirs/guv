@@ -238,7 +238,11 @@ class XlsUTP(UVTask):
 
 
 class XlsAffectation(UVTask):
-    """Fichier Excel des créneaux de toutes les UV configurées."""
+    """Fichier Excel des créneaux de toutes les UV configurées.
+
+    Fichier par UV à remplir par le responsable en renseignant les
+    intervenants dans chaque créneau de la semaine.
+    """
 
     unique_uv = False
     target_name = "planning_hebdomadaire.xlsx"

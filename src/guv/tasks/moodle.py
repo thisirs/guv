@@ -50,11 +50,23 @@ TIME_FORMAT = "%H:%M"
 
 
 class CsvGroups(UVTask, CliArgsMixin):
-    """Fichiers csv des groupes de Cours/TD/TP/singleton pour Moodle
+    """Fichiers csv des groupes de Cours/TD/TP/singleton pour Moodle.
 
     Crée des fichiers csv des groupes de Cours/TD/TP pour chaque UV
     sélectionnée. Avec l'option `-g`, on peut spécifier d'autres
     groupes à exporter sous Moodle.
+
+    Options
+    -------
+
+    - L'option ``--groups`` permet de spécifier un ou plusieurs groupements particuliers via un nom de colonne. Par défaut, les groupements ``Cours``, ``TD``, ``TP`` et ``singleton`` sont utilisés.
+
+    Examples
+    --------
+
+    .. code:: console
+
+       guv csv_groups --groups Groupe_Projet
 
     """
 
@@ -98,7 +110,10 @@ class CsvGroups(UVTask, CliArgsMixin):
 
 
 class HtmlInst(UVTask):
-    "Génère la description des intervenants pour Moodle"
+    """Génère la description des intervenants pour Moodle.
+
+    Crée le fichier ``intervenants.html`` qui peut être utilisé dans Moodle pour afficher une description de l'équipe pédagogique avec les créneaux assurés.
+    """
 
     target_dir = "generated"
     target_name = "intervenants.html"
@@ -157,7 +172,29 @@ class HtmlInst(UVTask):
 
 
 class HtmlTable(UVTask, CliArgsMixin):
-    """Table HTML des Cours/TD/TP à charger sur Moodle"""
+    """Table HTML des Cours/TD/TP à charger sur Moodle
+
+    Permet de générer des fragments HTML à coller dans une page Moodle
+    qui décrivent sous forme de tableau l'ensemble des créneaux de
+    Cours/TD/TP.
+
+    Options
+    -------
+
+    - L'option ``--courses`` spécifie les types de créneaux pour lequel faire un tableau. Par défaut des tableaux sont créés pour les Cours, TD et TP.
+    - L'option ``--grouped`` permet de spécifier si les tableaux doivent être regroupés en un seul.
+    - L'option ``--num-AB`` permet de préciser si la numérotation des séances dans le tableau doit être en semaine A/B (A1, B1, A2, B2,...) ou normal (1, 2, 3, 4,...). Valable uniquement pour les TP. Pour les autres types la numérotation classique est toujours utilisée.
+    - L'option ``--names`` permet de spécifier les noms des semaines.
+
+    Examples
+    --------
+
+    .. code:: console
+
+       guv html_table --courses TP --num-AB
+       guv html_table --grouped
+
+    """
 
     target_dir = "generated"
     target_name = "{name}_table.html"
@@ -321,16 +358,22 @@ class HtmlTable(UVTask, CliArgsMixin):
 
 
 class JsonRestriction(UVTask, CliArgsMixin):
-    """Fichier json de restrictions d'accès aux ressources sur Moodle basées sur le début/fin des séances
+    """Fichier json de restrictions d'accès aux ressources Moodle basées sur le début/fin des séances
 
     Le fichier json contient des restrictions d'accès pour les
     créneaux de Cours/TD/TP basé sur l'appartenance aux groupes de
     Cours/TD/TP, sur les début/fin de séance, début/fin de semaine.
 
+    Le fragment json peut être transféré sous Moodle en tant que
+    restriction d'accès grâce au script Greasemonkey disponible `ici
+    <../resources/moodle_availability_conditions.js>`_.
+
     Pour les contraintes par créneaux qui s'appuie sur l'appartenance
     à un groupe, il est nécessaire de renseigner la variable
-    `GROUP_ID` qui relie le nom des groupes dans les activités
-    Cours/TD/TP à leur identifiant Moodle.
+    ``GROUP_ID`` dans le fichier ``config.py`` qui relie le nom des
+    groupes de Cours/TD/TP dans le fichier ``effectif.xlsx`` aux
+    identifiants Moodle correspondant (voir la tâche :ref:`` pour
+    récupérer la correspondance).
 
     L'argument "-c" permet de spécifier les activités considérées, à
     choisir parmi Cours, TD ou TP.
@@ -338,6 +381,32 @@ class JsonRestriction(UVTask, CliArgsMixin):
     Le drapeau "-a" permet de grouper les séances par deux semaines
     dans le cas où il y a des semaines A et B. La fin d'une activité
     est alors identifiée à la fin de la semaine B.
+
+    Les restrictions globales implémentées sont les suivantes :
+
+    - antérieur à la date du premier créneau
+    - postérieur à la date du premier créneau
+    - postérieur à la date du premier créneau moins 3 jours
+    - postérieur à la date du dernier créneau
+    - antérieur à la date du dernier créneau
+    - postérieur au lundi précédant immédiatement le premier créneau
+    - postérieur au vendredi suivant immédiatement le dernier créneau
+    - postérieur à miniuit juste avant le premier créneau
+    - postérieur à minuit juste après le dernier créneau
+
+    Les restrictions dépendant de l'appartenance à un groupe sont les
+    suivantes :
+
+    - antérieur à la date de début de créneau de l'étudiant
+    - postérieur à la date de début de créneau de l'étudiant
+    - postérieur à la date de fin de créneau de l'étudiant
+    - antérieur à la date de fin de créneau de l'étudiant
+    - restreint à la séance de l'étudiant
+    - restreint à la séance de l'étudiant plus 15 minutes après
+    - restreint au début de la séance, 3 minutes avant, 5 minutes après
+
+    Options
+    -------
 
     """
 
@@ -551,38 +620,36 @@ class JsonGroup(UVTask, CliArgsMixin):
 
 
 class CsvCreateGroups(UVTask, CliArgsMixin):
-    """Création de groupes d'étudiants prêt à charger sous Moodle
+    """Création de groupes d'étudiants prêt à charger sous Moodle.
 
     Cette tâche crée un fichier csv d'affectation des étudiants à un
-    groupe. Si `grouping` est spécifié les groupes sont créés à
+    groupe. Si ``grouping`` est spécifié les groupes sont créés à
     l'intérieur de chaque sous-groupe (de TP/TD par exemple).
 
     Le nombre de groupes créés (au total ou par sous-groupes) est
-    controlé par `num-groups`, `group-size` et `proportions`.
+    controlé par ``num-groups``, ``group-size`` et ``proportions``.
 
-    Le nom des groupes est controlé par `template` et `names`. Les
+    Le nom des groupes est controlé par ``template`` et ``names``. Les
     remplacements suivants sont disponibles à l'intérieur de
-    `template` :
-    - {title} : remplacé par le titre (premier argument)
-    - {grouping_name} : remplacé par le nom du sous-groupe à
-      l'intérieur duquel on construit des groupes (si on a spécifié
-      `grouping`)
-    - {group_name} : nom du groupe en construction (si on a spécifié
-      `names`)
-    - # : numérotation du groupe en construction (si `names` n'est pas
-      spécifié)
-    - @ : lettre du groupe en construction (si `names` n'est pas
-      spécifié)
-    L'argument `names` peut être une liste de noms à utiliser ou un
+    ``template`` :
+
+    - ``{title}`` : remplacé par le titre (premier argument)
+    - ``{grouping_name}`` : remplacé par le nom du sous-groupe à l'intérieur duquel on construit des groupes (si on a spécifié ``grouping``)
+    - ``{group_name}`` : nom du groupe en construction (si on a spécifié ``names``)
+    - ``#`` : numérotation du groupe en construction (si `names` n'est pas spécifié)
+    - ``@`` : lettre du groupe en construction (si `names` n'est pas spécifié)
+
+    L'argument ``names`` peut être une liste de noms à utiliser ou un
     fichier contenant une liste de noms ligne par ligne. Il sont pris
     aléatoirement si on spécifie le drapeau `random`.
 
-    Le drapeau `global` permet de remettre à zéro la génération des
+    Le drapeau ``global`` permet de remettre à zéro la génération des
     noms de groupes lorsqu'on change le groupe à l'intérieur duquel on
-    construit des sous-groupes (si on a spécifié `grouping`).
+    construit des sous-groupes (si on a spécifié ``grouping``).
 
     Les groupes sont aléatoires par défaut. Pour créer des groupes par
-    ordre alphabétique, il faut spécifier le drapeau `ordered`.
+    ordre alphabétique, il faut spécifier le drapeau ``ordered``.
+
     """
 
     always_make = True

@@ -52,36 +52,28 @@ def pdf_attendance_list_render(df, tmpl_file, **kwargs):
 
 
 class PdfAttendance(UVTask, CliArgsMixin):
-    """Fichier pdf de feuilles de présence
+    """Fichier pdf de feuilles de présence.
 
-    Cette tâche génère un fichier pdf ou un fichier zip de fichier pdf
-    contenant des feuilles de présence.
+    Cette tâche génère un fichier pdf ou un fichier zip de fichiers
+    pdf contenant des feuilles de présence.
 
-    L'option `--title` spécifie un titre qui sera utilisé dans les
-    feuilles de présence.
+    Options
+    -------
 
-    Le drapeau `--blank` permet de créer des feuilles de présence sans
-    les noms des étudiants.
+    - L'option ``--title`` spécifie un titre qui sera utilisé dans les feuilles de présence.
+    - Le drapeau ``--blank`` permet de créer des feuilles de présence sans les noms des étudiants.
+    - L'option ``--group`` permet de créer des groupes pour faire autant de feuilles de présence. Il faut spécifier une colonne du fichier central ``effectif.xlsx``.
+    - Au lieu de spécifier ``--group``, on peut spécifier les options ``--names`` et ``--count`` qui sont des listes qui doivent avoir même longueur. Si ``--names`` n'est pas défini, des noms de la forme ``Groupe 1``, ``Groupe 2``,... sont utilisés.
+    - L'option ``--extra`` permet de rajouter des lignes supplémentaires vides en plus de celles déjà présentes induites par ``--group`` ou fixées par ``--count``.
+    - L'option ``--tiers-temps`` permet de dédier une feuille de présence spécifique pour les étudiants marqués comme tiers-temps dans le fichier central.
+    - L'option ``--save-tex`` permet de laisser le fichier .tex générer pour modification éventuelle.
 
-    L'option `--group` permet de créer des groupes pour faire autant
-    de feuilles de présence. Il faut spécifier une colonne du fichier
-    central `effectif.xlsx`.
+    Examples
+    --------
 
-    Au lieu de spécifier `--group`, on peut spécifier les options
-    `--names` et `--count` qui sont des listes qui doivent avoir même
-    longueur. Si `--names` n'est pas défini, des noms de la forme
-    `Groupe 1`, `Groupe 2`,... sont utilisés.
+    .. code:: console
 
-    L'option `--extra` permet de rajouter des lignes supplémentaires
-    vides en plus de celles déjà présentes induites par `--group`` ou
-    fixées par `--count`.
-
-    L'option `--tiers-temps` permet de dédier une feuille de
-    présence spécifique pour les étudiants marqués comme tiers-temps
-    dans le fichier central.
-
-    L'option `--save-tex` permet de laisser le fichier .tex générer
-    pour modification éventuelle.
+       guv pdf_attendance --title "Examen de TP" --group TP
 
     """
 
@@ -277,20 +269,30 @@ class PdfAttendance(UVTask, CliArgsMixin):
 
 
 class PdfAttendanceFull(UVTask, CliArgsMixin):
-    """Fichier zip de feuilles de présence nominatives par groupe et par semestre
+    """Fichier zip de feuilles de présence nominatives par groupe et par semestre.
 
     Permet d'avoir un seule feuille de présence pour tout le semestre.
 
-    L'option `--group` permet de spécifier une colonne de groupes pour
-    faire des feuilles de présence par groupes.
+    Options
+    -------
 
-    L'option `--slots` permet de spécifier le nombre de séances pour
-    le semestre.
+    - L'option ``--group`` permet de spécifier une colonne de groupes pour
+      faire des feuilles de présence par groupes.
 
-    L'option `--template` permet de fixer le nom des séances
-    sucessives dans la feuille de présence. Par défaut on a
-    `{group_name}{number}`. Les seuls mots-clés supportés sont
-    `group_name` et `number`.
+    - L'option ``--slots`` permet de spécifier le nombre de séances pour
+      le semestre.
+
+    - L'option ``--template`` permet de fixer le nom des séances
+      sucessives dans la feuille de présence. Par défaut on a
+      ``{group_name}{number}``. Les seuls mots-clés supportés sont
+      ``group_name`` et ``number``.
+
+    Examples
+    --------
+
+    .. code:: console
+
+       guv pdf_attendance_full --group TP --template "G{group_name}_{number}"
 
     """
 

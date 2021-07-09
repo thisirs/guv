@@ -25,10 +25,29 @@ from ..gradebook import run
 class CsvForUpload(CliArgsMixin, UVTask):
     """Fichier csv de notes prêtes à être chargées sur l'ENT.
 
-    Crée un fichier csv de notes prêtes à être chargées sur l'ENT. La
-    colonne des notes est fixée par l'argument `grade_colname` et est
-    prise dans le fichier `student_data_merge.xlsx'. L'argument optionnel
-    `comment_colname` permet d'ajouter des commentaires.
+    Crée un fichier csv nommé ``{grade_colname}_ENT.csv`` de notes
+    prêtes à être chargées sur l'ENT. La colonne des notes est fixée
+    par l'argument ``grade_colname`` et est prise dans le fichier
+    ``effectif.xlsx``. L'argument optionnel ``comment_colname`` permet
+    d'ajouter des commentaires éventuellement formaté avec l'option
+    ``--format``.
+
+    Options
+    -------
+
+    - L'option ``--grade-colname`` permet d'indiquer la colonne contenant les notes à exporter
+    - L'option ``--comment-colname`` permet d'indiquer la colonne contenant un commentaire à ajouter
+    - L'option ``--ects`` permet de spécifier que la note à exporter est une note ECTS. D'après l'ENT, il ne faut alors pas de colonne de commentaires et la note n'est pas arrondie (l'ENT n'aime pas quand il y a trop de décimales)
+    - L'option ``--format`` permet de formatter plus précisément le commentaire. Le mot-clé ``msg`` représente la donnée présente dans le colonne ``comment-colname``
+
+    Examples
+    --------
+
+    .. code:: console
+
+       guv csv_for_upload --grade-colname Note_ECTS --ects
+       guv csv_for_upload --grade-colname Note_TP --comment-colname "Correcteur" --format "Corrigé par {msg}"
+
     """
 
     always_make = True

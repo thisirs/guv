@@ -113,11 +113,12 @@ def create_cal_from_dataframe(df, text, target):
 
 
 class CalUv(UVTask):
-    """Calendrier PDF de la semaine par UV
+    """Calendrier PDF de la semaine par UV.
 
-    Crée le calendrier des Cours/TD/TP pour chaque UV sélectionnées
-    dans le sous-dossier `documents` respectif de chaque UV avec le
-    nom `calendrier_hebdomadaire.pdf`.
+    Crée le calendrier hebdomadaire des Cours/TD/TP pour chaque UV
+    sélectionnée. Le fichier pdf est placé dans le sous-dossier
+    ``documents`` respectif de chaque UV avec le nom
+    ``calendrier_hebdomadaire.pdf``.
 
     """
 
@@ -144,7 +145,22 @@ class CalUv(UVTask):
 
 
 class CalInst(CliArgsMixin, TaskBase):
-    """Calendrier PDF de la semaine par intervenant"""
+    """Calendrier hebdomadaire par intervenant.
+
+    Options
+    -------
+
+    - L'option ``--plannings`` permet de spécifier les UV/UE concernées en spécifiant les plannings correspondants. Par défault les UV/UE des plannings ``SELECTED_PLANNINGS`` sont utilisées.
+    - L'option ``--insts`` est une liste des intervenants pour qui créer le calendrier. Par défaut ``DEFAULT_INSTRUCTOR`` est utilisé.
+
+    Examples
+    --------
+
+    .. code:: console
+
+       guv cal_inst --plannings P2048 Master2Sem1 --insts "Bob Arctor" "Winston Smith"
+
+    """
 
     target_dir = "generated"
     target_name = "{name}_calendrier.pdf"

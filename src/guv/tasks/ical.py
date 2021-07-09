@@ -70,16 +70,21 @@ def ical_events(dataframe, **settings):
 
 
 class IcalInst(CliArgsMixin, TaskBase):
-    """Fichier iCal de tous les créneaux par intervenant
+    """Fichier iCal de tous les créneaux par intervenant.
 
     Crée un fichier iCal de tous les créneaux de Cours/TP/TD du ou des
     plannings renseignés pour les intervenants renseignés.
 
-    L'option `--plannings` est une liste de planning à inclure des les
-    fichiers iCal. Par défaut, on utilise `SELECTED_PLANNINGS`.
+    Options
+    -------
 
-    L'option `--insts` est une liste des intervenants à inclure dans
-    les fichiers iCal. Par défault, `DEFAULT_INSTRUCTOR` est utilisée.
+    - L'option ``--plannings`` est une liste de planning à inclure des les fichiers iCal. Par défaut, on utilise ``SELECTED_PLANNINGS``.
+    - L'option ``--insts`` est une liste des intervenants à inclure dans les fichiers iCal. Par défault, ``DEFAULT_INSTRUCTOR`` est utilisée.
+
+    .. code:: console
+
+       guv ical_inst --plannings P2048 Master2Sem1 --insts "Bob Arctor" "Winston Smith"
+
 
     """
 
