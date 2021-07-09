@@ -22,6 +22,7 @@ import numpy as np
 import pynliner
 import jinja2
 import browser_cookie3
+import textwrap
 import yapf.yapflib.yapf_api as yapf
 from bs4 import BeautifulSoup
 import requests
@@ -443,10 +444,10 @@ class JsonRestriction(UVTask, CliArgsMixin):
                         func(g, b, e, p, q) for g, b, e in gbe
                     ]
 
-                if "GROUP_ID" not in self.settings or not self.settings.GROUP_ID:
-                    print("WARNING: Plusieurs groupes de Cours/TD/TP et GROUP_ID non spécifié")
+                if "MOODLE_GROUPS" not in self.settings or not self.settings.MOODLE_GROUPS:
+                    print("WARNING: Plusieurs groupes de Cours/TD/TP et MOODLE_GROUPS non spécifié")
                 else:
-                    info = dict(group_id=self.settings.GROUP_ID)
+                    info = dict(groups=self.settings.MOODLE_GROUPS)
                     no_group.update({
                         "visible si: t <= B par groupe": CondOr(before_beg_group).to_PHP(**info),
                         "visible si: t > B par groupe": CondOr(after_beg_group).to_PHP(**info),
@@ -892,7 +893,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
 
 
 class FetchGroupId(CliArgsMixin, TaskBase):
-    """Crée un fichier de correspondance entre le nom des groupes Moodle et leur id
+    """Crée un fichier de correspondance entre le nom des groupes Moodle et leur id.
 
     Pour utiliser certaines fonctionnalités de `guv` (notamment
     `json_restriction` et `json_group`), il faut connaitre les
@@ -916,27 +917,47 @@ class FetchGroupId(CliArgsMixin, TaskBase):
 
     def cookies(self):
         cj = browser_cookie3.firefox()
-        return {c.name: c.value for c in cj if "moodle.utc.fr" in c.domain}
+        c = {c.name: c.value for c in cj if "moodle.utc.fr" in c.domain}
+        if not c:
+            raise Exception(
+                "Le cookie pour accéder à Moodle n'a pas été trouvé. "
+                "Identifiez-vous avec Firefox sur Moodle et recommencez."
+            )
+        return c
 
-    def group_id(self, html_page):
+    def groups(self, html_page):
         soup = BeautifulSoup(html_page, "html.parser")
 
-        group_id = {}
+        groups = {}
         for select in soup.find_all("select"):
             if select["name"] in ["group", "grouping"]:
                 for option in select.find_all("option"):
                     value = option["value"]
                     if int(value) > 0:
-                        group_id[option.text] = int(value)
-        return group_id
+                        groups[option.text] = {
+                            "moodle_id": int(value),
+                            "moodle_name": option.text
+                        }
+
+        return groups
 
     def run(self):
         cookies = self.cookies()
         for id in self.ident_list:
             req = requests.post(pformat(self.url, id=id), cookies=cookies)
-            group_id = self.group_id(req.text)
+            groups = self.groups(req.text)
 
             with Output(self.build_target(id=id)) as target:
                 with open(target(), "w") as f:
-                    f.write("# Copier le dictionnaire suivant dans le fichier config.py de l'UV\n\n")
-                    f.write(yapf.FormatCode("GROUP_ID = " + pprint.pformat(group_id))[0])
+                    msg = """\
+
+Copier le dictionnaire suivant dans le fichier config.py de l'UV. Tous
+les groupes créés sous Moodle sont présents. Il faut s'assurer que les
+clés correspondent aux noms des groupes de Cours,TD,TP compris par guv
+(de la forme "C", "C1", "D1", "D2", "T1", "T2"...)
+
+                    """
+
+                    f.write(textwrap.indent(msg.strip(), "# "))
+                    f.write("\n\n")
+                    f.write(yapf.FormatCode("MOODLE_GROUPS = " + pprint.pformat(groups))[0])
