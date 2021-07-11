@@ -197,7 +197,7 @@ class HtmlTable(UVTask, CliArgsMixin):
     """
 
     target_dir = "generated"
-    target_name = "{name}_table.html"
+    target_name = "{name}{AB}_table.html"
 
     cli_args = (
         argument(
@@ -215,9 +215,9 @@ class HtmlTable(UVTask, CliArgsMixin):
         ),
         argument(
             "-a",
-            "--no-AB",
+            "--num-AB",
             action="store_true",
-            help="Faire apparaitre les semaines A/B",
+            help="Utiliser une numérotation en semaine A/B",
         ),
         argument(
             "-n",
@@ -232,14 +232,13 @@ class HtmlTable(UVTask, CliArgsMixin):
         self.csv_inst_list = AddInstructors.target_from()
         self.file_dep = [self.csv_inst_list]
 
+        AB = "_TP_AB" if self.num_AB else ""
         if self.grouped:
             name = "_".join(self.courses) + "_grouped"
-            if self.no_AB:
-                name += "_no_AB"
-            self.target = self.build_target(name=name)
+            self.target = self.build_target(name=name, AB=AB)
         else:
             self.targets = [
-                self.build_target(name=course)
+                self.build_target(name=course, AB=AB)
                 for course in self.courses
             ]
 
@@ -315,7 +314,7 @@ class HtmlTable(UVTask, CliArgsMixin):
                 else:
                     return str(num)
 
-            if activity in ["Cours", "TD"] or (activity == "TP" and self.no_AB):
+            if activity in ["Cours", "TD"] or (activity == "TP" and not self.num_AB):
                 return ", ".join(df.num.apply(to_names))
             else:
                 return ", ".join(df.semaine + df.numAB.apply(to_names))
