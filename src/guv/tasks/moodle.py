@@ -422,14 +422,14 @@ class JsonRestriction(UVTask, CliArgsMixin):
             help="Type de séances considérées",
         ),
         argument(
-            "-a", "--AB", action="store_true", help="Prise en compte des semaines A/B"
+            "-a", "--num-AB", action="store_true", help="Prise en compte des semaines A/B"
         ),
     )
 
     def setup(self):
         super().setup()
         self.all_courses = CsvAllCourses.target_from()
-        AB = "_AB" if self.AB else ""
+        AB = "_AB" if self.num_AB else ""
         self.target = self.build_target(AB=AB)
         self.file_dep = [self.all_courses]
 
@@ -438,12 +438,12 @@ class JsonRestriction(UVTask, CliArgsMixin):
         df = df.loc[df["Code enseig."] == self.uv]
         df = df.loc[df["Activité"] == self.course]
 
-        key = "numAB" if self.AB else "num"
+        key = "numAB" if self.num_AB else "num"
         gb = df.groupby(key)
 
         def get_beg_end_date_each(num, df):
             def group_beg_end(row):
-                if self.AB:
+                if self.num_AB:
                     group = row["Lib. créneau"] + row["semaine"]
                 else:
                     group = row["Lib. créneau"]
