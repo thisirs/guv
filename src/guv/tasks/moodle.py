@@ -369,7 +369,7 @@ class JsonRestriction(UVTask, CliArgsMixin):
 
     Pour les contraintes par créneaux qui s'appuie sur l'appartenance
     à un groupe, il est nécessaire de renseigner la variable
-    ``GROUP_ID`` dans le fichier ``config.py`` qui relie le nom des
+    ``MOODLE_GROUPS`` dans le fichier ``config.py`` qui relie le nom des
     groupes de Cours/TD/TP dans le fichier ``effectif.xlsx`` aux
     identifiants Moodle correspondant (voir la tâche :ref:`` pour
     récupérer la correspondance).
