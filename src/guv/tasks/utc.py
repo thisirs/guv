@@ -180,7 +180,8 @@ class UtcUvListToCsv(TaskBase):
 
                 if len(df_ue.columns) != 10 or list(df_ue.columns) != columns:
                     msg = ", ".join(["`" + e + "`" for e in columns])
-                    raise Exception(f"Le fichier {self.ue_list_filename} doit être un fichier Excel avec exactement et dans cet ordre les colonnes: {msg}")
+                    ue_fn = rel_to_dir(self.ue_list_filename, self.settings.SEMESTER_DIR)
+                    raise Exception(f"Le fichier {ue_fn} doit être un fichier Excel avec exactement et dans cet ordre les colonnes: {msg}")
 
                 tables.append(df_ue)
             else:
