@@ -60,4 +60,4 @@ INFO_ETUDIANT = None
 
 # Correspondance entre le noms des groupes de Cours/TD/TP et leur
 # identifiant Moodle
-GROUP_ID = None
+MOODLE_GROUPS = None
