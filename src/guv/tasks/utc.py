@@ -159,7 +159,12 @@ class UtcUvListToCsv(TaskBase):
         # Lire les créneaux par semaine pour les masters
         if self.ue_list_filename is not None:
             if os.path.exists(self.ue_list_filename):
-                df_ue = pd.read_excel(self.ue_list_filename, engine="openpyxl")
+                try:
+                    df_ue = pd.read_excel(self.ue_list_filename, engine="openpyxl")
+                except ValueError as e:
+                    ue_fn = rel_to_dir(self.ue_list_filename, self.settings.SEMESTER_DIR)
+                    raise Exception(f"Erreur lors de la lecture du fichier Excel : {ue_fn}")
+
                 columns = [
                     "Code enseig.",
                     "Activité",
