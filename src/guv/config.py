@@ -249,10 +249,13 @@ class Settings:
     def load_file(self, config_file):
         logger.info("Loading configuration file: {}".format(config_file))
 
-        module_name = os.path.splitext(os.path.basename(config_file))[0]
-        spec = importlib.util.spec_from_file_location(module_name, config_file)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
+        try:
+            module_name = os.path.splitext(os.path.basename(config_file))[0]
+            spec = importlib.util.spec_from_file_location(module_name, config_file)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+        except Exception as e:
+            raise ImproperlyConfiguredException(f"Problème de chargement du fichier {config_file}", e) from e
 
         settings = [s for s in dir(module) if s.isupper()]
         for setting in settings:
