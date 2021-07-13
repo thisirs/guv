@@ -259,7 +259,7 @@ class XlsAffectation(UVTask):
         df_uv = df.loc[df["Code enseig."] == self.uv, :]
 
         if len(df_uv) == 0:
-            raise Exception("L'UV/UE `{self.uv}` n'est pas reconnue dans le fichier `CRENEAU_UV` ou `CRENEAU_UE`")
+            raise Exception(f"L'UV/UE `{self.uv}` n'est pas reconnue dans le fichier `CRENEAU_UV` ou `CRENEAU_UE`")
 
         selected_columns = [
             "Jour",
