@@ -185,7 +185,7 @@ class UtcUvListToCsv(TaskBase):
                 tables.append(df_ue)
             else:
                 ue_fn = rel_to_dir(self.ue_list_filename, self.settings.SEMESTER_DIR)
-                raise Exception(f"Le fichier n'existe pas: {ue_fn}")
+                raise Exception(f"Le fichier n'existe pas : {ue_fn}")
 
         df = pd.concat(tables)
 
