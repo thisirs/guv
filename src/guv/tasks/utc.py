@@ -36,7 +36,7 @@ class UtcUvListToCsv(TaskBase):
         if "CRENEAU_UE" in self.settings:
             self.ue_list_filename = os.path.join(
                 self.settings.SEMESTER_DIR,
-                self.settings["CRENEAU_UE"]
+                self.settings.CRENEAU_UE
             )
         else:
             self.ue_list_filename = None
