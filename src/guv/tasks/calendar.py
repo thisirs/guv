@@ -1,6 +1,6 @@
 """
-Fichier qui regroupe des tâches liées à la génération de calendrier
-par semaine d'une UV ou d'un intervenant.
+Ce module rassemble les tâches liées à la génération de calendrier par
+semaine d'une UV ou d'un intervenant.
 """
 
 import os
@@ -152,7 +152,7 @@ class CalInst(CliArgsMixin, TaskBase):
     Examples
     --------
 
-    .. code:: console
+    .. code:: bash
 
        guv cal_inst --plannings P2048 Master2Sem1 --insts "Bob Arctor" "Winston Smith"
 

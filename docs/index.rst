@@ -1,4 +1,3 @@
-
 =====
  guv
 =====
@@ -16,13 +15,13 @@ Installation
 Il faut d'abord télécharger l'archive du projet sur Gitlab et
 l'installer avec ``pip`` :
 
-.. code:: console
+.. code:: bash
 
    pip install .
 
 On peut également cloner le projet si ``git`` est installé comme suit :
 
-.. code:: console
+.. code:: bash
 
    git clone git@gitlab.utc.fr:syrousse/guv.git
    cd guv
@@ -37,7 +36,7 @@ Exemple rapide
 On commence par créer l'arborescence requise (voir
 :ref:`création-de-larborescence` pour plus de détails) :
 
-.. code:: console
+.. code:: bash
 
    guv createsemester P2021 --uv SY02,SY09
    cd P2021
@@ -65,7 +64,7 @@ spécifique d'une UV ou pas pour créer de nouveaux fichiers. Pour cela,
 implémentation de type ``make``. À l'image de ``doit``, **guv** peut
 exécuter des tâches et chaque appel à **guv** est de la forme :
 
-.. code:: console
+.. code:: bash
 
    guv <une_tâche> <les arguments de la tâche>
 
@@ -84,7 +83,7 @@ Création de l'arborescence
 Pour créer cette arborescence ainsi que les fichiers de configuration,
 préremplis on peut exécuter la commande suivante :
 
-.. code:: console
+.. code:: bash
 
    guv createsemester P2020 --uv SY02 SY09
 
@@ -114,7 +113,7 @@ Si on veut rajouter des dossiers d'UV à un dossier de semestre déjà
 existant, on peut exécuter la commande suivante à l'intérieur d'un
 dossier de semestre:
 
-.. code:: console
+.. code:: bash
 
    cd P2020
    guv createuv SY19 AOS1
@@ -371,13 +370,17 @@ Cela permet par exemple de générer des fichiers iCal par intervenant sur
 tout un semestre, de générer un fichier récapitulatif des UTP
 effectuées.
 
-Pour cela, il faut remplir le fichier ``planning_hebdomadaire.xlsx``
-situé dans le sous-dossier ``documents`` de chaque UV/UE. Toutes les
-séances présentes dans le fichier pdf renseigné dans ``CRENEAU_UV`` y
-figurent. Lorsque l'équipe pédagogique est formée, on peut compléter ces
-fichiers en écrivant le nom de l'intervenant dans la colonne
-``Intervenants`` et en supprimant éventuellement des créneaux non
-retenus.
+Pour cela, il faut remplir les fichiers ``planning_hebdomadaire.xlsx``
+situés dans le sous-dossier ``documents`` de chaque UV/UE. Ces
+fichiers sont automatiquement générés s'ils n'existent pas lorsqu'on
+exécute simplement **guv** sans tâche particulière.
+
+Les fichiers ``planning_hebdomadaire.xlsx`` contiennent toutes les
+séances de l'UV/UE concernée d'après le fichier pdf renseigné dans
+``CRENEAU_UV`` ou d'après le fichier Excel renseigné par
+``CRENEAU_UE``. Il suffit de préciser le nom de l'intervenant dans la
+colonne ``Intervenants`` et en supprimant éventuellement des créneaux
+non retenus.
 
 Interfaçage avec Moodle
 -----------------------
@@ -553,9 +556,6 @@ arguments :
 
 Autres fonctions d'agrégation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-
 
    Cette fonction permet de remplir les valeurs non définies dans une
    colonne. Le code suivant permet de remplacer les valeurs ``NA`` dans
@@ -799,7 +799,7 @@ Des fichiers de complétion pour ``zsh`` et ``bash`` sont disponibles
 dans le sous-dossier ``data``. Pour un système type Unix et le shell
 ``zsh``, on peut utiliser les commandes suivantes :
 
-.. code:: console
+.. code:: bash
 
    mkdir -p ~/.zsh/completions
    cp $(python -c "import guv; print(guv.__path__[0])")/data/_guv_zsh ~/.zsh/completions
@@ -809,7 +809,7 @@ Si des tâches supplémentaires ont été ajoutées avec la variable
 Il faut d'abord installer la bibliothèque ``shtab`` et exécuter la
 commande suivante dans le dossier du semestre.
 
-.. code:: python
+.. code:: bash
 
    shtab --shell=zsh guv.runner.get_parser > ~/.zsh/completions/_guv_zsh
 
@@ -828,6 +828,9 @@ Liste des variables reconnues dans les fichiers ``config.py`` de semestre
 
 - ``CRENEAU_UV`` : Chemin relatif vers le fichier pdf des créneaux des
   UVS ingénieur.
+
+- ``CRENEAU_UE`` : Chemin relatif vers le fichier Excel des créneaux des
+  UES de master.
 
 - ``SELECTED_PLANNINGS`` : Liste des plannings à considérer. Par
   défaut, tous les plannings définis dans la variables ``PLANNINGS``
@@ -891,17 +894,6 @@ Fichier de présence
 .. autoclass:: guv.tasks.attendance.PdfAttendance
    :exclude-members:
 
-Créneau
--------
-
-.. automodule:: guv.tasks.utc
-   :exclude-members:
-
-.. autoclass:: guv.tasks.utc.UtcUvListToCsv
-   :exclude-members:
-.. autoclass:: guv.tasks.utc.CsvAllCourses
-   :exclude-members:
-
 Fichier iCal
 ------------
 
@@ -910,7 +902,6 @@ Fichier iCal
 
 .. autoclass:: guv.tasks.ical.IcalInst
    :exclude-members:
-
 
 Fichier trombinoscope
 ---------------------
@@ -938,12 +929,6 @@ Calendrier hebdomadaire
 .. automodule:: guv.tasks.students
    :exclude-members:
 
-.. autoclass:: guv.tasks.students.CsvInscrits
-   :exclude-members:
-.. autoclass:: guv.tasks.students.XlsStudentData
-   :exclude-members:
-.. autoclass:: guv.tasks.students.XlsStudentDataMerge
-   :exclude-members:
 .. autoclass:: guv.tasks.students.CsvExamGroups
    :exclude-members:
 .. autoclass:: guv.tasks.students.CsvMoodleGroups
@@ -976,15 +961,7 @@ Intervenants
 .. automodule:: guv.tasks.instructors
    :exclude-members:
 
-.. autoclass:: guv.tasks.instructors.XlsInstructors
-   :exclude-members:
-.. autoclass:: guv.tasks.instructors.AddInstructors
-   :exclude-members:
-.. autoclass:: guv.tasks.instructors.XlsInstDetails
-   :exclude-members:
 .. autoclass:: guv.tasks.instructors.XlsUTP
-   :exclude-members:
-.. autoclass:: guv.tasks.instructors.XlsAffectation
    :exclude-members:
 
 Moodle
@@ -1006,6 +983,31 @@ Moodle
 .. autoclass:: guv.tasks.moodle.CsvCreateGroups
    :exclude-members:
 .. autoclass:: guv.tasks.moodle.FetchGroupId
+   :exclude-members:
+
+Tâches intermédiaires
+=====================
+
+Créneau
+-------
+
+.. autoclass:: guv.tasks.utc.UtcUvListToCsv
+   :exclude-members:
+.. autoclass:: guv.tasks.utc.CsvAllCourses
+   :exclude-members:
+.. autoclass:: guv.tasks.students.CsvInscrits
+   :exclude-members:
+.. autoclass:: guv.tasks.students.XlsStudentData
+   :exclude-members:
+.. autoclass:: guv.tasks.students.XlsStudentDataMerge
+   :exclude-members:
+.. autoclass:: guv.tasks.instructors.XlsInstructors
+   :exclude-members:
+.. autoclass:: guv.tasks.instructors.AddInstructors
+   :exclude-members:
+.. autoclass:: guv.tasks.instructors.XlsInstDetails
+   :exclude-members:
+.. autoclass:: guv.tasks.instructors.XlsAffectation
    :exclude-members:
 
 

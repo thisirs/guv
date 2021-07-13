@@ -1,5 +1,5 @@
 """
-Fichier qui regroupe les tâches de création des créneaux officiels de
+Ce module rassemble les tâches de création des créneaux officiels de
 Cours/TD/TP.
 """
 

@@ -1,5 +1,5 @@
 """
-Fichier qui regroupe les tâches liées à la création de fiches de
+Ce module rassemble les tâches liées à la création de fiches de
 présence.
 """
 
@@ -62,7 +62,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
     Examples
     --------
 
-    .. code:: console
+    .. code:: bash
 
        guv pdf_attendance --title "Examen de TP" --group TP
 
@@ -269,7 +269,7 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
     Examples
     --------
 
-    .. code:: console
+    .. code:: bash
 
        guv pdf_attendance_full --group TP --template "G{group_name}_{number}"
 

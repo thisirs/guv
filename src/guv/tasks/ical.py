@@ -1,5 +1,5 @@
 """
-Fichier qui regroupe des tâches de génération de fichiers ICal des
+Ce module rassemble les tâches de génération de fichiers iCal des
 créneaux d'une UV ou d'un intervenant.
 """
 
@@ -77,7 +77,7 @@ class IcalInst(CliArgsMixin, TaskBase):
 
     {options}
 
-    .. code:: console
+    .. code:: bash
 
        guv ical_inst --plannings P2048 Master2Sem1 --insts "Bob Arctor" "Winston Smith"
 

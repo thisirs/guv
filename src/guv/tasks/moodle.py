@@ -1,5 +1,5 @@
 """
-Fichier qui regroupe des tâches pour interagir avec Moodle : création
+Ce module rassemble les tâches pour interagir avec Moodle : création
 de fichiers de groupes officiels de Cours/TD/TP où aléatoires
 (binômes, trinômes par groupes) prêt à charger, descriptif de l'UV et
 des intervenants sous forme de code HTML à copier-coller dans Moodle,
@@ -61,7 +61,7 @@ class CsvGroups(UVTask, CliArgsMixin):
     Examples
     --------
 
-    .. code:: console
+    .. code:: bash
 
        guv csv_groups --groups Groupe_Projet
 
@@ -182,7 +182,7 @@ class HtmlTable(UVTask, CliArgsMixin):
     Examples
     --------
 
-    .. code:: console
+    .. code:: bash
 
        guv html_table --courses TP --num-AB
        guv html_table --grouped

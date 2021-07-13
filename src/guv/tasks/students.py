@@ -1,6 +1,6 @@
 """
-Fichier qui regroupe des tâches de création d'un fichier Excel sur
-l'effectif d'une UV.
+Ce module rassemble les tâches de création d'un fichier Excel central
+sur l'effectif d'une UV.
 """
 
 import os

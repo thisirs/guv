@@ -1,5 +1,5 @@
 """
-Fichier qui regroupe des tâches de création de trombinoscopes en
+Ce module rassemble les tâches de création de trombinoscopes en
 fonction de groupes de Cours/TD/TP ou de projet.
 """
 

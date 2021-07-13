@@ -1,5 +1,5 @@
 """
-Fichier qui regroupe des tâches liées aux notes: chargement de notes
+Ce module rassemble les tâches liées aux notes : chargement de notes
 numériques ou ECTS sur l'ENT, fichier Excel avec barème, fichier Excel
 pour faire un jury.
 """
@@ -37,7 +37,7 @@ class CsvForUpload(CliArgsMixin, UVTask):
     Examples
     --------
 
-    .. code:: console
+    .. code:: bash
 
        guv csv_for_upload --grade-colname Note_ECTS --ects
        guv csv_for_upload --grade-colname Note_TP --comment-colname "Correcteur" --format "Corrigé par {msg}"
