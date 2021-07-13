@@ -55,21 +55,26 @@ class ModulesTaskLoader(NamespaceTaskLoader):
         self.namespace.update(dictionary)
 
 
-task_loader = ModulesTaskLoader()
-task_loader._load_variables(settings.settings)
-task_loader._load_tasks(
-    instructors,
-    utc,
-    grades,
-    students,
-    trombinoscope,
-    moodle,
-    ical,
-    calendar,
-    attendance,
-)
-logger.info("{} tasks loaded".format(len(task_loader.tasks)))
-logger.info("{} variables loaded".format(len(task_loader.variables)))
+try:
+    task_loader = ModulesTaskLoader()
+    task_loader._load_variables(settings.settings)
+    task_loader._load_tasks(
+        instructors,
+        utc,
+        grades,
+        students,
+        trombinoscope,
+        moodle,
+        ical,
+        calendar,
+        attendance,
+    )
+    logger.info("{} tasks loaded".format(len(task_loader.tasks)))
+    logger.info("{} variables loaded".format(len(task_loader.variables)))
+except ImproperlyConfigured as e:
+    msg = e.args[0]
+    print(f"{msg} : {e.args[1]}")
+    sys.exit()
 
 # Load custom tasks
 try:
