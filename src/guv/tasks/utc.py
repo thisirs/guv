@@ -110,7 +110,7 @@ class UtcUvListToCsv(TaskBase):
                 cols = df.columns.to_list()
 
                 # 'Semaine' is the only column that might not be
-                # detected is next pages because it can be empty.
+                # detected in next pages because it can be empty.
                 # Store its index to insert a blank column if needed
                 if "Semaine" in cols:
                     week_idx = cols.index('Semaine')
