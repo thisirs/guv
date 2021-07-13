@@ -1,3 +1,4 @@
+
 =====
  guv
 =====
@@ -7,7 +8,7 @@ plusieurs UV ou UE. Il permet de centraliser les informations concernant
 une UV/UE et d'en incorporer facilement de nouvelles au travers de
 fichiers de configuration. Il permet entre autres de créer des fichiers
 iCal, des trombinoscopes, des feuilles de présences, des feuilles de
-notes…
+notes...
 
 Installation
 ============
@@ -28,13 +29,13 @@ On peut également cloner le projet si ``git`` est installé comme suit :
    pip install .
 
 Un fichier de complétion de commandes est également disponible (voir
-`ici <#fichier-de-complétion>`__).
+:ref:`fichier-de-complétion`.
 
 Exemple rapide
 ==============
 
 On commence par créer l'arborescence requise (voir
-`ici <#création-de-larborescence>`__ pour plus de détails) :
+:ref:`création-de-larborescence` pour plus de détails) :
 
 .. code:: console
 
@@ -58,22 +59,24 @@ pour générer les calendriers hebdomadaires des UV.
 Tutoriel
 ========
 
-``guv`` doit utiliser des fichiers fournis par l'administration
+**guv** doit utiliser des fichiers fournis par l'administration
 spécifique d'une UV ou pas pour créer de nouveaux fichiers. Pour cela,
-``guv`` s'appuie sur la bibliothèque Python ``doit`` qui est une
-implémentation de type ``make``. À l'image de ``doit``, ``guv`` peut
-exécuter des tâches et chaque appel à ``guv`` est de la forme :
+**guv** s'appuie sur la bibliothèque Python ``doit`` qui est une
+implémentation de type ``make``. À l'image de ``doit``, **guv** peut
+exécuter des tâches et chaque appel à **guv** est de la forme :
 
 .. code:: console
 
    guv <une_tâche> <les arguments de la tâche>
 
-``guv`` travaille avec une arborescence prédéfinie. Les documents
+**guv** travaille avec une arborescence prédéfinie. Les documents
 spécifiques à une UV sont stockées dans un dossier d'UV. Tous les
 dossiers d'UV sont stockés dans un dossier de semestre. Chaque dossier
 d'UV contient un fichier nommé ``config.py`` pour configurer l'UV. Le
 dossier de semestre contient également un dossier de configuration nommé
 ``config.py``.
+
+.. _création-de-larborescence:
 
 Création de l'arborescence
 --------------------------
@@ -103,9 +106,9 @@ de configuration prérempli ``config.py`` ainsi que des sous-dossiers
    │   ├── documents
    │   └── generated
    └── SY09
-   ├── config.py
-   ├── documents
-   └── generated
+       ├── config.py
+       ├── documents
+       └── generated
 
 Si on veut rajouter des dossiers d'UV à un dossier de semestre déjà
 existant, on peut exécuter la commande suivante à l'intérieur d'un
@@ -131,90 +134,94 @@ spécifiques à un semestre : liste des UV gérées, chemin vers le fichier
 des créneaux fourni par l'administration, liste des plannings,
 calendrier.
 
-#. Configuration des plannings avec ``PLANNINGS``
 
-   Les plannings sont des périodes de temps sur un même semestre. Par
-   défaut, le planning ingénieur, qui porte le même nom que le semestre
-   est utilisé. Il est possible de configurer d'autres périodes de temps
-   pour un même semestre (pour gérer les trimestres des masters par
-   exemple).
+Configuration des plannings avec ``PLANNINGS``
+++++++++++++++++++++++++++++++++++++++++++++++
 
-   La déclaration des plannings est controlée par la variable
-   ``PLANNINGS`` qui est un dictionnaire dont les clés sont le nom des
-   plannings à paramétrer et les valeurs un dictionnaire de
-   caractéristiques.
+Les plannings sont des périodes de temps sur un même semestre. Par
+défaut, le planning ingénieur, qui porte le même nom que le semestre
+est utilisé. Il est possible de configurer d'autres périodes de temps
+pour un même semestre (pour gérer les trimestres des masters par
+exemple).
 
-   Les caractéristiques nécessaires sont la liste des UV gérées par ce
-   planning, la date de début et la date de fin du planning.
+La déclaration des plannings est controlée par la variable
+``PLANNINGS`` qui est un dictionnaire dont les clés sont le nom des
+plannings à paramétrer et les valeurs un dictionnaire de
+caractéristiques.
 
-   Par exemple, on peut avoir la définition suivante :
+Les caractéristiques nécessaires sont la liste des UV gérées par ce
+planning, la date de début et la date de fin du planning.
 
-   .. code:: python
+Par exemple, on peut avoir la définition suivante :
 
-      from datetime import date
-      PLANNINGS = {
-          "P2020": {
-              "UVS": ["SY09", "SY02"],
-              "PL_BEG": date(2020, 2, 24),
-              "PL_END": date(2020, 6, 27)
-          }
-      }
+.. code:: python
 
-#. Configuration du planning ingénieur
+   from datetime import date
+   PLANNINGS = {
+       "P2020": {
+           "UVS": ["SY09", "SY02"],
+           "PL_BEG": date(2020, 2, 24),
+           "PL_END": date(2020, 6, 27)
+       }
+   }
 
-   Afin de créer les créneaux de cours, il faut renseigner quelques
-   paramètres pour créer le planning ingénieur. Les dates de début et de
-   fin de période sont déjà renseignées dans la variable ``PLANNINGS``.
+Configuration du planning ingénieur
++++++++++++++++++++++++++++++++++++
 
-   Les jours qui sont transformés en d'autres jours pour tenir compte
-   des jours fériés ou journées spéciales sont listés dans la variable
-   ``TURN``. Par exemple, on peut spécifier
+Afin de créer les créneaux de cours, il faut renseigner quelques
+paramètres pour créer le planning ingénieur. Les dates de début et de
+fin de période sont déjà renseignées dans la variable ``PLANNINGS``.
 
-   .. code:: python
+Les jours qui sont transformés en d'autres jours pour tenir compte
+des jours fériés ou journées spéciales sont listés dans la variable
+``TURN``. Par exemple, on peut spécifier
 
-      from datetime import date
-      TURN = {
-          date(2020, 5, 4): 'Vendredi',
-          date(2020, 5, 12): 'Vendredi',
-          date(2020, 5, 20): 'Jeudi',
-          date(2020, 6, 4): 'Lundi'
-      }
+.. code:: python
 
-   Les variables ``SKIP_DAYS_C``, ``SKIP_DAYS_D`` et ``SKIP_DAYS_T``
-   contiennent respectivement la liste des jours où il n'y a pas de
-   cours, TD, TP (première semaine, vacances, median, final…). Des
-   fonctions d'aide telles que ``skip_week``, ``skip_range`` sont mises
-   à disposition.
+   from datetime import date
+   TURN = {
+       date(2020, 5, 4): 'Vendredi',
+       date(2020, 5, 12): 'Vendredi',
+       date(2020, 5, 20): 'Jeudi',
+       date(2020, 6, 4): 'Lundi'
+   }
 
-   .. code:: python
+Les variables ``SKIP_DAYS_C``, ``SKIP_DAYS_D`` et ``SKIP_DAYS_T``
+contiennent respectivement la liste des jours où il n'y a pas de
+cours, TD, TP (première semaine, vacances, median, final...). Des
+fonctions d'aide telles que ``skip_week``, ``skip_range`` sont mises
+à disposition.
 
-      from guv.helpers import skip_week, skip_range
+.. code:: python
 
-      # Première semaine sans TD/TP
-      debut = skip_week(PLANNINGS["P2020"]['PL_BEG'])
+   from guv.helpers import skip_week, skip_range
 
-      # Semaine des médians
-      median = skip_range(date(2020, 4, 27), date(2020, 5, 4))
+   # Première semaine sans TD/TP
+   debut = skip_week(PLANNINGS["P2020"]['PL_BEG'])
 
-      # Vacances
-      vacances_printemps = skip_range(date(2020, 4, 13), date(2020, 4, 18))
+   # Semaine des médians
+   median = skip_range(date(2020, 4, 27), date(2020, 5, 4))
 
-      # Semaine des finals
-      final = skip_range(date(2020, 6, 19), date(2020, 6, 27))
+   # Vacances
+   vacances_printemps = skip_range(date(2020, 4, 13), date(2020, 4, 18))
 
-      # Jours sautés pour Cours/TD/TP
-      SKIP_DAYS_C = ferie + vacances_printemps + median + final
-      SKIP_DAYS_D = ferie + vacances_printemps + debut + median + final
-      SKIP_DAYS_T = ferie + vacances_printemps + debut + final
+   # Semaine des finals
+   final = skip_range(date(2020, 6, 19), date(2020, 6, 27))
 
-#. Configuration des créneaux
+   # Jours sautés pour Cours/TD/TP
+   SKIP_DAYS_C = ferie + vacances_printemps + median + final
+   SKIP_DAYS_D = ferie + vacances_printemps + debut + median + final
+   SKIP_DAYS_T = ferie + vacances_printemps + debut + final
 
-   Les créneaux officiels portant sur toutes les UV de l'UTC durant une
-   semaine type sont renseignés dans un fichier pdf fourni par
-   l'administration et disponible
-   `ici <https://webapplis.utc.fr/ent/services/services.jsf?sid=578>`__.
-   Il faut renseigner son chemin relatif dans la variable
-   ``CRENEAU_UV``.
+
+Configuration des créneaux
+++++++++++++++++++++++++++
+
+Les créneaux officiels portant sur toutes les UV de l'UTC durant une
+semaine type sont renseignés dans un fichier pdf fourni par
+l'administration et disponible `ici
+<https://webapplis.utc.fr/ent/services/services.jsf?sid=578>`__. Il
+faut renseigner son chemin relatif dans la variable ``CRENEAU_UV``.
 
 Fichier ``config.py`` de configuration d'UV
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -223,109 +230,117 @@ Le fichier de configuration d'une UV contient des informations
 spécifiques à l'UV. Suivant les besoins, il faut fournir les chemins
 vers des sources de données fournies par l'UTC, Moodle ou autres.
 
-#. Fichier d'extraction de l'effectif d'une UV
+.. _ent-listing:
 
-   Le fichier de l'effectif officiel d'une UV est disponible sur l'ENT
-   sous la rubrique "Inscriptions aux enseignements - Liste des
-   étudiants inscrits" en cliquant sur "Extractions". Il s'agit d'un
-   fichier nommé ``extraction_enseig_note.XLS`` (même si c'est un
-   fichier csv). Il faut renseigner son chemin relatif dans la variable
-   ``ENT_LISTING``. Il constitue la base du fichier central de l'UV
-   ``effectif.xlsx``. Il crée les colonnes suivantes :
+Fichier d'extraction de l'effectif d'une UV
++++++++++++++++++++++++++++++++++++++++++++
 
-   -  ``Nom``
-   -  ``Prénom``
-   -  ``Date de naissance``
-   -  ``Inscription``
-   -  ``Branche``
-   -  ``Semestre``
-   -  ``Dernier diplôme obtenu``
-   -  ``Courriel``
-   -  ``Login``
-   -  ``Tel. 1``
-   -  ``Tel. 2``
+Le fichier de l'effectif officiel d'une UV est disponible sur l'ENT
+sous la rubrique "Inscriptions aux enseignements - Liste des
+étudiants inscrits" en cliquant sur "Extractions". Il s'agit d'un
+fichier nommé ``extraction_enseig_note.XLS`` (même si c'est un
+fichier csv). Il faut renseigner son chemin relatif dans la variable
+``ENT_LISTING``. Il constitue la base du fichier central de l'UV
+``effectif.xlsx``. Il crée les colonnes suivantes :
 
-#. Fichier d'affectation aux Cours/TD/TP
+-  ``Nom``
+-  ``Prénom``
+-  ``Date de naissance``
+-  ``Inscription``
+-  ``Branche``
+-  ``Semestre``
+-  ``Dernier diplôme obtenu``
+-  ``Courriel``
+-  ``Login``
+-  ``Tel. 1``
+-  ``Tel. 2``
 
-   Il s'agit du fichier fourni par l'administration qui précise les
-   affectations des étudiants aux différents créneaux de Cours/TD/TP. Il
-   est envoyé par courriel aux responsables d'UV. On peut renseigner son
-   chemin relatif au dossier d'UV dans la variable
-   ``AFFECTATION_LISTING``. Il est agrégé de manière automatique au
-   fichier central de l'UV où il crée les colonnes suivantes :
+Fichier d'affectation aux Cours/TD/TP
++++++++++++++++++++++++++++++++++++++
 
-   -  ``Name``
-   -  ``Cours``
-   -  ``TD``
-   -  ``TP``
+Il s'agit du fichier fourni par l'administration qui précise les
+affectations des étudiants aux différents créneaux de Cours/TD/TP. Il
+est envoyé par courriel aux responsables d'UV. On peut renseigner son
+chemin relatif au dossier d'UV dans la variable
+``AFFECTATION_LISTING``. Il est agrégé de manière automatique au
+fichier central de l'UV où il crée les colonnes suivantes :
 
-   De part sa nature, son agrégation peut donner lieu à des ambiguïtés
-   qui sont levées en interrogeant l'utilisateur (choix semaine A/B, nom
-   d'étudiant non reconnu).
+- ``Name`` : Nom de l'étudiant présent dans le fichier d'affectation
+- ``Cours`` : Groupe de cours (``C``, ``C1``, ``C2``)
+- ``TD`` : Groupe de TD (``D1``, ``D2``,...)
+- ``TP`` : Groupe de TP (``T1``, ``T2``, ``T1A``, ``T1B``,...)
 
-#. Fichier de l'effectif de Moodle
+De part sa nature, son agrégation peut donner lieu à des ambiguïtés
+qui sont levées en interrogeant l'utilisateur (choix semaine A/B, nom
+d'étudiant non reconnu).
 
-   Des renseignements supplémentaires sont disponibles sur Moodle :
-   l'identifiant de connexion, le numéro d'identification, l'adresse
-   courriel (qui peut différer de l'adresse figurant dans l'effectif
-   officiel). Ces informations sont disponibles en exportant sous Moodle
-   une feuille de note (en plus des notes qui ne nous intéresse pas). Il
-   faut aller dans ``Configuration du carnet de notes`` et sélectionner
-   ``Feuille de calcul Excel`` dans le menu déroulant et ensuite
-   ``Télécharger``.
+Fichier de l'effectif de Moodle
++++++++++++++++++++++++++++++++
 
-   On renseigne le chemin relatif de ce fichier dans la variable
-   ``MOODLE_LISTING``. Une fois incorporé, ce fichier crée les colonnes
-   suivantes :
+Des renseignements supplémentaires sont disponibles sur Moodle :
+l'identifiant de connexion, le numéro d'identification, l'adresse
+courriel (qui peut différer de l'adresse figurant dans l'effectif
+officiel). Ces informations sont disponibles en exportant sous Moodle
+une feuille de note (en plus des notes qui ne nous intéresse pas). Il
+faut aller dans ``Configuration du carnet de notes`` et sélectionner
+``Feuille de calcul Excel`` dans le menu déroulant et ensuite
+``Télécharger``.
 
-   -  ``Prénom_moodle``
-   -  ``Nom_moodle``
-   -  ``Numéro d'identification``
-   -  ``Adresse de courriel``
+On renseigne le chemin relatif de ce fichier dans la variable
+``MOODLE_LISTING``. Une fois incorporé, ce fichier crée les colonnes
+suivantes :
 
-#. Fichier des tiers-temps
+- ``Prénom_moodle``
+- ``Nom_moodle``
+- ``Numéro d'identification``
+- ``Adresse de courriel``
 
-   Il s'agit d'un simple fichier texte avec commentaire éventuel listant
-   ligne par ligne les étudiants bénéficiant d'un tiers-temps. Il crée
-   la colonne ``tiers-temps`` dans le fichier central de l'UV.
+Fichier des tiers-temps
++++++++++++++++++++++++
 
-   On peut le renseigner dans la variable ``TIERS_TEMPS``. Par exemple :
+Il s'agit d'un simple fichier texte avec commentaire éventuel listant
+ligne par ligne les étudiants bénéficiant d'un tiers-temps. Il crée
+la colonne ``tiers-temps`` dans le fichier central de l'UV.
 
-   .. code:: shell
+On peut le renseigner dans la variable ``TIERS_TEMPS``. Par exemple :
 
-      # Étudiants bénéficiant d'un tiers-temps
-      Bob Arctor
+.. code:: shell
 
-#. Fichiers des changements de TD/TP
+   # Étudiants bénéficiant d'un tiers-temps
+   Bob Arctor
 
-   Il s'agit de fichiers de prise en compte des changements de groupes
-   de TD/TP par rapport au groupes officiels tels que décrits par le
-   fichier ``AFFECTATION_LISTING``.
+Fichiers des changements de TD/TP
++++++++++++++++++++++++++++++++++
 
-   Chaque ligne repère un changement qui est de la forme
-   ``id1 --- id2``. Les identifiants peuvent être des adresses email ou
-   de la forme "nom prénom". L'identifiant ``id2`` peut également être
-   un identifiant de séance (``D1``, ``D2``, ``T1``, ``T2``,…) au cas où
-   il y a un transfert et non un échange.
+Il s'agit de fichiers de prise en compte des changements de groupes
+de TD/TP par rapport au groupes officiels tels que décrits par le
+fichier ``AFFECTATION_LISTING``.
 
-   On peut renseigner le chemin relatif vers ces fichiers dans les
-   variables ``CHANGEMENT_TD`` et ``CHANGEMENT_TP``.
+Chaque ligne repère un changement qui est de la forme
+``id1 --- id2``. Les identifiants peuvent être des adresses email ou
+de la forme "nom prénom". L'identifiant ``id2`` peut également être
+un identifiant de séance (``D1``, ``D2``, ``T1``, ``T2``,...) au cas où
+il y a un transfert et non un échange.
 
-#. Fichier d'information générale par étudiant
+On peut renseigner le chemin relatif vers ces fichiers dans les
+variables ``CHANGEMENT_TD`` et ``CHANGEMENT_TP``.
 
-   Il arrive que l'on souhaite stocker d'autres informations de type
-   textuel sur un étudiant. On peut le renseigner dans la variable
-   ``INFO_ETUDIANT``. C'est un fichier au format ``Org`` de la forme
-   suivante :
+Fichier d'information générale par étudiant
++++++++++++++++++++++++++++++++++++++++++++
 
-   .. code:: org
+Il arrive que l'on souhaite stocker d'autres informations de type
+textuel sur un étudiant. On peut le renseigner dans la variable
+``INFO_ETUDIANT``. C'est un fichier au format ``Org`` de la forme
+suivante :
 
-      * Nom1 Prénom1
-        texte1
-      * Nom2 Prénom2
-        texte2
+.. code:: org
 
-   Les informations sont incoporées dans une colonne de nom ``Info``.
+   * Nom1 Prénom1
+     texte1
+   * Nom2 Prénom2
+     texte2
+
+Les informations sont incoporées dans une colonne nommée ``Info``.
 
 Workflow classique
 ==================
@@ -336,18 +351,22 @@ Gestion d'une UV
 Gestion des étudiants
 ---------------------
 
-``guv`` permet la gestion des étudiants de plusieurs UV/UE. Pour cela,
+**guv** permet la gestion des étudiants de plusieurs UV/UE. Pour cela,
 il est nécessaire de renseigner les variables ``ENT_LISTING`` (voir
-`ici <#fichier-dextraction-de-leffectif-dune-uv>`__),
-``AFFECTATION_LISTING`` et éventuellement ``MOODLE_LISTING``.
+:ref:`ent-listing`), ``AFFECTATION_LISTING`` et éventuellement
+``MOODLE_LISTING``.
 
-Ensuite en exécutant simplement ``guv`` sans argument, un fichier
-central est créé.
+Ensuite en exécutant simplement **guv** sans argument dans le dossier
+d'UV, le fichier central ``effectifs.xlsx`` regroupant ces
+informations est créé. Ce fichier est regénéré à chaque fois qu'il y a
+un changement dans les dépendances. Il ne faut donc jamais y rentrer
+des informations manuellement. Pour incorporer des informations, voir
+:ref:`incorporation`.
 
 Gestion des intervenants
 ------------------------
 
-``guv`` offre également une gestion des intervenants dans les UV/UE.
+**guv** offre également une gestion des intervenants dans les UV/UE.
 Cela permet par exemple de générer des fichiers iCal par intervenant sur
 tout un semestre, de générer un fichier récapitulatif des UTP
 effectuées.
@@ -363,98 +382,45 @@ retenus.
 Interfaçage avec Moodle
 -----------------------
 
-``guv`` permet d'agréger les informations issues de Moodle mais permet
+**guv** permet d'agréger les informations issues de Moodle mais permet
 également de créer des fichiers importables sur Moodle : fichier de
 groupes, fichier de notes, restriction d'accès aux activités en fonction
 du planning.
 
-Tâches
-======
-
-Création de fichier iCal de créneaux de cours
----------------------------------------------
-
-La tâche ``ical_inst`` permet de créer des fichiers iCal regroupant les
-créneaux de cours. On peut restreindre la création de ces fichiers à un
-ensemble d'intervenants ou un ensemble de plannings.
-
-Par exemple, l'instruction suivante
-
-.. code:: console
-
-   guv ical_inst
-
-crée un fichier iCal restreint au plannings courants et concernant
-l'intervenant par défaut.
-
-.. code:: console
-
-   guv ical_inst -i "John Doe" "Jane Doe"
-
-.. code:: console
-
-   guv ical_inst -i "John Doe" -p Master2Sem1
-
-Calendrier des créneaux d'une UV sous forme de fichier pdf
-----------------------------------------------------------
-
-Les tâches ``cal_inst`` et ``cal_uv`` permettent de créer des
-calendriers. La tâche ``cal_inst`` permet de créer des calendriers
-hebdomadaire par intervenant et par planning. La tâche ``cal_uv`` permet
-de créer un calendrier hebdomadaire de tous les créneaux d'une UV.
-
-.. code:: console
-
-   guv cal_inst
-
-Trombinoscope par groupe de Cours/TD/TP
----------------------------------------
-
-Il est possible de construire des trombinoscopes suivant les groupes de
-Cours/TD/TP et même suivant un groupement arbitraire présent de le
-fichier central.
-
-Feuille de présences
---------------------
-
-Il est possible de créer des feuilles de présences nominatives ou non
-par groupes de Cours/TD/TP ou un groupe arbitraire.
-
-.. code:: console
-
-   guv pdf_attendance
-
-.. code:: console
-
-   guv pdf_attendance_full
+.. _incorporation:
 
 Incorporation d'informations extérieures
 ----------------------------------------
 
-Les informations concernant l'effectif d'une UV sont toutes rassemblées
-dans un fichier central Excel situé à la racine de l'UV :
+Les informations concernant l'effectif d'une UV sont toutes
+rassemblées dans un fichier central Excel situé à la racine de l'UV :
 ``effectifs.xlsx``. Un certain nombre d'informations y sont déjà
 incorporées automatiquement : l'effectif officiel via la variable
 ``ENT_LISTING``, les affectations au Cours/TD/TP ainsi que les données
 Moodle, les tiers-temps, les changements de TD/TP et les informations
-par étudiant si présents.
+par étudiant si elle ont été renseignées dans variables
+correspondantes.
 
 Il arrive qu'on dispose d'informations extérieures concernant les
-étudiants (feuilles de notes Excel/csv, fichier csv de groupes provenant
-de Moodle ou généré avec ``guv``,…) et qu'on veuille les incorporer au
-fichier central de l'UV. Pour cela, il faut renseigner la variable
-``AGGREGATE_DOCUMENTS``. La variable ``AGGREGATE_DOCUMENTS`` est une
-liste de listes de longueur 2. Chaque liste de longueur 2 est composée
-d'un chemin vers un fichier à incorporer et d'une fonction prenant en
-argument le fichier central sous forme de ``DataFrame`` auquel
-incorporer le fichier et le chemin du fichier à incorporer et retourne
-un DataFrame mis à jour avec les nouvelles informations.
+étudiants (feuilles de notes Excel/csv, fichier csv de groupes
+provenant de Moodle ou généré avec **guv**,...) et qu'on veuille les
+incorporer au fichier central de l'UV. Pour cela, il faut renseigner
+la variable ``AGGREGATE_DOCUMENTS``. La variable
+``AGGREGATE_DOCUMENTS`` est une liste de listes de longueur 2. Chaque
+liste de longueur 2 est composée d'un chemin vers un fichier à
+incorporer et d'une fonction prenant en argument le fichier central
+sous forme de `DataFrame` Pandas auquel incorporer le fichier et le
+chemin du fichier à incorporer et retourne un `DataFrame` mis à jour
+avec les nouvelles informations.
 
 Par exemple, si on dispose d'un fichier ``notes.csv`` situé dans le
 sous-dossier ``documents`` de l'UV et qu'on veut l'incorporer, on écrira
 en toute généralité :
 
 .. code:: python
+
+   def fonction_qui_incorpore(df, file_path):
+       # On incorpore le fichier `file_path` à `df` et on revoie `df`.
 
    AGGREGATE_DOCUMENTS = [
        [
@@ -463,30 +429,44 @@ en toute généralité :
        ]
    ]
 
-À la prochaine exécution de ``guv`` sans argument, la tâche par défaut
+À la prochaine exécution de **guv** sans argument, la tâche par défaut
 va reconstruire le fichier central et le fichier ``notes.csv`` sera
-incorporé. Il reste à implémenter ``fonction_qui_incorpore`` qui réalise
-l'incorporation.
+incorporé. Il reste à implémenter ``fonction_qui_incorpore`` qui
+réalise l'incorporation. Cependant pour la plupart des usages, il
+existe des fonctions spécialisées suivant le type d'information à
+incorporer.
+
+-  Fonction ``aggregate``
+
+   .. autofunction:: guv.helpers.aggregate
+
+-  Fonction ``fillna_column``
+
+   .. autofunction:: guv.helpers.fillna_column
+
+-  Fonction ``replace_regex``
+
+   .. autofunction:: guv.helpers.replace_regex
+
+-  Fonction ``replace_column``
+
+   .. autofunction:: guv.helpers.replace_column
+
+-  Fonction ``compute_new_column``
+
+   .. autofunction:: guv.helpers.compute_new_column
+
+-  Fonction ``aggregate_org``
+
+   .. autofunction:: guv.helpers.aggregate_org
+
+-  Fonction ``switch``
+
+   .. autofunction:: guv.helpers.switch
+
 
 Fonction ``aggregate``
 ~~~~~~~~~~~~~~~~~~~~~~
-
-Pour la plupart des usages, le fichier à incorporer est sous forme de
-tableau et il est inutile d'écrire cette fonction. À la place, on peut
-utiliser la fonction ``aggregate`` qui renvoie une telle fonction.
-
-.. code:: python
-
-   from guv.helpers import aggregate
-   AGGREGATE_DOCUMENTS = [
-       [
-           "documents/notes.csv",
-           aggregate(
-               left_on="Courriel",
-               right_on="email"
-           )
-       ]
-   ]
 
 L'argument ``left_on`` désigne une colonne du fichier central de
 l'effectif et ``right_on`` désigne une colonne du fichier à incorporer
@@ -574,11 +554,12 @@ arguments :
 Autres fonctions d'agrégation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#. Fonction ``fillna_column``
+
+
 
    Cette fonction permet de remplir les valeurs non définies dans une
-   colonne. Le code suivant permet de remplacer les valeurs \`NA\` dans
-   la colonne \`Note\ :sub:`final`\ \` par la valeur \`ABS`.
+   colonne. Le code suivant permet de remplacer les valeurs ``NA`` dans
+   la colonne ``Note_final`` par la valeur ``ABS``.
 
    .. code:: python
 
@@ -657,66 +638,6 @@ Autres fonctions d'agrégation
 #. Fonction ``switch``
 
    Permet de permuter des valeurs dans une colonne.
-
-Tâches liées à Moodle
----------------------
-
-Chargement des groupes de Cours/TD/TP officiel sur Moodle
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Les groupes de Cours/TD/TP tels que fournis par l'administration sont
-incorporés au fichier central. Avec cette tâche, on peut exporter cette
-information sous forme d'un fichier csv chargeable sous Moodle.
-
-.. code:: console
-
-   guv csv_groups
-
-Par défaut, le tâche génère les groupes de Cours/TD/TP mais il est
-possible via l'option ``-g`` d'exporter n'importe quel groupement pourvu
-qu'il soit présent dans le fichier central.
-
-Génération de fragment HTML à charger sur Moodle
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. code:: console
-
-   guv html_table
-
-.. code:: console
-
-   guv html_inst
-
-Génération de restriction aux ressources Moodle
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-La tâche ``csv_groups`` permet déjà de charger des groupes sur Moodle
-qui reflètent l'appartenance aux groupes de Cours/TD/TP fournis par
-l'administration. On peut alors restreindre l'accès aux activités Moodle
-en utilisant ces groupes ainsi que les plages horaires des Cours/TD/TP.
-
-Malheureusement, le paramétrage de ces restrictions sur Moodle est assez
-fastidieux et il est facile de se tromper. La tâche ``json_restriction``
-facilite la création de telles restrictions en générant des données sous
-forme json importable dans Moodle grâce à un script Greasemonkey.
-
-.. code:: console
-
-   guv json_restriction
-
-.. code:: console
-
-   guv json_group
-
-Génération de groupes aléatoires
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Génération d'un fichier de notes prêt à charger sur Moodle
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Il est possible de charger des notes sur Moodle en utilisant directement
-le fichier central ``effectif.csv`` qui est généré en même temps que la
-version Excel.
 
 Divers
 ======
@@ -869,6 +790,8 @@ contenant les arguments spécifiés avec la fonction ``argument``.
 Les spécifications à l'intérieur de la fonction ``argument`` sont les
 mêmes que pour ``argparse``.
 
+.. _fichier-de-complétion:
+
 Fichier de complétion
 ---------------------
 
@@ -896,7 +819,7 @@ Variables reconnues dans les fichiers ``config.py``
 Liste des variables reconnues dans les fichiers ``config.py`` de semestre
 -------------------------------------------------------------------------
 
-- ``UVS`` : Liste des UV ou UE gérées par ``guv``. Cette variable est
+- ``UVS`` : Liste des UV ou UE gérées par **guv**. Cette variable est
   utilisée lorsqu'une tâche doit avoir accès à toutes les UV/UE gérées
   pour appliquer une même tâche à chaque.
 
@@ -906,11 +829,17 @@ Liste des variables reconnues dans les fichiers ``config.py`` de semestre
 - ``CRENEAU_UV`` : Chemin relatif vers le fichier pdf des créneaux des
   UVS ingénieur.
 
-- ``SELECTED_PLANNINGS`` :
+- ``SELECTED_PLANNINGS`` : Liste des plannings à considérer. Par
+  défaut, tous les plannings définis dans la variables ``PLANNINGS``
+  sont considérés. La liste des plannings sélectionnés est notamment
+  utilisé dans les tâches :class:`~guv.tasks.calendar.CalInst` et
+  :class:`~guv.tasks.ical.IcalInst`.
 
-- ``DEFAULT_INSTRUCTOR`` :
+- ``DEFAULT_INSTRUCTOR`` : Intervenant par défault utilisé dans les
+  tâches :class:`~guv.tasks.calendar.CalInst` et
+  :class:`~guv.tasks.ical.IcalInst`.
 
-- ``DEBUG`` :
+- ``DEBUG`` : Niveau de log.
 
 - ``TURN`` : Dictionnaire des jours qui sont changés en d'autres jours
   de la semaine.
@@ -933,14 +862,15 @@ Liste des variables reconnues dans les fichiers ``config.py`` d'UV
   fourni par l'ENT.
 
 - ``AFFECTATION_LISTING`` : Chemin relatif vers le fichier des
-  créneaux de Cours/TD/TP
+  créneaux de Cours/TD/TP.
 
 - ``MOODLE_LISTING`` : Chemin relatif vers le fichier Moodle qu'on
   peut télécharger en allant dans Configuration du carnet de notes et
   en sélectionnant ``Feuille de calcul Excel`` dans le menu déroulant
   et ensuite ``Télécharger``.
 
-- ``AGGREGATE_DOCUMENTS`` : Liste
+- ``AGGREGATE_DOCUMENTS`` : Liste des documents à agréger au fichier
+  central en plus des documents usuels.
 
 
 Tâches

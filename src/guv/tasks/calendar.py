@@ -147,11 +147,7 @@ class CalUv(UVTask):
 class CalInst(CliArgsMixin, TaskBase):
     """Calendrier hebdomadaire par intervenant.
 
-    Options
-    -------
-
-    - L'option ``--plannings`` permet de spécifier les UV/UE concernées en spécifiant les plannings correspondants. Par défault les UV/UE des plannings ``SELECTED_PLANNINGS`` sont utilisées.
-    - L'option ``--insts`` est une liste des intervenants pour qui créer le calendrier. Par défaut ``DEFAULT_INSTRUCTOR`` est utilisé.
+    {options}
 
     Examples
     --------
@@ -170,13 +166,13 @@ class CalInst(CliArgsMixin, TaskBase):
             "-p",
             "--plannings",
             nargs="+",
-            help="Liste des plannings à considérer",
+            help="Spécifie les UV/UE concernées via les plannings. Par défaut, toutes les UV/UE des plannings ``SELECTED_PLANNINGS`` sont concernées.",
         ),
         argument(
             "-i",
             "--insts",
             nargs="*",
-            help="Liste des intervenants à considérer",
+            help="Spécifie la liste des intervenants pour qui créer le calendrier. Par défaut, la liste se limite à ``DEFAULT_INSTRUCTOR``.",
         ),
     )
 

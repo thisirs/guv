@@ -27,18 +27,12 @@ class CsvForUpload(CliArgsMixin, UVTask):
 
     Crée un fichier csv nommé ``{grade_colname}_ENT.csv`` de notes
     prêtes à être chargées sur l'ENT. La colonne des notes est fixée
-    par l'argument ``grade_colname`` et est prise dans le fichier
-    ``effectif.xlsx``. L'argument optionnel ``comment_colname`` permet
-    d'ajouter des commentaires éventuellement formaté avec l'option
-    ``--format``.
+    par l'argument ``--grade_colname`` et est prise dans le fichier
+    ``effectif.xlsx``. L'argument optionnel ``--comment_colname``
+    permet d'ajouter des commentaires éventuellement formaté avec
+    l'option ``--format``.
 
-    Options
-    -------
-
-    - L'option ``--grade-colname`` permet d'indiquer la colonne contenant les notes à exporter
-    - L'option ``--comment-colname`` permet d'indiquer la colonne contenant un commentaire à ajouter
-    - L'option ``--ects`` permet de spécifier que la note à exporter est une note ECTS. D'après l'ENT, il ne faut alors pas de colonne de commentaires et la note n'est pas arrondie (l'ENT n'aime pas quand il y a trop de décimales)
-    - L'option ``--format`` permet de formatter plus précisément le commentaire. Le mot-clé ``msg`` représente la donnée présente dans le colonne ``comment-colname``
+    {options}
 
     Examples
     --------
@@ -58,25 +52,25 @@ class CsvForUpload(CliArgsMixin, UVTask):
             "-g",
             "--grade-colname",
             required=True,
-            help="Nom de la colonne contenant la note à exporter",
+            help="Nom de la colonne contenant la note à exporter.",
         ),
         argument(
             "--ects",
             action="store_true",
-            help="Précise si la note est une note ECTS (pas de colonne commentaire)",
+            help="Précise si la note à exporter est une note ECTS. D'après l'ENT, il ne faut alors pas de colonne de commentaires et la note n'est pas arrondie (l'ENT n'aime pas quand il y a trop de décimales).",
         ),
         argument(
             "-c",
             "--comment-colname",
             required=False,
-            help="Nom de la colonne contenant un commentaire",
+            help="Nom de la colonne contenant un commentaire à ajouter dans le fichier exporté.",
         ),
         argument(
             "-f",
             "--format",
             required=False,
             default="{msg}",
-            help="Format pour créer un message dans le colonne commentaire (par défaut: '{msg}')",
+            help="Modèle permettant de formatter plus précisément le commentaire. Le mot-clé ``msg`` représente la donnée présente dans la colonne ``--comment-colname``. Par défaut, on a ``{msg}``.",
         ),
     )
 

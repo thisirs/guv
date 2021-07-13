@@ -107,7 +107,9 @@ def generate_tasks():
         else:
             doc, *rest = ref.__doc__.split("\n", maxsplit=1)
             if rest:
-                full_doc = doc + "\n\n" + textwrap.dedent(rest[0])
+                # Remove {options} section from Sphinx
+                rest = re.sub(" *\\{options\\}\n+", "", rest[0])
+                full_doc = doc + "\n\n" + textwrap.dedent(rest)
             else:
                 full_doc = doc
 

@@ -28,11 +28,8 @@ URL = 'https://demeter.utc.fr/portal/pls/portal30/portal30.get_photo_utilisateur
 class PdfTrombinoscope(UVTask, CliArgsMixin):
     """Fichier PDF des trombinoscopes par groupes et/ou sous-groupes.
 
-    Options
-    -------
+    {options}
 
-    - L'option ``--group`` désigne la colonne utilisée pour réaliser le groupement. Un fichier pdf est généré pour chaque groupe. Lorsque le nom de groupe est "all", il y a un seul groupe (donc un seul fichier pdf) comportant la totalité des étudiants.
-    - L'option ``--subgroup`` permet de distinguer des sous-groupes dans chaque groupe (donc dans chaque fichier), par exemple des groupes de projet.
     """
 
     always_make = True
@@ -43,7 +40,7 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
             "--group",
             dest="groupby",
             required=True,
-            help="Nom de colonne pour réaliser un groupement",
+            help="Nom de colonne utilisée pour réaliser le groupement. Un fichier pdf est généré pour chaque groupe. Lorsque le nom de groupe est ``all``, il y a un seul groupe (donc un seul fichier pdf) comportant la totalité des étudiants.",
         ),
         argument(
             "-s",
@@ -51,7 +48,7 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
             dest="subgroupby",
             required=False,
             default=None,
-            help="Nom de colonne des sous-groupes (binômes, trinômes)",
+            help="Nom de colonne utilisée pour faire des sous-groupes (binômes, trinômes) parmi le groupement déjà existant.",
         ),
     )
 

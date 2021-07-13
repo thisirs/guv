@@ -53,13 +53,10 @@ class CsvGroups(UVTask, CliArgsMixin):
     """Fichiers csv des groupes de Cours/TD/TP/singleton pour Moodle.
 
     Crée des fichiers csv des groupes de Cours/TD/TP pour chaque UV
-    sélectionnée. Avec l'option `-g`, on peut spécifier d'autres
+    sélectionnée. Avec l'option ``-g``, on peut spécifier d'autres
     groupes à exporter sous Moodle.
 
-    Options
-    -------
-
-    - L'option ``--groups`` permet de spécifier un ou plusieurs groupements particuliers via un nom de colonne. Par défaut, les groupements ``Cours``, ``TD``, ``TP`` et ``singleton`` sont utilisés.
+    {options}
 
     Examples
     --------
@@ -79,7 +76,7 @@ class CsvGroups(UVTask, CliArgsMixin):
             "--groups",
             nargs="+",
             default=["Cours", "TD", "TP", "singleton"],
-            help="Liste des groupements à considérer (par défault %(default)s)",
+            help="Liste des groupements à considérer via un nom de colonne. Par défaut, les groupements ``Cours``, ``TD``, ``TP`` et ``singleton`` sont utilisés.",
         ),
     )
 
@@ -112,7 +109,9 @@ class CsvGroups(UVTask, CliArgsMixin):
 class HtmlInst(UVTask):
     """Génère la description des intervenants pour Moodle.
 
-    Crée le fichier ``intervenants.html`` qui peut être utilisé dans Moodle pour afficher une description de l'équipe pédagogique avec les créneaux assurés.
+    Crée le fichier ``intervenants.html`` qui peut être utilisé dans
+    Moodle pour afficher une description de l'équipe pédagogique avec
+    les créneaux assurés.
     """
 
     target_dir = "generated"
@@ -178,13 +177,7 @@ class HtmlTable(UVTask, CliArgsMixin):
     qui décrivent sous forme de tableau l'ensemble des créneaux de
     Cours/TD/TP.
 
-    Options
-    -------
-
-    - L'option ``--courses`` spécifie les types de créneaux pour lequel faire un tableau. Par défaut des tableaux sont créés pour les Cours, TD et TP.
-    - L'option ``--grouped`` permet de spécifier si les tableaux doivent être regroupés en un seul.
-    - L'option ``--num-AB`` permet de préciser si la numérotation des séances dans le tableau doit être en semaine A/B (A1, B1, A2, B2,...) ou normal (1, 2, 3, 4,...). Valable uniquement pour les TP. Pour les autres types la numérotation classique est toujours utilisée.
-    - L'option ``--names`` permet de spécifier les noms des semaines.
+    {options}
 
     Examples
     --------
@@ -205,26 +198,31 @@ class HtmlTable(UVTask, CliArgsMixin):
             "--courses",
             nargs="*",
             default=["Cours", "TD", "TP"],
-            help="Liste des cours à faire figurer dans le tableau",
+            help="Liste des types de créneaux pour lequel faire un tableau. Par défaut des tableaux sont créés pour les Cours, TD et TP.",
         ),
         argument(
             "-g",
             "--grouped",
             action="store_true",
-            help="Grouper les cours dans le même tableau ou faire des fichiers distincts",
+            help="Grouper les cours dans le même tableau ou faire des fichiers distincts.",
         ),
         argument(
             "-a",
             "--num-AB",
             action="store_true",
-            help="Utiliser une numérotation en semaine A/B",
+            help="Permet de préciser si la numérotation des séances dans le tableau doit être en semaine A/B (A1, B1, A2, B2,...) ou normal (1, 2, 3, 4,...). Valable uniquement pour les TP. Pour les autres types la numérotation classique est toujours utilisée.",
         ),
         argument(
             "-n",
             "--names",
             nargs="+",
-            help="Liste ou fichier contenant les noms des lignes du tableau",
+            help="Liste ou fichier contenant les noms des colonnes du tableau. Par défaut, les noms de colonnes sont ``D1``, ``D2``,... ou ``T1``, ``T2``,...",
         ),
+        argument(
+            "--header-row-format",
+            default="{beg}--{end}",
+            help="Format pour l'en-tête de chaque ligne"
+        )
     )
 
     def setup(self):
@@ -369,15 +367,15 @@ class JsonRestriction(UVTask, CliArgsMixin):
 
     Pour les contraintes par créneaux qui s'appuie sur l'appartenance
     à un groupe, il est nécessaire de renseigner la variable
-    ``MOODLE_GROUPS`` dans le fichier ``config.py`` qui relie le nom des
-    groupes de Cours/TD/TP dans le fichier ``effectif.xlsx`` aux
-    identifiants Moodle correspondant (voir la tâche :ref:`` pour
-    récupérer la correspondance).
+    ``MOODLE_GROUPS`` dans le fichier ``config.py`` qui relie le nom
+    des groupes de Cours/TD/TP dans le fichier ``effectif.xlsx`` aux
+    identifiants Moodle correspondant (voir la tâche
+    :class:`~guv.tasks.moodle.FetchGroupId` pour récupérer la correspondance).
 
-    L'argument "-c" permet de spécifier les activités considérées, à
+    L'argument ``-c`` permet de spécifier les activités considérées, à
     choisir parmi Cours, TD ou TP.
 
-    Le drapeau "-a" permet de grouper les séances par deux semaines
+    Le drapeau ``-a`` permet de grouper les séances par deux semaines
     dans le cas où il y a des semaines A et B. La fin d'une activité
     est alors identifiée à la fin de la semaine B.
 
@@ -390,7 +388,7 @@ class JsonRestriction(UVTask, CliArgsMixin):
     - antérieur à la date du dernier créneau
     - postérieur au lundi précédant immédiatement le premier créneau
     - postérieur au vendredi suivant immédiatement le dernier créneau
-    - postérieur à miniuit juste avant le premier créneau
+    - postérieur à minuit juste avant le premier créneau
     - postérieur à minuit juste après le dernier créneau
 
     Les restrictions dépendant de l'appartenance à un groupe sont les
@@ -404,8 +402,7 @@ class JsonRestriction(UVTask, CliArgsMixin):
     - restreint à la séance de l'étudiant plus 15 minutes après
     - restreint au début de la séance, 3 minutes avant, 5 minutes après
 
-    Options
-    -------
+    {options}
 
     """
 
@@ -419,10 +416,10 @@ class JsonRestriction(UVTask, CliArgsMixin):
             "--course",
             default="TP",
             choices=["Cours", "TD", "TP"],
-            help="Type de séances considérées",
+            help="Type de séances considérées. Par défaut, ``Cours``, ``TD``, ``TP`` sont utilisées.",
         ),
         argument(
-            "-a", "--num-AB", action="store_true", help="Prise en compte des semaines A/B"
+            "-a", "--num-AB", action="store_true", help="Permet de prendre en compte les semaines A/B. Ainsi, la fin d'une séance est à la fin de la semaine B."
         ),
     )
 
@@ -565,6 +562,9 @@ class JsonGroup(UVTask, CliArgsMixin):
     base d'appartenance à un groupe dans Moodle est qu'il n'est pas
     nécessaire de charger ce groupe sur Moodle et que l'étudiant ne
     peut pas savoir à quel groupe il appartient.
+
+    {options}
+
     """
 
     target_dir = "generated"
@@ -619,35 +619,45 @@ class JsonGroup(UVTask, CliArgsMixin):
 
 
 class CsvCreateGroups(UVTask, CliArgsMixin):
-    """Création de groupes d'étudiants prêt à charger sous Moodle.
+    """Création aléatoire de groupes d'étudiants prêt à charger sous Moodle.
 
     Cette tâche crée un fichier csv d'affectation des étudiants à un
-    groupe. Si ``grouping`` est spécifié les groupes sont créés à
-    l'intérieur de chaque sous-groupe (de TP/TD par exemple).
+    groupe. Si l'option ``--grouping`` est spécifiée les groupes sont
+    créés à l'intérieur de chaque sous-groupe (de TP ou TD par
+    exemple).
 
-    Le nombre de groupes créés (au total ou par sous-groupes) est
-    controlé par ``num-groups``, ``group-size`` et ``proportions``.
+    Le nombre de groupes créés (au total ou par sous-groupes suivant
+    ``--grouping``) est controlé par une des options
+    ``--proportions``, ``--group-size`` et ``--num-groups`` par
+    priorité décroissante.
 
-    Le nom des groupes est controlé par ``template`` et ``names``. Les
-    remplacements suivants sont disponibles à l'intérieur de
-    ``template`` :
+    Le nom des groupes est controlé par ``--template`` et ``--names``.
+    Les remplacements suivants sont disponibles à l'intérieur de
+    ``--template`` :
 
     - ``{title}`` : remplacé par le titre (premier argument)
-    - ``{grouping_name}`` : remplacé par le nom du sous-groupe à l'intérieur duquel on construit des groupes (si on a spécifié ``grouping``)
-    - ``{group_name}`` : nom du groupe en construction (si on a spécifié ``names``)
-    - ``#`` : numérotation du groupe en construction (si `names` n'est pas spécifié)
-    - ``@`` : lettre du groupe en construction (si `names` n'est pas spécifié)
+    - ``{grouping_name}`` : remplacé par le nom du sous-groupe à
+      l'intérieur duquel on construit des groupes (si on a spécifié
+      ``--grouping``)
+    - ``{group_name}`` : nom du groupe en construction (si on a
+      spécifié ``--names``)
+    - ``#`` : numérotation séquentielle du groupe en construction (si
+      `names` n'est pas spécifié)
+    - ``@`` : lettre séquentielle du groupe en construction (si
+      `names` n'est pas spécifié)
 
-    L'argument ``names`` peut être une liste de noms à utiliser ou un
+    L'option ``--names`` peut être une liste de noms à utiliser ou un
     fichier contenant une liste de noms ligne par ligne. Il sont pris
-    aléatoirement si on spécifie le drapeau `random`.
+    aléatoirement si on spécifie le drapeau `--random`.
 
-    Le drapeau ``global`` permet de remettre à zéro la génération des
+    Le drapeau ``--global`` permet de remettre à zéro la génération des
     noms de groupes lorsqu'on change le groupe à l'intérieur duquel on
-    construit des sous-groupes (si on a spécifié ``grouping``).
+    construit des sous-groupes (si on a spécifié ``--grouping``).
 
     Les groupes sont aléatoires par défaut. Pour créer des groupes par
-    ordre alphabétique, il faut spécifier le drapeau ``ordered``.
+    ordre alphabétique, il faut spécifier le drapeau ``--ordered``.
+
+    {options}
 
     """
 
@@ -655,7 +665,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
     target_dir = "generated"
     target_name = "{title}_groups.csv"
     cli_args = (
-        argument("title", help="Nom associé à l'ensemble des groupes créés"),
+        argument("title", help="Nom associé à l'ensemble des groupes créés. Repris dans le nom du fichier créé et dans le nom des groupes créés suivant la *template* utilisée."),
         argument(
             "-G",
             "--grouping",
@@ -674,7 +684,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             "--group-size",
             type=int,
             required=False,
-            help="Taille des groupes, binomes, trinomes ou plus",
+            help="Taille des groupes : binomes, trinomes ou plus",
         ),
         argument(
             "-p",
@@ -967,6 +977,8 @@ class FetchGroupId(CliArgsMixin, TaskBase):
     permet de télécharger la correspondance en indiquant l'identifiant
     de l'UV/UE (l'entier figurant à la fin de l'url principale:
     id=????)
+
+    {options}
 
     """
 

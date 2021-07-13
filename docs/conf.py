@@ -12,6 +12,9 @@
 #
 import os
 import sys
+import re
+import textwrap
+import argparse
 sys.path.insert(0, os.path.abspath('../src'))
 
 
@@ -88,3 +91,51 @@ autodoc_mock_imports = [
     "yaml",
     "bs4"
 ]
+
+
+def doc_cli_args(args):
+    docs = []
+    parser = argparse.ArgumentParser(prog="guv", description="")
+    for arg in args:
+        action = parser.add_argument(*arg.args, **arg.kwargs)
+        if action.option_strings:
+            arg_name = ", ".join(f"``{a}``" for a in action.option_strings)
+            arg_doc = action.help
+            docs.append("- " + textwrap.indent(f"{arg_name} : {arg_doc}", "  ")[2:])
+        else:
+            if action.metavar is not None:
+                result = action.metavar
+            elif action.choices is not None:
+                choice_strs = [str(choice) for choice in action.choices]
+                result = '{%s}' % ','.join(choice_strs)
+            else:
+                result = ""
+            arg_name = result
+            arg_doc = action.help
+            docs.append("- " + textwrap.indent(f"{arg_name} : {arg_doc}", "  ")[2:])
+
+    return """
+.. rubric:: Options
+
+{options}
+""".format(options="\n".join(docs))
+
+
+def expand_block(cli_args, line):
+    if "{options}" in line:
+        def rep(m):
+            indent = m.group(1)
+            options = doc_cli_args(cli_args)
+            return textwrap.indent(options, indent)
+
+        return re.sub("( *)(\\{options\\})", rep, line).split("\n")
+    else:
+        return [line]
+
+def sphinx_add_options(app, what, name, obj, options, lines):
+    if what == "class" and hasattr(obj, "cli_args"):
+        lines[:] = [ll + "\n" for l in lines for ll in expand_block(obj.cli_args, l)]
+
+
+def setup(app):
+    app.connect('autodoc-process-docstring', sphinx_add_options)

@@ -57,16 +57,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
     Cette tâche génère un fichier pdf ou un fichier zip de fichiers
     pdf contenant des feuilles de présence.
 
-    Options
-    -------
-
-    - L'option ``--title`` spécifie un titre qui sera utilisé dans les feuilles de présence.
-    - Le drapeau ``--blank`` permet de créer des feuilles de présence sans les noms des étudiants.
-    - L'option ``--group`` permet de créer des groupes pour faire autant de feuilles de présence. Il faut spécifier une colonne du fichier central ``effectif.xlsx``.
-    - Au lieu de spécifier ``--group``, on peut spécifier les options ``--names`` et ``--count`` qui sont des listes qui doivent avoir même longueur. Si ``--names`` n'est pas défini, des noms de la forme ``Groupe 1``, ``Groupe 2``,... sont utilisés.
-    - L'option ``--extra`` permet de rajouter des lignes supplémentaires vides en plus de celles déjà présentes induites par ``--group`` ou fixées par ``--count``.
-    - L'option ``--tiers-temps`` permet de dédier une feuille de présence spécifique pour les étudiants marqués comme tiers-temps dans le fichier central.
-    - L'option ``--save-tex`` permet de laisser le fichier .tex générer pour modification éventuelle.
+    {options}
 
     Examples
     --------
@@ -87,50 +78,50 @@ class PdfAttendance(UVTask, CliArgsMixin):
             "-t",
             "--title",
             default="Feuille de présence",
-            help="Titre utilisé dans les feuilles de présence"
+            help="Spécifie un titre qui sera utilisé dans les feuilles de présence."
         ),
         argument(
             "-g",
             "--group",
-            help="Nom de la colonne utilisée pour faire des groupes",
+            help="Permet de créer des groupes pour faire autant de feuilles de présence. Il faut spécifier une colonne du fichier central ``effectif.xlsx``.",
         ),
         argument(
             "-b",
             "--blank",
             default=False,
-            help="Ne pas faire apparaitre de noms (utile seulement avec --group)"
+            help="Ne pas faire apparaitre le nom des étudiants (utile seulement avec --group)."
         ),
         argument(
             "-c",
             "--count",
             type=int,
             nargs="*",
-            help="Spécifie les effectifs des groupes à utiliser"
+            help="Utilise une liste d'effectifs au lieu de ``--group``. Le noms des groupes peut être spécifier par ``--names``. Sinon, les noms de groupe sont de la forme ``Groupe 1``, ``Groupe 2``,..."
         ),
         argument(
             "-n",
             "--names",
             nargs="*",
-            help="Spécifie le nom des groupes correspondants à --count"
+            help="Spécifie le nom des groupes correspondants à ``--count``. La liste doit être de même taille que ``--count``."
         ),
         argument(
             "-e",
             "--extra",
             type=int,
             default=0,
-            help="Nombre de places supplémentaires dans les feuilles de présence"
+            help="Permet de rajouter des lignes supplémentaires vides en plus de celles déjà présentes induites par ``--group`` ou fixées par ``--count``."
         ),
         argument(
             "--tiers-temps",
             action="store_true",
             default=False,
-            help="Met les tiers-temps dans un groupe à part"
+            help="Permet de dédier une feuille de présence spécifique pour les étudiants marqués comme tiers-temps dans le fichier central ``effectifs.xlsx``."
         ),
         argument(
             "--save-tex",
             action="store_true",
             default=False,
-            help="Met le(s) fichier(s) .tex généré(s) à disposition"
+            help="Permet de laisser les fichiers .tex générés pour modification éventuelle."
         )
     )
 
@@ -273,19 +264,7 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
 
     Permet d'avoir un seule feuille de présence pour tout le semestre.
 
-    Options
-    -------
-
-    - L'option ``--group`` permet de spécifier une colonne de groupes pour
-      faire des feuilles de présence par groupes.
-
-    - L'option ``--slots`` permet de spécifier le nombre de séances pour
-      le semestre.
-
-    - L'option ``--template`` permet de fixer le nom des séances
-      sucessives dans la feuille de présence. Par défaut on a
-      ``{group_name}{number}``. Les seuls mots-clés supportés sont
-      ``group_name`` et ``number``.
+    {options}
 
     Examples
     --------
@@ -304,20 +283,20 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
             "-g",
             "--group",
             required=True,
-            help="Nom de la colonne du groupement à considérer",
+            help="Permet de spécifier une colonne de groupes pour faire des feuilles de présence par groupes.",
         ),
         argument(
             "-n",
             "--slots",
             required=True,
             type=int,
-            help="Nombre de colonne dans la feuille de présence",
+            help="Permet de spécifier le nombre de séances pour le semestre c'est à dire le nombre de colonne dans la feuille de présence.",
         ),
         argument(
             "-t",
             "--template",
             default="{group_name}{number}",
-            help="Modèle pour le nom des séances (par défaut: '{group_name}{number}')",
+            help="Modèle permettant de fixer le nom des séances successives dans la feuille de présence. Par défaut on a ``{group_name}{number}``. Les seuls mots-clés supportés sont ``group_name`` et ``number``.",
         ),
     )
 

@@ -9,21 +9,35 @@ from .utils import check_columns, slugrot, slugrot_string
 
 
 def fillna_column(colname, na_value=None, group_column=None):
-    """Renvoie une fonction qui remplace les valeurs non définies dans la colonne `colname`.
+    """Renvoie une fonction qui remplace les valeurs non définies dans la colonne ``colname``.
 
-    Une seule des options `na_value` et `group_column` doit être
-    spécifiée. Si `na_value` est spécifiée, on remplace
-    inconditionnellement par la valeur fournie. Si `group_column` est
-    spécifiée, on complète en groupant par `group_column` en prenant
+    Une seule des options ``na_value`` et ``group_column`` doit être
+    spécifiée. Si ``na_value`` est spécifiée, on remplace
+    inconditionnellement par la valeur fournie. Si ``group_column`` est
+    spécifiée, on complète en groupant par ``group_column`` en prenant
     la seule valeur valide par groupe dans cette colonne.
 
-    Utilisable avec l'argument `postprocessing` ou `preprocessing`
-    dans la fonction `aggregate` ou directement à la place de la
-    fonction `aggregate` dans `AGGREGATE_DOCUMENTS`.
+    Utilisable avec l'argument ``postprocessing`` ou ``preprocessing``
+    dans la fonction ``aggregate`` ou directement à la place de la
+    fonction ``aggregate`` dans ``AGGREGATE_DOCUMENTS``.
 
-    Exemples :
-    > fillna_column("group", na_value="ABS")
-    > fillna_column("group", group_column="choix")
+    Parameters
+    ----------
+
+    colname : str
+        Nom de la colonne où remplacer les ``NA``
+    na_value : :obj:`str`, optional
+        Valeur remplaçant les valeurs non définies
+    group_column : :obj:`str`, optional
+        Nom de la colonne utilisée pour le groupement
+
+    Examples
+    --------
+
+    .. code:: python
+
+       fillna_column("group", na_value="ABS")
+       fillna_column("group", group_column="choix")
 
     """
     if not((na_value is None) ^ (group_column is None)):
@@ -62,15 +76,39 @@ def fillna_column(colname, na_value=None, group_column=None):
 
 def replace_regex(colname, *reps, new_colname=None, msg=None):
     """Renvoie une fonction qui remplace les occurrences de toutes les
-    expressions régulières renseignées dans `reps` dans la colonne
-    `colname`.
+    expressions régulières renseignées dans ``reps`` dans la colonne
+    ``colname``.
 
-    Utilisable avec l'argument `postprocessing` ou `preprocessing`
-    dans la fonction `aggregate` ou directement à la place de la
-    fonction `aggregate` dans `AGGREGATE_DOCUMENTS`.
+    Utilisable avec l'argument ``postprocessing`` ou ``preprocessing``
+    dans la fonction ``aggregate`` ou directement à la place de la
+    fonction ``aggregate`` dans ``AGGREGATE_DOCUMENTS``.
 
-    Par exemple :
-    > replace_regex("group", (r"group([0-9])", r"G\1"), (r"g([0-9])", r"G\1"))
+    Si ``new_colname`` est spécifié, une nouvelle colonne est créée avec
+    ce nom et ``colname`` est laissée. Sinon les valeurs sont
+    directement remplacées dans le colonne ``colname``.
+
+    Un message ``msg`` peut être spécifié pour décrire ce que fait la
+    fonction, il sera affiché lorsque l'agrégation sera effectuée.
+    Sinon, un message générique sera affiché.
+
+    Parameters
+    ----------
+
+    colname : str
+        Nom de la colonne où effectuer les remplacements
+    *reps :
+        Les couples regex / remplacement
+    new_colname : str
+        Le nom de la nouvelle colonne
+    msg : str
+        Un message descriptif utilisé
+
+    Examples
+    --------
+
+    .. code:: python
+
+       replace_regex("group", (r"group([0-9])", r"G\1"), (r"g([0-9])", r"G\1"))
 
     """
 
@@ -94,14 +132,28 @@ def replace_regex(colname, *reps, new_colname=None, msg=None):
 
 def replace_column(colname, rep_dict, new_colname=None):
     """Renvoie une fonction qui remplace les valeurs exactes renseignées
-    dans `rep_dict` dans la colonne `colname`.
+    dans ``rep_dict`` dans la colonne ``colname``.
 
-    Utilisable avec l'argument `postprocessing` ou `preprocessing`
-    dans la fonction `aggregate` ou directement à la place de la
-    fonction `aggregate` dans `AGGREGATE_DOCUMENTS`.
+    Utilisable avec l'argument ``postprocessing`` ou ``preprocessing``
+    dans la fonction ``aggregate`` ou directement à la place de la
+    fonction ``aggregate`` dans ``AGGREGATE_DOCUMENTS``.
 
-    Exemple :
-    > replace_column("group", {"TD 1": "TD1", "TD 2": "TD2"})
+    Parameters
+    ----------
+
+    colname : str
+        Nom de la colonne où effectuer les remplacements
+    rep_dict : dict
+        Dictionnaire des remplacements
+    new_colname : str
+        Nom de la nouvelle colonne
+
+    Examples
+    --------
+
+    .. code:: python
+
+       replace_column("group", {"TD 1": "TD1", "TD 2": "TD2"})
 
     """
 
@@ -120,17 +172,33 @@ def replace_column(colname, rep_dict, new_colname=None):
 def compute_new_column(*cols, func=None, colname=None):
     """Renvoie une fonction qui calcule une nouvelle note à partir
     d'autres colonnes. Les colonnes utilisées sont renseignées dans
-    `cols`. La fonction `func` qui réalise l'agrégation reçoit une
+    ``cols``. La fonction ``func`` qui réalise l'agrégation reçoit une
     Series Pandas.
 
-    Utilisable avec l'argument `postprocessing` ou `preprocessing`
-    dans la fonction `aggregate` ou directement à la place de la
-    fonction `aggregate` dans `AGGREGATE_DOCUMENTS`.
+    Utilisable avec l'argument ``postprocessing`` ou ``preprocessing``
+    dans la fonction ``aggregate`` ou directement à la place de la
+    fonction ``aggregate`` dans ``AGGREGATE_DOCUMENTS``.
 
-    Par exemple:
-    > def myfunc(s):
-    >     return max(s["Note1"], s["Note2"])
-    > compute_new_column("Note1", "Note2", func=myfunc, colname="Note max")
+    Parameters
+    ----------
+
+    *cols
+        Liste des colonnes fournies à la fonction ``func``
+    func : callable
+        Fonction prenant en argument un dictionnaire
+
+    Examples
+    --------
+
+    .. code:: python
+
+       def myfunc(s):
+           return max(s["Note1"], s["Note2"])
+
+       AGGREGATE_DOCUMENTS = [
+
+       ]
+       compute_new_column("Note1", "Note2", func=myfunc, colname="Note max")
 
     """
     if func is None:
@@ -150,21 +218,70 @@ def compute_new_column(*cols, func=None, colname=None):
 
 
 def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset=None, drop=None, rename=None, read_method=None, kw_read={}):
-    """Renvoie une fonction qui réalise l'agrégation d'un DataFrame avec un fichier.
+    """Renvoie une fonction qui réalise l'agrégation avec un fichier Excel/csv.
 
-    Les arguments `left_on` et `right_on` sont les clés pour réaliser
-    une jointure : `left_on` est la clé du DataFrame existant et
-    `right_on` est la clé du DataFrame à agréger présent dans le
-    fichier. `left_on` et `right_on` peuvent aussi être des callable
+    Les arguments ``left_on`` et ``right_on`` sont les clés pour réaliser
+    une jointure : ``left_on`` est la clé du DataFrame existant et
+    ``right_on`` est la clé du DataFrame à agréger présent dans le
+    fichier. ``left_on`` et ``right_on`` peuvent aussi être des callable
     prenant en argument le DataFrame correspondant et renvoyant une
-    nouvelle colonne avec laquelle faire la jointure. `subset` est une
-    liste des colonnes à garder, `drop` une liste des colonnes à
-    enlever. `rename` est un dictionnaire des colonnes à renommer.
-    `read_method` est un callable appelé avec `kw_read` pour lire le
-    fichier contenant le DataFrame à agréger. `preprocessing` et
-    `postprocessing` sont des callable qui prennent en argument un
+    nouvelle colonne avec laquelle faire la jointure. ``subset`` est une
+    liste des colonnes à garder, ``drop`` une liste des colonnes à
+    enlever. ``rename`` est un dictionnaire des colonnes à renommer.
+    ``read_method`` est un callable appelé avec ``kw_read`` pour lire le
+    fichier contenant le DataFrame à agréger. ``preprocessing`` et
+    ``postprocessing`` sont des callable qui prennent en argument un
     DataFrame et en renvoie un et qui réalise un pré ou post
     traitement sur l'agrégation.
+
+    Parameters
+    ----------
+
+    left_on : str
+        Le nom de colonne présent dans le fichier ``effectif.xlsx``
+        pour réaliser la jointure.
+
+    right_on : str
+        Le nom de colonne présent dans le fichier à incorporer pour
+        réaliser la jointure.
+
+    subset : :obj:`list`, optional
+        Permet de sélectionner un nombre restreint de colonnes en
+        spécifiant la liste. Par défaut, toutes les colonnes sont
+        incorporées.
+
+    drop : :obj:`list`, optional
+        Permet d'enlever des colonnes de l'agrégation.
+
+    rename : :obj:`dict`, optional
+        Permet de renommer des colonnes après incorporation.
+
+    read_method : :obj:`callable`, optional
+
+    kw_read : dict
+        Les arguments nommés à utiliser avec la fonction ``read_method``.
+
+    preprocessing : :obj:`callable`, optional
+        Pré-traitement à appliquer au `DataFrame` avant de l'intégrer.
+
+    postprocessing : :obj:`callable`, optional
+        Post-traitement à appliquer au `DataFrame` après intégration du fichier.
+
+    Examples
+    --------
+
+    .. code:: python
+
+       from guv.helpers import aggregate
+       AGGREGATE_DOCUMENTS = [
+           [
+               "documents/notes.csv",
+               aggregate(
+                   left_on="Courriel",
+                   right_on="email"
+               )
+           ]
+       ]
 
     """
 
@@ -314,11 +431,38 @@ def aggregate_org(colname, postprocessing=None):
     """Renvoie une fonction d'agrégation d'un fichier Org.
 
     Le document à agréger est au format Org avec un nom d'étudiant par
-    headline. Par exemple,
-    * Bob Morane
-      Souvent absent
-    * Untel
-      Voir email d'excuse
+    headline.
+
+    Parameters
+    ----------
+
+    colname : str
+        Nom de la colonne dans lequel stocker les informations
+        présentes dans le fichier Org.
+
+    postprocessing : :obj:`callable`, optional
+
+
+    Examples
+    --------
+
+    Le fichier Org :
+
+    .. code:: text
+
+       * Bob Morane
+         Souvent absent
+       * Untel
+         Voir email d'excuse
+
+
+    L'instruction d'agrégation :
+
+    .. code:: python
+
+       AGGREGATE_DOCUMENTS = [
+           ["documents/infos.org", aggregate_org("Informations")],
+       ]
 
     """
 
@@ -367,25 +511,42 @@ def aggregate_org(colname, postprocessing=None):
 def switch(colname, backup=False, path=None, new_colname=None):
     """Renvoie une fonction qui réalise des échanges dans une colonne.
 
-    L'argument `colname` est la colonne dans laquelle opérer les
-    échanges. L'argument `backup` spécifie si la colonne doit être
-    sauvegardée avant de faire les échanges.
+    L'argument ``colname`` est la colonne dans laquelle opérer les
+    échanges. L'argument ``backup`` spécifie si la colonne doit être
+    sauvegardée (avec un suffixe ``.orig``) avant de faire les
+    échanges.
 
-    Utilisable avec l'argument `postprocessing` ou `preprocessing`
-    dans la fonction `aggregate` en spécifiant l'argument `path` ou
-    directement à la place de la fonction `aggregate` dans
-    `AGGREGATE_DOCUMENTS`.
+    Utilisable avec l'argument ``postprocessing`` ou ``preprocessing``
+    dans la fonction ``aggregate`` en spécifiant l'argument ``path`` ou
+    directement à la place de la fonction ``aggregate`` dans
+    ``AGGREGATE_DOCUMENTS``.
 
-    Exemples :
-    > AGGREGATE_DOCUMENTS = [
-        ("fichier_échange_TP", switch("TP"))
-    ]
-    > AGGREGATE_DOCUMENTS = [
-        ("fichier_à_agréger", aggregate(
-            ...,
-            postprocessing=switch("TP", path="fichier_échange_TP")
-        ))
-    ]
+    Parameters
+    ----------
+
+    colname : (str)
+        Nom de la colonne où opérer les changements
+    backup : (bool)
+        Sauvegarder la colonne avant tout changement
+    path : (str)
+        Chemin de fichier lorsque ``switch`` est utilisée dans un
+        argument ``postprocessing``.
+
+    Examples
+    --------
+
+    .. code:: python
+
+       AGGREGATE_DOCUMENTS = [
+           ["fichier_échange_TP", switch("TP")]
+       ]
+       AGGREGATE_DOCUMENTS = [
+           [
+               "fichier_à_agréger",
+               aggregate(..., postprocessing=switch("TP", path="fichier_échange_TP")),
+           ]
+       ]
+
     """
 
     if backup is True and new_colname is not None:

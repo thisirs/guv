@@ -879,23 +879,28 @@ class CsvMoodleGroups(CliArgsMixin, UVTask):
 
 
 class CsvGroupsGroupings(UVTask, CliArgsMixin):
-    """Fichier csv de groupes et groupements à charger sur Moodle pour les créer
+    """Fichier csv de groupes et groupements à charger sur Moodle pour les créer.
 
     Il faut spécifier le nombre de groupes dans chaque groupement avec
-    l'argument `ngroups` et le nombre de groupements dans
-    `ngroupings`.
+    l'argument ``-g`` et le nombre de groupements dans
+    ``-G``.
 
     Le nom des groupements est controlé par un modèle spécifié par
-    l'argument -F (par défault "D##_P1"). Les remplacements
+    l'argument ``-F`` (par défault "D##_P1"). Les remplacements
     disponibles sont :
+
     - ## : remplacé par des nombres
     - @@ : remplacé par des lettres
 
     Le nom des groupes est controlé par un modèle spécifié par
-    l'argument -f (par défault "D##_P1_@"). Les remplacements
+    l'argument ``-f`` (par défault "D##_P1_@"). Les remplacements
     disponibles sont :
+
     - # : remplacé par des nombres
     - @ : remplacé par des lettres
+
+    {options}
+
     """
 
     target_dir = "generated"
@@ -919,7 +924,7 @@ class CsvGroupsGroupings(UVTask, CliArgsMixin):
             dest="ngroupings",
             type=int,
             required=True,
-            help="Nombre de groupements",
+            help="Nombre de groupements différents",
         ),
         argument(
             "-F",

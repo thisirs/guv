@@ -1,3 +1,13 @@
+"""Ce module rassemble toutes les tâches disponibles dans ``guv``.
+Pour les exécuter, il faut utiliser la version *snake-case* du nom de
+la classe. Par exemple
+
+.. code:: console
+
+   guv pdf_attendance --title "Examen de TP" --group TP
+
+"""
+
 from .utc import (
     UtcUvListToCsv,
     CsvAllCourses,
