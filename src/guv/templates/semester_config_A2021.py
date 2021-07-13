@@ -24,7 +24,7 @@ from datetime import date
 PLANNINGS = {
     "{{ SEMESTER }}": {
         "UVS": [{{ UVS }}],
-        "PL_BEG": date(2021, 5, 6),
+        "PL_BEG": date(2021, 9, 6),
         "PL_END": date(2022, 1, 15)
     }
 }
