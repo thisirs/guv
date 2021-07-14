@@ -730,7 +730,7 @@ class CsvMoodleGroups(CliArgsMixin, UVTask):
 
         if self.other_group is not None:
             if not isinstance(self.other_group, list):
-                other_groups = [self.other_group]
+                self.other_groups = [self.other_group]
 
             diff = set(self.other_group) - set(df.columns.values)
             if diff:
