@@ -107,6 +107,8 @@ class IcalInst(CliArgsMixin, TaskBase):
         super().setup()
         self.csv_slot_inst = AddInstructors.target_from()
         self.file_dep = [self.csv_slot_inst]
+
+        self.parse_args()
         if self.plannings is None:
             self.plannings = self.settings.SELECTED_PLANNINGS
         self.target = self.build_target(name=f"{'_'.join(self.plannings)}")

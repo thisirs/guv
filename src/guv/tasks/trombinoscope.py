@@ -56,6 +56,9 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
         super().setup()
 
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.file_dep = [self.xls_merge]
+
+        self.parse_args()
         if self.groupby == "all":
             if self.subgroupby is not None:
                 target = "trombi_all_{subgroupby}.pdf"
@@ -68,7 +71,6 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
                 target = "trombi_{groupby}.zip"
 
         self.target = self.build_target(target_name=target)
-        self.file_dep = [self.xls_merge]
         self.width = 5
 
     def run(self):

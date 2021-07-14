@@ -78,8 +78,10 @@ class CsvForUpload(CliArgsMixin, UVTask):
         super().setup()
 
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
-        self.target = self.build_target()
         self.file_dep = [self.xls_merge]
+
+        self.parse_args()
+        self.target = self.build_target()
 
     def run(self):
         if self.ects and self.comment_colname:
@@ -147,9 +149,11 @@ class XlsMergeFinalGrade(CliArgsMixin, UVTask):
 
     def setup(self):
         super().setup()
-        self.target = self.build_target()
+        self.parse_args()
+
         self.xls_sheets = os.path.join(self.settings.SEMESTER_DIR, self.target_dir, f"{self.exam}.xlsx")
         self.file_dep = [self.xls_sheets]
+        self.target = self.build_target()
 
     def run(self):
         xls = pd.ExcelFile(self.xls_sheets)
@@ -240,8 +244,10 @@ class XlsAssignmentGrade(CliArgsMixin, UVTask):
         super().setup()
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
         self.inst_uv = XlsAffectation.target_from(**self.info)
-        self.target = self.build_target()
         self.file_dep = [self.inst_uv, self.xls_merge]
+
+        self.parse_args()
+        self.target = self.build_target()
 
     def run(self):
         inst_uv = pd.read_excel(self.inst_uv, engine="openpyxl")

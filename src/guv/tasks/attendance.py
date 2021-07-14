@@ -128,8 +128,10 @@ class PdfAttendance(UVTask, CliArgsMixin):
     def setup(self):
         super().setup()
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
-        self.target = self.build_target()
         self.file_dep = [self.xls_merge]
+
+        self.parse_args()
+        self.target = self.build_target()
         latex_env = LaTeXEnvironment()
         self.template = latex_env.get_template(self.template_file)
 
@@ -303,6 +305,8 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
     def setup(self):
         super().setup()
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.file_dep = [self.xls_merge]
+        self.parse_args()
         self.target = self.build_target()
         self.kwargs = {**self.info, "nslot": self.slots, "ctype": self.group}
 

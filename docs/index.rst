@@ -783,6 +783,9 @@ contenant les arguments spécifiés avec la fonction ``argument``.
 
        def setup(self):
            super().setup()
+           ...
+           self.parse_args())
+           ...
 
        def run(self):
            pass

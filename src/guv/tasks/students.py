@@ -645,10 +645,12 @@ class CsvExamGroups(UVTask, CliArgsMixin):
     def setup(self):
         super().setup()
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.file_dep = [self.xls_merge]
+
+        self.parse_args()
         self.target = self.build_target()
         target_name = os.path.splitext(self.target_name)[0] + '_moodle.csv'
         self.target_moodle = self.build_target(target_name=target_name)
-        self.file_dep = [self.xls_merge]
 
     def run(self):
         df = pd.read_excel(self.xls_merge, engine="openpyxl")
@@ -715,12 +717,14 @@ class CsvMoodleGroups(CliArgsMixin, UVTask):
     def setup(self):
         super().setup()
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.file_dep = [self.xls_merge]
+
+        self.parse_args()
         self.target_csv = self.build_target(**self.info)
         self.target_moodle = os.path.splitext(self.target_csv)[0] + '_moodle.csv'
 
         # target_moodle only to avoid circular dep
         self.target = self.target_moodle
-        self.file_dep = [self.xls_merge]
 
     def run(self):
         df = pd.read_excel(self.xls_merge, engine="openpyxl")
@@ -893,6 +897,8 @@ class ZoomBreakoutRooms(UVTask, CliArgsMixin):
     def setup(self):
         super().setup()
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.file_dep = [self.xls_merge]
+        self.parse_args()
         self.target = self.build_target()
 
     def run(self):

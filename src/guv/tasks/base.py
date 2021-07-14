@@ -81,15 +81,16 @@ class TaskBase:
         try:
             self.setup()
         except (ImproperlyConfigured, DependentTaskParserError, NotUVDirectory) as e:
-            if hasattr(self, "targets"):
-                doit_task["targets"] = self.targets
-            elif hasattr(self, "target"):
-                doit_task["targets"] = [self.target]
-
             tf = TaskFailed(str(e))
             doit_task["actions"] = [lambda: tf]
 
-            logger.info("Task `{}` failed: {}".format(self.task_name(), e))
+            doit_task.update(dict(
+                (a, getattr(self, a))
+                for a in ["targets", "file_dep", "uptodate", "verbosity"]
+                if a in dir(self)
+            ))
+
+            logger.info("Task `{}` failed: {}".format(self.task_name(), type(e)))
             return doit_task
 
         doit_task.update(dict(
@@ -236,10 +237,6 @@ class UVTask(TaskBase):
 
 
 class CliArgsMixin(TaskBase):
-    def setup(self):
-        super().setup()
-        self.parse_args()
-
     def parse_args(self):
         parser = argparse.ArgumentParser(
             description=self.doc(),

@@ -82,11 +82,12 @@ class CsvGroups(UVTask, CliArgsMixin):
     def setup(self):
         super().setup()
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.file_dep = [self.xls_merge]
+        self.parse_args()
         self.targets = [
             self.build_target(ctype=ctype)
             for ctype in self.groups
         ]
-        self.file_dep = [self.xls_merge]
 
     def run(self):
         df = pd.read_excel(self.xls_merge, engine="openpyxl")
@@ -164,6 +165,7 @@ class CsvGroupsGroupings(UVTask, CliArgsMixin):
     def setup(self):
         super().setup()
         self.target = self.build_target(**self.info)
+        self.parse_args()
 
     def run(self):
         letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -319,6 +321,7 @@ class HtmlTable(UVTask, CliArgsMixin):
         self.csv_inst_list = AddInstructors.target_from()
         self.file_dep = [self.csv_inst_list]
 
+        self.parse_args()
         AB = "_TP_AB" if self.num_AB else ""
         if self.grouped:
             name = "_".join(self.courses) + "_grouped"
@@ -515,9 +518,11 @@ class JsonRestriction(UVTask, CliArgsMixin):
     def setup(self):
         super().setup()
         self.all_courses = CsvAllCourses.target_from()
+        self.file_dep = [self.all_courses]
+
+        self.parse_args()
         AB = "_AB" if self.num_AB else ""
         self.target = self.build_target(AB=AB)
-        self.file_dep = [self.all_courses]
 
     def run(self):
         df = pd.read_csv(self.all_courses)
@@ -670,8 +675,10 @@ class JsonGroup(UVTask, CliArgsMixin):
     def setup(self):
         super().setup()
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
-        self.target = self.build_target()
         self.file_dep = [self.xls_merge]
+
+        self.parse_args()
+        self.target = self.build_target()
 
     def run(self):
         df = pd.read_excel(self.xls_merge, engine="openpyxl")
@@ -822,8 +829,10 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         super().setup()
 
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
-        self.target = self.build_target()
         self.file_dep = [self.xls_merge]
+
+        self.parse_args()
+        self.target = self.build_target()
 
         if (
             self.proportions is None

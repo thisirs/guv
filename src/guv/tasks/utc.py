@@ -251,8 +251,10 @@ class CsvAllCourses(CliArgsMixin, TaskBase):
         super().setup()
         from .instructors import AddInstructors
         self.csv = AddInstructors.target_from()
-        self.target = self.build_target()
         self.file_dep = [self.csv]
+
+        self.parse_args()
+        self.target = self.build_target()
         if self.plannings is None:
             self.plannings = self.settings.SELECTED_PLANNINGS
 

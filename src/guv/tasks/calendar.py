@@ -183,6 +183,7 @@ class CalInst(CliArgsMixin, TaskBase):
         template = os.path.join(tmpl_dir, "calendar_template.tex.jinja2")
         self.file_dep = [self.uv_list, template]
 
+        self.parse_args()
         if self.plannings is None:
             self.plannings = self.settings.SELECTED_PLANNINGS
         if self.insts is None:
