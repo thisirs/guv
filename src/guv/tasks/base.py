@@ -173,8 +173,10 @@ class TaskBase:
 
                 return (t for t in tasks)
 
-        except NotUVDirectory as e:
-            tf = TaskFailed(str(e))
+        # Raised by get_unique_uv or selected_uv if not in UV/semester directory
+        except (NotUVDirectory, ImproperlyConfigured) as e:
+            logger.info("Task `{}` failed: {}".format(cls.task_name(), type(e)))
+            tf = TaskFailed(e.args[0])
             return {
                 "basename": cls.task_name(),
                 "actions": [lambda: tf],
