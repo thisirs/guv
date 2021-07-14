@@ -69,9 +69,11 @@ def create_insts_list(df):
 class XlsInstructors(TaskBase):
     """Fichier de détails global des intervenants toutes UV confondues
 
-    Il sert à la tâche html_inst pour générer un descriptif des
-    intervenants d'une UV et à la tâche xls_utp pour le calcul des
-    UTP effectuées et des remplacements.
+    Il sert à la tâche :class:`~guv.tasks.moodle.HtmlInst` pour
+    générer un descriptif des intervenants d'une UV et à la tâche
+    :class:`guv.tasks.instructors.XlsUTP` pour le calcul des UTP
+    effectuées et des remplacements.
+
     """
 
     hidden = True
