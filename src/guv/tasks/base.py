@@ -190,7 +190,7 @@ class TaskBase:
             # échoue. Progager l'exception si DEBUG.
             if settings.DEBUG < logging.WARNING:
                 raise e from e
-            tf = TaskFailed(str(e))
+            tf = TaskFailed(str(e.args))
             return {
                 "basename": cls.task_name(),
                 "actions": [lambda: tf],
