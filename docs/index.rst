@@ -1183,8 +1183,6 @@ besoin d'exécuter car elles sont des dépendances des tâches usuelles.
    - :class:`guv.tasks.instructors.XlsAffectation`
    - :class:`guv.tasks.instructors.XlsInstructors`
 
-   Cette tâche est une dépendance pour les tâches suivantes :
-
 .. autoclass:: guv.tasks.instructors.XlsAffectation
    :exclude-members:
 
