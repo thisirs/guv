@@ -124,7 +124,7 @@ def replace_regex(colname, *reps, new_colname=None, msg=None):
     if msg is not None:
         func.__name__ = msg
     elif new_colname is None:
-        func.__name__ = f"Remplacement regex colonne `{colname}`"
+        func.__name__ = f"Remplacement regex dans colonne `{colname}`"
     else:
         func.__name__ = f"Création colonne `{new_colname}` + replacement regex colonne `{colname}`"
     return func
@@ -212,7 +212,7 @@ def compute_new_column(*cols, func=None, colname=None):
         df = df.assign(**{colname: new_col})
         return df
 
-    func2.__name__ = f"Creating new column `{colname}`"
+    func2.__name__ = f"Création colonne `{colname}`"
 
     return func2
 
