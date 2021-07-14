@@ -362,8 +362,8 @@ class JsonRestriction(UVTask, CliArgsMixin):
     Cours/TD/TP, sur les début/fin de séance, début/fin de semaine.
 
     Le fragment json peut être transféré sous Moodle en tant que
-    restriction d'accès grâce au script Greasemonkey disponible `ici
-    <../resources/moodle_availability_conditions.js>`_.
+    restriction d'accès grâce au script Greasemonkey disponible
+    :download:`ici <../resources/moodle_availability_conditions.js>`.
 
     Pour les contraintes par créneaux qui s'appuie sur l'appartenance
     à un groupe, il est nécessaire de renseigner la variable
