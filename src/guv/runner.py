@@ -90,7 +90,7 @@ try:
         else:
             raise Exception("Le fichier de tâches n'existe pas :", fp)
 except ImproperlyConfigured:
-    pass
+    logger.info("Unable to load custom tasks")
 
 
 def run_doit(args):
