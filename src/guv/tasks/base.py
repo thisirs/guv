@@ -150,7 +150,10 @@ class TaskBase:
 
         try:
             if UVTask not in cls.__mro__:
-                # La tâche n'est pas liée à une UV
+                # La tâche n'est pas liée à une UV. On vérifie qu'on
+                # est dans un dossier d'UV ou de semestre.
+                if "SEMESTER_DIR" not in settings:
+                    raise NotUVDirectory("Pas dans un dossier d'UV/semestre")
                 instance = cls()
                 return instance.to_doit_task()
             elif cls.unique_uv:
