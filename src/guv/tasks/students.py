@@ -170,12 +170,12 @@ class XlsStudentData(UVTask):
     """Construit le fichier Excel des données étudiants fournies par l'UTC
 
     Les données utilisées sont le fichier disponible sur l'ENT de
-    l'effectif officiel de l'UV repéré par la variable ENT_LISTING
-    dans le fichier config.py de l'UV, le fichier des affectations aux
-    créneaux de Cours/TD/TP repéré par la variable AFFECTATION_LISTING
-    dans le fichier config.py de l'UV et le fichier Moodle des
+    l'effectif officiel de l'UV repéré par la variable ``ENT_LISTING``
+    dans le fichier ``config.py`` de l'UV, le fichier des affectations aux
+    créneaux de Cours/TD/TP repéré par la variable ``AFFECTATION_LISTING``
+    dans le fichier ``config.py`` de l'UV et le fichier Moodle des
     inscrits à l'UV (si disponible) repéré par la variable
-    MOODLE_LISTING dans le fichier config.py de l'UV.
+    ``MOODLE_LISTING`` dans le fichier ``config.py`` de l'UV.
     """
 
     hidden = True
@@ -427,7 +427,7 @@ class XlsStudentDataMerge(UVTask):
 
     Ajoute les informations de changement de TD/TP, les tiers-temps et
     des informations par étudiants. Ajoute également les informations
-    spécifiées dans AGGREGATE_DOCUMENTS.
+    spécifiées dans ``AGGREGATE_DOCUMENTS``.
     """
 
     hidden = True
