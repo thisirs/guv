@@ -968,9 +968,6 @@ Calendrier hebdomadaire
 
    - :class:`guv.tasks.students.XlsStudentDataMerge`
 
-.. autoclass:: guv.tasks.students.CsvGroupsGroupings
-   :exclude-members:
-
 .. autoclass:: guv.tasks.students.ZoomBreakoutRooms
    :exclude-members:
 
@@ -1042,6 +1039,9 @@ Moodle
    Cette tâche dépend de :
 
    - :class:`guv.tasks.students.XlsStudentDataMerge`
+
+.. autoclass:: guv.tasks.moodle.CsvGroupsGroupings
+   :exclude-members:
 
 .. autoclass:: guv.tasks.moodle.HtmlInst
    :exclude-members:

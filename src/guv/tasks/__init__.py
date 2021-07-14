@@ -37,7 +37,6 @@ from .students import (
     XlsStudentDataMerge,
     CsvExamGroups,
     CsvMoodleGroups,
-    CsvGroupsGroupings,
     ZoomBreakoutRooms,
 )
 
@@ -59,6 +58,7 @@ from .instructors import (
 
 from .moodle import (
     CsvGroups,
+    CsvGroupsGroupings,
     HtmlInst,
     HtmlTable,
     JsonRestriction,
