@@ -81,14 +81,20 @@ class TaskBase:
         try:
             self.setup()
         except (ImproperlyConfigured, DependentTaskParserError, NotUVDirectory) as e:
+            # Set actions as failed if failed to set up
             tf = TaskFailed(str(e))
             doit_task["actions"] = [lambda: tf]
 
+            # Add attrs even if failed to still have dependencies and
+            # targets
             doit_task.update(dict(
                 (a, getattr(self, a))
                 for a in ["targets", "file_dep", "uptodate", "verbosity"]
                 if a in dir(self)
             ))
+            if "targets" not in doit_task:
+                if hasattr(self, "target"):
+                    doit_task["targets"] = [self.target]
 
             logger.info("Task `{}` failed: {}".format(self.task_name(), type(e)))
             return doit_task
