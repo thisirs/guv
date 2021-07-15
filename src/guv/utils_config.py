@@ -11,7 +11,7 @@ from .config import settings
 def selected_uv(all="dummy"):
     "Génère les UV configurées dans le fichier config.py du semestre"
 
-    if "UV_DIR" not in settings:
+    if "SEMESTER" not in settings:
         raise NotUVDirectory("La tâche doit être exécutée dans un dossier d'UV/semestre")
 
     if settings.UV_DIR is not None:
