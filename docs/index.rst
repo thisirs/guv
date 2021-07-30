@@ -9,6 +9,9 @@ fichiers de configuration. Il permet entre autres de créer des fichiers
 iCal, des trombinoscopes, des feuilles de présences, des feuilles de
 notes...
 
+.. contents:: Sommaire
+    :depth: 2
+
 Installation
 ============
 
@@ -28,7 +31,7 @@ On peut également cloner le projet si ``git`` est installé comme suit :
    pip install .
 
 Un fichier de complétion de commandes est également disponible (voir
-:ref:`fichier-de-complétion`.
+:ref:`fichier-de-complétion`).
 
 Exemple rapide
 ==============
@@ -53,7 +56,7 @@ semestre :
    CRENEAU_UV = "documents/Creneaux-UV-hybride-prov-V02.pdf"
 
 On peut maintenant exécuter ``guv cal_uv`` dans le dossier du semestre
-pour générer les calendriers hebdomadaires des UV.
+npour générer les calendriers hebdomadaires des UV.
 
 Tutoriel
 ========
@@ -412,8 +415,8 @@ la variable ``AGGREGATE_DOCUMENTS``. La variable
 ``AGGREGATE_DOCUMENTS`` est une liste de listes de longueur 2. Chaque
 liste de longueur 2 est composée d'un chemin vers un fichier à
 incorporer et d'une fonction prenant en argument le fichier central
-sous forme de `DataFrame` Pandas auquel incorporer le fichier et le
-chemin du fichier à incorporer et retourne un `DataFrame` mis à jour
+sous forme de *DataFrame* Pandas auquel incorporer le fichier et le
+chemin du fichier à incorporer et retourne un *DataFrame* mis à jour
 avec les nouvelles informations.
 
 Par exemple, si on dispose d'un fichier ``notes.csv`` situé dans le
@@ -466,417 +469,6 @@ incorporer.
 -  Fonction ``switch``
 
    .. autofunction:: guv.helpers.switch
-
-
-Fonction ``aggregate``
-~~~~~~~~~~~~~~~~~~~~~~
-
-L'argument ``left_on`` désigne une colonne du fichier central de
-l'effectif et ``right_on`` désigne une colonne du fichier à incorporer
-pour réaliser une jointure. On effectue donc l'incorporation en
-utilisant l'addresse de courriel qui sert d'identifiant dans les deux
-fichiers.
-
-Pour des cas plus compliqués où la colonne n'est pas présente ou ambigüe
-(nom avec des orthographes différentes par exemple), au lieu de
-spécifier un nom de colonne, on peut spécifier une fonction qui va
-renvoyer une colonne pour réaliser la jointure. Par exemple, si on
-souhaite incorporer un fichier ne contenant que le nom et le prénom, on
-écrira :
-
-.. code:: python
-
-   AGGREGATE_DOCUMENTS = [
-       [
-           "documents/notes.csv",
-           aggregate(
-               left_on=nom_prenom,
-               right_on=nom_prenom
-           )
-       ],
-   ]
-
-Il reste à écrire la fonction ``nom_prenom`` qui prend en argument le
-``DataFrame`` représentant le fichier central ou le fichier à incorporer
-et renvoie une ``Series`` pandas qui identifie chaque ligne sans
-ambiguïté. Dans beaucoup de cas, il s'agit d'une colonne (ou plusieurs)
-contenant une chaine de caractères potentiellement ambigüe (nom,
-prénom). Dans ce cas, plutôt que d'écrire nous-mêmes la fonction
-``nom_prenom``, on peut utiliser la fonction ``slugrot`` comme suit :
-
-.. code:: python
-
-   from guv.helpers import slugrot
-   AGGREGATE_DOCUMENTS = [
-       [
-           "documents/notes.csv",
-           aggregate(
-               left_on=slugrot("Nom", "Prénom"),
-               right_on=slugrot("Nom", "Prénom")
-           )
-       ],
-   ]
-
-La fonction ``slugrot`` renvoie une fonction qui va renvoyer elle-même
-une nouvelle colonne construite à partir des colonnes ``Nom`` et
-``Prénom``. Au préalable, ces colonnes seront désambiguisées (lettres
-minuscules, suppression des caractères spéciaux et espaces), concaténées
-et rendues robustes à la permutation circulaire (``Nom``, ``Prénom``
-sera équivalent à ``Prénom``, ``Nom`` )
-
-Ainsi, même si les nom et prénom dans les deux fichiers sont légèrement
-différents (majuscules, espaces, tirets, accents), la jointure pourra se
-faire.
-
-En plus de ``left_on`` et ``right_on``, on peut spécifier d'autres
-arguments :
-
--  ``subset``: toutes les colonnes de la source sont intégrées par
-   défaut. L'argument ``subset`` permet d'en sélectionner seulement un
-   sous-ensemble
--  ``drop``: au lieu de spécifier une liste de colonnes à retenir, on
-   peut spécifier une liste de colonnes à enlever
--  ``rename``: une fois que la liste des colonnes à incorporer est
-   établie avec ``subset`` et ``drop``, on peut les renommer avant de
-   les incorporer. ``rename`` est un dictionnaire du nom des anciennes
-   colonnes vers les nouveaux.
--  ``read_method``: une fonction chargée de lire le fichier à intégrer.
-   Par défaut, on utilise l'extension du fichier à intégrer pour en
-   déduire une fonction adaptée. Pour le moment, seul les extensions
-   .csv et .xlsx sont supportées.
--  ``kw_read``: Les arguments nommés à utiliser avec la fonction
-   ``read_method``.
--  ``preprocessing``: Après la lecture du fichier à intégrer avec
-   ``read_method``, il est possible d'appliquer un pré-traitement du
-   DataFrame en spécifiant une fonction prenant en argument un DataFrame
-   et renvoyant un DataFrame modifié.
--  ``postprocessing``: Après l'agrégation, il est possible d'appliquer
-   un post-traitement en spécifiant une fonction prenant en argument un
-   DataFrame et renvoyant un DataFrame modifié.
-
-Autres fonctions d'agrégation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-   Cette fonction permet de remplir les valeurs non définies dans une
-   colonne. Le code suivant permet de remplacer les valeurs ``NA`` dans
-   la colonne ``Note_final`` par la valeur ``ABS``.
-
-   .. code:: python
-
-      AGGREGATE_DOCUMENTS = [
-          [
-              None,
-              fillna_column("Note_final", na_value="ABS")
-          ]
-      ]
-
-   On peut aussi l'utiliser pour remplir des valeurs non définies grâce
-   à un groupement fixé par une colonne. On peut par exemple imaginer
-   que les étudiants forment des groupes de projet et que seul un
-   étudiant par groupe a une information qu'on voudrait propager à
-   l'ensemble du groupe. On peut alors écrire :
-
-   .. code:: python
-
-      AGGREGATE_DOCUMENTS = [
-          [
-              None,
-              fillna_column("Dataset", group_column="Groupe_projet")
-          ]
-      ]
-
-   La colonne \`Dataset\` est complétée en fonction des valeurs
-   présentes en groupant par \`Groupe\ :sub:`projet`\ \`.
-
-   Un ``warning`` est affiché si il y a plusieurs ou aucune valeur par
-   groupe.
-
-#. Fonction ``replace_regex``
-
-   Cette fonction permet de remplacer par expression régulière dans une
-   colonne. Les expressions régulières sont données sous forme de
-   dictionnaire.
-
-   .. code:: python
-
-      AGGREGATE_DOCUMENTS = [
-          [
-              None,
-              replace_regex("Group", (r"group([0-9])", r"G\1"), (r"g([0-9])", r"G\1"))
-          ]
-      ]
-
-#. Fonction ``replace_column``
-
-   Cette fonction permet de remplacer dans une colonne
-
-#. Fonction ``compute_new_column``
-
-   Permet de calculer une nouvelle colonne à partir d'autres. Par
-   exemple, on peut l'utiliser comme suit :
-
-   .. code:: python
-
-      from guv.helpers import compute_new_column
-
-      def moyenne(notes):
-          return (notes["Note_médian"] + notes["Note_final"]) / 2
-
-      AGGREGATE_DOCUMENTS = [
-          [
-              None,
-              compute_new_column(
-                  "Note_médian", "Note_final", func=moyenne, colname="Note_moyenne"
-              ),
-          ]
-      ]
-
-#. Fonction ``aggregate_org``
-
-   Permet d'agréger un fichier .org.
-
-#. Fonction ``switch``
-
-   Permet de permuter des valeurs dans une colonne.
-
-Divers
-======
-
-Changement des chemins par défaut
----------------------------------
-
-Beaucoup de tâches écrivent des fichiers avec un nom prédéfini dans un
-dossier prédéfini. Il est possible de changer ces valeurs par défaut en
-utilisant les attributs de classe ``target_name`` et ``target_dir`` de
-la tâche correspondante. Par exemple, la tâche ``XlsStudentDataMerge``
-est responsable de la création du fichier ``effectifs.xlsx`` dans le
-dossier de l'UV.
-
-Pour changer cela, on peut écrire le code suivant dans le fichier
-``config.py`` de l'UV :
-
-.. code:: python
-
-   from guv.tasks import XlsStudentDataMerge
-   XlsStudentDataMerge.target_name = "info.xlsx"
-   XlsStudentDataMerge.target_dir = "documents"
-
-L'effectif sera alors écrit dans le dossier ``documents`` avec le nom
-``info.xlsx``.
-
-Création d'une tâche
---------------------
-
-Il est possible de créer ses propres tâches assez facilement. La
-variable ``TASKS`` dans les fichiers de configuration est prévue à cet
-effet. Il s'agit d'une liste de chemins vers des fichiers Python
-définissant des tâches.
-
-On peut distinguer deux types de tâches différentes qui doivent hériter
-de deux classes différentes :
-
--  les tâches non spécifiques à une UV ou un groupe d'UV qui doivent
-   hériter de la classe ``TaskBase``. On trouve par exemple :
-
-   -  les tâches "par intervenants": calendrier hebdomadaire
-   -  la tâche de création de tous les créneaux de Cours/TP/TD à l'UTC
-
--  les tâches spécifiques à une UV qui doivent hériter de la classe
-   ``UVTask``. Ce sont les plus courantes et les plus utilisées, on
-   trouve par exemple :
-
-   -  le trombinoscope de l'effectif de l'UV
-   -  les feuilles de présence concernant les TD d'une UV
-
-   Dans les deux cas, deux méthodes doivent ensuite être implémentées :
-
-   -  la méthode ``setup`` qui doit définir les attributs ``target`` et
-      ``file_dep`` qui définissent la cible à créer ainsi que les
-      dépendances utilisées pour créer cette cible.
-   -  la méthode ``run`` qui effectue la tâche proprement dite en créant
-      ``target`` avec les fichiers ``file_dep``.
-
-Tâche non spécifique à une UV
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Pour créer une tâche non spécifique à une UV, il faut hériter de la
-classe ``TaskBase``. Les attributs de classe utiles sont :
-
--  ``target_dir``: le dossier relatif au semestre où le fichier cible
-   sera placé.
-
--  ``target_name``: le nom de la cible créée
-
--  ``always_make``: la ou les cibles doivent doit être reconstruites
-   même si les dépendances n'ont pas changé
-
-   .. code:: python
-
-      from guv.tasks.base import TaskBase
-
-      class MaTache(TaskBase):
-          def setup(self):
-              super().setup()
-              self.target = "result"
-              self.file_dep = ["dependance1", "dependance2"]
-
-          def run(self):
-              print("Run")
-
-Tâche spécifique à une UV
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Les tâches spécifiques sont les plus courantes. Pour les créer, il faut
-hériter de la classe ``UVTask``. Les attributs de classe utiles sont :
-
--  ``unique_uv``: la tâche ne peut être exécutée que pour une seule UV à
-   la fois
-
--  ``target_dir``: le dossier relatif à l'UV où les fichiers utiles
-   seront placés
-
--  ``target_name``: le nom du fichier créé
-
--  ``always_make``: la ou les cibles doivent doit être reconstruites
-   même si les dépendances n'ont pas changé
-
-   Comme il s'agit d'une tâche spécifique à une UV, les attributs ``uv``
-   et ``planning`` sont disponibles depuis les méthodes ``setup`` et
-   ``run``.
-
-   Par exemple :
-
-   .. code:: python
-
-      from guv.tasks.base import UVTask
-
-      class MaTache(UVTask):
-          def setup(self):
-              super().setup()
-              print(f"Création de la tâche {self.name} pour l'UV {self.uv}")
-              self.target = "file_result"
-              self.file_dep = ["file1", "file2"]
-
-          def run(self):
-              print(f"Création de la cible {self.target}")
-
-Autres classes
-~~~~~~~~~~~~~~
-
-La classe ``CliArgsMixin`` permet de paramétrer et de rentre disponible
-pour les méthodes ``setup`` et ``run`` les arguments fournis en ligne de
-commande. Il n'y a pas de méthode à implémenter, juste une variable de
-classe ``cli_args`` à spécifier. La variable ``cli_args`` est un tuple
-contenant les arguments spécifiés avec la fonction ``argument``.
-
-.. code:: python
-
-   from guv.utils import argument
-
-   class MaTache(CliArgsMixin, UVTask):
-       cli_args = (
-           argument(
-               "-a",
-               "--aa",
-           ),
-       )
-
-       def setup(self):
-           super().setup()
-           ...
-           self.parse_args())
-           ...
-
-       def run(self):
-           pass
-
-Les spécifications à l'intérieur de la fonction ``argument`` sont les
-mêmes que pour ``argparse``.
-
-.. _fichier-de-complétion:
-
-Fichier de complétion
----------------------
-
-Des fichiers de complétion pour ``zsh`` et ``bash`` sont disponibles
-dans le sous-dossier ``data``. Pour un système type Unix et le shell
-``zsh``, on peut utiliser les commandes suivantes :
-
-.. code:: bash
-
-   mkdir -p ~/.zsh/completions
-   cp $(python -c "import guv; print(guv.__path__[0])")/data/_guv_zsh ~/.zsh/completions
-
-Si des tâches supplémentaires ont été ajoutées avec la variable
-``TASKS``, il est possible de mettre à jour les fichiers de complétion.
-Il faut d'abord installer la bibliothèque ``shtab`` et exécuter la
-commande suivante dans le dossier du semestre.
-
-.. code:: bash
-
-   shtab --shell=zsh guv.runner.get_parser > ~/.zsh/completions/_guv_zsh
-
-Variables reconnues dans les fichiers ``config.py``
-===================================================
-
-Liste des variables reconnues dans les fichiers ``config.py`` de semestre
--------------------------------------------------------------------------
-
-- ``UVS`` : Liste des UV ou UE gérées par **guv**. Cette variable est
-  utilisée lorsqu'une tâche doit avoir accès à toutes les UV/UE gérées
-  pour appliquer une même tâche à chaque.
-
-- ``PLANNINGS`` : Dictionnaire des plannings avec leurs propriétés
-  correspondantes.
-
-- ``CRENEAU_UV`` : Chemin relatif vers le fichier pdf des créneaux des
-  UVS ingénieur.
-
-- ``CRENEAU_UE`` : Chemin relatif vers le fichier Excel des créneaux des
-  UES de master.
-
-- ``SELECTED_PLANNINGS`` : Liste des plannings à considérer. Par
-  défaut, tous les plannings définis dans la variables ``PLANNINGS``
-  sont considérés. La liste des plannings sélectionnés est notamment
-  utilisé dans les tâches :class:`~guv.tasks.calendar.CalInst` et
-  :class:`~guv.tasks.ical.IcalInst`.
-
-- ``DEFAULT_INSTRUCTOR`` : Intervenant par défault utilisé dans les
-  tâches :class:`~guv.tasks.calendar.CalInst` et
-  :class:`~guv.tasks.ical.IcalInst`.
-
-- ``DEBUG`` : Niveau de log.
-
-- ``TURN`` : Dictionnaire des jours qui sont changés en d'autres jours
-  de la semaine.
-
-- ``SKIP_DAYS_C`` : Liste des jours (hors samedi/dimanche) où il n'y a
-  pas cours.
-
-- ``SKIP_DAYS_D`` : Liste des jours (hors samedi/dimanche) où il n'y a
-  pas TD.
-
-- ``SKIP_DAYS_T`` : Liste des jours (hors samedi/dimanche) où il n'y a
-  pas TP.
-
-- ``TASKS`` :
-
-Liste des variables reconnues dans les fichiers ``config.py`` d'UV
-------------------------------------------------------------------
-
-- ``ENT_LISTING`` : Chemin relatif vers le fichier de l'UV tel que
-  fourni par l'ENT.
-
-- ``AFFECTATION_LISTING`` : Chemin relatif vers le fichier des
-  créneaux de Cours/TD/TP.
-
-- ``MOODLE_LISTING`` : Chemin relatif vers le fichier Moodle qu'on
-  peut télécharger en allant dans Configuration du carnet de notes et
-  en sélectionnant ``Feuille de calcul Excel`` dans le menu déroulant
-  et ensuite ``Télécharger``.
-
-- ``AGGREGATE_DOCUMENTS`` : Liste des documents à agréger au fichier
-  central en plus des documents usuels.
 
 
 Tâches
@@ -1198,6 +790,246 @@ besoin d'exécuter car elles sont des dépendances des tâches usuelles.
    - :class:`guv.tasks.instructors.XlsInstDetails`
    - :class:`guv.tasks.instructors.XlsUTP`
    - :class:`guv.tasks.calendar.CalUv`
+
+Variables reconnues dans les fichiers ``config.py``
+===================================================
+
+Liste des variables reconnues dans les fichiers ``config.py`` de semestre
+-------------------------------------------------------------------------
+
+- ``UVS`` : Liste des UV ou UE gérées par **guv**. Cette variable est
+  utilisée lorsqu'une tâche doit avoir accès à toutes les UV/UE gérées
+  pour appliquer une même tâche à chaque.
+
+- ``PLANNINGS`` : Dictionnaire des plannings avec leurs propriétés
+  correspondantes.
+
+- ``CRENEAU_UV`` : Chemin relatif vers le fichier pdf des créneaux des
+  UVS ingénieur.
+
+- ``CRENEAU_UE`` : Chemin relatif vers le fichier Excel des créneaux des
+  UES de master.
+
+- ``SELECTED_PLANNINGS`` : Liste des plannings à considérer. Par
+  défaut, tous les plannings définis dans la variables ``PLANNINGS``
+  sont considérés. La liste des plannings sélectionnés est notamment
+  utilisée dans les tâches :class:`~guv.tasks.calendar.CalInst` et
+  :class:`~guv.tasks.ical.IcalInst`.
+
+- ``DEFAULT_INSTRUCTOR`` : Intervenant par défault utilisé dans les
+  tâches :class:`~guv.tasks.calendar.CalInst` et
+  :class:`~guv.tasks.ical.IcalInst`.
+
+- ``DEBUG`` : Niveau de log.
+
+- ``TURN`` : Dictionnaire des jours qui sont changés en d'autres jours
+  de la semaine.
+
+- ``SKIP_DAYS_C`` : Liste des jours (hors samedi/dimanche) où il n'y a
+  pas cours.
+
+- ``SKIP_DAYS_D`` : Liste des jours (hors samedi/dimanche) où il n'y a
+  pas TD.
+
+- ``SKIP_DAYS_T`` : Liste des jours (hors samedi/dimanche) où il n'y a
+  pas TP.
+
+- ``TASKS`` :
+
+Liste des variables reconnues dans les fichiers ``config.py`` d'UV
+------------------------------------------------------------------
+
+- ``ENT_LISTING`` : Chemin relatif vers le fichier de l'UV tel que
+  fourni par l'ENT.
+
+- ``AFFECTATION_LISTING`` : Chemin relatif vers le fichier des
+  créneaux de Cours/TD/TP.
+
+- ``MOODLE_LISTING`` : Chemin relatif vers le fichier Moodle qu'on
+  peut télécharger en allant dans Configuration du carnet de notes et
+  en sélectionnant ``Feuille de calcul Excel`` dans le menu déroulant
+  et ensuite ``Télécharger``.
+
+- ``AGGREGATE_DOCUMENTS`` : Liste des documents à agréger au fichier
+  central en plus des documents usuels.
+
+Divers
+======
+
+Changement des chemins par défaut
+---------------------------------
+
+Beaucoup de tâches écrivent des fichiers avec un nom prédéfini dans un
+dossier prédéfini. Il est possible de changer ces valeurs par défaut en
+utilisant les attributs de classe ``target_name`` et ``target_dir`` de
+la tâche correspondante. Par exemple, la tâche ``XlsStudentDataMerge``
+est responsable de la création du fichier ``effectifs.xlsx`` dans le
+dossier de l'UV.
+
+Pour changer cela, on peut écrire le code suivant dans le fichier
+``config.py`` de l'UV :
+
+.. code:: python
+
+   from guv.tasks import XlsStudentDataMerge
+   XlsStudentDataMerge.target_name = "info.xlsx"
+   XlsStudentDataMerge.target_dir = "documents"
+
+L'effectif sera alors écrit dans le dossier ``documents`` avec le nom
+``info.xlsx``.
+
+Création d'une tâche
+--------------------
+
+Il est possible de créer ses propres tâches assez facilement. La
+variable ``TASKS`` dans les fichiers de configuration est prévue à cet
+effet. Il s'agit d'une liste de chemins vers des fichiers Python
+définissant des tâches.
+
+On peut distinguer deux types de tâches différentes qui doivent hériter
+de deux classes différentes :
+
+-  les tâches non spécifiques à une UV ou un groupe d'UV qui doivent
+   hériter de la classe ``TaskBase``. On trouve par exemple :
+
+   -  les tâches "par intervenants": calendrier hebdomadaire
+   -  la tâche de création de tous les créneaux de Cours/TP/TD à l'UTC
+
+-  les tâches spécifiques à une UV qui doivent hériter de la classe
+   ``UVTask``. Ce sont les plus courantes et les plus utilisées, on
+   trouve par exemple :
+
+   -  le trombinoscope de l'effectif de l'UV
+   -  les feuilles de présence concernant les TD d'une UV
+
+   Dans les deux cas, deux méthodes doivent ensuite être implémentées :
+
+   -  la méthode ``setup`` qui doit définir les attributs ``target`` et
+      ``file_dep`` qui définissent la cible à créer ainsi que les
+      dépendances utilisées pour créer cette cible.
+   -  la méthode ``run`` qui effectue la tâche proprement dite en créant
+      ``target`` avec les fichiers ``file_dep``.
+
+Tâche non spécifique à une UV
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Pour créer une tâche non spécifique à une UV, il faut hériter de la
+classe ``TaskBase``. Les attributs de classe utiles sont :
+
+-  ``target_dir``: le dossier relatif au semestre où le fichier cible
+   sera placé.
+
+-  ``target_name``: le nom de la cible créée
+
+-  ``always_make``: la ou les cibles doivent doit être reconstruites
+   même si les dépendances n'ont pas changé
+
+   .. code:: python
+
+      from guv.tasks.base import TaskBase
+
+      class MaTache(TaskBase):
+          def setup(self):
+              super().setup()
+              self.target = "result"
+              self.file_dep = ["dependance1", "dependance2"]
+
+          def run(self):
+              print("Run")
+
+Tâche spécifique à une UV
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Les tâches spécifiques sont les plus courantes. Pour les créer, il faut
+hériter de la classe ``UVTask``. Les attributs de classe utiles sont :
+
+-  ``unique_uv``: la tâche ne peut être exécutée que pour une seule UV à
+   la fois
+
+-  ``target_dir``: le dossier relatif à l'UV où les fichiers utiles
+   seront placés
+
+-  ``target_name``: le nom du fichier créé
+
+-  ``always_make``: la ou les cibles doivent doit être reconstruites
+   même si les dépendances n'ont pas changé
+
+   Comme il s'agit d'une tâche spécifique à une UV, les attributs ``uv``
+   et ``planning`` sont disponibles depuis les méthodes ``setup`` et
+   ``run``.
+
+   Par exemple :
+
+   .. code:: python
+
+      from guv.tasks.base import UVTask
+
+      class MaTache(UVTask):
+          def setup(self):
+              super().setup()
+              print(f"Création de la tâche {self.name} pour l'UV {self.uv}")
+              self.target = "file_result"
+              self.file_dep = ["file1", "file2"]
+
+          def run(self):
+              print(f"Création de la cible {self.target}")
+
+Autres classes
+~~~~~~~~~~~~~~
+
+La classe ``CliArgsMixin`` permet de paramétrer et de rentre
+disponible pour les méthodes ``setup`` et ``run`` les arguments
+fournis en ligne de commande. Il n'y a pas de méthode à implémenter,
+juste une variable de classe ``cli_args`` à spécifier. La variable
+``cli_args`` est un tuple contenant les arguments spécifiés avec la
+fonction ``argument``.
+
+.. code:: python
+
+   from guv.utils import argument
+
+   class MaTache(CliArgsMixin, UVTask):
+       cli_args = (
+           argument(
+               "-a",
+               "--aa",
+           ),
+       )
+
+       def setup(self):
+           super().setup()
+           ...
+           self.parse_args())
+           ...
+
+       def run(self):
+           pass
+
+Les spécifications à l'intérieur de la fonction ``argument`` sont les
+mêmes que pour ``argparse``.
+
+.. _fichier-de-complétion:
+
+Fichier de complétion
+---------------------
+
+Des fichiers de complétion pour ``zsh`` et ``bash`` sont disponibles
+dans le sous-dossier ``data``. Pour un système type Unix et le shell
+``zsh``, on peut utiliser les commandes suivantes :
+
+.. code:: bash
+
+   mkdir -p ~/.zsh/completions
+   cp $(python -c "import guv; print(guv.__path__[0])")/data/_guv_zsh ~/.zsh/completions
+
+Si des tâches supplémentaires ont été ajoutées avec la variable
+``TASKS``, il est possible de mettre à jour les fichiers de complétion.
+Il faut d'abord installer la bibliothèque ``shtab`` et exécuter la
+commande suivante dans le dossier du semestre.
+
+.. code:: bash
+
+   shtab --shell=zsh guv.runner.get_parser > ~/.zsh/completions/_guv_zsh
 
 Indices and tables
 ==================

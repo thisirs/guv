@@ -36,8 +36,11 @@ def fillna_column(colname, na_value=None, group_column=None):
 
     .. code:: python
 
-       fillna_column("group", na_value="ABS")
-       fillna_column("group", group_column="choix")
+       from guv.helpers import fillna_column
+       AGGREGATE_DOCUMENTS = [
+           [None, fillna_column("group", na_value="ABS")],
+           [None, fillna_column("group", group_column="choix")]
+       ]
 
     """
     if not((na_value is None) ^ (group_column is None)):
@@ -108,7 +111,10 @@ def replace_regex(colname, *reps, new_colname=None, msg=None):
 
     .. code:: python
 
-       replace_regex("group", (r"group([0-9])", r"G\1"), (r"g([0-9])", r"G\1"))
+       from guv.helpers import replace_regex
+       AGGREGATE_DOCUMENTS = [
+           [None, replace_regex("group", (r"group([0-9])", r"G\1"), (r"g([0-9])", r"G\1"))]
+       ]
 
     """
 
@@ -153,7 +159,10 @@ def replace_column(colname, rep_dict, new_colname=None):
 
     .. code:: python
 
-       replace_column("group", {"TD 1": "TD1", "TD 2": "TD2"})
+       from guv.helpers import replace_column
+       AGGREGATE_DOCUMENTS = [
+           [None, replace_column("group", {"TD 1": "TD1", "TD 2": "TD2"})]
+       ]
 
     """
 
@@ -173,7 +182,7 @@ def compute_new_column(*cols, func=None, colname=None):
     """Renvoie une fonction qui calcule une nouvelle note à partir
     d'autres colonnes. Les colonnes utilisées sont renseignées dans
     ``cols``. La fonction ``func`` qui réalise l'agrégation reçoit une
-    Series Pandas.
+    *Series* Pandas.
 
     Utilisable avec l'argument ``postprocessing`` ou ``preprocessing``
     dans la fonction ``aggregate`` ou directement à la place de la
@@ -192,13 +201,19 @@ def compute_new_column(*cols, func=None, colname=None):
 
     .. code:: python
 
-       def myfunc(s):
-           return max(s["Note1"], s["Note2"])
+       from guv.helpers import compute_new_column
+
+       def moyenne(notes):
+           return (notes["Note_médian"] + notes["Note_final"]) / 2
 
        AGGREGATE_DOCUMENTS = [
-
+           [
+               None,
+               compute_new_column(
+                   "Note_médian", "Note_final", func=moyenne, colname="Note_moyenne"
+               ),
+           ]
        ]
-       compute_new_column("Note1", "Note2", func=myfunc, colname="Note max")
 
     """
     if func is None:
@@ -239,11 +254,17 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
 
     left_on : str
         Le nom de colonne présent dans le fichier ``effectif.xlsx``
-        pour réaliser la jointure.
+        pour réaliser la jointure. Au cas où la colonne n'existe pas,
+        on peut spécifier une fonction prenant en argument le
+        *DataFrame* et renvoyant une *Series* utilisée pour la
+        jointure (voir fonction :func:`guv.utils.slugrot`).
 
     right_on : str
         Le nom de colonne présent dans le fichier à incorporer pour
-        réaliser la jointure.
+        réaliser la jointure. Au cas où la colonne n'existe pas,
+        on peut spécifier une fonction prenant en argument le
+        *DataFrame* et renvoyant une *Series* utilisée pour la
+        jointure (voir fonction :func:`guv.utils.slugrot`).
 
     subset : :obj:`list`, optional
         Permet de sélectionner un nombre restreint de colonnes en
@@ -273,12 +294,20 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
     .. code:: python
 
        from guv.helpers import aggregate
+       from guv.utils import slugrot
        AGGREGATE_DOCUMENTS = [
            [
                "documents/notes.csv",
                aggregate(
                    left_on="Courriel",
                    right_on="email"
+               )
+           ],
+           [
+               "documents/notes.csv",
+               aggregate(
+                   left_on=slugrot("Nom", "Prénom"),
+                   right_on=slugrot("Nom", "Prénom")
                )
            ]
        ]
@@ -460,6 +489,7 @@ def aggregate_org(colname, postprocessing=None):
 
     .. code:: python
 
+       from guv.helpers import aggregate_org
        AGGREGATE_DOCUMENTS = [
            ["documents/infos.org", aggregate_org("Informations")],
        ]
@@ -537,6 +567,7 @@ def switch(colname, backup=False, path=None, new_colname=None):
 
     .. code:: python
 
+       from guv.helpers import switch
        AGGREGATE_DOCUMENTS = [
            ["fichier_échange_TP", switch("TP")]
        ]
