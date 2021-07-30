@@ -651,7 +651,7 @@ class JsonGroup(UVTask, CliArgsMixin):
     """Fichier json des restrictions d'accès aux ressources sur Moodle par addresse email
 
     Le fichier Json contient des restrictions d'accès à copier dans
-    Moodle. L'argument `group` permet de construire des restrictions
+    Moodle. L'argument ``group`` permet de construire des restrictions
     par groupe. L'intérêt par rapport à une restriction classique à
     base d'appartenance à un groupe dans Moodle est qu'il n'est pas
     nécessaire de charger ce groupe sur Moodle et que l'étudiant ne
@@ -1071,8 +1071,9 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
 class FetchGroupId(CliArgsMixin, TaskBase):
     """Crée un fichier de correspondance entre le nom des groupes Moodle et leur id.
 
-    Pour utiliser certaines fonctionnalités de `guv` (notamment
-    `json_restriction` et `json_group`), il faut connaitre les
+    Pour utiliser certaines fonctionnalités de **guv** (notamment
+    :class:`~guv.tasks.moodle.JsonRestriction` et
+    :class:`~guv.tasks.moodle.JsonGroup`), il faut connaitre les
     identifiants des groupes enregistrés sur Moodle. Cette tâche
     permet de télécharger la correspondance en indiquant l'identifiant
     de l'UV/UE (l'entier figurant à la fin de l'url principale:
