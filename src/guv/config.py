@@ -255,7 +255,7 @@ class Settings:
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
         except Exception as e:
-            raise ImproperlyConfiguredException(f"Problème de chargement du fichier {config_file}", e) from e
+            raise ImproperlyConfigured(f"Problème de chargement du fichier {config_file}", e) from e
 
         settings = [s for s in dir(module) if s.isupper()]
         for setting in settings:
