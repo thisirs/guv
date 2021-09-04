@@ -21,9 +21,27 @@ class TaskBase:
     target_name = None
 
     def setup(self):
+        """Préparation de la tâche.
+
+        Doit initialiser l'attribut `file_dep` et `target` pour
+        préserver l'arbre des dépendances avant éventuellement
+        d'échouer avec les exceptions `ImproperlyConfigured`,
+        `DependentTaskParserError`, `NotUVDirectory` seulement. Doit
+        appeler la méthode `parse_args` si l'interface `CliArgsMixin`
+        est utilisée.
+
+        """
+
         logger.info("Setting up task `{}`".format(self.task_name()))
 
     def run(self):
+        """Exécution de la tâche.
+
+        Toutes les exceptions sont rattrapées et renvoie un
+        `TaskFailed` à `doit` en mode normal. En mode debug, aucune
+        exception n'est rattrapée.
+
+        """
         pass
 
     @property
