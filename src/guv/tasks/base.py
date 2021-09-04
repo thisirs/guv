@@ -266,7 +266,11 @@ class UVTask(TaskBase):
 
 
 class CliArgsMixin(TaskBase):
-    def parse_args(self):
+    def __init__(self):
+        self._parser = None
+
+    @property
+    def parser(self):
         parser = argparse.ArgumentParser(
             description=self.doc(),
             prog=f"guv {self.task_name()}"
@@ -274,8 +278,10 @@ class CliArgsMixin(TaskBase):
 
         for arg in self.cli_args:
             parser.add_argument(*arg.args, **arg.kwargs)
-        self.parser = parser
+        self._parser = parser
+        return self._parser
 
+    def parse_args(self):
         # Command-line arguments
         argv = sys.argv
 
