@@ -685,7 +685,7 @@ class CsvExamGroups(UVTask, CliArgsMixin):
             dff.to_csv(target(), index=False, header=False)
 
 
-class CsvMoodleGroups(CliArgsMixin, UVTask):
+class CsvMoodleGroups(UVTask, CliArgsMixin):
     """Fichier csv de sous-groupes (binômes ou trinômes) aléatoires"""
 
     target_dir = "generated"

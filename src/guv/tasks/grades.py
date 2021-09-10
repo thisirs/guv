@@ -22,7 +22,7 @@ from .instructors import XlsAffectation
 from ..gradebook import run
 
 
-class CsvForUpload(CliArgsMixin, UVTask):
+class CsvForUpload(UVTask, CliArgsMixin):
     """Fichier csv de notes prêtes à être chargées sur l'ENT.
 
     Crée un fichier csv nommé ``{grade_colname}_ENT.csv`` de notes
@@ -134,7 +134,7 @@ class CsvForUpload(CliArgsMixin, UVTask):
             df0.to_csv(target(), index=False, sep=";")
 
 
-class XlsMergeFinalGrade(CliArgsMixin, UVTask):
+class XlsMergeFinalGrade(UVTask, CliArgsMixin):
     """Fichier Excel des notes finales attribuées
 
     Transforme un classeur Excel avec une feuille par correcteur en une
@@ -232,7 +232,7 @@ class YamlQCM(UVTask):
                 yaml.dump(rec, fd, default_flow_style=False)
 
 
-class XlsAssignmentGrade(CliArgsMixin, UVTask):
+class XlsAssignmentGrade(UVTask, CliArgsMixin):
     """Création d'un fichier Excel pour remplissage des notes par les intervenants"""
 
     target_dir = "generated"
