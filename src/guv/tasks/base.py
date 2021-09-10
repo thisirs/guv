@@ -271,14 +271,16 @@ class CliArgsMixin(TaskBase):
 
     @property
     def parser(self):
-        parser = argparse.ArgumentParser(
-            description=self.doc(),
-            prog=f"guv {self.task_name()}"
-        )
+        if self._parser is None:
+            parser = argparse.ArgumentParser(
+                description=self.doc(),
+                prog=f"guv {self.task_name()}"
+            )
 
-        for arg in self.cli_args:
-            parser.add_argument(*arg.args, **arg.kwargs)
-        self._parser = parser
+            for arg in self.cli_args:
+                parser.add_argument(*arg.args, **arg.kwargs)
+            self._parser = parser
+
         return self._parser
 
     def parse_args(self):
