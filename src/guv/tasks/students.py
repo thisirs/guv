@@ -21,6 +21,7 @@ from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.utils.dataframe import dataframe_to_rows
 
+from ..config import logger
 from ..exceptions import ImproperlyConfigured
 from ..utils_config import Output
 from ..helpers import switch, slugrot, slugrot_string
@@ -117,6 +118,8 @@ class CsvInscrits(UVTask):
                                 "Semestre": sem,
                             }
                         )
+                    elif line.strip():
+                        logger.warning(f"La ligne ci-après n'est pas reconnue :\n{line}")
 
         df = pd.DataFrame(rows)
         df = pd.pivot_table(
