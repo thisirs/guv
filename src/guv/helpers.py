@@ -633,6 +633,7 @@ def switch(colname, backup=False, path=None, new_colname=None):
                 if not stu1 or not stu2:
                     raise Exception(f"Ligne incorrecte: `{line.strip()}`")
 
+                # Indice de l'étudiant 1
                 if '@etu' in stu1:
                     stu1row = df.loc[df['Courriel'] == stu1]
                     if len(stu1row) != 1:
@@ -644,9 +645,10 @@ def switch(colname, backup=False, path=None, new_colname=None):
                         raise Exception(f'Étudiant de nom `{stu1}` non présent ou reconnu dans la base de données')
                     stu1idx = stu1row.index[0]
 
-                if stu2 in names:
+                if stu2 in names: # Le deuxième élément est une colonne
+                    logger.warning(f"Étudiant(e) '{stu1}' affecté(e) au groupe '{stu2}'")
                     df.loc[stu1idx, target_colname] = stu2
-                elif '@etu' in stu2:
+                elif '@etu' in stu2: # Le deuxième élément est une adresse email
                     stu2row = df.loc[df['Courriel'] == stu2]
                     if len(stu2row) != 1:
                         raise Exception(f'Adresse courriel `{stu2}` non présente dans la base de données')
