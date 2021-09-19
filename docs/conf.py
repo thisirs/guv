@@ -16,8 +16,6 @@ import re
 import textwrap
 import argparse
 sys.path.insert(0, os.path.abspath('../src'))
-from guv.tasks.base import CliArgsInheritMixin
-from guv.tasks.base_gradebook import AbstractGradeBook
 
 # -- Project information -----------------------------------------------------
 
@@ -137,7 +135,7 @@ def sphinx_add_options(app, what, name, obj, options, lines):
     if what != "class":
         return
 
-    if issubclass(obj, AbstractGradeBook):
+    if hasattr(obj, "doc_flag"):
         instance = obj(None, None, None)
         parser = instance.parser
     elif hasattr(obj, "cli_args"):

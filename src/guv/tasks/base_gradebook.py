@@ -24,6 +24,10 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
     target_dir = "generated"
     target_name = "{name}_gradebook.xlsx"
 
+    # Flag to identify subclasses of AbstractGradeBook: module loading
+    # issue if using issubclass in Sphinx's conf.py.
+    doc_flag = True
+
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
 
