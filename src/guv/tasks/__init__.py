@@ -43,7 +43,6 @@ from .students import (
 from .grades import (
     CsvForUpload,
     XlsMergeFinalGrade,
-    XlsGradeSheet,
     YamlQCM,
     XlsAssignmentGrade,
 )
@@ -65,4 +64,10 @@ from .moodle import (
     JsonGroup,
     CsvCreateGroups,
     FetchGroupId,
+)
+
+from .gradebook import (
+    XlsGradeBookNoGroup,
+    XlsGradeBookGroup,
+    XlsGradeBookJury
 )

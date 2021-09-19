@@ -13,7 +13,14 @@ from doit.cmd_base import NamespaceTaskLoader
 import guv
 
 from .exceptions import ImproperlyConfigured
-from .tasks.base import TaskBase, UVTask, CliArgsMixin
+from .tasks.base import (
+    TaskBase,
+    UVTask,
+    CliArgsMixin,
+    CliArgsInheritMixin,
+    ConfigOpt,
+    GroupOpt,
+)
 from .utils import argument
 
 # Load settings from configuration files
@@ -27,8 +34,7 @@ from .tasks import moodle
 from .tasks import ical
 from .tasks import calendar
 from .tasks import attendance
-
-from .tasks.grades import XlsGradeSheet
+from .tasks import gradebook
 
 
 class ModulesTaskLoader(NamespaceTaskLoader):
@@ -68,6 +74,7 @@ try:
         ical,
         calendar,
         attendance,
+        gradebook,
     )
     logger.info("{} tasks loaded".format(len(task_loader.tasks)))
     logger.info("{} variables loaded".format(len(task_loader.variables)))
@@ -120,21 +127,23 @@ def generate_tasks():
 
         task_name = re.sub(r"(?<!^)(?<=[a-z])(?=[A-Z])", "_", name).lower()
 
-        if issubclass(ref, CliArgsMixin):
+        # Skip non-task classes from loaded in gradebook.py
+        if (
+            ref is CliArgsInheritMixin
+            or ref is ConfigOpt
+            or ref is GroupOpt
+        ):
+            continue
+
+        if issubclass(ref, CliArgsInheritMixin):
+            yield (ref, task_name, doc, full_doc, ref(None, None, None).parser)
+        elif issubclass(ref, CliArgsMixin):
             yield (
                 ref,
                 task_name,
                 doc,
                 full_doc,
                 [argument(*arg.args, **arg.kwargs) for arg in ref.cli_args],
-            )
-        elif ref is XlsGradeSheet:
-            yield (
-                ref,
-                task_name,
-                doc,
-                full_doc,
-                [argument("args", nargs=argparse.REMAINDER)]
             )
         else:
             yield ref, task_name, doc, full_doc, []
@@ -149,7 +158,7 @@ def create_uv_dirs(base_dir, uvs):
         os.makedirs(doc_dir, exist_ok=True)
         os.makedirs(gen_dir, exist_ok=True)
 
-        tmpl_dir = os.path.join(guv.__path__[0], 'templates')
+        tmpl_dir = os.path.join(guv.__path__[0], "templates")
         jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(tmpl_dir))
         tmpl = jinja_env.get_template("uv_config.py")
 
@@ -158,7 +167,7 @@ def create_uv_dirs(base_dir, uvs):
         new_path = os.path.join(uv_dir, "config.py")
         if os.path.exists(new_path):
             raise Exception("File config.py already exists")
-        with open(new_path, 'w', encoding='utf-8') as new_file:
+        with open(new_path, "w", encoding="utf-8") as new_file:
             new_file.write(content)
 
 
@@ -196,14 +205,25 @@ def get_parser(add_hidden=False):
         # Don't add hidden tasks (completion)
         if not add_hidden and hasattr(ref, "hidden") and ref.hidden:
             continue
-        sp = subparsers.add_parser(
-            task_name,
-            help=doc,
-            description=full_doc,
-            formatter_class=argparse.RawDescriptionHelpFormatter,
-        )
-        for arg in args:
-            sp.add_argument(*arg.args, **arg.kwargs)
+
+        if isinstance(args, argparse.ArgumentParser):
+            sp = subparsers.add_parser(
+                task_name,
+                add_help=False,
+                help=doc,
+                description=full_doc,
+                formatter_class=argparse.RawDescriptionHelpFormatter,
+                parents=[args],
+            )
+        else:
+            sp = subparsers.add_parser(
+                task_name,
+                help=doc,
+                description=full_doc,
+                formatter_class=argparse.RawDescriptionHelpFormatter,
+            )
+            for arg in args:
+                sp.add_argument(*arg.args, **arg.kwargs)
 
     return parser
 
@@ -222,7 +242,7 @@ def main():
         os.makedirs(doc_dir, exist_ok=True)
         os.makedirs(gen_dir, exist_ok=True)
 
-        tmpl_dir = os.path.join(guv.__path__[0], 'templates')
+        tmpl_dir = os.path.join(guv.__path__[0], "templates")
         jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(tmpl_dir))
         try:
             tmpl = jinja_env.get_template(f"semester_config_{args.semester}.py")
@@ -231,13 +251,13 @@ def main():
 
         context = {
             "UVS": ", ".join(f'"{e}"' for e in args.uv),
-            "SEMESTER": args.semester
+            "SEMESTER": args.semester,
         }
         content = tmpl.render(context)
         new_path = os.path.join(base_dir, "config.py")
         if os.path.exists(new_path):
             raise Exception("File config.py already exists")
-        with open(new_path, 'w', encoding='utf-8') as new_file:
+        with open(new_path, "w", encoding="utf-8") as new_file:
             new_file.write(content)
 
         create_uv_dirs(base_dir, args.uv)

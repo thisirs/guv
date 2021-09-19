@@ -586,7 +586,21 @@ Notes
 .. autoclass:: guv.tasks.grades.XlsMergeFinalGrade
    :exclude-members:
 
-.. autoclass:: guv.tasks.grades.XlsGradeSheet
+.. autoclass:: guv.tasks.gradebook.XlsGradeBookJury
+   :exclude-members:
+
+   Cette tâche dépend de :
+
+   - :class:`guv.tasks.students.XlsStudentDataMerge`
+
+.. autoclass:: guv.tasks.gradebook.XlsGradeBookNoGroup
+   :exclude-members:
+
+   Cette tâche dépend de :
+
+   - :class:`guv.tasks.students.XlsStudentDataMerge`
+
+.. autoclass:: guv.tasks.gradebook.XlsGradeBookGroup
    :exclude-members:
 
    Cette tâche dépend de :

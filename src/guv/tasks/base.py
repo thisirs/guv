@@ -5,6 +5,7 @@ from pathlib import Path
 import argparse
 import logging
 import pprint
+import yaml
 
 from doit.exceptions import TaskFailed
 
@@ -60,11 +61,7 @@ class TaskBase:
         target of that class as a dependency.
         """
 
-        target = os.path.join(
-            settings.SEMESTER_DIR,
-            cls.target_dir,
-            cls.target_name
-        )
+        target = os.path.join(settings.SEMESTER_DIR, cls.target_dir, cls.target_name)
         return pformat(target, **kwargs)
 
     def build_target(self, **kwargs):
@@ -89,11 +86,7 @@ class TaskBase:
     def to_doit_task(self, **kwargs):
         """Build a doit task from current instance"""
 
-        doit_task = {
-            "doc": self.doc(),
-            "basename": self.task_name(),
-            "verbosity": 2
-        }
+        doit_task = {"doc": self.doc(), "basename": self.task_name(), "verbosity": 2}
         doit_task.update(kwargs)
 
         try:
@@ -105,11 +98,13 @@ class TaskBase:
 
             # Add attrs even if failed to still have dependencies and
             # targets
-            doit_task.update(dict(
-                (a, getattr(self, a))
-                for a in ["targets", "file_dep", "uptodate", "verbosity"]
-                if a in dir(self)
-            ))
+            doit_task.update(
+                dict(
+                    (a, getattr(self, a))
+                    for a in ["targets", "file_dep", "uptodate", "verbosity"]
+                    if a in dir(self)
+                )
+            )
             if "targets" not in doit_task:
                 if hasattr(self, "target"):
                     doit_task["targets"] = [self.target]
@@ -117,11 +112,13 @@ class TaskBase:
             logger.info("Task `{}` failed: {}".format(self.task_name(), type(e)))
             return doit_task
 
-        doit_task.update(dict(
-            (a, getattr(self, a))
-            for a in ["targets", "file_dep", "uptodate", "verbosity"]
-            if a in dir(self)
-        ))
+        doit_task.update(
+            dict(
+                (a, getattr(self, a))
+                for a in ["targets", "file_dep", "uptodate", "verbosity"]
+                if a in dir(self)
+            )
+        )
 
         # Allow always_make attr
         if hasattr(self, "always_make"):
@@ -147,13 +144,14 @@ class TaskBase:
 
         def format_task(doit_task):
             return "\n".join(f"{key}: {value}" for key, value in doit_task.items())
+
         logger.info(f"Task properties are:\n{format_task(doit_task)}")
 
         return doit_task
 
     @classmethod
     def task_name(cls):
-        return re.sub(r'(?<!^)(?<=[a-z])(?=[A-Z])', '_', cls.__name__).lower()
+        return re.sub(r"(?<!^)(?<=[a-z])(?=[A-Z])", "_", cls.__name__).lower()
 
     @classmethod
     def doc(cls):
@@ -184,8 +182,7 @@ class TaskBase:
                 # Return a generator but make sure all build_task
                 # functions are executed first.
                 instances = [
-                    cls(planning, uv, info)
-                    for planning, uv, info in selected_uv()
+                    cls(planning, uv, info) for planning, uv, info in selected_uv()
                 ]
                 tasks = [
                     instance.to_doit_task(name=f"{instance.planning}_{instance.uv}")
@@ -201,7 +198,7 @@ class TaskBase:
             return {
                 "basename": cls.task_name(),
                 "actions": [lambda: tf],
-                "doc": cls.doc()
+                "doc": cls.doc(),
             }
         except Exception as e:
             # Exception inexpliquée, la construction de la tâche
@@ -212,7 +209,7 @@ class TaskBase:
             return {
                 "basename": cls.task_name(),
                 "actions": [lambda: tf],
-                "doc": cls.doc()
+                "doc": cls.doc(),
             }
 
 
@@ -271,10 +268,11 @@ class CliArgsMixin(TaskBase):
 
     @property
     def parser(self):
+        """Return a parser with arguments from cli_args"""
+
         if self._parser is None:
             parser = argparse.ArgumentParser(
-                description=self.doc(),
-                prog=f"guv {self.task_name()}"
+                description=self.doc(), prog=f"guv {self.task_name()}"
             )
 
             for arg in self.cli_args:
@@ -299,12 +297,89 @@ class CliArgsMixin(TaskBase):
             # commande
 
             # If parse_args fails, don't show error message and don't sys.exit()
+            parser = self.parser
+
             def dummy(msg):
                 raise DependentTaskParserError()
-            self.parser.error = dummy
 
-            args = self.parser.parse_args(args=[])
+            parser.error = dummy
+            args = parser.parse_args(args=[])
 
         # Set parsed arguments as attributes of self
         for key, value in args.__dict__.items():
             self.__setattr__(key, value)
+
+
+class CliArgsInheritMixin(CliArgsMixin):
+    """Mixin allowing more flexibility on the generated cli parser"""
+
+    def add_arguments(self):
+        self._parser = argparse.ArgumentParser()
+        self.add_argument("--name", required=True, help="Nom de la feuille de notes")
+
+    def add_argument(self, *args, **kwargs):
+        self._parser.add_argument(*args, **kwargs)
+
+    def get_columns(self, **kwargs):
+        return []
+
+    # Overridden to allow for a custom parser not relying on cli_args
+    # class attribute.
+    @property
+    def parser(self):
+        self.add_arguments()
+        return self._parser
+
+
+class ConfigOpt(CliArgsInheritMixin):
+    """Add a config option"""
+
+    config_argname = "--config"
+    config_help="Fichier de configuration"
+
+    def add_arguments(self):
+        super().add_arguments()
+        metavar = self.config_argname.strip("-").replace("-", "_").upper()
+        self.add_argument(
+            self.config_argname,
+            metavar=metavar,
+            dest="config_file",
+            help=self.config_help,
+            required=True,
+        )
+
+    @property
+    def config(self):
+        if not hasattr(self, "_config") or self._config is None:
+            self._config = self.parse_config()
+        return self._config
+
+    def validate_config(self, config):
+        return config
+
+    def parse_config(self):
+        config_file = self.config_file
+        if not os.path.exists(config_file):
+            raise Exception(f"Configuration file '{config_file}' not found")
+
+        with open(config_file, "r") as stream:
+            config = list(yaml.load_all(stream, Loader=yaml.SafeLoader))[0]
+            config = self.validate_config(config)
+            return config
+
+
+class GroupOpt(CliArgsInheritMixin):
+    """Classe pour la spécification d'une colonne dénotant des sous-groupes"""
+
+    def add_arguments(self):
+        super().add_arguments()
+        self.add_argument("--group", dest="subgroup_by")
+
+    def get_columns(self, **kwargs):
+        columns = super().get_columns(**kwargs)
+
+        if self.subgroup_by is not None:
+            columns.append((self.subgroup_by, "raw", 6))
+
+        return columns
+

@@ -9,6 +9,7 @@ import sys
 import numpy as np
 import pandas as pd
 import oyaml as yaml            # Ordered yaml
+import argparse
 
 from ..utils_config import Output
 from ..utils import (
@@ -180,24 +181,6 @@ class XlsMergeFinalGrade(UVTask, CliArgsMixin):
 
         with Output(self.target, protected=True) as target:
             df.to_excel(target(), index=False)
-
-
-class XlsGradeSheet(UVTask):
-    """Génère un fichier Excel pour faciliter la correction des examens/projets/jury"""
-
-    always_make = True
-    target_dir = "documents"
-
-    def setup(self):
-        super().setup()
-        self.data_file = XlsStudentDataMerge.target_from(**self.info)
-        self.docs = os.path.join(self.settings.SEMESTER_DIR, self.uv, self.target_dir)
-
-    def run(self):
-        cmd_args = sys.argv[2:] + ['-o', self.docs, '-d', self.data_file]
-        run(cmd_args,
-            prog="guv xls_grades_sheet",
-            description=XlsGradeSheet.__doc__)
 
 
 class YamlQCM(UVTask):

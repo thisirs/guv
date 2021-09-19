@@ -16,7 +16,8 @@ import re
 import textwrap
 import argparse
 sys.path.insert(0, os.path.abspath('../src'))
-
+from guv.tasks.base import CliArgsInheritMixin
+from guv.tasks.base_gradebook import AbstractGradeBook
 
 # -- Project information -----------------------------------------------------
 
@@ -93,11 +94,9 @@ autodoc_mock_imports = [
 ]
 
 
-def doc_cli_args(args):
+def doc_cli_args(parser):
     docs = []
-    parser = argparse.ArgumentParser(prog="guv", description="")
-    for arg in args:
-        action = parser.add_argument(*arg.args, **arg.kwargs)
+    for action in parser._actions:
         if action.option_strings:
             arg_name = ", ".join(f"``{a}``" for a in action.option_strings)
             arg_doc = action.help
@@ -121,11 +120,13 @@ def doc_cli_args(args):
 """.format(options="\n".join(docs))
 
 
-def expand_block(cli_args, line):
+def expand_block(parser, line):
+    """Expand placeholders in line"""
+
     if "{options}" in line:
         def rep(m):
             indent = m.group(1)
-            options = doc_cli_args(cli_args)
+            options = doc_cli_args(parser)
             return textwrap.indent(options, indent)
 
         return re.sub("( *)(\\{options\\})", rep, line).split("\n")
@@ -133,9 +134,21 @@ def expand_block(cli_args, line):
         return [line]
 
 def sphinx_add_options(app, what, name, obj, options, lines):
-    if what == "class" and hasattr(obj, "cli_args"):
-        lines[:] = [ll + "\n" for l in lines for ll in expand_block(obj.cli_args, l)]
+    if what != "class":
+        return
 
+    if issubclass(obj, AbstractGradeBook):
+        instance = obj(None, None, None)
+        parser = instance.parser
+    elif hasattr(obj, "cli_args"):
+        parser = argparse.ArgumentParser(prog="guv", description="")
+        for arg in obj.cli_args:
+            parser.add_argument(*arg.args, **arg.kwargs)
+    else:
+        return
+
+    # In-place modification
+    lines[:] = [ll + "\n" for l in lines for ll in expand_block(parser, l)]
 
 def setup(app):
     app.connect('autodoc-process-docstring', sphinx_add_options)
