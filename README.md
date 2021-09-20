@@ -51,5 +51,4 @@ CRENEAU_UV = "documents/Creneaux-UV-hybride-prov-V02.pdf"
 On peut maintenant exécuter `guv cal_uv` dans le dossier du semestre
 pour générer les calendriers hebdomadaires des UV.
 
-Voir la documentation [ici](https://syrousse.gitlab.utc.fr/guv/) pour
-plus de détails.
+Voir la documentation [ici](https://www.hds.utc.fr/~syrousse/guv_bb55bc3cf80d9d2f95014408296f43f59bd3a129) pour plus de détails.
