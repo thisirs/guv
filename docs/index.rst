@@ -41,7 +41,7 @@ On commence par créer l'arborescence requise (voir
 
 .. code:: bash
 
-   guv createsemester P2021 --uv SY02,SY09
+   guv createsemester P2021 --uv SY02 SY09
    cd P2021
 
 Les variables ont été renseignées dans le fichier ``config.py`` du
