@@ -794,7 +794,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             "--num-groups",
             type=int,
             required=False,
-            help="Nombre de groupe à créer (par sous-groupes si spécifié)",
+            help="Nombre de groupes à créer (par sous-groupes si spécifié)",
         ),
         argument(
             "-s",
@@ -809,7 +809,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             nargs="+",
             type=float,
             required=False,
-            help="Nombre de groupes et proportions des ces groupes",
+            help="Liste de proportions pour créer les groupes",
         ),
         argument(
             "-t",
