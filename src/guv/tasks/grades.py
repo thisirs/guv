@@ -20,7 +20,6 @@ from ..utils import (
 from .base import CliArgsMixin, UVTask
 from .students import XlsStudentDataMerge
 from .instructors import XlsAffectation
-from ..gradebook import run
 
 
 class CsvForUpload(UVTask, CliArgsMixin):
