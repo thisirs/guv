@@ -318,7 +318,7 @@ class XlsStudentData(UVTask):
                 row_merge["_merge"] = "both"
                 dfr_clean = dfr_clean.append(row_merge)
 
-        dfr_clean = dfr_clean.drop(["_merge", "fullname_slug"], axis=1)
+        dfr_clean = dfr_clean.drop(["_merge", "fullname_slug", "Name"], axis=1)
 
         return dfr_clean
 
