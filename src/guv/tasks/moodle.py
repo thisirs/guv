@@ -987,7 +987,8 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                 df = df.sample(frac=1)
                 continue
 
-            logger.warning(f"{i+1} configuration(s) testée(s)")
+            if i > 0:
+                logger.warning(f"{i+1} configuration(s) testée(s)")
             return self.add_names_to_grouping(groups, name, name_gen)
 
         raise Exception(f"Aucune des {i+1} configurations testées n'est valide")
