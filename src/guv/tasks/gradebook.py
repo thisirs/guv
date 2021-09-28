@@ -1,3 +1,12 @@
+"""Ce module rassemble les tâches pour la génération de fichier Excel
+pour :
+
+- facilement évaluer un travail par groupe ou non avec un barème ou
+  non,
+- rassembler les notes pour tenir un jury d'UV.
+
+"""
+
 import math
 from collections import OrderedDict
 from schema import Schema, And, Use, Or, Optional
