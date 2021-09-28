@@ -251,29 +251,30 @@ class XlsStudentData(UVTask):
     def add_UTC_data(self, df, fn):
         "Incorpore les données Cours/TD/TP des inscrits UTC"
 
+        if "Nom" not in df.columns:
+            raise Exception("Pas de colonnes 'Nom' pour agréger les données")
+        if "Prénom" not in df.columns:
+            raise Exception("Pas de colonnes 'Prénom' pour agréger les données")
+
         # Données issues du fichier des affectations au Cours/TD/TP
         dfu = pd.read_csv(fn)
 
-        if "Nom" in df.columns and "Prénom" in df.columns:
-            fullnames = df["Nom"] + " " + df["Prénom"]
+        fullnames = df["Nom"] + " " + df["Prénom"]
 
-            def slug(e):
-                return unidecode(e.upper()[:23].strip())
+        def slug(e):
+            return unidecode(e.upper()[:23].strip())
 
-            df["fullname_slug"] = fullnames.apply(slug)
+        df["fullname_slug"] = fullnames.apply(slug)
 
-            dfr = pd.merge(
-                df,
-                dfu,
-                suffixes=("", "_utc"),
-                how="outer",
-                left_on=["fullname_slug", "Branche", "Semestre"],
-                right_on=["Name", "Branche", "Semestre"],
-                indicator=True,
-            )
-
-        else:
-            raise Exception("Pas de colonnes 'Nom' et 'Prénom' pour agréger les données")
+        dfr = pd.merge(
+            df,
+            dfu,
+            suffixes=("", "_utc"),
+            how="outer",
+            left_on=["fullname_slug", "Branche", "Semestre"],
+            right_on=["Name", "Branche", "Semestre"],
+            indicator=True,
+        )
 
         dfr_clean = dfr.loc[dfr["_merge"] == "both"]
 
