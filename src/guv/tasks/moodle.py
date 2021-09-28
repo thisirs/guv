@@ -1070,15 +1070,26 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
 
 
 class FetchGroupId(CliArgsMixin, TaskBase):
-    """Crée un fichier de correspondance entre le nom des groupes Moodle et leur id.
+    """Crée un fichier de correspondance entre le nom et l'id des groupes Moodle.
 
     Pour utiliser certaines fonctionnalités de **guv** (notamment
     :class:`~guv.tasks.moodle.JsonRestriction` et
-    :class:`~guv.tasks.moodle.JsonGroup`), il faut connaitre les
-    identifiants des groupes enregistrés sur Moodle. Cette tâche
-    permet de télécharger la correspondance en indiquant l'identifiant
-    de l'UV/UE (l'entier figurant à la fin de l'url principale:
-    id=????)
+    :class:`~guv.tasks.moodle.JsonGroup`), il faut connaitre la
+    correspondance entre le nom des groupes et leur identifiant dans
+    Moodle. Cette tâche permet de télécharger la correspondance en
+    indiquant l'identifiant de l'UV/UE sous Moodle. Par exemple, l'id
+    de l'url suivante :
+
+        https://moodle.utc.fr/course/view.php?id=1718
+
+    est 1718. La correspondance est téléchargée dans le sous-dossier
+    ``document/`` du dossier du semestre. Il suffit ensuite de copier
+    son contenu dans le fichier ``config.py`` de l'UV/UE
+    correspondante.
+
+    Pour avoir accès à Moodle, les cookies de Firefox sont utilisés.
+    Il faut donc préalablement s'être identifié dans Moodle avec
+    Firefox.
 
     {options}
 
