@@ -731,8 +731,8 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
     exclusives ``--proportions``, ``--group-size`` et
     ``--num-groups``.
 
-    Le nom des groupes est controlé par ``--template`` et ``--names``.
-    Les remplacements suivants sont disponibles à l'intérieur de
+    Le nom des groupes est controlé par ``--template``. Les
+    remplacements suivants sont disponibles à l'intérieur de
     ``--template`` :
 
     - ``{title}`` : remplacé par le titre (premier argument)
