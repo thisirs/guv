@@ -790,7 +790,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             "-p",
             "--proportions",
             nargs="+",
-            type=int,
+            type=float,
             required=False,
             help="Nombre de groupes et proportions des ces groupes",
         ),
