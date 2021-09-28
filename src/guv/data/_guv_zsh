@@ -19,7 +19,7 @@ _shtab_guv_commands_() {
     "csv_groups_groupings:Fichier csv de groupes et groupements à charger sur Moodle pour les créer."
     "csv_moodle_groups:Fichier csv de sous-groupes (binômes ou trinômes) aléatoires"
     "doit:Permet d\'avoir accès aux commandes doit sous-jacentes"
-    "fetch_group_id:Crée un fichier de correspondance entre le nom des groupes Moodle et leur id."
+    "fetch_group_id:Crée un fichier de correspondance entre le nom et l\'id des groupes Moodle."
     "html_inst:Génère la description des intervenants pour Moodle."
     "html_table:Table HTML des Cours\/TD\/TP à charger sur Moodle"
     "ical_inst:Fichier iCal de tous les créneaux par intervenant."
@@ -31,7 +31,9 @@ _shtab_guv_commands_() {
     "pdf_trombinoscope:Fichier PDF des trombinoscopes par groupes et\/ou sous-groupes."
     "xls_affectation:Fichier Excel des créneaux de toutes les UV configurées."
     "xls_assignment_grade:Création d\'un fichier Excel pour remplissage des notes par les intervenants"
-    "xls_grade_sheet:Génère un fichier Excel pour faciliter la correction des examens\/projets\/jury"
+    "xls_grade_book_group:Fichier Excel de notes par groupe."
+    "xls_grade_book_jury:Fichier Excel pour la gestion d\'une jury d\'UV"
+    "xls_grade_book_no_group:Fichier Excel de notes individuelles."
     "xls_merge_final_grade:Fichier Excel des notes finales attribuées"
     "xls_utp:Crée un document Excel pour calcul des heures et remplacements."
     "yaml_qcm:Génère un fichier yaml prérempli pour noter un QCM"
@@ -59,20 +61,21 @@ _shtab_guv_createsemester=(
 
 _shtab_guv_createuv=(
   "(- :)"{-h,--help}"[show this help message and exit]"
-  "*:uv:"
+  "(*):uv:"
 )
 
 _shtab_guv_csv_create_groups=(
   "(- :)"{-h,--help}"[show this help message and exit]"
   {-G,--grouping}"[Pré-groupes dans lesquels faire des sous-groupes]:grouping:"
-  {-n,--num-groups}"[Nombre de groupe à créer (par sous-groupes si spécifié)]:num_groups:"
+  {-n,--num-groups}"[Nombre de groupes à créer (par sous-groupes si spécifié)]:num_groups:"
   {-s,--group-size}"[Taille des groupes \: binomes, trinomes ou plus]:group_size:"
-  {-p,--proportions}"[Nombre de groupes et proportions des ces groupes]:proportions:"
+  {-p,--proportions}"[Liste de proportions pour créer les groupes]:proportions:"
   {-t,--template}"[Modèle pour donner des noms aux groupes]:template:"
   {-l,--names}"[Liste de mots clés pour construire les noms des groupes]:names:"
   {-o,--ordered}"[Ordonner la liste des étudiants par ordre alphabétique]"
   {-g,--global}"[Remettre à zéro la suite des noms de sous-groupes]"
   {-r,--random}"[Permuter aléatoirement les noms de groupes]"
+  "--other-groups[Liste de colonnes de groupes déjà formés qui ne doivent plus être reformés. Valable uniquement pour les binomes et trinomes.]:other_groups:"
   ":Nom associé à l\'ensemble des groupes créés. Repris dans le nom du fichier créé et dans le nom des groupes créés suivant la \*template\* utilisée.:"
 )
 
@@ -118,7 +121,7 @@ _shtab_guv_doit=(
 
 _shtab_guv_fetch_group_id=(
   "(- :)"{-h,--help}"[show this help message and exit]"
-  "*:Liste des identifiants des UV sur Moodle (id\=\?\?\?\? dans l\'url):"
+  "(*):Liste des identifiants des UV sur Moodle (id\=\?\?\?\? dans l\'url):"
 )
 
 _shtab_guv_html_inst=(
@@ -189,9 +192,27 @@ _shtab_guv_xls_assignment_grade=(
   {-e,--exam}"[Nom de l\'examen]:exam:"
 )
 
-_shtab_guv_xls_grade_sheet=(
+_shtab_guv_xls_grade_book_group=(
   "(- :)"{-h,--help}"[show this help message and exit]"
-  ":args:"
+  "--name[Nom de la feuille de notes]:name:"
+  "--marking-scheme[Fichier contenant le barème détaillé]:config_file:"
+  {-o,--order-by}"[Colonne utilisée pour ordonner les noms dans chaque feuille]:order_by:"
+  {-w,--worksheets}"[Colonne utilisée pour grouper en plusieurs feuilles]:group_by:"
+  {-g,--group-by}"[Colonne de groupes utilisée pour noter des groupes d\'étudiants]:subgroup_by:"
+)
+
+_shtab_guv_xls_grade_book_jury=(
+  "(- :)"{-h,--help}"[show this help message and exit]"
+  "--name[Nom de la feuille de notes]:name:"
+  "--config[Fichier de configuration spécifiant les notes à utiliser]:config_file:"
+)
+
+_shtab_guv_xls_grade_book_no_group=(
+  "(- :)"{-h,--help}"[show this help message and exit]"
+  "--name[Nom de la feuille de notes]:name:"
+  "--marking-scheme[Fichier contenant le barème détaillé]:config_file:"
+  {-o,--order-by}"[Colonne utilisée pour ordonner les noms dans chaque feuille]:order_by:"
+  {-w,--worksheets}"[Colonne utilisée pour grouper en plusieurs feuilles]:group_by:"
 )
 
 _shtab_guv_xls_merge_final_grade=(
@@ -245,7 +266,9 @@ case $words[1] in
   pdf_trombinoscope) _arguments $_shtab_guv_pdf_trombinoscope ;;
   xls_affectation) _arguments $_shtab_guv_xls_affectation ;;
   xls_assignment_grade) _arguments $_shtab_guv_xls_assignment_grade ;;
-  xls_grade_sheet) _arguments $_shtab_guv_xls_grade_sheet ;;
+  xls_grade_book_group) _arguments $_shtab_guv_xls_grade_book_group ;;
+  xls_grade_book_jury) _arguments $_shtab_guv_xls_grade_book_jury ;;
+  xls_grade_book_no_group) _arguments $_shtab_guv_xls_grade_book_no_group ;;
   xls_merge_final_grade) _arguments $_shtab_guv_xls_merge_final_grade ;;
   xls_utp) _arguments $_shtab_guv_xls_utp ;;
   yaml_qcm) _arguments $_shtab_guv_yaml_qcm ;;
