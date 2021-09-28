@@ -341,7 +341,11 @@ class HtmlTable(UVTask, CliArgsMixin):
                 fd.write(output)
 
     def run(self):
-        # Set names
+        if len(self.names) == 1:
+            if not os.path.exists(self.names[0]):
+                raise Exception("Le fichier `{self.names[0]}` n'existe pas")
+            with open(self.names[0], "r") as fd:
+                self.names = [l.strip() for l in fd.readlines()]
 
         if self.grouped:
             html = self.get_html(self.courses)
