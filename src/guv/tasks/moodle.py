@@ -718,14 +718,14 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
     """Création aléatoire de groupes d'étudiants prêt à charger sous Moodle.
 
     Cette tâche crée un fichier csv d'affectation des étudiants à un
-    groupe. Si l'option ``--grouping`` est spécifiée les groupes sont
-    créés à l'intérieur de chaque sous-groupe (de TP ou TD par
-    exemple).
+    groupe directement chargeable sous Moodle. Si l'option
+    ``--grouping`` est spécifiée les groupes sont créés à l'intérieur
+    de chaque sous-groupe (de TP ou TD par exemple).
 
     Le nombre de groupes créés (au total ou par sous-groupes suivant
-    ``--grouping``) est controlé par une des options
-    ``--proportions``, ``--group-size`` et ``--num-groups`` par
-    priorité décroissante.
+    ``--grouping``) est controlé par une les options mutuellement
+    exclusives ``--proportions``, ``--group-size`` et
+    ``--num-groups``.
 
     Le nom des groupes est controlé par ``--template`` et ``--names``.
     Les remplacements suivants sont disponibles à l'intérieur de
