@@ -759,6 +759,23 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
 
     {options}
 
+    Examples
+    --------
+
+    Faire des trinomes à l'intérieur de chaque sous-groupe de TD :
+
+    .. code:: bash
+
+       guv csv_create_groups Projet1 -G TD --group-size 3
+
+
+    Partager en deux chaque sous-groupe de TD avec des noms de groupes
+    de la former D1i, D1ii, D2i, D2ii... :
+
+    .. code:: bash
+
+       guv csv_create_groups HalfGroup -G TD --proportions .5 .5 --template '{grouping_name}{group_name}' --names i ii
+
     """
 
     always_make = True
