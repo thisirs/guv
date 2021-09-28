@@ -834,16 +834,6 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         self.parse_args()
         self.target = self.build_target()
 
-        if (
-            self.proportions is None
-            and self.group_size is None
-            and self.num_groups is None
-        ):
-            raise argparse.ArgumentError(
-                None,
-                "Spécifier un argument parmi --proportions, --group-size, --num-groups",
-            )
-
         # Set template used to generate group names
         if self.template is None:
             if self.names is None:
@@ -892,6 +882,13 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                 yield pformat(tmpl, group_name=n)
 
     def run(self):
+        if (self.proportions is not None) + (self.group_size is not None) + (
+            self.num_groups is not None
+        ) != 1:
+            raise self.parser.error(
+                "Spécifier un et un seul argument parmi --proportions, --group-size, --num-groups",
+            )
+
         df = pd.read_excel(self.xls_merge, engine="openpyxl")
 
         # Shuffled or ordered rows according to `ordered`
