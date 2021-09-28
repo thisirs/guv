@@ -757,6 +757,11 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
     Les groupes sont aléatoires par défaut. Pour créer des groupes par
     ordre alphabétique, il faut spécifier le drapeau ``--ordered``.
 
+    Pour les binomes et trinomes, on peut imposer qu'ils soient
+    différents par rapport à un autre ou plusieurs groupements
+    effectués antérieurement à travers l'option ``--other-groups`` qui
+    accepte une liste de colonnes de groupes déjà construits.
+
     {options}
 
     Examples
@@ -844,6 +849,12 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             action="store_true",
             help="Permuter aléatoirement les noms de groupes",
         ),
+        argument(
+            "--other-groups",
+            nargs="+",
+            required=False,
+            help="Liste de colonnes de groupes déjà formés qui ne doivent plus être reformés. Valable uniquement pour les binomes et trinomes."
+        )
     )
 
     def setup(self):
@@ -911,6 +922,9 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             )
 
         df = pd.read_excel(self.xls_merge, engine="openpyxl")
+
+        if self.other_groups is not None:
+            check_columns(df, self.other_groups, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
 
         # Shuffled or ordered rows according to `ordered`
         if not self.ordered:
@@ -1046,9 +1060,12 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             return False
 
         # Binomes précédents
-        if other_groups is not None:
-            for gp in other_groups:
+        if self.other_groups is not None:
+            for gp in self.other_groups:
                 if etu1[gp] == etu2[gp]:
+                    nom1 = etu1["Nom"] + " " + etu1["Prénom"]
+                    nom2 = etu2["Nom"] + " " + etu2["Prénom"]
+                    logger.warning(f"Binôme {nom1} et {nom2} déjà formé")
                     return False
 
         return True
@@ -1060,12 +1077,12 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         b = self.check_valid_group_2(df, [idx1, idx3])
         c = self.check_valid_group_2(df, [idx2, idx3])
 
-        if other_groups is not None:
+        if self.other_groups is not None:
             etu1 = df.loc[idx1]
             etu2 = df.loc[idx2]
             etu3 = df.loc[idx3]
 
-            for gp in other_groups:
+            for gp in self.other_groups:
                 if len(set([etu1[gp], etu2[gp], etu3[gp]])) != 3:
                     return False
 
