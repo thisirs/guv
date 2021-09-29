@@ -575,7 +575,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
                 schema = Schema(
                     {
                         Optional("type", default="grade"): "grade",
-                        Optional("Note éliminatoire", default=-1): -1,
+                        Optional("passing mark", default=-1): -1,
                         Optional(str): object,
                     }
                 )
@@ -589,18 +589,18 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
             Or(
                 And(
                     Or(None, {}, ""),
-                    Use(lambda dummy: {"type": "grade", "Note éliminatoire": -1}),
+                    Use(lambda dummy: {"type": "grade", "passing mark": -1}),
                 ),
                 And(dict, Use(validate_grade2)),
             )
         )
 
-        DEFAULT_COLUMNS = {"Note agrégée": {"type": "grade", "Note éliminatoire": -1}}
+        DEFAULT_MARKS = {"Note agrégée": {"type": "grade", "passing mark": -1}}
 
-        validate_columns = Or(
-            And(Or(None, {}, ""), Use(lambda dummy: DEFAULT_COLUMNS)),
+        validate_marks = Or(
+            And(Or(None, {}, ""), Use(lambda dummy: DEFAULT_MARKS)),
             {
-                Optional("Note agrégée", default=DEFAULT_COLUMNS["Note agrégée"]): {},
+                Optional("Note agrégée", default=DEFAULT_MARKS["Note agrégée"]): {},
                 Optional(str): validate_grade,
             },
         )
@@ -630,15 +630,15 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
                     None,
                     Use(
                         lambda dummy: {
-                            "columns": validate_columns.validate(None),
+                            "marks": validate_marks.validate(None),
                             "options": validate_options.validate(None),
                         }
                     ),
                 ),
                 {
                     Optional(
-                        "columns", default=validate_columns.validate(None)
-                    ): validate_columns,
+                        "marks", default=validate_marks.validate(None)
+                    ): validate_marks,
                     Optional(
                         "options", default=validate_options.validate(None)
                     ): validate_options,
