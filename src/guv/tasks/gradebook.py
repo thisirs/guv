@@ -78,6 +78,19 @@ def walk_tree(tree, depth=None):
     yield from walk_tree0("root", tree, 0, 0)
 
 
+def get_values(tree, prop, default=1):
+    "Return list of terminal values of property"
+
+    if isinstance(tree, dict):
+        return [pts for node in tree.values() for pts in get_values(node, prop, default=default)]
+    else:
+        # Should be a list of dict, concatenating
+        a = {}
+        for s in tree:
+            a.update(s)
+        return [a.get(prop, default)]
+
+
 class MarkingScheme:
     def __init__(self, tree):
         self.tree = tree
@@ -86,38 +99,13 @@ class MarkingScheme:
 
     @property
     def points(self):
-        "Return list of points"
-
-        def get_points(tree):
-            if isinstance(tree, dict):
-                return [pts for node in tree.values() for pts in get_points(node)]
-            else:
-                # Should be a list of dict, concatenating
-                a = {}
-                for s in tree:
-                    a.update(s)
-                return [a["points"]]
-
-        return get_points(self.tree)
+        "Return depth-first list of points"
+        return get_values(self.tree, "points")
 
     @property
     def coeffs(self):
-        "Return list of coeffs"
-
-        def get_coeffs(tree):
-            if isinstance(tree, dict):
-                return [pts for node in tree.values() for pts in get_coeffs(node)]
-            else:
-                # Should be a list of dict, concatenating
-                a = {}
-                for s in tree:
-                    a.update(s)
-                if "coeffs" in a:
-                    return [a["coeffs"]]
-                else:
-                    return [1]
-
-        return get_coeffs(self.tree)
+        "Return depth-first list of coeffs"
+        return get_values(self.tree, "coeffs")
 
     def write(self, worksheet, ref):
         row = ref.row
