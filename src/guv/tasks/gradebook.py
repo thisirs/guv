@@ -222,6 +222,7 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
     avec le fichier YAML contenant par exemple :
 
     .. code:: yaml
+
        Exercice 1:
          Question 1:
            - points: 1
@@ -245,6 +246,7 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
     avec le fichier YAML contenant par exemple :
 
     .. code:: yaml
+
        Fond:
        Forme:
 
@@ -555,6 +557,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
     ``raw``.
 
     .. code:: yaml
+
        marks:
          - grade1:
              passing mark: 8
