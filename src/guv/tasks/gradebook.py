@@ -239,26 +239,22 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
     def validate_config(self, config):
         """Validate marking scheme"""
 
-        def validate_question(data):
-            return Schema(
-                [
-                    {
-                        Optional("points"): Or(int, float),
-                        Optional("coeffs"): Or(int, float),
-                        Optional("détails"): str,
-                    }
-                ]
-            ).validate(data)
-
         def validate_subsections(data):
             return Schema(
                 Or(
-                    validate_question,
-                    {str: validate_subsections}
+                    And(lambda e: e is None, Use(lambda _: [{}])),
+                    [
+                        {
+                            Optional("points"): Or(int, float),
+                            Optional("coeffs"): Or(int, float),
+                            Optional("détails"): str,
+                        }
+                    ],
+                    {str: Use(validate_subsections)},
                 )
             ).validate(data)
 
-        return Schema({str: validate_subsections}).validate(config)
+        return Schema({str: Use(validate_subsections)}).validate(config)
 
     def get_columns(self):
         columns = super().get_columns()
