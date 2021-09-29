@@ -510,24 +510,78 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
 
 
 class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
-    """Fichier Excel pour la gestion d'une jury d'UV
+    """Fichier Excel pour la gestion d'un jury d'UV
 
-    Cette tâche permet de générer un classeur regroupant toutes les
-    notes sur le semestre pour faire un jury d'UV. Le fichier contient
-    les notes spécifiées dans le fichier de configuration via
-    ``--config``, une colonne spéciale nommée "Note agrégée" destinée
-    à contenir la note agrégée sur 20, charge à vous de la remplir
-    avec une formule agrégeant toutes les notes et la traduction en
-    note ECTS de la note agrégée. La deuxième feuille met à
-    disposition des barres d'admission pour chaque note, des barres
-    pour la conversion de la note agrégée en note ECTS ainsi que
-    quelques statistiques sur la répartition des notes.
+    Cette tâche permet de générer un classeur regroupant sur la
+    première feuille :
+
+    - les notes spécifiées dans le fichier de configuration via
+      ``--config`` qui participe à la note finale,
+    - une colonne spéciale nommée "Note agrégée" destinée à contenir
+      la note agrégée sur 20, charge à vous de la remplir avec une
+      formule agrégeant toutes les notes,
+    - une note ECTS automatiquement calculée représentant la note
+      agrégée.
+
+    La deuxième feuille met à disposition des barres d'admission pour
+    chaque note, des barres pour la conversion de la note agrégée en
+    note ECTS ainsi que quelques statistiques sur la répartition des
+    notes.
+
+    Le fichier de configuration est un fichier au format YAML. Les
+    notes devant être utilisées (qu'elles existent ou non dans le
+    fichier ``effectifs.xlsx``) sont listées dans la section
+    ``marks``. On peut spécifier une note de passage avec ``passing
+    mark``. Par défaut, une note de passage de -1 est utilisée mais on
+    peut la modifier dans le fichier Excel. Si on souhaite copier ou
+    créer une colonne qui n'a pas vocation à contenir une note (et
+    donc pas de gestion de note de passage) on doit spécifier le type
+    ``raw``.
+
+    .. code:: yaml
+       marks:
+         - grade1:
+             passing mark: 8
+         - grade2
+         - grade3
+         - info:
+             type: raw
 
     La note ECTS et la note agrégée peuvent ensuite être facilement
     incorporées au fichier central en renseignant la variable
     ``AGGREGATE_DOCUMENTS``.
 
+    .. code:: python
+
+       AGGREGATE_DOCUMENTS = [
+           [
+               "generated/jury_gradebook.xlsx",
+               aggregate(
+                   left_on="Courriel",
+                   right_on="Courriel",
+                   subset=["Note agrégée", "Note ECTS"],
+               ),
+           ]
+       ]
+
     {options}
+
+    Examples
+    --------
+
+    .. code:: bash
+
+       guv xls_jury --name SY02_jury --config documents/config_jury.yml
+
+    avec le fichier YAML contenant par exemple :
+
+    .. code:: yaml
+       marks:
+         - median:
+         - final
+             passing mark: 6
+         - TD:
+             type: raw
 
     """
 
