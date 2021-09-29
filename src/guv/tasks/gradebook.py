@@ -210,6 +210,8 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
     Examples
     --------
 
+    Fichier de notes pour un devoir en divisant par groupe de TD :
+
     .. code:: bash
 
        guv xls_grade_book_no_group \
@@ -227,6 +229,24 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
          Question 1:
            - points: 1
 
+    Fichier de notes pour une soutenance individuelle en divisant par
+    jour de passage (colonne "Jour passage" dans ``effectifs.xlsx``)
+    et en ordonnant par ordre de passage (colonne "Ordre passage" dans
+    ``effectifs.xlsx``) :
+
+    .. code:: bash
+
+       guv xls_grade_book_no_group \
+         --name Soutenance1 \
+         --marking-scheme documents/barème_soutenance1.yml \
+         --worksheets "Jour passage" \
+         --order-by "Ordre passage"
+
+    avec le fichier YAML contenant par exemple :
+
+    .. code:: yaml
+       Fond:
+       Forme:
 
     """
 
