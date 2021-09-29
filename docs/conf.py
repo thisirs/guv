@@ -119,7 +119,7 @@ def doc_cli_args(parser):
 
 
 def expand_block(parser, line):
-    """Expand placeholders in line"""
+    """Return list of lines after expanding placeholder in line"""
 
     if "{options}" in line:
         def rep(m):
@@ -127,7 +127,7 @@ def expand_block(parser, line):
             options = doc_cli_args(parser)
             return textwrap.indent(options, indent)
 
-        return re.sub("( *)(\\{options\\})", rep, line).split("\n")
+        return re.sub("( *)(\\{options\\})", rep, line).splitlines()
     else:
         return [line]
 
@@ -146,7 +146,8 @@ def sphinx_add_options(app, what, name, obj, options, lines):
         return
 
     # In-place modification
-    lines[:] = [ll + "\n" for l in lines for ll in expand_block(parser, l)]
+    lines[:] = [ll for l in lines for ll in expand_block(parser, l)]
+
 
 def setup(app):
     app.connect('autodoc-process-docstring', sphinx_add_options)

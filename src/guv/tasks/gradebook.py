@@ -214,9 +214,9 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
 
     .. code:: bash
 
-       guv xls_grade_book_no_group \
-         --name Devoir1 \
-         --marking-scheme documents/barème_devoir1.yml \
+       guv xls_grade_book_no_group \\
+         --name Devoir1 \\
+         --marking-scheme documents/barème_devoir1.yml \\
          --worksheets TD
 
     avec le fichier YAML contenant par exemple :
@@ -237,10 +237,10 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
 
     .. code:: bash
 
-       guv xls_grade_book_no_group \
-         --name Soutenance1 \
-         --marking-scheme documents/barème_soutenance1.yml \
-         --worksheets "Jour passage" \
+       guv xls_grade_book_no_group \\
+         --name Soutenance1 \\
+         --marking-scheme documents/barème_soutenance1.yml \\
+         --worksheets "Jour passage" \\
          --order-by "Ordre passage"
 
     avec le fichier YAML contenant par exemple :
@@ -595,6 +595,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
     avec le fichier YAML contenant par exemple :
 
     .. code:: yaml
+
        marks:
          - median:
          - final
