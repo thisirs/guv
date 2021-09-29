@@ -168,16 +168,65 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
     """Fichier Excel de notes individuelles.
 
     Cette tâche permet de générer un fichier Excel pour rentrer
-    facilement des notes avec un barème détaillé. Le fichier peut être
-    divisé en plusieurs feuilles suivant l'argument ``--worksheets``
-    et chaque feuille peut être ordonnée suivant l'argument
-    ``--order-by``.
+    facilement des notes avec un barème détaillé. Le fichier Excel
+    peut être divisé en plusieurs feuilles suivant une colonne du
+    fichier ``effectifs.xlsx`` et l'argument ``--worksheets`` et
+    chaque feuille peut être ordonnée suivant l'argument
+    ``--order-by``. Le fichier spécifiant le barème est au format
+    YAML. La structure du devoir est spécifiée de manière arborescente
+    avec une liste finale pour les questions contenant les points
+    accordées à cette question et éventuellement le coefficient (par
+    défaut 1) et des détails (ne figurant pas dans le fichier Excel).
+
+    .. code:: yaml
+
+       Exercice 1:
+         Question 1:
+           - points: 1
+       Problème:
+         Partie 1:
+           Question 1:
+             - points: 2
+           Question 2:
+             - points: 2
+             - coeffs: 3
+           Question 3:
+             - points: 2
+             - détails: |
+                 Question difficile, ne pas noter trop sévèrement.
+         Partie 2:
+           Question 1:
+             - points: 2
+           Question 2:
+             - points: 2
+
 
     Les notes finales peuvent ensuite être facilement incorporées au
     fichier central en renseignant la variable
     ``AGGREGATE_DOCUMENTS``.
 
     {options}
+
+    Examples
+    --------
+
+    .. code:: bash
+
+       guv xls_grade_book_no_group \
+         --name Devoir1 \
+         --marking-scheme documents/barème_devoir1.yml \
+         --worksheets TD
+
+    avec le fichier YAML contenant par exemple :
+
+    .. code:: yaml
+       Exercice 1:
+         Question 1:
+           - points: 1
+       Exercice 2:
+         Question 1:
+           - points: 1
+
 
     """
 
