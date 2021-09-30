@@ -24,7 +24,7 @@ def fillna_column(colname, na_value=None, group_column=None):
     Parameters
     ----------
 
-    colname : str
+    colname : :obj:`str`
         Nom de la colonne où remplacer les ``NA``
     na_value : :obj:`str`, optional
         Valeur remplaçant les valeurs non définies
@@ -97,13 +97,13 @@ def replace_regex(colname, *reps, new_colname=None, msg=None):
     Parameters
     ----------
 
-    colname : str
+    colname : :obj:`str`
         Nom de la colonne où effectuer les remplacements
     *reps :
         Les couples regex / remplacement
-    new_colname : str
+    new_colname : :obj:`str`
         Le nom de la nouvelle colonne
-    msg : str
+    msg : :obj:`str`
         Un message descriptif utilisé
 
     Examples
@@ -147,11 +147,11 @@ def replace_column(colname, rep_dict, new_colname=None):
     Parameters
     ----------
 
-    colname : str
+    colname : :obj:`str`
         Nom de la colonne où effectuer les remplacements
-    rep_dict : dict
+    rep_dict : :obj:`dict`
         Dictionnaire des remplacements
-    new_colname : str
+    new_colname : :obj:`str`
         Nom de la nouvelle colonne
 
     Examples
@@ -193,7 +193,7 @@ def compute_new_column(*cols, func=None, colname=None):
 
     *cols
         Liste des colonnes fournies à la fonction ``func``
-    func : callable
+    func : :obj:`callable`
         Fonction prenant en argument un dictionnaire
 
     Examples
@@ -252,14 +252,14 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
     Parameters
     ----------
 
-    left_on : str
+    left_on : :obj:`str`
         Le nom de colonne présent dans le fichier ``effectif.xlsx``
         pour réaliser la jointure. Au cas où la colonne n'existe pas,
         on peut spécifier une fonction prenant en argument le
         *DataFrame* et renvoyant une *Series* utilisée pour la
         jointure (voir fonction :func:`guv.utils.slugrot`).
 
-    right_on : str
+    right_on : :obj:`str`
         Le nom de colonne présent dans le fichier à incorporer pour
         réaliser la jointure. Au cas où la colonne n'existe pas,
         on peut spécifier une fonction prenant en argument le
@@ -279,7 +279,7 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
 
     read_method : :obj:`callable`, optional
 
-    kw_read : dict
+    kw_read : :obj:`dict`, optional
         Les arguments nommés à utiliser avec la fonction ``read_method``.
 
     preprocessing : :obj:`callable`, optional
@@ -465,11 +465,12 @@ def aggregate_org(colname, postprocessing=None):
     Parameters
     ----------
 
-    colname : str
+    colname : :obj:`str`
         Nom de la colonne dans lequel stocker les informations
         présentes dans le fichier Org.
 
     postprocessing : :obj:`callable`, optional
+        Post-traitement à appliquer au `DataFrame` après intégration du fichier Org.
 
 
     Examples
@@ -554,11 +555,11 @@ def switch(colname, backup=False, path=None, new_colname=None):
     Parameters
     ----------
 
-    colname : (str)
+    colname : :obj:`str`
         Nom de la colonne où opérer les changements
-    backup : (bool)
+    backup : :obj:`bool`
         Sauvegarder la colonne avant tout changement
-    path : (str)
+    path : :obj:`str`
         Chemin de fichier lorsque ``switch`` est utilisée dans un
         argument ``postprocessing``.
 
