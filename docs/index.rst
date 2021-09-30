@@ -1043,7 +1043,7 @@ commande suivante dans le dossier du semestre.
 
 .. code:: bash
 
-   shtab --shell=zsh guv.runner.get_parser > ~/.zsh/completions/_guv
+   shtab --shell=zsh guv.runner.get_parser_shtab > ~/.zsh/completions/_guv
 
 Indices and tables
 ==================

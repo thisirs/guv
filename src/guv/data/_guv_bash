@@ -35,7 +35,9 @@ _shtab_guv_xls_utp_option_strings=('-h' '--help')
 _shtab_guv_yaml_qcm_option_strings=('-h' '--help')
 _shtab_guv_zoom_breakout_rooms_option_strings=('-h' '--help')
 
-
+_shtab_guv_xls_grade_book_group___marking_scheme_COMPGEN=_shtab_compgen_files
+_shtab_guv_xls_grade_book_jury___config_COMPGEN=_shtab_compgen_files
+_shtab_guv_xls_grade_book_no_group___marking_scheme_COMPGEN=_shtab_compgen_files
 
 _shtab_guv_pos_0_choices='createsemester createuv doit cal_inst cal_uv csv_create_groups csv_exam_groups csv_for_upload csv_groups csv_groups_groupings csv_moodle_groups fetch_group_id html_inst html_table ical_inst json_group json_restriction moodle_log pdf_attendance pdf_attendance_full pdf_trombinoscope xls_affectation xls_assignment_grade xls_grade_book_group xls_grade_book_jury xls_grade_book_no_group xls_merge_final_grade xls_utp yaml_qcm zoom_breakout_rooms'
 _shtab_guv_json_restriction__c_choices='Cours TD TP'

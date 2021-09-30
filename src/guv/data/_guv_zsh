@@ -32,7 +32,7 @@ _shtab_guv_commands_() {
     "xls_affectation:Fichier Excel des créneaux de toutes les UV configurées."
     "xls_assignment_grade:Création d\'un fichier Excel pour remplissage des notes par les intervenants"
     "xls_grade_book_group:Fichier Excel de notes par groupe."
-    "xls_grade_book_jury:Fichier Excel pour la gestion d\'une jury d\'UV"
+    "xls_grade_book_jury:Fichier Excel pour la gestion d\'un jury d\'UV"
     "xls_grade_book_no_group:Fichier Excel de notes individuelles."
     "xls_merge_final_grade:Fichier Excel des notes finales attribuées"
     "xls_utp:Crée un document Excel pour calcul des heures et remplacements."
@@ -195,7 +195,7 @@ _shtab_guv_xls_assignment_grade=(
 _shtab_guv_xls_grade_book_group=(
   "(- :)"{-h,--help}"[show this help message and exit]"
   "--name[Nom de la feuille de notes]:name:"
-  "--marking-scheme[Fichier contenant le barème détaillé]:config_file:"
+  "--marking-scheme[Fichier contenant le barème détaillé]:config_file:_files"
   {-o,--order-by}"[Colonne utilisée pour ordonner les noms dans chaque feuille]:order_by:"
   {-w,--worksheets}"[Colonne utilisée pour grouper en plusieurs feuilles]:group_by:"
   {-g,--group-by}"[Colonne de groupes utilisée pour noter des groupes d\'étudiants]:subgroup_by:"
@@ -204,13 +204,13 @@ _shtab_guv_xls_grade_book_group=(
 _shtab_guv_xls_grade_book_jury=(
   "(- :)"{-h,--help}"[show this help message and exit]"
   "--name[Nom de la feuille de notes]:name:"
-  "--config[Fichier de configuration spécifiant les notes à utiliser]:config_file:"
+  "--config[Fichier de configuration spécifiant les notes à utiliser]:config_file:_files"
 )
 
 _shtab_guv_xls_grade_book_no_group=(
   "(- :)"{-h,--help}"[show this help message and exit]"
   "--name[Nom de la feuille de notes]:name:"
-  "--marking-scheme[Fichier contenant le barème détaillé]:config_file:"
+  "--marking-scheme[Fichier contenant le barème détaillé]:config_file:_files"
   {-o,--order-by}"[Colonne utilisée pour ordonner les noms dans chaque feuille]:order_by:"
   {-w,--worksheets}"[Colonne utilisée pour grouper en plusieurs feuilles]:group_by:"
 )
