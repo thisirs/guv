@@ -937,6 +937,9 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                 "Spécifier un et un seul argument parmi --proportions, --group-size, --num-groups",
             )
 
+        if "{grouping_name}" in self.template and self.grouping is None:
+            raise Exception("La template contient '{grouping_name}' mais aucun groupement n'est spécifié avec l'option --grouping")
+
         df = pd.read_excel(self.xls_merge, engine="openpyxl")
 
         if self.other_groups is not None:
