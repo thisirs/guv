@@ -285,7 +285,8 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
 
     kw_read : :obj:`dict`, optional
         Les arguments nommés à utiliser avec la fonction
-        ``read_method``. Par exemple, pour un fichier ".csv" on peut spécifier
+        ``read_method``. Par exemple, pour un fichier ".csv" on peut
+        spécifier :
 
         .. code:: python
 
