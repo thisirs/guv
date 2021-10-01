@@ -289,8 +289,8 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
 
         .. code:: python
 
-        kw_read={"header": None, "names": ["Courriel", "TP_pres"]}
-        kw_read={"na_values": "-"},
+           kw_read={"header": None, "names": ["Courriel", "TP_pres"]}
+           kw_read={"na_values": "-"},
 
     preprocessing : :obj:`callable`, optional
         Pré-traitement à appliquer au `DataFrame` avant de l'intégrer.
