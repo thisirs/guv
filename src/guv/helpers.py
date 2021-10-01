@@ -278,9 +278,19 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
         Permet de renommer des colonnes après incorporation.
 
     read_method : :obj:`callable`, optional
+        Spécifie la fonction à appeler pour charger le fichier. Les
+        fonctions Pandas ``pd.read_csv`` et ``pd.read_excel`` sont
+        automatiquement sélectionnées pour les fichiers ayant pour
+        extension ".csv" ou ".xlsx".
 
     kw_read : :obj:`dict`, optional
-        Les arguments nommés à utiliser avec la fonction ``read_method``.
+        Les arguments nommés à utiliser avec la fonction
+        ``read_method``. Par exemple, pour un fichier ".csv" on peut spécifier
+
+        .. code:: python
+
+        kw_read={"header": None, "names": ["Courriel", "TP_pres"]}
+        kw_read={"na_values": "-"},
 
     preprocessing : :obj:`callable`, optional
         Pré-traitement à appliquer au `DataFrame` avant de l'intégrer.
