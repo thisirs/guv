@@ -94,22 +94,12 @@ autodoc_mock_imports = [
 
 def doc_cli_args(parser):
     docs = []
+    hf = argparse.HelpFormatter("dummy")
     for action in parser._actions:
-        if action.option_strings:
-            arg_name = ", ".join(f"``{a}``" for a in action.option_strings)
-            arg_doc = action.help
-            docs.append("- " + textwrap.indent(f"{arg_name} : {arg_doc}", "  ")[2:])
-        else:
-            if action.metavar is not None:
-                result = action.metavar
-            elif action.choices is not None:
-                choice_strs = [str(choice) for choice in action.choices]
-                result = '{%s}' % ','.join(choice_strs)
-            else:
-                result = ""
-            arg_name = result
-            arg_doc = action.help
-            docs.append("- " + textwrap.indent(f"{arg_name} : {arg_doc}", "  ")[2:])
+        action_header = hf._format_action_invocation(action)
+        action_header = ", ".join(f"``{e}``" for e in action_header.split(", "))
+        help_text = hf._expand_help(action)
+        docs.append("- " + textwrap.indent(f"{action_header} : {help_text}", "  ")[2:])
 
     return """
 .. rubric:: Options
