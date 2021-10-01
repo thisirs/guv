@@ -942,6 +942,9 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
 
         df = pd.read_excel(self.xls_merge, engine="openpyxl")
 
+        if self.grouping is not None:
+            check_columns(df, self.grouping, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
+
         if self.other_groups is not None:
             check_columns(df, self.other_groups, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
 
@@ -950,9 +953,6 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             df = df.sample(frac=1).reset_index(drop=True)
         else:
             df = sort_values(df, ["Nom", "Prénom"])
-
-        if self.grouping is not None:
-            check_columns(df, self.grouping, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
 
         # Add title to template
         tmpl = self.template
