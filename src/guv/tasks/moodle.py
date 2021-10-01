@@ -750,12 +750,14 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
     fichier contenant une liste de noms ligne par ligne. Il sont pris
     aléatoirement si on spécifie le drapeau `--random`.
 
-    Le drapeau ``--global`` permet de remettre à zéro la génération des
-    noms de groupes lorsqu'on change le groupe à l'intérieur duquel on
-    construit des sous-groupes (si on a spécifié ``--grouping``).
+    Le drapeau ``--global`` permet de ne pas remettre à zéro la
+    génération des noms de groupes lorsqu'on change le groupement à
+    l'intérieur duquel on construit des groupes (utile seulement si on
+    a spécifié ``--grouping``).
 
-    Les groupes sont aléatoires par défaut. Pour créer des groupes par
-    ordre alphabétique, il faut spécifier le drapeau ``--ordered``.
+    Les groupes créés sont aléatoires par défaut. Pour créer des
+    groupes par ordre alphabétique, il faut spécifier le drapeau
+    ``--ordered``.
 
     Pour les binomes et trinomes, on peut imposer qu'ils soient
     différents par rapport à un autre ou plusieurs groupements
@@ -856,7 +858,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             "--global",
             dest="global_",
             action="store_true",
-            help="Remettre à zéro la suite des noms de sous-groupes",
+            help="Ne pas remettre à zéro la suite des noms de groupes entre chaque groupement",
         ),
         argument(
             "-r",
