@@ -70,7 +70,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
 
     always_make = True
     target_dir = "generated"
-    target_name = "attendance_{group}.zip"
+    target_name = "attendance_{group}"
     template_file = "attendance.tex.jinja2"
 
     cli_args = (
@@ -243,9 +243,9 @@ class PdfAttendance(UVTask, CliArgsMixin):
         # Écriture du pdf dans un zip si plusieurs
         with Output(self.target) as target0:
             if len(pdfs) == 1:
-                shutil.move(pdfs[0], target0())
+                shutil.move(pdfs[0], target0() + ".pdf")
             else:
-                with zipfile.ZipFile(target0(), "w") as z:
+                with zipfile.ZipFile(target0() + ".zip", "w") as z:
                     for filepath in pdfs:
                         z.write(filepath, os.path.basename(filepath))
 
