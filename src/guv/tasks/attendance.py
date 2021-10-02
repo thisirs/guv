@@ -131,7 +131,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
         self.file_dep = [self.xls_merge]
 
         self.parse_args()
-        self.target = self.build_target()
+        self.target = self.build_target(group=(self.group or "all"))
         latex_env = LaTeXEnvironment()
         self.template = latex_env.get_template(self.template_file)
 
