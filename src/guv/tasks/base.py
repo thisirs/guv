@@ -241,7 +241,7 @@ class UVTask(TaskBase):
     def build_target(self, **kwargs):
         """Return a pathname of the target"""
 
-        kw = self.__dict__
+        kw = self.__dict__.copy()
         kw["target_dir"] = self.target_dir
         kw["target_name"] = self.target_name
         kw.update(kwargs)
