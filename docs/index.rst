@@ -41,8 +41,8 @@ On commence par créer l'arborescence requise (voir
 
 .. code:: bash
 
-   guv createsemester P2021 --uv SY02 SY09
-   cd P2021
+   guv createsemester A2021 --uv SY02 SY09
+   cd A2021
 
 Les variables ont été renseignées dans le fichier ``config.py`` du
 semestre.
@@ -88,9 +88,9 @@ préremplis on peut exécuter la commande suivante :
 
 .. code:: bash
 
-   guv createsemester P2020 --uv SY02 SY09
+   guv createsemester A2021 --uv SY02 SY09
 
-qui va créer un dossier de semestre nommé ``P2020`` contenant un fichier
+qui va créer un dossier de semestre nommé ``A2021`` contenant un fichier
 de configuration prérempli ``config.py`` ainsi que des sous-dossiers
 ``generated`` et ``documents`` et deux dossiers d'UV nommés ``SY02`` et
 ``SY09`` contenant chacun leur fichier de configuration prérempli
@@ -99,7 +99,7 @@ de configuration prérempli ``config.py`` ainsi que des sous-dossiers
 
 .. code:: shell
 
-   P2020
+   A2021
    ├── config.py
    ├── documents
    ├── generated
@@ -118,7 +118,7 @@ dossier de semestre:
 
 .. code:: bash
 
-   cd P2020
+   cd A2021
    guv createuv SY19 AOS1
 
 Configuration des fichiers ``config.py``
