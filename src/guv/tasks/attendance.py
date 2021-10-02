@@ -247,7 +247,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
         # Écriture du pdf dans un zip si plusieurs
         if len(pdfs) == 1:
             with Output(self.target + ".pdf") as target0:
-                shutil.move(pdfs[0], target0() + ".pdf")
+                shutil.move(pdfs[0], target0())
         else:
             with Output(self.target + ".zip") as target0:
                 with zipfile.ZipFile(target0(), "w") as z:
