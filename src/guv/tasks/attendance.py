@@ -88,6 +88,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
         argument(
             "-b",
             "--blank",
+            action="store_true",
             default=False,
             help="Ne pas faire apparaitre le nom des étudiants (utile seulement avec --group)."
         ),
