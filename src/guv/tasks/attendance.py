@@ -241,11 +241,12 @@ class PdfAttendance(UVTask, CliArgsMixin):
             texs.append(tex)
 
         # Écriture du pdf dans un zip si plusieurs
-        with Output(self.target) as target0:
-            if len(pdfs) == 1:
+        if len(pdfs) == 1:
+            with Output(self.target + ".pdf") as target0:
                 shutil.move(pdfs[0], target0() + ".pdf")
-            else:
-                with zipfile.ZipFile(target0() + ".zip", "w") as z:
+        else:
+            with Output(self.target + ".zip") as target0:
+                with zipfile.ZipFile(target0(), "w") as z:
                     for filepath in pdfs:
                         z.write(filepath, os.path.basename(filepath))
 
