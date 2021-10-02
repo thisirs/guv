@@ -56,7 +56,7 @@ semestre :
    CRENEAU_UV = "documents/Creneaux-UV-hybride-prov-V02.pdf"
 
 On peut maintenant exécuter ``guv cal_uv`` dans le dossier du semestre
-npour générer les calendriers hebdomadaires des UV.
+pour générer les calendriers hebdomadaires des UV.
 
 Tutoriel
 ========
