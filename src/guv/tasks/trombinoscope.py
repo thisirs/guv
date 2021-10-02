@@ -38,6 +38,7 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
         argument(
             "-g",
             "--group",
+            metavar="GROUP",
             dest="groupby",
             required=True,
             help="Nom de colonne utilisée pour réaliser le groupement. Un fichier pdf est généré pour chaque groupe. Lorsque le nom de groupe est ``all``, il y a un seul groupe (donc un seul fichier pdf) comportant la totalité des étudiants.",
@@ -45,6 +46,7 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
         argument(
             "-s",
             "--subgroup",
+            metavar="SUBGROUP",
             dest="subgroupby",
             required=False,
             default=None,
