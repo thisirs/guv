@@ -194,6 +194,9 @@ class PdfAttendance(UVTask, CliArgsMixin):
                     context["students"] = students
                     yield context
 
+                if sum(self.count) < len(df.index):
+                    raise Exception("Les effectifs cumulés ne suffisent pas")
+
                 groups = make_groups(df.index, self.count)
                 for name, idxs in zip(self.names, groups):
                     group = df.loc[idxs]
