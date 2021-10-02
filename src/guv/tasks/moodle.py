@@ -137,6 +137,7 @@ class CsvGroupsGroupings(UVTask, CliArgsMixin):
         argument(
             "-g",
             type=int,
+            metavar="n_groups",
             dest="ngroups",
             required=True,
             help="Nombre de groupes dans chaque groupement",
@@ -144,12 +145,14 @@ class CsvGroupsGroupings(UVTask, CliArgsMixin):
         argument(
             "-f",
             dest="ngroupsf",
+            metavar="format",
             default="D##_P1_@",
             help="Format du nom de groupe (defaut: %(default)s)",
         ),
         argument(
             "-G",
             dest="ngroupings",
+            metavar="n_groupings",
             type=int,
             required=True,
             help="Nombre de groupements différents",
@@ -157,6 +160,7 @@ class CsvGroupsGroupings(UVTask, CliArgsMixin):
         argument(
             "-F",
             dest="ngroupingsf",
+            metavar="format",
             default="D##_P1",
             help="Format du nom de groupement (defaut: %(default)s)",
         ),
