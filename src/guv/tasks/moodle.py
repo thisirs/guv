@@ -803,6 +803,26 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
 
        guv csv_create_groups Half --proportions .5 .5 --ordered --names First Second --template '{group_name}'
 
+    .. rubric:: Remarques
+
+    Afin qu'il soit correctement chargé par Moodle, le fichier ne
+    contient pas d'en-tête spécifiant le nom des colonnes. Pour
+    agréger ce fichier de groupes au fichier central, il faut donc
+    utiliser l'argument ``kw_read`` comme suit :
+
+    .. code:: python
+
+       AGGREGATE_DOCUMENTS = [
+           [
+               "generated/Projet1_groups.csv",
+               aggregate(
+                   kw_read={"header": None, "names": ["Courriel", "Groupe P1"]},
+                   left_on="Courriel",
+                   right_on="Courriel"
+               )
+           ],
+       ]
+
     """
 
     always_make = True
