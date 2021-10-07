@@ -161,7 +161,7 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
                     self.first_df[name] = cells
                 elif type in ["hide", "raw"]:
                     raise Exception(
-                        "La colonne `{name}` n'existe pas dans le fichier central mais "
+                        f"La colonne `{name}` n'existe pas dans le fichier central mais "
                         "son type est `raw` ou `hide` dans le fichier de configuration.",
                         self.data_df.columns,
                     )
