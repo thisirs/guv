@@ -232,6 +232,145 @@ def compute_new_column(*cols, func=None, colname=None):
     return func2
 
 
+def aggregate_df(
+    left_df,
+    right_df,
+    left_on,
+    right_on,
+    preprocessing=None,
+    postprocessing=None,
+    subset=None,
+    drop=None,
+    rename=None,
+):
+    """Merge two dataframes"""
+
+    # Columns that will be removed after merging
+    drop_cols = []
+
+    # Flag if left_on is a computed column
+    left_on_is_added = False
+
+    # Add column if callable, callable should return of pandas
+    # Series
+    if callable(left_on):
+        left_on = left_on(left_df)
+        left_df = left_df.assign(**{left_on.name: left_on.values})
+        left_on = left_on.name
+        left_on_is_added = True
+
+    # Check if it exists
+    if isinstance(left_on, str):
+        # Check that left_on column exists
+        check_columns(left_df, left_on)
+    else:
+        raise Exception("L'argument 'left_on' doit être un callable ou une chaine de caractères")
+
+    # Add column if callable
+    if callable(right_on):
+        right_on = right_on(right_df)
+        right_df = right_df.assign(**{right_on.name: right_on.values})
+        right_on = right_on.name
+
+    # Check if it exists
+    if isinstance(right_on, str):
+        check_columns(right_df, right_on)
+    else:
+        raise Exception("Unsupported type for right_on")
+
+    # Extract subset of columns, right_on included
+    if subset is not None:
+        sc_columns = Or(*right_df.columns)
+        subset = Schema(Or(And(sc_columns, Use(lambda x: [x])), [sc_columns])).validate(subset)
+        subset0 = list({s: 1 for s in [right_on] + subset}.keys())
+        right_df = right_df[subset0]
+
+    # Allow to drop columns, right_on not allowed
+    if drop is not None:
+        sc_columns = Or(*right_df.columns)
+        drop = Schema(Or(And(sc_columns, Use(lambda x: [x])), [sc_columns])).validate(drop)
+        if right_on in drop:
+            raise Exception('On enlève pas la clé')
+        right_df = right_df.drop(drop, axis=1)
+
+    # Rename columns in data to be merged
+    if rename is not None:
+        if right_on in rename:
+            raise Exception('Pas de renommage de la clé possible')
+        rename = Schema({str: str}).validate(rename)
+        right_df = right_df.rename(columns=rename)
+
+    # Columns to drop after merge: primary key of right dataframe
+    # only if name is different, _merge column added by pandas
+    # during merge, programmatically added column is
+    # left_on_is_added is set
+    drop_cols = ['_merge']
+    if right_on != left_on:
+        if right_on in left_df.columns:
+            drop_cols += [right_on + "_y"]
+        else:
+            drop_cols += [right_on]
+
+    if left_on_is_added:
+        drop_cols += [left_on]
+
+    # Record same column name between right_df and left_df to
+    # merge them eventually
+    duplicated_columns = set(left_df.columns).intersection(set(right_df.columns))
+    duplicated_columns = duplicated_columns.difference(set([left_on, right_on]))
+
+    if preprocessing is not None:
+        if hasattr(preprocessing, "__name__"):
+            print(f"Preprocessing: {preprocessing.__name__}")
+        else:
+            print("Preprocessing")
+        right_df = preprocessing(right_df)
+
+    # Outer merge
+    merged_df = left_df.merge(right_df,
+                              left_on=left_on,
+                              right_on=right_on,
+                              how='outer',
+                              suffixes=('', '_y'),
+                              indicator=True)
+
+    # Select like how='left' as result
+    agg_df = merged_df[merged_df["_merge"].isin(['left_only', 'both'])]
+
+    # Select right only and report
+    merged_df_ro = merged_df[merged_df["_merge"] == 'right_only']
+    key = right_on
+    if (right_on != left_on and right_on in left_df.columns):
+        key = key + "_y"
+
+    for index, row in merged_df_ro.iterrows():
+        print("WARNING: identifiant présent dans le document à aggréger mais introuvable dans la base de données :", row[key])
+
+    if postprocessing is not None:
+        if hasattr(postprocessing, "__name__"):
+            print(f"Postprocessing: {postprocessing.__name__}")
+        else:
+            print("Postprocessing")
+        agg_df = postprocessing(agg_df)
+
+    # Try to merge columns
+    for c in duplicated_columns:
+        c_y = c + '_y'
+        print("Trying to merge columns '%s' and '%s'..." % (c, c_y), end='')
+        if any(agg_df[c_y].notna() & agg_df[c].notna()):
+            print('failed')
+            continue
+        else:
+            agg_df.loc[:, c] = agg_df.loc[:, c].fillna(agg_df.loc[:, c_y])
+            drop_cols.append(c_y)
+            print('done')
+
+    # Drop useless columns
+    agg_df = agg_df.drop(drop_cols, axis=1, errors='ignore')
+
+    return agg_df
+
+
 def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset=None, drop=None, rename=None, read_method=None, kw_read={}):
     """Renvoie une fonction qui réalise l'agrégation avec un fichier Excel/csv.
 
@@ -326,29 +465,6 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
     """
 
     def aggregate0(left_df, path):
-        nonlocal left_on, right_on, subset, drop, rename
-
-        # Columns that will be removed after merging
-        drop_cols = []
-
-        # Flag if left_on is a computed column
-        left_on_is_added = False
-
-        # Add column if callable, callable should return of pandas
-        # Series
-        if callable(left_on):
-            left_on = left_on(left_df)
-            left_df = left_df.assign(**{left_on.name: left_on.values})
-            left_on = left_on.name
-            left_on_is_added = True
-
-        # Check if it exists
-        if isinstance(left_on, str):
-            # Check that left_on column exists
-            check_columns(left_df, left_on)
-        else:
-            raise Exception("L'argument 'left_on' doit être un callable ou une chaine de caractères")
-
         # Infer a read method if not provided
         if read_method is None:
             if path.endswith('.csv'):
@@ -360,109 +476,17 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
         else:
             right_df = read_method(path, **kw_read)
 
-        if preprocessing is not None:
-            if hasattr(preprocessing, "__name__"):
-                print(f"Preprocessing: {preprocessing.__name__}")
-            else:
-                print("Preprocessing")
-            right_df = preprocessing(right_df)
-
-        # Add column if callable
-        if callable(right_on):
-            right_on = right_on(right_df)
-            right_df = right_df.assign(**{right_on.name: right_on.values})
-            right_on = right_on.name
-
-        # Check if it exists
-        if isinstance(right_on, str):
-            check_columns(right_df, right_on)
-        else:
-            raise Exception("Unsupported type for right_on")
-
-        # Extract subset of columns, right_on included
-        if subset is not None:
-            sc_columns = Or(*right_df.columns)
-            subset = Schema(Or(And(sc_columns, Use(lambda x: [x])), [sc_columns])).validate(subset)
-            subset0 = list({s: 1 for s in [right_on] + subset}.keys())
-            right_df = right_df[subset0]
-
-        # Allow to drop columns, right_on not allowed
-        if drop is not None:
-            sc_columns = Or(*right_df.columns)
-            drop = Schema(Or(And(sc_columns, Use(lambda x: [x])), [sc_columns])).validate(drop)
-            if right_on in drop:
-                raise Exception('On enlève pas la clé')
-            right_df = right_df.drop(drop, axis=1)
-
-        # Rename columns in data to be merged
-        if rename is not None:
-            if right_on in rename:
-                raise Exception('Pas de renommage de la clé possible')
-            rename = Schema({str: str}).validate(rename)
-            right_df = right_df.rename(columns=rename)
-
-        # Columns to drop after merge: primary key of right dataframe
-        # only if name is different, _merge column added by pandas
-        # during merge, programmatically added column is
-        # left_on_is_added is set
-        drop_cols = ['_merge']
-        if right_on != left_on:
-            if right_on in left_df.columns:
-                drop_cols += [right_on + "_y"]
-            else:
-                drop_cols += [right_on]
-
-        if left_on_is_added:
-            drop_cols += [left_on]
-
-        # Record same column name between right_df and left_df to
-        # merge them eventually
-        duplicated_columns = set(left_df.columns).intersection(set(right_df.columns))
-        duplicated_columns = duplicated_columns.difference(set([left_on, right_on]))
-
-        # Outer merge
-        merged_df = left_df.merge(right_df,
-                                  left_on=left_on,
-                                  right_on=right_on,
-                                  how='outer',
-                                  suffixes=('', '_y'),
-                                  indicator=True)
-
-        # Select like how='left' as result
-        agg_df = merged_df[merged_df["_merge"].isin(['left_only', 'both'])]
-
-        # Select right only and report
-        merged_df_ro = merged_df[merged_df["_merge"] == 'right_only']
-        key = right_on
-        if (right_on != left_on and right_on in left_df.columns):
-            key = key + "_y"
-
-        for index, row in merged_df_ro.iterrows():
-            print("WARNING: identifiant présent dans le document à aggréger mais introuvable dans la base de données :", row[key])
-
-        if postprocessing is not None:
-            if hasattr(postprocessing, "__name__"):
-                print(f"Postprocessing: {postprocessing.__name__}")
-            else:
-                print("Postprocessing")
-            agg_df = postprocessing(agg_df)
-
-        # Try to merge columns
-        for c in duplicated_columns:
-            c_y = c + '_y'
-            print("Trying to merge columns '%s' and '%s'..." % (c, c_y), end='')
-            if any(agg_df[c_y].notna() & agg_df[c].notna()):
-                print('failed')
-                continue
-            else:
-                agg_df.loc[:, c] = agg_df.loc[:, c].fillna(agg_df.loc[:, c_y])
-                drop_cols.append(c_y)
-                print('done')
-
-        # Drop useless columns
-        agg_df = agg_df.drop(drop_cols, axis=1, errors='ignore')
-
-        return agg_df
+        return aggregate_df(
+            left_df,
+            right_df,
+            left_on=left_on,
+            right_on=right_on,
+            preprocessing=preprocessing,
+            postprocessing=postprocessing,
+            subset=subset,
+            drop=drop,
+            rename=rename,
+        )
 
     return aggregate0
 
