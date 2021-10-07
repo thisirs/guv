@@ -464,7 +464,7 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
 
     def get_columns(self):
         columns = super().get_columns()
-        columns.append((self.subgroup_by, "hide", 5))
+        columns.append((self.subgroup_by, "raw", 5))
         return columns
 
     def add_arguments(self):
