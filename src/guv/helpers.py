@@ -491,11 +491,11 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
     return aggregate0
 
 
-def aggregate_org(colname, postprocessing=None):
+def aggregate_org(colname, postprocessing=None, on=None):
     """Renvoie une fonction d'agrégation d'un fichier Org.
 
-    Le document à agréger est au format Org avec un nom d'étudiant par
-    headline.
+    Le document à agréger est au format Org. Les titres servent de clé
+    pour l'agrégation et le contenu de ces titres et agréger.
 
     Parameters
     ----------
@@ -504,31 +504,59 @@ def aggregate_org(colname, postprocessing=None):
         Nom de la colonne dans lequel stocker les informations
         présentes dans le fichier Org.
 
+    on : :obj:`str`, optional
+        Colonne du fichier ``effectif.xlsx`` servant de clé pour
+        agréger avec les titres du fichier Org. Par défaut, les titres
+        doivent contenir les nom et prénom des étudiants.
+
     postprocessing : :obj:`callable`, optional
         Post-traitement à appliquer au `DataFrame` après intégration du fichier Org.
-
 
     Examples
     --------
 
-    Le fichier Org :
+    - Agrégation d'un fichier avec les noms des étudiants pour titre :
 
-    .. code:: text
+      Le fichier Org :
 
-       * Bob Morane
-         Souvent absent
-       * Untel
-         Voir email d'excuse
+      .. code:: text
 
+         * Bob Morane
+           Souvent absent
+         * Untel
+           Voir email d'excuse
 
-    L'instruction d'agrégation :
+      L'instruction d'agrégation :
 
-    .. code:: python
+      .. code:: python
 
-       from guv.helpers import aggregate_org
-       AGGREGATE_DOCUMENTS = [
-           ["documents/infos.org", aggregate_org("Informations")],
-       ]
+         from guv.helpers import aggregate_org
+         AGGREGATE_DOCUMENTS = [
+             ["documents/infos.org", aggregate_org("Informations")],
+         ]
+
+    - Agrégation d'un fichier avec pour titres les éléments d'une
+      colonne existante. Par exemple, on peut agréger les notes par
+      groupe de projet prises dans le fichier Org. On spécifie la
+      colonne contenant les groupes de projet "Projet1_Group".
+
+      Le fichier Org :
+
+      .. code:: text
+
+         * Projet1_Group1
+           A
+         * Projet1_Group2
+           B
+
+      L'instruction d'agrégation :
+
+      .. code:: python
+
+         from guv.helpers import aggregate_org
+         AGGREGATE_DOCUMENTS = [
+             ["documents/infos.org", aggregate_org("Note projet 1", on="Projet1_Group")],
+         ]
 
     """
 
@@ -536,41 +564,28 @@ def aggregate_org(colname, postprocessing=None):
         if not path.endswith('.org'):
             raise Exception(f"{path} n'est pas un fichier org")
 
-        left_df[colname] = ""
+        if on is None:
+            left_on = slugrot("Nom", "Prénom")
+            right_on = slugrot("header")
+        else:
+            left_on = on
+            right_on = "header"
 
-        # Add column that acts as a primary key
-        tf_df = slugrot("Nom", "Prénom")
-        left_df["fullname_slug"] = tf_df(left_df)
-
-        infos = open(path, 'r').read()
-        if infos:
-            for chunk in re.split("^\\* *", infos, flags=re.MULTILINE):
+        def parse_org(text):
+            for chunk in re.split("^\\* *", text, flags=re.MULTILINE):
                 if not chunk:
                     continue
-                etu, *text = chunk.split("\n", maxsplit=1)
+                header, *text = chunk.split("\n", maxsplit=1)
                 text = "\n".join(text).strip("\n")
                 text = textwrap.dedent(text)
-                slugname = slugrot_string(etu)
+                yield header, text
 
-                res = left_df.loc[left_df.fullname_slug == slugname]
-                if len(res) == 0:
-                    raise Exception('Pas de correspondance pour `{:s}`'.format(etu))
-                elif len(res) > 1:
-                    raise Exception('Plusieurs correspondances pour `{:s}`'.format(etu))
+        text = open(path, 'r').read()
+        df_org = pd.DataFrame(parse_org(text), columns=["header", colname])
 
-                left_df.loc[res.index[0], colname] = text
-
-        df = left_df.drop('fullname_slug', axis=1)
-
-        if postprocessing is not None:
-            if hasattr(postprocessing, "__name__"):
-                print(f"Postprocessing: {postprocessing.__name__}")
-            else:
-                print("Postprocessing")
-
-            df = postprocessing(df)
-
+        df = aggregate_df(left_df, df_org, left_on, right_on, postprocessing=postprocessing)
         return df
+
     return aggregate_org0
 
 
