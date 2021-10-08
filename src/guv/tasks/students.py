@@ -918,3 +918,33 @@ class ZoomBreakoutRooms(UVTask, CliArgsMixin):
         df_group = df_group.sort_values("Pre-assign Room Name")
         with Output(self.target, protected=True) as target:
             df_group.to_csv(target(), index=False)
+
+
+class MaggleTeams(UVTask, CliArgsMixin):
+    """Crée un fichier csv prêt à charger sur Zoom pour faire des groupes"""
+
+    target_dir = "generated"
+    target_name = "maggle_teams_{group}.csv"
+    cli_args = (
+        argument(
+            "group",
+            help="Le nom de la colonne des groupes",
+        ),
+    )
+
+    def setup(self):
+        super().setup()
+        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.file_dep = [self.xls_merge]
+        self.parse_args()
+        self.target = self.build_target()
+
+    def run(self):
+        df = pd.read_excel(self.xls_merge, engine="openpyxl")
+        check_columns(
+            df, ["Login", "Courriel", self.group, ], file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
+        )
+
+        df_group = df[["Nom", "Prénom", "Courriel", "Login", self.group]]
+        with Output(self.target, protected=True) as target:
+            df_group.to_csv(target(), index=False)
