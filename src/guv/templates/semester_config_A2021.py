@@ -79,7 +79,7 @@ ferie = [
     date(2021, 10, 21),
     date(2021, 11, 11),
 ]
-vacances_noel = skip_range(date(2021, 12, 23), date(2021, 1, 2))
+vacances_noel = skip_range(date(2021, 12, 23), date(2022, 1, 2))
 vacances_toussaint = skip_range(date(2021, 10, 25), date(2021, 11, 1))
 
 SKIP_DAYS_C = ferie + vacances_toussaint + vacances_noel + median + final
