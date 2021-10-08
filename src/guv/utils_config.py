@@ -221,5 +221,3 @@ def compute_slots(csv_inst_list, planning_type, empty_instructor=True, filter_uv
 
     dfm = pd.concat([df_Cm, df_Dm, df_Tm], ignore_index=True)
     return dfm
-
-
