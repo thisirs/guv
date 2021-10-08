@@ -109,77 +109,86 @@ class Output():
             print(f"Wrote `{rel_to_dir(self.target, settings.SEMESTER_DIR)}'")
 
 
+def generate_days(beg, end, skip, turn, course_type):
+    """Génére des tuples
+
+    date, dayname, num, weekAB, numAB, nweek
+
+    """
+
+    if course_type not in ["C", "D", "T"]:
+        raise Exception("Type de cours inconnu", course_type)
+
+    daynames = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"]
+    delta = end - beg
+    day_counter = {day: 0 for day in daynames}
+
+    nweek = 0
+
+    for i in range(delta.days + 1):
+        date = beg + timedelta(days=i)
+
+        # Lundi
+        if i % 7 == 0:
+            nweek += 1
+
+        # Ignore week-end
+        if date.weekday() in [5, 6]:
+            continue
+
+        # Skip days
+        if date in skip:
+            continue
+
+        # Get real day
+        dayname = turn[date] if date in turn else daynames[date.weekday()]
+        day_counter[dayname] += 1
+        num = day_counter[dayname]
+        weekAB = None
+        numAB = None
+
+        if course == "T":
+            # A, B, A, B when num is 1, 2, 3, 4
+            weekAB = "A" if num % 2 == 1 else "B"
+
+            # 1, 1, 2, 2 when num is 1, 2, 3, 4
+            numAB = (num + 1) // 2
+
+        yield date, dayname, num, weekAB, numAB, nweek
+
+
 def create_plannings(planning_type):
-    """Generate list of working days according to planning"""
+    """Retourne trois dataframes Pandas avec les colonnes:
 
-    def generate_days(beg, end, skip, turn, course):
-        """Generate working days from BEG to END"""
+    - date: la date
+    - dayname: le nom du jour (suivant TURN)
+    - num: le numéro de la séance
+    - weekAB: la semaine A ou B
+    - numAB: le numéro de la séance avec prise en compte A/B
+    - nweek: le numéro de la semaine
 
-        daynames = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"]
-        delta = end - beg
-        semaine = {day: 0 for day in daynames}
-
-        nweek = 0
-
-        for i in range(delta.days + 1):
-            d = beg + timedelta(days=i)
-
-            # Lundi
-            if i % 7 == 0:
-                nweek += 1
-
-            # Ignore week-end
-            if d.weekday() in [5, 6]:
-                continue
-
-            # Skip days
-            if d in skip:
-                continue
-
-            # Get real day
-            day = turn[d] if d in turn else daynames[d.weekday()]
-
-            # Get week A or B
-            if course == "T":
-                sem = "A" if semaine[day] % 2 == 0 else "B"
-                numAB = semaine[day] // 2 + 1
-                semaine[day] += 1
-                num = semaine[day]
-            elif course in ["C", "D"]:
-                semaine[day] += 1
-                numAB = None
-                sem = None
-                num = semaine[day]
-            else:
-                raise Exception("course inconnu")
-
-            if d in turn:
-                yield d, turn[d], sem, num, numAB, nweek
-            else:
-                yield d, daynames[d.weekday()], sem, num, numAB, nweek
-
-    beg = settings.PLANNINGS[planning_type]["PL_BEG"]
-    end = settings.PLANNINGS[planning_type]["PL_END"]
+    Chaque ligne est un créneau dans le planning associé.
+    """
 
     planning_C = pd.DataFrame(
         generate_days(
             beg, end, settings.SKIP_DAYS_C, settings.TURN, "C"
         ),
-        columns=["date", "dayname", "semaine", "num", "numAB", "nweek"],
+        columns=["date", "dayname", "num", "weekAB", "numAB", "nweek"],
     )
 
     planning_D = pd.DataFrame(
         generate_days(
             beg, end, settings.SKIP_DAYS_D, settings.TURN, "D"
         ),
-        columns=["date", "dayname", "semaine", "num", "numAB", "nweek"],
+        columns=["date", "dayname", "num", "weekAB", "numAB", "nweek"],
     )
 
     planning_T = pd.DataFrame(
         generate_days(
             beg, end, settings.SKIP_DAYS_T, settings.TURN, "T"
         ),
-        columns=["date", "dayname", "semaine", "num", "numAB", "nweek"],
+        columns=["date", "dayname", "num", "weekAB", "numAB", "nweek"],
     )
 
     return planning_C, planning_D, planning_T
@@ -216,7 +225,7 @@ def compute_slots(csv_inst_list, planning_type, empty_instructor=True, filter_uv
             pl_T,
             how="left",
             left_on=["Jour", "Semaine"],
-            right_on=["dayname", "semaine"],
+            right_on=["dayname", "weekAB"],
         )
 
     dfm = pd.concat([df_Cm, df_Dm, df_Tm], ignore_index=True)
