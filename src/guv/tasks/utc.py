@@ -259,8 +259,6 @@ class CsvAllCourses(CliArgsMixin, TaskBase):
             self.plannings = self.settings.SELECTED_PLANNINGS
 
     def run(self):
-        df = pd.read_csv(self.csv)
-
         tables = []
         for planning_type in self.plannings:
             uvs = (self.settings.PLANNINGS[planning_type].get('UVS') or
