@@ -147,7 +147,7 @@ def generate_days(beg, end, skip, turn, course_type):
         weekAB = None
         numAB = None
 
-        if course == "T":
+        if course_type == "T":
             # A, B, A, B when num is 1, 2, 3, 4
             weekAB = "A" if num % 2 == 1 else "B"
 
