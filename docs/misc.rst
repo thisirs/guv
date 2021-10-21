@@ -20,6 +20,8 @@ Pour changer cela, on peut écrire le code suivant dans le fichier
 L'effectif sera alors écrit dans le dossier ``documents`` avec le nom
 ``info.xlsx``.
 
+.. _creation-tache:
+
 Création d'une tâche
 --------------------
 
@@ -130,7 +132,7 @@ fonction ``argument``.
 
    from guv.utils import argument
 
-   class MaTache(CliArgsMixin, UVTask):
+   class MaTache(UVTask, CliArgsMixin):
        cli_args = (
            argument(
                "-a",

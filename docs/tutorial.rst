@@ -1,9 +1,9 @@
 Tutoriel
 ========
 
-**guv** doit utiliser des fichiers fournis par l'administration
-spécifique d'une UV ou pas pour créer de nouveaux fichiers. Pour cela,
-**guv** s'appuie sur la bibliothèque Python ``doit`` qui est une
+**guv** doit utiliser des fichiers fournis par l'administration qui
+sont spécifiques d'une UV ou pas pour créer de nouveaux fichiers. Pour
+cela, **guv** s'appuie sur la bibliothèque Python ``doit`` qui est une
 implémentation de type ``make``. À l'image de ``doit``, **guv** peut
 exécuter des tâches et chaque appel à **guv** est de la forme :
 
@@ -30,12 +30,13 @@ préremplis on peut exécuter la commande suivante :
 
    guv createsemester A2021 --uv SY02 SY09
 
-qui va créer un dossier de semestre nommé ``A2021`` contenant un fichier
-de configuration prérempli ``config.py`` ainsi que des sous-dossiers
-``generated`` et ``documents`` et deux dossiers d'UV nommés ``SY02`` et
-``SY09`` contenant chacun leur fichier de configuration prérempli
-également nommé ``config.py`` et des sous-dossiers ``generated`` et
-``documents``. L'arborescence est ainsi la suivante :
+qui va créer un dossier de semestre nommé ``A2021`` contenant un
+fichier de configuration prérempli ``config.py`` ainsi que des
+sous-dossiers ``generated`` et ``documents`` et deux autres dossiers
+d'UV nommés ``SY02`` et ``SY09`` contenant chacun leur fichier de
+configuration prérempli également nommé ``config.py`` ainsi que des
+sous-dossiers ``generated`` et ``documents``. L'arborescence est alors
+la suivante :
 
 .. code:: shell
 
@@ -61,6 +62,10 @@ dossier de semestre:
    cd A2021
    guv createuv SY19 AOS1
 
+Pour que l'UV soit effectivement prise en compte par **guv**, il faut
+ensuite la déclarer dans le fichier ``config.py`` du semestre.
+
+
 Configuration des fichiers ``config.py``
 ----------------------------------------
 
@@ -72,10 +77,13 @@ Fichier ``config.py`` de configuration de semestre
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Le fichier de configuration du semestre contient des informations
-spécifiques à un semestre : liste des UV gérées, chemin vers le fichier
-des créneaux fourni par l'administration, liste des plannings,
-calendrier.
-
+spécifiques à un semestre : liste des UV gérées, chemin vers le
+fichier des créneaux fourni par l'administration, liste des plannings,
+calendrier. Si l'arborescence a été créée avec la tâche
+``createsemester``, un nom de semestre reconnu par **guv** et une
+liste d'UV, les variables ``PLANNINGS``, ``TURN``, ``SKIP_DAYS_C``,
+``SKIP_DAYS_D``, ``SKIP_DAYS_T`` sont automatiquement renseignées et
+on peut sauter les deux sections suivantes.
 
 Configuration des plannings avec ``PLANNINGS``
 ++++++++++++++++++++++++++++++++++++++++++++++
@@ -86,13 +94,17 @@ est utilisé. Il est possible de configurer d'autres périodes de temps
 pour un même semestre (pour gérer les trimestres des masters par
 exemple).
 
-La déclaration des plannings est controlée par la variable
+La déclaration des plannings est contrôlée par la variable
 ``PLANNINGS`` qui est un dictionnaire dont les clés sont le nom des
 plannings à paramétrer et les valeurs un dictionnaire de
 caractéristiques.
 
 Les caractéristiques nécessaires sont la liste des UV gérées par ce
 planning, la date de début et la date de fin du planning.
+
+Si l'arboresence a été créée avec la tâche ``createsemester`` et que
+le nom du semestre est reconnu, la variable ``PLANNINGS`` est
+automatiquement remplie.
 
 Par exemple, on peut avoir la définition suivante :
 
@@ -113,10 +125,13 @@ Configuration du planning ingénieur
 Afin de créer les créneaux de cours, il faut renseigner quelques
 paramètres pour créer le planning ingénieur. Les dates de début et de
 fin de période sont déjà renseignées dans la variable ``PLANNINGS``.
+Si l'arboresence a été créée avec la tâche ``createsemester`` et que
+le nom du semestre est reconnu, les autres variables du planning
+ingénieur sont automatiquement remplies.
 
-Les jours qui sont transformés en d'autres jours pour tenir compte
-des jours fériés ou journées spéciales sont listés dans la variable
-``TURN``. Par exemple, on peut spécifier
+Sinon, il faut préciser les jours qui sont transformés en d'autres
+jours pour tenir compte des jours fériés ou journées spéciales. Ils
+sont listés dans la variable ``TURN``. Par exemple, on peut spécifier
 
 .. code:: python
 
@@ -128,11 +143,14 @@ des jours fériés ou journées spéciales sont listés dans la variable
        date(2020, 6, 4): 'Lundi'
    }
 
-Les variables ``SKIP_DAYS_C``, ``SKIP_DAYS_D`` et ``SKIP_DAYS_T``
-contiennent respectivement la liste des jours où il n'y a pas de
-cours, TD, TP (première semaine, vacances, median, final...). Des
-fonctions d'aide telles que ``skip_week``, ``skip_range`` sont mises
-à disposition.
+Le 4 mai et le 12 mai sont donc un vendredi, le 20 mai est un jeudi et
+le 4 juin est un lundi.
+
+Il faut également renseigner les variables ``SKIP_DAYS_C``,
+``SKIP_DAYS_D`` et ``SKIP_DAYS_T`` qui contiennent respectivement la
+liste des jours où il n'y a pas de cours, TD, TP (première semaine,
+vacances, median, final...). Des fonctions d'aide telles que
+``skip_week``, ``skip_range`` sont mises à disposition.
 
 .. code:: python
 
@@ -155,6 +173,7 @@ fonctions d'aide telles que ``skip_week``, ``skip_range`` sont mises
    SKIP_DAYS_D = ferie + vacances_printemps + debut + median + final
    SKIP_DAYS_T = ferie + vacances_printemps + debut + final
 
+.. _conf_creneau:
 
 Configuration des créneaux
 ++++++++++++++++++++++++++
@@ -163,7 +182,8 @@ Les créneaux officiels portant sur toutes les UV de l'UTC durant une
 semaine type sont renseignés dans un fichier pdf fourni par
 l'administration et disponible `ici
 <https://webapplis.utc.fr/ent/services/services.jsf?sid=578>`__. Il
-faut renseigner son chemin relatif dans la variable ``CRENEAU_UV``.
+faut le télécharger et renseigner son chemin relatif dans la variable
+``CRENEAU_UV`` afin que **guv** ait connaissance des créneaux des UV.
 
 Fichier ``config.py`` de configuration d'UV
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -197,6 +217,8 @@ fichier csv). Il faut renseigner son chemin relatif dans la variable
 -  ``Tel. 1``
 -  ``Tel. 2``
 
+.. _affectation:
+
 Fichier d'affectation aux Cours/TD/TP
 +++++++++++++++++++++++++++++++++++++
 
@@ -215,6 +237,8 @@ fichier central de l'UV où il crée les colonnes suivantes :
 De part sa nature, son agrégation peut donner lieu à des ambiguïtés
 qui sont levées en interrogeant l'utilisateur (choix semaine A/B, nom
 d'étudiant non reconnu).
+
+.. _moodle-listing:
 
 Fichier de l'effectif de Moodle
 +++++++++++++++++++++++++++++++
@@ -241,8 +265,9 @@ Fichier des tiers-temps
 +++++++++++++++++++++++
 
 Il s'agit d'un simple fichier texte avec commentaire éventuel listant
-ligne par ligne les étudiants bénéficiant d'un tiers-temps. Il crée
-la colonne ``tiers-temps`` dans le fichier central de l'UV.
+ligne par ligne les étudiants bénéficiant d'un tiers-temps. Il crée la
+colonne ``tiers-temps`` dans le fichier central ``effectifs.xlsx`` de
+l'UV.
 
 On peut le renseigner dans la variable ``TIERS_TEMPS``. Par exemple :
 
@@ -275,7 +300,7 @@ textuel sur un étudiant. On peut le renseigner dans la variable
 ``INFO_ETUDIANT``. C'est un fichier au format ``Org`` de la forme
 suivante :
 
-.. code:: org
+.. code:: text
 
    * Nom1 Prénom1
      texte1
