@@ -274,7 +274,9 @@ besoin d'exécuter car elles sont des dépendances des tâches usuelles.
    - :class:`guv.tasks.attendance.PdfAttendance`
    - :class:`guv.tasks.grades.CsvForUpload`
    - :class:`guv.tasks.grades.XlsAssignmentGrade`
-   - :class:`guv.tasks.grades.XlsGradeSheet`
+   - :class:`guv.tasks.gradebook.XlsGradeBookJury`
+   - :class:`guv.tasks.gradebook.XlsGradeBookGroup`
+   - :class:`guv.tasks.gradebook.XlsGradeBookNoGroup`
    - :class:`guv.tasks.grades.YamlQCM`
    - :class:`guv.tasks.moodle.CsvCreateGroups`
    - :class:`guv.tasks.moodle.CsvGroups`
