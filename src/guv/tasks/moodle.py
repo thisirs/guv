@@ -1038,12 +1038,25 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             except InvalidGroups:
                 df = df.sample(frac=1)
                 continue
+            else:
+                break
+        else:
+            # If no break
+            raise Exception(f"Aucune des {i+1} configurations testées n'est valide")
 
-            if i > 0:
-                logger.warning(f"{i+1} configuration(s) testée(s)")
-            return self.add_names_to_grouping(groups, name, name_gen)
+        if i > 0:
+            logger.warning(f"{i+1} configuration(s) testée(s)")
 
-        raise Exception(f"Aucune des {i+1} configurations testées n'est valide")
+        series_list = self.add_names_to_grouping(groups, name, name_gen)
+
+        # Print when groups are in alphabetical order
+        if self.ordered:
+            for series in series_list:
+                first = df.loc[series.index].iloc[0]
+                last = df.loc[series.index].iloc[-1]
+                print(series.name, ":", first["Nom"], first["Prénom"], "--", last["Nom"], last["Prénom"])
+
+        return pd.concat(series_list)
 
     def make_groups_index(self, df):
         """Return a partition of the index of dataframe `df`.
@@ -1154,11 +1167,11 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                 yield pformat(n, grouping_name=name)
 
         series_list = [
-            pd.Series([group_name]*len(group), index=group)
+            pd.Series([group_name]*len(group), index=group, name=group_name)
             for group_name, group in zip(name_gen0(), groups)
         ]
 
-        return pd.concat(series_list)
+        return series_list
 
 
 class FetchGroupId(CliArgsMixin, TaskBase):
