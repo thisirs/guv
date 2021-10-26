@@ -1018,8 +1018,15 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             logger.warning(str(df_groups.head()))
 
     def make_groups(self, name, df, name_gen):
-        """Try to make subgroups in `df`"""
+        """Try to make subgroups in dataframe `df`.
 
+        Returns a Pandas series whose index is the one of `df` and
+        value is the group name generated from `name` and `name_gen`.
+
+        """
+
+        # Generate valid subgroups as a list of list of elements of
+        # `df` index.
         for i in range(100000):
             try:
                 # Make groups based on proportions, num_groups or
@@ -1039,7 +1046,12 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         raise Exception(f"Aucune des {i+1} configurations testées n'est valide")
 
     def make_groups_index(self, df):
-        """Use index of `df` to make groups"""
+        """Return a partition of the index of dataframe `df`.
+
+        Partition is encoded as a list of list of elements of the
+        index.
+
+        """
 
         index = df.index
 
