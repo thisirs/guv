@@ -182,7 +182,8 @@ class PdfAttendance(UVTask, CliArgsMixin):
 
         context = {
             "title": self.title,
-            "extra": self.extra
+            "extra": self.extra,
+            **self.info
         }
 
         if self.count:
