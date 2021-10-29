@@ -212,45 +212,45 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
     Examples
     --------
 
-    Fichier de notes pour un devoir en divisant par groupe de TD :
+    - Fichier de notes pour un devoir en divisant par groupe de TD :
 
-    .. code:: bash
+      .. code:: bash
 
-       guv xls_grade_book_no_group \\
-         --name Devoir1 \\
-         --marking-scheme documents/barème_devoir1.yml \\
-         --worksheets TD
+         guv xls_grade_book_no_group \\
+           --name Devoir1 \\
+           --marking-scheme documents/barème_devoir1.yml \\
+           --worksheets TD
 
-    avec le fichier YAML contenant par exemple :
+      avec le fichier YAML contenant par exemple :
 
-    .. code:: yaml
+      .. code:: yaml
 
-       Exercice 1:
-         Question 1:
-           - points: 1
-       Exercice 2:
-         Question 1:
-           - points: 1
+         Exercice 1:
+           Question 1:
+             - points: 1
+         Exercice 2:
+           Question 1:
+             - points: 1
 
-    Fichier de notes pour une soutenance individuelle en divisant par
-    jour de passage (colonne "Jour passage" dans ``effectifs.xlsx``)
-    et en ordonnant par ordre de passage (colonne "Ordre passage" dans
-    ``effectifs.xlsx``) :
+    - Fichier de notes pour une soutenance individuelle en divisant
+      par jour de passage (colonne "Jour passage" dans
+      ``effectifs.xlsx``) et en ordonnant par ordre de passage
+      (colonne "Ordre passage" dans ``effectifs.xlsx``) :
 
-    .. code:: bash
+      .. code:: bash
 
-       guv xls_grade_book_no_group \\
-         --name Soutenance1 \\
-         --marking-scheme documents/barème_soutenance1.yml \\
-         --worksheets "Jour passage" \\
-         --order-by "Ordre passage"
+         guv xls_grade_book_no_group \\
+           --name Soutenance1 \\
+           --marking-scheme documents/barème_soutenance1.yml \\
+           --worksheets "Jour passage" \\
+           --order-by "Ordre passage"
 
-    avec le fichier YAML contenant par exemple :
+      avec le fichier YAML contenant par exemple :
 
-    .. code:: yaml
+      .. code:: yaml
 
-       Fond:
-       Forme:
+         Fond:
+         Forme:
 
     """
 
@@ -641,20 +641,23 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
     Examples
     --------
 
-    .. code:: bash
+    - Feuille de notes avec la note ``median``, la  note ``final`` avec un
+      barre à 6 et l'information ``TD`` :
 
-       guv xls_jury --name SY02_jury --config documents/config_jury.yml
+      .. code:: bash
 
-    avec le fichier YAML contenant par exemple :
+         guv xls_jury --name SY02_jury --config documents/config_jury.yml
 
-    .. code:: yaml
+      avec le fichier YAML contenant par exemple :
 
-       marks:
-         - median:
-         - final
-             passing mark: 6
-         - TD:
-             type: raw
+      .. code:: yaml
+
+         marks:
+           - median:
+           - final
+               passing mark: 6
+           - TD:
+               type: raw
 
     """
 

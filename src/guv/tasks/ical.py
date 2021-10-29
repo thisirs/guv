@@ -77,10 +77,12 @@ class IcalInst(CliArgsMixin, TaskBase):
 
     {options}
 
+    Examples
+    --------
+
     .. code:: bash
 
        guv ical_inst --plannings P2048 Master2Sem1 --insts "Bob Arctor" "Winston Smith"
-
 
     """
 

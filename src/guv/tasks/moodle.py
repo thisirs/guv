@@ -773,35 +773,33 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
     Examples
     --------
 
-    Faire des trinomes à l'intérieur de chaque sous-groupe de TD :
+    - Faire des trinomes à l'intérieur de chaque sous-groupe de TD :
 
-    .. code:: bash
+      .. code:: bash
 
-       guv csv_create_groups Projet1 -G TD --group-size 3
+         guv csv_create_groups Projet1 -G TD --group-size 3
 
+    - Faire des trinomes à l'intérieur de chaque sous-groupe de TD sans
+      qu'aucun des trinomes n'ait déjà été choisi dans la colonne
+      ``Projet1`` :
 
-    Faire des trinomes à l'intérieur de chaque sous-groupe de TD sans
-    qu'aucun des trinomes n'ait déjà été choisi dans la colonne
-    ``Projet1`` :
+      .. code:: bash
 
-    .. code:: bash
+         guv csv_create_groups Projet2 -G TD --group-size 3 --other-groups Projet1
 
-       guv csv_create_groups Projet2 -G TD --group-size 3 --other-groups Projet1
+    - Partager en deux chaque sous-groupe de TD avec des noms de groupes
+      de la forme D1i, D1ii, D2i, D2ii... :
 
+      .. code:: bash
 
-    Partager en deux chaque sous-groupe de TD avec des noms de groupes
-    de la forme D1i, D1ii, D2i, D2ii... :
+         guv csv_create_groups HalfGroup -G TD --proportions .5 .5 --template '{grouping_name}{group_name}' --names i ii
 
-    .. code:: bash
+    - Partager l'effectif en deux parties selon l'ordre alphabétique
+      avec les noms de groupes ``First`` et ``Second`` :
 
-       guv csv_create_groups HalfGroup -G TD --proportions .5 .5 --template '{grouping_name}{group_name}' --names i ii
+      .. code:: bash
 
-    Partager l'effectif en deux parties selon l'ordre alphabétique
-    avec les noms de groupes ``First`` et ``Second`` :
-
-    .. code:: bash
-
-       guv csv_create_groups Half --proportions .5 .5 --ordered --names First Second --template '{group_name}'
+         guv csv_create_groups Half --proportions .5 .5 --ordered --names First Second --template '{group_name}'
 
     .. rubric:: Remarques
 
