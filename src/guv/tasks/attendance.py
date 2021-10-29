@@ -117,7 +117,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
             "--count",
             type=int,
             nargs="*",
-            help="Utilise une liste d'effectifs au lieu de ``--group``. Le noms des groupes peut être spécifier par ``--names``. Sinon, les noms de groupe sont de la forme ``Groupe 1``, ``Groupe 2``,..."
+            help="Utilise une liste d'effectifs au lieu de ``--group``. Le nom des groupes peut être spécifié par ``--names``. Sinon, les noms de groupe sont de la forme ``Groupe 1``, ``Groupe 2``,..."
         ),
         argument(
             "-n",
