@@ -641,8 +641,8 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
     Examples
     --------
 
-    - Feuille de notes avec la note ``median``, la  note ``final`` avec un
-      barre à 6 et l'information ``TD`` :
+    - Feuille de notes avec la note ``median``, la note ``final`` avec
+      une barre à 6 et l'information ``TD`` :
 
       .. code:: bash
 
