@@ -691,13 +691,13 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
     def validate_config(self, config):
         """Validation du fichier de configuration
 
-        columns:
-          grade1:
-            type: raw
-          grade2:
-            type: grade
-            note éliminatoire: 8
-        options:
+        marks:
+          - grade1:
+              passing mark: 8
+          - grade2
+          - grade3
+          - info:
+              type: raw
         """
 
         def validate_grade2(data):
