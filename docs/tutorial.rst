@@ -1,5 +1,5 @@
-Tutoriel
-========
+Configuration de base
+=====================
 
 **guv** doit utiliser des fichiers fournis par l'administration qui
 sont spécifiques d'une UV ou pas pour créer de nouveaux fichiers. Pour
@@ -10,6 +10,25 @@ exécuter des tâches et chaque appel à **guv** est de la forme :
 .. code:: bash
 
    guv <une_tâche> <les arguments de la tâche>
+
+Lorsque la configuration de base est effective, les tâches suivantes
+sont accessibles :
+
+- :class:`guv.tasks.attendance.PdfAttendanceFull`
+- :class:`guv.tasks.attendance.PdfAttendance`
+- :class:`guv.tasks.grades.CsvForUpload`
+- :class:`guv.tasks.grades.XlsAssignmentGrade`
+- :class:`guv.tasks.gradebook.XlsGradeBookJury`
+- :class:`guv.tasks.gradebook.XlsGradeBookGroup`
+- :class:`guv.tasks.gradebook.XlsGradeBookNoGroup`
+- :class:`guv.tasks.grades.YamlQCM`
+- :class:`guv.tasks.moodle.CsvCreateGroups`
+- :class:`guv.tasks.moodle.CsvGroups`
+- :class:`guv.tasks.moodle.JsonGroup`
+- :class:`guv.tasks.students.CsvExamGroups`
+- :class:`guv.tasks.students.CsvMoodleGroups`
+- :class:`guv.tasks.students.ZoomBreakoutRooms`
+- :class:`guv.tasks.trombinoscope.PdfTrombinoscope`
 
 **guv** travaille avec une arborescence prédéfinie. Les documents
 spécifiques à une UV sont stockées dans un dossier d'UV. Tous les
@@ -23,7 +42,7 @@ dossier de semestre contient également un dossier de configuration nommé
 Création de l'arborescence
 --------------------------
 
-Pour créer cette arborescence ainsi que les fichiers de configuration,
+Pour créer cette arborescence ainsi que les fichiers de configuration
 préremplis on peut exécuter la commande suivante :
 
 .. code:: bash
@@ -31,12 +50,13 @@ préremplis on peut exécuter la commande suivante :
    guv createsemester A2021 --uv SY02 SY09
 
 qui va créer un dossier de semestre nommé ``A2021`` contenant un
-fichier de configuration prérempli ``config.py`` ainsi que des
+fichier de configuration prérempli ``config.py`` (voir
+:ref:`conf-semester` pour sa configuration) ainsi que des
 sous-dossiers ``generated`` et ``documents`` et deux autres dossiers
 d'UV nommés ``SY02`` et ``SY09`` contenant chacun leur fichier de
-configuration prérempli également nommé ``config.py`` ainsi que des
-sous-dossiers ``generated`` et ``documents``. L'arborescence est alors
-la suivante :
+configuration prérempli également nommé ``config.py`` (voir
+:ref:`conf-UV` pour sa configuration) ainsi que des sous-dossiers
+``generated`` et ``documents``. L'arborescence est alors la suivante :
 
 .. code:: shell
 
@@ -63,27 +83,31 @@ dossier de semestre:
    guv createuv SY19 AOS1
 
 Pour que l'UV soit effectivement prise en compte par **guv**, il faut
-ensuite la déclarer dans le fichier ``config.py`` du semestre.
+ensuite la déclarer dans le fichier ``config.py`` du semestre avec
+la variable ``UVS``.
 
-
-Configuration des fichiers ``config.py``
-----------------------------------------
-
-Le semestre ainsi que chacune des UV qu'il contient sont paramétrés par
-des fichiers de configuration nommé ``config.py`` présent à la racine de
-leur dossier respectif.
+.. _conf-semester:
 
 Fichier ``config.py`` de configuration de semestre
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------------------------
 
 Le fichier de configuration du semestre contient des informations
-spécifiques à un semestre : liste des UV gérées, chemin vers le
-fichier des créneaux fourni par l'administration, liste des plannings,
-calendrier. Si l'arborescence a été créée avec la tâche
-``createsemester``, un nom de semestre reconnu par **guv** et une
-liste d'UV, les variables ``PLANNINGS``, ``TURN``, ``SKIP_DAYS_C``,
-``SKIP_DAYS_D``, ``SKIP_DAYS_T`` sont automatiquement renseignées et
-on peut sauter les deux sections suivantes.
+spécifiques à un semestre :
+
+- liste des UV gérées via la variable ``UVS``,
+- chemin vers le fichier des créneaux fourni par l'administration, via
+  la variable ``CRENEAU_UV``,
+- liste des plannings via la variables ``PLANNINGS``,
+- information de calendrier avec les variables ``TURN``,
+  ``SKIP_DAYS_C``, ``SKIP_DAYS_D``, ``SKIP_DAYS_T``
+
+Si l'arborescence a été créée avec la tâche ``createsemester`` et un
+nom de semestre reconnu par **guv** (de type A2021, P2021,...) les
+variables ``PLANNINGS``, ``TURN``, ``SKIP_DAYS_C``, ``SKIP_DAYS_D``,
+``SKIP_DAYS_T`` sont automatiquement renseignées. Si en plus les
+dossiers d'UV ont été créés avec l'option ``--uv``, la variable
+``UVS`` est aussi renseignée et on peut sauter les deux sections
+suivantes.
 
 Configuration des plannings avec ``PLANNINGS``
 ++++++++++++++++++++++++++++++++++++++++++++++
@@ -185,12 +209,33 @@ l'administration et disponible `ici
 faut le télécharger et renseigner son chemin relatif dans la variable
 ``CRENEAU_UV`` afin que **guv** ait connaissance des créneaux des UV.
 
-Fichier ``config.py`` de configuration d'UV
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. _conf-UV:
 
-Le fichier de configuration d'une UV contient des informations
-spécifiques à l'UV. Suivant les besoins, il faut fournir les chemins
-vers des sources de données fournies par l'UTC, Moodle ou autres.
+Fichier ``config.py`` de configuration d'UV
+-------------------------------------------
+
+Le fichier de configuration d'une UV est situé à la racine du dossier
+de l'UV/UE et contient des informations spécifiques à l'UV/UE. Il faut
+obligatoirement indiquer à **guv** le chemin relatif vers :
+
+- le fichier d'extraction de l'effectif de l'UV/UE, voir
+  :ref:`ent-listing`,
+- le fichier d'affectation aux Cours/TD/TP, voir :ref:`affectation`.
+
+Il existe d'autres variables permettant d'ajouter d'autres
+informations comme les informations Moodle, les changements de TD/TP
+mais elles sont facultatives.
+
+Lorsque les modifications du fichier ``config.py`` ont été faites, il
+suffit d'exécuter la commande ``guv`` sans argument dans le dossier
+d'UV/UE pour que les différentes informations soient incorporées à un
+fichier central nommé ``effectif.xlsx`` (ainsi qu'une version csv)
+situé à la racine du dossier d'UV/UE.
+
+Le fichier ``effectif.xlsx`` est regénéré à chaque fois qu'il y a un
+changement dans les dépendances. Il ne faut donc jamais y rentrer des
+informations manuellement. Pour incorporer des informations, voir
+:ref:`incorporation`.
 
 .. _ent-listing:
 
@@ -309,59 +354,10 @@ suivante :
 
 Les informations sont incoporées dans une colonne nommée ``Info``.
 
-Workflow classique
-==================
-
-Gestion d'une UV
-----------------
-
-Gestion des étudiants
----------------------
-
-**guv** permet la gestion des étudiants de plusieurs UV/UE. Pour cela,
-il est nécessaire de renseigner les variables ``ENT_LISTING`` (voir
-:ref:`ent-listing`), ``AFFECTATION_LISTING`` et éventuellement
-``MOODLE_LISTING``.
-
-Ensuite en exécutant simplement **guv** sans argument dans le dossier
-d'UV, le fichier central ``effectifs.xlsx`` regroupant ces
-informations est créé. Ce fichier est regénéré à chaque fois qu'il y a
-un changement dans les dépendances. Il ne faut donc jamais y rentrer
-des informations manuellement. Pour incorporer des informations, voir
-:ref:`incorporation`.
-
-Gestion des intervenants
-------------------------
-
-**guv** offre également une gestion des intervenants dans les UV/UE.
-Cela permet par exemple de générer des fichiers iCal par intervenant sur
-tout un semestre, de générer un fichier récapitulatif des UTP
-effectuées.
-
-Pour cela, il faut remplir les fichiers ``planning_hebdomadaire.xlsx``
-situés dans le sous-dossier ``documents`` de chaque UV/UE. Ces
-fichiers sont automatiquement générés s'ils n'existent pas lorsqu'on
-exécute simplement **guv** sans tâche particulière.
-
-Les fichiers ``planning_hebdomadaire.xlsx`` contiennent toutes les
-séances de l'UV/UE concernée d'après le fichier pdf renseigné dans
-``CRENEAU_UV`` ou d'après le fichier Excel renseigné par
-``CRENEAU_UE``. Il suffit de préciser le nom de l'intervenant dans la
-colonne ``Intervenants`` et en supprimant éventuellement des créneaux
-non retenus.
-
-Interfaçage avec Moodle
------------------------
-
-**guv** permet d'agréger les informations issues de Moodle mais permet
-également de créer des fichiers importables sur Moodle : fichier de
-groupes, fichier de notes, restriction d'accès aux activités en fonction
-du planning.
-
 .. _incorporation:
 
 Incorporation d'informations extérieures
-----------------------------------------
+++++++++++++++++++++++++++++++++++++++++
 
 Les informations concernant l'effectif d'une UV sont toutes
 rassemblées dans un fichier central Excel situé à la racine de l'UV :
@@ -434,3 +430,37 @@ incorporer.
 -  Fonction ``switch``
 
    .. autofunction:: guv.helpers.switch
+
+Configurations supplémentaires
+==============================
+
+Gestion des intervenants
+------------------------
+
+**guv** offre également une gestion des intervenants dans les UV/UE.
+Cela permet par exemple de générer des fichiers iCal par intervenant
+sur tout un semestre, de générer un fichier récapitulatif des UTP
+effectuées.
+
+Pour cela, il faut remplir les fichiers ``planning_hebdomadaire.xlsx``
+situés dans le sous-dossier ``documents`` de chaque UV/UE. Ces
+fichiers sont automatiquement générés s'ils n'existent pas lorsqu'on
+exécute simplement ``guv`` sans argument dans le dossier de semestre.
+
+Les fichiers ``planning_hebdomadaire.xlsx`` contiennent toutes les
+séances de l'UV/UE concernée d'après le fichier pdf renseigné dans
+``CRENEAU_UV``.
+
+Si l'UV/UE n'est pas répertoriée dans le fichier pdf, il s'agit très
+probablement d'une UE. Un fichier Excel vide avec en-tête est alors
+créé et il faut renseigner manuellement les différents créneaux.
+
+Dès lors, on peut utiliser les tâches suivantes :
+
+- :class:`guv.tasks.instructors.XlsUTP`
+- :class:`guv.tasks.calendar.CalInst`
+- :class:`guv.tasks.ical.IcalInst`
+- :class:`guv.tasks.calendar.CalUv`
+- :class:`guv.tasks.moodle.HtmlInst`
+- :class:`guv.tasks.moodle.HtmlTable`
+
