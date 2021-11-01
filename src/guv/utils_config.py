@@ -100,7 +100,10 @@ class Output():
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
 
-        return lambda: self.target
+        return self
+
+    def __call__(self):
+        return self.target
 
     def __exit__(self, type, value, traceback):
         if type is ZeroDivisionError:
