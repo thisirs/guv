@@ -67,7 +67,7 @@ def create_insts_list(df):
 
 
 class XlsInstructors(TaskBase):
-    """Fichier de détails global des intervenants toutes UV confondues
+    """Fichier de détails global des intervenants toutes UV confondues.
 
     Il sert à la tâche :class:`~guv.tasks.moodle.HtmlInst` pour
     générer un descriptif des intervenants d'une UV et à la tâche
@@ -97,7 +97,7 @@ class XlsInstructors(TaskBase):
 
 
 class AddInstructors(TaskBase):
-    """Ajoute les intervenants dans la liste csv des créneaux"""
+    """Rassemble les fichiers ``planning_hebdomadaire.xlsx`` de chaque UV/UE."""
 
     hidden = True
     target_dir = "generated"
@@ -224,8 +224,11 @@ class XlsUTP(UVTask):
 class XlsAffectation(UVTask):
     """Fichier Excel des créneaux de toutes les UV configurées.
 
-    Fichier par UV à remplir par le responsable en renseignant les
-    intervenants dans chaque créneau de la semaine.
+    Crée un fichier "planning_hebdomadaire.xlsx" dans chaque dossier
+    d'UV/UE. Le fichier est prérempli d'après le fichier pdf des
+    créneaux de toutes les UVs. Si l'UV/UE n'est pas trouvée, un
+    fichier avec en-tête mais sans créneau est créé.
+
     """
 
     unique_uv = False
