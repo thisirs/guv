@@ -54,11 +54,6 @@ _SETTING_LIST = [
         help="La variable 'CRENEAU_UV' est incorrecte : un chemin relatif vers le fichier pdf des créneaux ingénieur est attendu",
     ),
     Setting(
-        "CRENEAU_UE",
-        schema=Schema(str),
-        help="La variable 'CRENEAU_UE' est incorrecte : un chemin relatif vers un fichier Excel des créneaux Master est attendu",
-    ),
-    Setting(
         "ENT_LISTING",
         schema=Schema(str),
         help="La variable 'ENT_LISTING' est incorrecte : un chemin relatif vers l'effectif de l'UV disponible sur l'ENT est attendu",

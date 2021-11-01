@@ -105,44 +105,26 @@ class AddInstructors(TaskBase):
 
     def setup(self):
         super().setup()
-        self.uv_list = UtcUvListToCsv.target_from()
         self.target = self.build_target()
         self.affectations = [
-            (uv, XlsAffectation.target_from(**info))
+            (planning, uv, XlsAffectation.target_from(**info))
             for planning, uv, info in selected_uv()
         ]
-        files = [f for _, f in self.affectations]
-        self.file_dep = files + [self.uv_list]
+        self.file_dep = [f for _, _, f in self.affectations]
 
     def run(self):
-        df_csv = pd.read_csv(self.uv_list)
-        df_csv.Semaine = df_csv.Semaine.astype(object)
+        def func(planning, uv, xls_aff):
+            df = pd.read_excel(xls_aff, engine="openpyxl")
+            df.insert(0, "Code enseig.", uv)
+            df.insert(0, "Planning", planning)
+            return df
 
-        df_affs = [
-            pd.read_excel(xls_aff, engine="openpyxl").assign(**{"Code enseig.": uv})
-            for uv, xls_aff in self.affectations
-        ]
-
+        df_affs = [func(planning, uv, xls_aff) for planning, uv, xls_aff in self.affectations]
         df_aff = pd.concat(df_affs, ignore_index=True)
         df_aff.Semaine = df_aff.Semaine.astype(object)
 
-        df_merge = pd.merge(
-            df_csv,
-            df_aff,
-            how="left",
-            on=[
-                "Code enseig.",
-                "Jour",
-                "Heure début",
-                "Heure fin",
-                "Semaine",
-                "Lib. créneau",
-                "Locaux",
-            ],
-        )
-
         with Output(self.target) as target:
-            df_merge.to_csv(target(), index=False)
+            df_aff.to_csv(target(), index=False)
 
 
 def read_xls_details(fn):
@@ -257,30 +239,43 @@ class XlsAffectation(UVTask):
         self.file_dep = [self.uvlist_csv]
 
     def run(self):
+        output_obj = self.create_excel_file()
+        if output_obj.result == "write":
+            self.add_second_worksheet()
+
+    def create_excel_file(self):
         df = pd.read_csv(self.uvlist_csv)
-        df_uv = df.loc[df["Code enseig."] == self.uv, :]
+        self.df_uv = df.loc[df["Code enseig."] == self.uv, :]
 
-        if len(df_uv) == 0:
-            raise Exception(f"L'UV/UE `{self.uv}` n'est pas reconnue dans le fichier `CRENEAU_UV` ou `CRENEAU_UE`")
+        # Test if UV/UE is in listing from UtcUvListToCsv
+        if len(self.df_uv) == 0:
+            logger.warn(f"L'UV/UE {self.uv} n'existe pas dans le fichier pdf, un fichier Excel sans créneau est créé.")
+            columns = [
+                "Activité",
+                "Jour",
+                "Heure début",
+                "Heure fin",
+                "Locaux",
+                "Semaine",
+                "Lib. créneau",
+                "Intervenants",
+                "Responsable",
+            ]
+            df_uv_select = pd.DataFrame(columns=columns)
+        else:
+            df_uv_select = self.df_uv.sort_values(["Lib. créneau", "Semaine"])
+            df_uv_select = df_uv_select.drop(["Code enseig."], axis=1)
+            df_uv_select["Intervenants"] = ""
+            df_uv_select["Responsable"] = ""
 
-        selected_columns = [
-            "Jour",
-            "Heure début",
-            "Heure fin",
-            "Locaux",
-            "Semaine",
-            "Lib. créneau",
-        ]
-        df_uv_select = df_uv[selected_columns]
-        df_uv_select = df_uv_select.sort_values(["Lib. créneau", "Semaine"])
-
-        df_uv_select["Intervenants"] = ""
-        df_uv_select["Responsable"] = ""
-
-        # Copy for modifications
+        # Write to disk
         with Output(self.target, protected=True) as target:
             df_uv_select.to_excel(target(), sheet_name="Intervenants", index=False)
 
+        # Return decision in Output
+        return target
+
+    def add_second_worksheet(self):
         N = 10
         workbook = openpyxl.load_workbook(self.target)
         worksheet = workbook.create_sheet("Décompte des heures")
@@ -348,9 +343,9 @@ class XlsAffectation(UVTask):
         total_cell = ref_cell.below(N+1)
         expected_cell = ref_cell.below(N+2)
 
-        n_cours = len(df_uv.loc[df["Activité"] == "Cours"])
-        n_TD = len(df_uv.loc[df["Activité"] == "TD"])
-        n_TP = len(df_uv.loc[df["Activité"] == "TP"])
+        n_cours = len(self.df_uv.loc[self.df_uv["Activité"] == "Cours"])
+        n_TD = len(self.df_uv.loc[self.df_uv["Activité"] == "TD"])
+        n_TP = len(self.df_uv.loc[self.df_uv["Activité"] == "TP"])
 
         first_cours = ref_cell.below().right(2)
         first_TD = ref_cell.below().right(3)

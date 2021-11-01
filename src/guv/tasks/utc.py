@@ -33,24 +33,12 @@ class UtcUvListToCsv(TaskBase):
         else:
             self.uv_list_filename = None
 
-        if "CRENEAU_UE" in self.settings:
-            self.ue_list_filename = os.path.join(
-                self.settings.SEMESTER_DIR,
-                self.settings.CRENEAU_UE
-            )
-        else:
-            self.ue_list_filename = None
-
         self.target = self.build_target()
 
-        self.file_dep = [
-            fn
-            for fn in [
-                self.uv_list_filename,
-                self.ue_list_filename
-            ]
-            if fn
-        ]
+        if self.uv_list_filename is not None:
+            self.file_dep = [self.uv_list_filename]
+        else:
+            self.file_dep = []
 
     def read_pdf(self):
         pdf = PdfFileReader(open(self.uv_list_filename, 'rb'))
@@ -137,14 +125,13 @@ class UtcUvListToCsv(TaskBase):
                 print(f'Header has {header_height} lines')
                 df = df.iloc[header_height:]
 
-            df['Planning'] = self.settings.SEMESTER
             tables.append(df)
 
         return pd.concat(tables)
 
     def run(self):
-        if self.uv_list_filename is None and self.ue_list_filename is None:
-            raise Exception("Au moins une des variables `CRENEAU_UV` ou `CRENEAU_UE` doit être définie")
+        if self.uv_list_filename is None:
+            raise Exception("La variable `CRENEAU_UV` doit être définie")
 
         tables = []
 
@@ -155,38 +142,6 @@ class UtcUvListToCsv(TaskBase):
             else:
                 uv_fn = rel_to_dir(self.uv_list_filename, self.settings.SEMESTER_DIR)
                 raise Exception(f"Le fichier n'existe pas: {uv_fn}")
-
-        # Lire les créneaux par semaine pour les masters
-        if self.ue_list_filename is not None:
-            if os.path.exists(self.ue_list_filename):
-                try:
-                    df_ue = pd.read_excel(self.ue_list_filename, engine="openpyxl")
-                except ValueError as e:
-                    ue_fn = rel_to_dir(self.ue_list_filename, self.settings.SEMESTER_DIR)
-                    raise Exception(f"Erreur lors de la lecture du fichier Excel : {ue_fn}")
-
-                columns = [
-                    "Code enseig.",
-                    "Activité",
-                    "Jour",
-                    "Heure début",
-                    "Heure fin",
-                    "Semaine",
-                    "Locaux",
-                    "Responsable enseig.",
-                    "Lib. créneau",
-                    "Planning"
-                ]
-
-                if len(df_ue.columns) != 10 or list(df_ue.columns) != columns:
-                    msg = ", ".join(["`" + e + "`" for e in columns])
-                    ue_fn = rel_to_dir(self.ue_list_filename, self.settings.SEMESTER_DIR)
-                    raise Exception(f"Le fichier {ue_fn} doit être un fichier Excel avec exactement et dans cet ordre les colonnes: {msg}")
-
-                tables.append(df_ue)
-            else:
-                ue_fn = rel_to_dir(self.ue_list_filename, self.settings.SEMESTER_DIR)
-                raise Exception(f"Le fichier n'existe pas : {ue_fn}")
 
         df = pd.concat(tables)
 
