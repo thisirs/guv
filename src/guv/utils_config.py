@@ -107,9 +107,15 @@ class Output():
 
     def __exit__(self, type, value, traceback):
         if type is ZeroDivisionError:
+            self.result = "keep"
             return True
         if type is None:
+            self.result = "write"
             print(f"Wrote `{rel_to_dir(self.target, settings.SEMESTER_DIR)}'")
+            return
+
+        self.result = "cancel"
+        return
 
 
 def generate_days(beg, end, skip, turn, course_type):
