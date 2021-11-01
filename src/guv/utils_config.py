@@ -3,7 +3,7 @@ import time
 from datetime import timedelta
 import pandas as pd
 
-from .exceptions import NotUVDirectory, ImproperlyConfigured
+from .exceptions import NotUVDirectory, ImproperlyConfigured, SkipWithBody
 from .utils import rel_to_dir
 from .config import settings
 
@@ -68,26 +68,24 @@ class Output():
     def __init__(self, target, protected=False):
         self.target = target
         self.protected = protected
+        self.choice = None
 
     def __enter__(self):
         if os.path.exists(self.target):
             if self.protected:
                 while True:
                     try:
-                        choice = input('Le fichier `%s'' existe déjà. Écraser (d), garder (g), sauvegarder (s), annuler (a) ? ' % rel_to_dir(self.target, settings.SEMESTER_DIR))
-                        if choice == 'd':
+                        self.choice = input('Le fichier `%s'' existe déjà. Écraser (d), garder (g), sauvegarder (s), annuler (a) ? ' % rel_to_dir(self.target, settings.SEMESTER_DIR))
+                        if self.choice not in ["d", "g", "s", "a"]:
+                            raise ValueError
+
+                        if self.choice == 'd':
                             os.remove(self.target)
-                        elif choice == 's':
+                        elif self.choice == 's':
                             parts = os.path.splitext(self.target)
                             timestr = time.strftime("_%Y%m%d-%H%M%S")
                             target0 = parts[0] + timestr + parts[1]
                             os.rename(self.target, target0)
-                        elif choice == 'g':
-                            return lambda: 1/0
-                        elif choice == 'a':
-                            raise Exception('Annulation')
-                        else:
-                            raise ValueError
                     except ValueError:
                         continue
                     else:
@@ -103,10 +101,15 @@ class Output():
         return self
 
     def __call__(self):
-        return self.target
+        if self.choice == "g":
+            raise SkipWithBody
+        elif self.choice == "a":
+            raise Exception("Annulation")
+        else:
+            return self.target
 
     def __exit__(self, type, value, traceback):
-        if type is ZeroDivisionError:
+        if type is SkipWithBody:
             self.result = "keep"
             return True
         if type is None:

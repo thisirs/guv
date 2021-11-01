@@ -12,3 +12,6 @@ class NotUVDirectory(Exception):
 
 class InvalidGroups(Exception):
     pass
+
+class SkipWithBody(Exception):
+    pass
