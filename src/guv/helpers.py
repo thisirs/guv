@@ -178,6 +178,56 @@ def replace_column(colname, rep_dict, new_colname=None):
     return func
 
 
+def apply(col, func, msg=None):
+    """Renvoie une fonction qui applique une fonction sur une colonne.
+
+    Utilisable avec l'argument ``postprocessing`` ou ``preprocessing``
+    dans la fonction ``aggregate`` ou directement à la place de la
+    fonction ``aggregate`` dans ``AGGREGATE_DOCUMENTS``.
+
+    ``col`` est un nom de colonne existant et ``func`` une fonction
+    prenant en argument un élément de la colonne et retournant un
+    élément modifié.
+
+    Un message ``msg`` peut être spécifié pour décrire ce que fait la
+    fonction, il sera affiché lorsque l'agrégation sera effectuée.
+    Sinon, un message générique sera affiché.
+
+    Parameters
+    ----------
+
+    colname : :obj:`str`
+        Nom de la colonne où effectuer les remplacements
+    func : :obj:`callable`
+        Fonction prenant en argument un élément et renvoyant l'élément
+        modifié
+    msg : :obj:`str`
+        Un message descriptif utilisé
+
+    Examples
+    --------
+
+    .. code:: python
+
+       from guv.helpers import apply
+       AGGREGATE_DOCUMENTS = [
+           [None, apply("note", lambda e: float(str(e).replace(",", ".")))]
+       ]
+
+    """
+    def func2(df, path=None):
+        check_columns(df, col)
+        df.loc[:, col] = df[col].apply(func)
+        return df
+
+    if msg is not None:
+        func2.__name__ = msg
+    else:
+        func2.__name__ = f"Appliquer une fonction à la colonne {col}"
+
+    return func2
+
+
 def compute_new_column(*cols, func=None, colname=None):
     """Renvoie une fonction qui calcule une nouvelle note à partir
     d'autres colonnes. Les colonnes utilisées sont renseignées dans
