@@ -366,7 +366,7 @@ rassemblées dans un fichier central Excel situé à la racine de l'UV :
 incorporées automatiquement : l'effectif officiel via la variable
 ``ENT_LISTING``, les affectations au Cours/TD/TP ainsi que les données
 Moodle, les tiers-temps, les changements de TD/TP et les informations
-par étudiant si elle ont été renseignées dans variables
+par étudiant si elles ont été renseignées dans les variables
 correspondantes.
 
 Il arrive qu'on dispose d'informations extérieures concernant les
