@@ -388,7 +388,8 @@ en toute généralité :
 .. code:: python
 
    def fonction_qui_incorpore(df, file_path):
-       # On incorpore le fichier `file_path` à `df` et on revoie `df`.
+       # On incorpore le fichier dont le chemin est `file_path` au
+       # DataFrame `df` et on renvoie le DataFrame mis à jour.
 
    AGGREGATE_DOCUMENTS = [
        [
@@ -404,9 +405,20 @@ réalise l'incorporation. Cependant pour la plupart des usages, il
 existe des fonctions spécialisées suivant le type d'information à
 incorporer.
 
--  Fonction ``aggregate``
+Pour incorporer des fichiers sous forme de tableau csv/Excel, on
+utilise ``aggregate`` :
 
    .. autofunction:: guv.helpers.aggregate
+
+Pour incorporer des fichiers au format Org, on utilise
+``aggregate_org`` :
+
+   .. autofunction:: guv.helpers.aggregate_org
+
+Pour créer/modifier une colonne seulement sans utiliser de fichier
+tiers, on peut utiliser les fonctions suivantes. Les transformations
+suivantes ne nécessitant pas de fichier à incorporer, on peut mettre
+``None`` à la place du chemin vers le fichier à incorporer.
 
 -  Fonction ``fillna_column``
 
@@ -420,14 +432,6 @@ incorporer.
 
    .. autofunction:: guv.helpers.replace_column
 
--  Fonction ``compute_new_column``
-
-   .. autofunction:: guv.helpers.compute_new_column
-
--  Fonction ``aggregate_org``
-
-   .. autofunction:: guv.helpers.aggregate_org
-
 -  Fonction ``switch``
 
    .. autofunction:: guv.helpers.switch
@@ -435,6 +439,10 @@ incorporer.
 -  Fonction ``apply``
 
    .. autofunction:: guv.helpers.apply
+
+-  Fonction ``compute_new_column``
+
+   .. autofunction:: guv.helpers.compute_new_column
 
 Configurations supplémentaires
 ==============================
