@@ -34,13 +34,26 @@ def fillna_column(colname, na_value=None, group_column=None):
     Examples
     --------
 
-    .. code:: python
+    - Mettre les entrées non définies dans la colonne ``note`` à
+      "ABS" :
 
-       from guv.helpers import fillna_column
-       AGGREGATE_DOCUMENTS = [
-           [None, fillna_column("group", na_value="ABS")],
-           [None, fillna_column("group", group_column="choix")]
-       ]
+      .. code:: python
+
+         from guv.helpers import fillna_column
+         AGGREGATE_DOCUMENTS = [
+             [None, fillna_column("note", na_value="ABS")],
+         ]
+
+    - Mettre les entrées non définies à l'intérieur de chaque groupe
+      repéré par la colonne ``groupe_projet`` à la seule valeur
+      définie à l'intérieur de ce groupe.
+
+      .. code:: python
+
+         from guv.helpers import fillna_column
+         AGGREGATE_DOCUMENTS = [
+             [None, fillna_column("note_projet", group_column="groupe_projet")],
+         ]
 
     """
     if not((na_value is None) ^ (group_column is None)):
