@@ -356,14 +356,22 @@ def aggregate_df(
     # Try to merge columns
     for c in duplicated_columns:
         c_y = c + '_y'
-        print("Trying to merge columns '%s' and '%s'..." % (c, c_y), end='')
+        logger.warn("Fusion des colonnes '%s'" % c)
         if any(agg_df[c_y].notna() & agg_df[c].notna()):
-            print('failed')
+            logger.warn("Fusion impossible")
             continue
         else:
+            dtype = agg_df.loc[:, c].dtype
             agg_df.loc[:, c] = agg_df.loc[:, c].fillna(agg_df.loc[:, c_y])
+            new_dtype = agg_df.loc[:, c].dtype
+            if new_dtype != dtype:
+                logger.warn(f"Le type de la colonne a changé suite à la fusion: {dtype} -> {new_dtype}")
+                try:
+                    logger.warn("Conversion de type")
+                    agg_df.loc[:, c] = agg_df[c].astype(dtype)
+                except ValueError:
+                    logger.warn("Conversion impossible")
             drop_cols.append(c_y)
-            print('done')
 
     # Drop useless columns
     agg_df = agg_df.drop(drop_cols, axis=1, errors='ignore')
