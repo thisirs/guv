@@ -432,6 +432,10 @@ incorporer.
 
    .. autofunction:: guv.helpers.switch
 
+-  Fonction ``apply``
+
+   .. autofunction:: guv.helpers.apply
+
 Configurations supplémentaires
 ==============================
 
