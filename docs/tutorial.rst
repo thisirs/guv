@@ -216,11 +216,11 @@ Fichier ``config.py`` de configuration d'UV
 
 Le fichier de configuration d'une UV est situé à la racine du dossier
 de l'UV/UE et contient des informations spécifiques à l'UV/UE. Il faut
-obligatoirement indiquer à **guv** le chemin relatif vers :
+obligatoirement indiquer à **guv** le chemin relatif vers le fichier
+d'extraction de l'effectif de l'UV/UE (voir :ref:`ent-listing`).
 
-- le fichier d'extraction de l'effectif de l'UV/UE, voir
-  :ref:`ent-listing`,
-- le fichier d'affectation aux Cours/TD/TP, voir :ref:`affectation`.
+Un autre fichier important est le fichier d'affectation aux
+Cours/TD/TP (voir :ref:`affectation`) si il est disponible.
 
 Il existe d'autres variables permettant d'ajouter d'autres
 informations comme les informations Moodle, les changements de TD/TP
@@ -269,10 +269,11 @@ Fichier d'affectation aux Cours/TD/TP
 
 Il s'agit du fichier fourni par l'administration qui précise les
 affectations des étudiants aux différents créneaux de Cours/TD/TP. Il
-est envoyé par courriel aux responsables d'UV. On peut renseigner son
-chemin relatif au dossier d'UV dans la variable
-``AFFECTATION_LISTING``. Il est agrégé de manière automatique au
-fichier central de l'UV où il crée les colonnes suivantes :
+est envoyé par courriel aux responsables d'UV. Il faut le copier tel
+quel dans un fichier et renseigner son chemin relatif au dossier d'UV
+dans la variable ``AFFECTATION_LISTING``. Il est agrégé de manière
+automatique au fichier central de l'UV où il crée les colonnes
+suivantes :
 
 - ``Name`` : Nom de l'étudiant présent dans le fichier d'affectation
 - ``Cours`` : Groupe de cours (``C``, ``C1``, ``C2``)
