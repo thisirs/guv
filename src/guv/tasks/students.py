@@ -24,7 +24,7 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 from ..config import logger
 from ..exceptions import ImproperlyConfigured
 from ..utils_config import Output
-from ..helpers import switch, slugrot, slugrot_string
+from ..helpers import switch, slugrot, slugrot_string, Documents
 from ..utils import (
     sort_values,
     argument,
@@ -431,7 +431,7 @@ class XlsStudentDataMerge(UVTask):
 
     Ajoute les informations de changement de TD/TP, les tiers-temps et
     des informations par étudiants. Ajoute également les informations
-    spécifiées dans ``AGGREGATE_DOCUMENTS``.
+    spécifiées dans ``DOCS``.
     """
 
     hidden = True
@@ -444,93 +444,58 @@ class XlsStudentDataMerge(UVTask):
         self.student_data = XlsStudentData.target_from(**self.info)
         self.target = self.build_target()
 
-        # Documents to aggregate
-        self.docs = []
-
-        if "TIERS_TEMPS" in self.settings and self.settings.TIERS_TEMPS:
-            tiers_temps = self.build_dep(self.settings.TIERS_TEMPS)
-            if os.path.exists(tiers_temps):
-                self.docs.append((tiers_temps, self.add_tiers_temps))
-            else:
-                fn = rel_to_dir(tiers_temps, self.settings.semester_directory)
-                raise ImproperlyConfigured(
-                    "La variable 'TIERS_TEMPS' spécifie le fichier "
-                    f"{fn} qui n'existe pas"
-                )
+        documents = Documents()
 
         if "CHANGEMENT_COURS" in self.settings and self.settings.CHANGEMENT_COURS:
             cours_switches = self.build_dep(self.settings.CHANGEMENT_COURS)
-            if os.path.exists(cours_switches):
-                self.docs.append((cours_switches, switch("Cours", backup=True)))
-            else:
-                fn = rel_to_dir(cours_switches, self.settings.semester_directory)
-                raise ImproperlyConfigured(
-                    "La variable 'CHANGEMENT_COURS' spécifie le fichier "
-                    f"{fn} qui n'existe pas"
-                )
+            documents.switch(
+                cours_switches,
+                colname="Cours",
+                backup=True
+            )
 
         if "CHANGEMENT_TD" in self.settings and self.settings.CHANGEMENT_TD:
             TD_switches = self.build_dep(self.settings.CHANGEMENT_TD)
-            if os.path.exists(TD_switches):
-                self.docs.append((TD_switches, switch("TD", backup=True)))
-            else:
-                fn = rel_to_dir(TD_switches, self.settings.semester_directory)
-                raise ImproperlyConfigured(
-                    "La variable 'CHANGEMENT_TD' spécifie le fichier "
-                    f"{fn} qui n'existe pas"
-                )
+            documents.switch(
+                TD_switches,
+                colname="TD",
+                backup=True
+            )
 
         if "CHANGEMENT_TP" in self.settings and self.settings.CHANGEMENT_TP:
             TP_switches = self.build_dep(self.settings.CHANGEMENT_TP)
-            if os.path.exists(TP_switches):
-                self.docs.append((TP_switches, switch("TP", backup=True)))
-            else:
-                fn = rel_to_dir(TP_switches, self.settings.semester_directory)
-                raise ImproperlyConfigured(
-                    "La variable 'CHANGEMENT_TP' spécifie le fichier "
-                    f"{fn} qui n'existe pas"
-                )
+            documents.switch(
+                TP_switches,
+                colname="TP",
+                backup=True
+            )
+
+        if "TIERS_TEMPS" in self.settings and self.settings.TIERS_TEMPS:
+            tiers_temps = self.build_dep(self.settings.TIERS_TEMPS)
+            documents.flag(
+                tiers_temps,
+                colname="Tiers-temps",
+                flags=["Oui", "Non"]
+            )
 
         if "INFO_ETUDIANT" in self.settings and self.settings.INFO_ETUDIANT:
             info_etu = self.build_dep(self.settings.INFO_ETUDIANT)
-            if os.path.exists(info_etu):
-                self.docs.append((info_etu, self.add_student_info))
-            else:
-                fn = rel_to_dir(info_etu, self.settings.semester_directory)
-                raise ImproperlyConfigured(
-                    "La variable 'INFO_ETUDIANT' spécifie le fichier "
-                    f"{fn} qui n'existe pas"
-                )
+            documents.aggregate_org(
+                info_etu,
+                colname="Info"
+            )
 
-        agg_docs = (
-            [
-                [self.build_dep(k) if k is not None else None, v]
-                for k, v in self.settings.AGGREGATE_DOCUMENTS
-            ]
-            if "AGGREGATE_DOCUMENTS" in self.settings
-            else []
-        )
+        if "DOCS" in self.settings:
+            documents.add_documents(self.settings.DOCS)
 
-        self.docs = self.docs + agg_docs
-        deps = [path for path, _ in self.docs if path is not None]
-        self.file_dep = deps + [self.student_data] + self.settings.config_files
+        self.documents = documents
+        self.file_dep = documents.deps + [self.student_data] + self.settings.config_files
 
     def run(self):
         df = pd.read_excel(self.student_data, engine="openpyxl")
 
-        for path, aggregater in self.docs:
-            if path is None:
-                if hasattr(aggregater, "__name__"):
-                    print(f"File is None, using aggregater: {aggregater.__name__}")
-                else:
-                    print("File is None, aggregating without file")
-
-                df = aggregater(df, None)
-            elif os.path.exists(path):
-                print("Aggregating '%s'" % rel_to_dir(self.build_dep(path), self.settings.SEMESTER_DIR))
-                df = aggregater(df, path)
-            else:
-                print("WARNING: File '%s' not found!" % rel_to_dir(self.build_dep(path), self.settings.SEMESTER_DIR))
+        # Aggregate documents
+        df = self.documents.apply_actions(df)
 
         dff = sort_values(df, ["Nom", "Prénom"])
 
@@ -564,64 +529,6 @@ class XlsStudentDataMerge(UVTask):
         target = os.path.splitext(self.target)[0] + ".csv"
         with Output(target) as out:
             dff.to_csv(out.target, index=False)
-
-    def add_tiers_temps(self, df, fn):
-        # Aucun tiers-temps
-        df['Tiers-temps'] = False
-
-        # Add column that acts as a primary key
-        tf_df = slugrot("Nom", "Prénom")
-        df["fullname_slug"] = tf_df(df)
-
-        with open(fn, 'r') as fd:
-            for line in fd:
-                # Saute commentaire ou ligne vide
-                line = line.strip()
-                if line.startswith('#'):
-                    continue
-                if not line:
-                    continue
-
-                slugname = slugrot_string(line)
-
-                res = df.loc[df.fullname_slug == slugname]
-                if len(res) == 0:
-                    raise Exception('Pas de correspondance pour `{:s}`'.format(line))
-                elif len(res) > 1:
-                    raise Exception('Plusieurs correspondances pour `{:s}`'.format(line))
-                df.loc[res.index[0], 'Tiers-temps'] = True
-
-        df = df.drop('fullname_slug', axis=1)
-        return df
-
-    def add_student_info(self, df, fn):
-        df['Info'] = ""
-
-        # Add column that acts as a primary key
-        tf_df = slugrot("Nom", "Prénom")
-        df["fullname_slug"] = tf_df(df)
-
-        infos = open(fn, 'r').read()
-        if infos:
-            for chunk in re.split("^\\* *", infos, flags=re.MULTILINE):
-                if not chunk:
-                    continue
-
-                etu, *text = chunk.split("\n", maxsplit=1)
-                text = "\n".join(text).strip("\n")
-                text = textwrap.dedent(text)
-                slugname = slugrot_string(etu)
-
-                res = df.loc[df.fullname_slug == slugname]
-                if len(res) == 0:
-                    raise Exception('Pas de correspondance pour `{:s}`'.format(etu))
-                elif len(res) > 1:
-                    raise Exception('Plusieurs correspondances pour `{:s}`'.format(etu))
-
-                df.loc[res.index[0], 'Info'] = text
-
-        df = df.drop('fullname_slug', axis=1)
-        return df
 
 
 class CsvExamGroups(UVTask, CliArgsMixin):

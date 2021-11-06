@@ -1,25 +1,28 @@
 import re
 import textwrap
 from datetime import timedelta
+from collections.abc import Callable
+from typing import Optional, List, Union
+import functools
+
 from schema import Schema, Or, And, Use
 import pandas as pd
 
 from .config import logger
-from .utils import check_columns, slugrot, slugrot_string
+from .utils import check_columns, check_filename, slugrot, slugrot_string
+from .exceptions import ImproperlyConfigured
 
 
-def fillna_column(colname, na_value=None, group_column=None):
+def fillna_column(
+    colname: str, *, na_value: Optional[str] = None, group_column: Optional[str] = None
+):
     """Renvoie une fonction qui remplace les valeurs non définies dans la colonne ``colname``.
 
     Une seule des options ``na_value`` et ``group_column`` doit être
     spécifiée. Si ``na_value`` est spécifiée, on remplace
     inconditionnellement par la valeur fournie. Si ``group_column`` est
-    spécifiée, on complète en groupant par ``group_column`` en prenant
+    spécifiée, on complète en groupant par ``group_column`` et en prenant
     la seule valeur valide par groupe dans cette colonne.
-
-    Utilisable avec l'argument ``postprocessing`` ou ``preprocessing``
-    dans la fonction ``aggregate`` ou directement à la place de la
-    fonction ``aggregate`` dans ``AGGREGATE_DOCUMENTS``.
 
     Parameters
     ----------
@@ -39,10 +42,7 @@ def fillna_column(colname, na_value=None, group_column=None):
 
       .. code:: python
 
-         from guv.helpers import fillna_column
-         AGGREGATE_DOCUMENTS = [
-             [None, fillna_column("note", na_value="ABS")],
-         ]
+         DOCS.fillna_column("note", na_value="ABS")
 
     - Mettre les entrées non définies à l'intérieur de chaque groupe
       repéré par la colonne ``groupe_projet`` à la seule valeur
@@ -50,22 +50,19 @@ def fillna_column(colname, na_value=None, group_column=None):
 
       .. code:: python
 
-         from guv.helpers import fillna_column
-         AGGREGATE_DOCUMENTS = [
-             [None, fillna_column("note_projet", group_column="groupe_projet")],
-         ]
+         DOCS.fillna_column("note_projet", group_column="groupe_projet")
 
     """
     if not((na_value is None) ^ (group_column is None)):
         raise Exception("Une seule des options `na_value` et `group_column` doit être spécifiée")
 
     if na_value is not None:
-        def func(df, path=None):
+        def func(df):
             check_columns(df, [colname])
             df[colname].fillna(na_value, inplace=True)
             return df
 
-        func.__name__ = f"Remplace les NA dans la colonne `{colname}` par la valeur `{na_value}`"
+        func.__desc__ = f"Remplace les NA dans la colonne `{colname}` par la valeur `{na_value}`"
 
     else:
         def fill_by_group(g):
@@ -81,27 +78,27 @@ def fillna_column(colname, na_value=None, group_column=None):
                 logger.warning("Aucune valeur non-NA dans le groupe")
             return g
 
-        def func(df, path=None):
+        def func(df):
             check_columns(df, [colname, group_column])
             return df.groupby(group_column).apply(fill_by_group)
 
-        func.__name__ = f"Remplace les NA dans la colonne `{colname}` en groupant par `{group_column}`"
+        func.__desc__ = f"Remplace les NA dans la colonne `{colname}` en groupant par `{group_column}`"
 
     return func
 
 
-def replace_regex(colname, *reps, new_colname=None, msg=None):
-    """Renvoie une fonction qui remplace les occurrences de toutes les
+def replace_regex(
+    colname: str, *reps, new_colname: Optional[str] = None, msg: Optional[str] = None
+):
+    """Remplacements regex dans une colonne.
+
+    Renvoie une fonction qui remplace les occurrences de toutes les
     expressions régulières renseignées dans ``reps`` dans la colonne
     ``colname``.
 
-    Utilisable avec l'argument ``postprocessing`` ou ``preprocessing``
-    dans la fonction ``aggregate`` ou directement à la place de la
-    fonction ``aggregate`` dans ``AGGREGATE_DOCUMENTS``.
-
-    Si ``new_colname`` est spécifié, une nouvelle colonne est créée avec
-    ce nom et ``colname`` est laissée. Sinon les valeurs sont
-    directement remplacées dans le colonne ``colname``.
+    Si ``new_colname`` est spécifié, une nouvelle colonne est créée
+    avec ce nom et ``colname`` est laissée telle quelle. Sinon les
+    valeurs sont directement remplacées dans le colonne ``colname``.
 
     Un message ``msg`` peut être spécifié pour décrire ce que fait la
     fonction, il sera affiché lorsque l'agrégation sera effectuée.
@@ -124,14 +121,11 @@ def replace_regex(colname, *reps, new_colname=None, msg=None):
 
     .. code:: python
 
-       from guv.helpers import replace_regex
-       AGGREGATE_DOCUMENTS = [
-           [None, replace_regex("group", (r"group([0-9])", r"G\1"), (r"g([0-9])", r"G\1"))]
-       ]
+       DOCS.replace_regex("group", (r"group([0-9])", r"G\1"), (r"g([0-9])", r"G\1"))
 
     """
 
-    def func(df, path=None):
+    def func(df):
         check_columns(df, colname)
         s = df[colname].copy()
         for rep in reps:
@@ -141,21 +135,27 @@ def replace_regex(colname, *reps, new_colname=None, msg=None):
         return df
 
     if msg is not None:
-        func.__name__ = msg
+        func.__desc__ = msg
     elif new_colname is None:
-        func.__name__ = f"Remplacement regex dans colonne `{colname}`"
+        func.__desc__ = f"Remplacement regex dans colonne `{colname}`"
     else:
-        func.__name__ = f"Création colonne `{new_colname}` + replacement regex colonne `{colname}`"
+        func.__desc__ = f"Remplacement regex dans colonne `{colname} vers colonne `{new_colname}`"
     return func
 
 
-def replace_column(colname, rep_dict, new_colname=None):
-    """Renvoie une fonction qui remplace les valeurs exactes renseignées
+def replace_column(colname: str, rep_dict: dict, new_colname: Optional[str] = None, msg: Optional[str] = None):
+    """Remplacements dans une colonne.
+
+    Renvoie une fonction qui remplace les valeurs exactes renseignées
     dans ``rep_dict`` dans la colonne ``colname``.
 
-    Utilisable avec l'argument ``postprocessing`` ou ``preprocessing``
-    dans la fonction ``aggregate`` ou directement à la place de la
-    fonction ``aggregate`` dans ``AGGREGATE_DOCUMENTS``.
+    Si ``new_colname`` est spécifié, une nouvelle colonne est créée
+    avec ce nom et ``colname`` est laissée telle quelle. Sinon les
+    valeurs sont directement remplacées dans le colonne ``colname``.
+
+    Un message ``msg`` peut être spécifié pour décrire ce que fait la
+    fonction, il sera affiché lorsque l'agrégation sera effectuée.
+    Sinon, un message générique sera affiché.
 
     Parameters
     ----------
@@ -166,39 +166,38 @@ def replace_column(colname, rep_dict, new_colname=None):
         Dictionnaire des remplacements
     new_colname : :obj:`str`
         Nom de la nouvelle colonne
+    msg : :obj:`str`
+        Un message descriptif utilisé
 
     Examples
     --------
 
     .. code:: python
 
-       from guv.helpers import replace_column
-       AGGREGATE_DOCUMENTS = [
-           [None, replace_column("group", {"TD 1": "TD1", "TD 2": "TD2"})]
-       ]
+       DOCS.replace_column("group", {"TD 1": "TD1", "TD 2": "TD2"})
 
     """
 
-    def func(df, path=None):
+    def func(df):
         check_columns(df, colname)
         col_ref = df[colname].replace(rep_dict)
         cn = new_colname if new_colname is not None else colname
         df = df.assign(**{cn: col_ref})
         return df
 
-    func.__name__ = f"Replacements in column `{colname}`"
-
+    if msg is not None:
+        func.__desc__ = msg
+    elif new_colname is None:
+        func.__desc__ = f"Remplacement dans colonne `{colname}`"
+    else:
+        func.__desc__ = f"Replacement dans colonne `{colname}` vers colonne `{new_colname}`"
     return func
 
 
-def apply(col, func, msg=None):
+def apply(colname: str, func: Callable, msg: Optional[str] = None):
     """Renvoie une fonction qui applique une fonction sur une colonne.
 
-    Utilisable avec l'argument ``postprocessing`` ou ``preprocessing``
-    dans la fonction ``aggregate`` ou directement à la place de la
-    fonction ``aggregate`` dans ``AGGREGATE_DOCUMENTS``.
-
-    ``col`` est un nom de colonne existant et ``func`` une fonction
+    ``colname`` est un nom de colonne existant et ``func`` une fonction
     prenant en argument un élément de la colonne et retournant un
     élément modifié.
 
@@ -222,34 +221,29 @@ def apply(col, func, msg=None):
 
     .. code:: python
 
-       from guv.helpers import apply
-       AGGREGATE_DOCUMENTS = [
-           [None, apply("note", lambda e: float(str(e).replace(",", ".")))]
-       ]
+       DOCS.apply("note", lambda e: float(str(e).replace(",", ".")))
 
     """
-    def func2(df, path=None):
-        check_columns(df, col)
-        df.loc[:, col] = df[col].apply(func)
+    def func2(df):
+        check_columns(df, colname)
+        df.loc[:, colname] = df[colname].apply(func)
         return df
 
     if msg is not None:
-        func2.__name__ = msg
+        func2.__desc__ = msg
     else:
-        func2.__name__ = f"Appliquer une fonction à la colonne {col}"
+        func2.__desc__ = f"Appliquer une fonction à la colonne `{colname}`"
 
     return func2
 
 
-def compute_new_column(*cols, func=None, colname=None):
-    """Renvoie une fonction qui calcule une nouvelle note à partir
-    d'autres colonnes. Les colonnes utilisées sont renseignées dans
-    ``cols``. La fonction ``func`` qui réalise l'agrégation reçoit une
-    *Series* Pandas.
+def compute_new_column(*cols, func: Callable, colname: str, msg: Optional[str] = None):
+    """Création d'une colonne à partir d'autres.
 
-    Utilisable avec l'argument ``postprocessing`` ou ``preprocessing``
-    dans la fonction ``aggregate`` ou directement à la place de la
-    fonction ``aggregate`` dans ``AGGREGATE_DOCUMENTS``.
+    Renvoie une fonction qui calcule une nouvelle note à partir
+    d'autres colonnes. Les colonnes utilisées sont renseignées dans
+    ``cols``. La fonction ``func`` qui calcule la nouvelle colonne
+    reçoit une *Series* Pandas.
 
     Parameters
     ----------
@@ -257,7 +251,12 @@ def compute_new_column(*cols, func=None, colname=None):
     *cols
         Liste des colonnes fournies à la fonction ``func``
     func : :obj:`callable`
-        Fonction prenant en argument un dictionnaire
+        Fonction prenant en argument un dictionnaire "nom des
+        colonnes/valeurs" et renvoyant une valeur calculée
+    colname : :obj:`str`
+        Nom de la colonne à créer
+    msg : :obj:`str`
+        Un message descriptif utilisé
 
     Examples
     --------
@@ -269,28 +268,19 @@ def compute_new_column(*cols, func=None, colname=None):
        def moyenne(notes):
            return (notes["Note_médian"] + notes["Note_final"]) / 2
 
-       AGGREGATE_DOCUMENTS = [
-           [
-               None,
-               compute_new_column(
-                   "Note_médian", "Note_final", func=moyenne, colname="Note_moyenne"
-               ),
-           ]
-       ]
+       DOCS.compute_new_column("Note_médian", "Note_final", func=moyenne, colname="Note_moyenne")
 
     """
-    if func is None:
-        raise Exception("Fonction non spécifiée")
-    if colname is None:
-        raise Exception("Nom de colonne non spécifié")
-
-    def func2(df, path=None):
+    def func2(df):
         check_columns(df, cols)
         new_col = df.apply(lambda x: func(x.loc[list(cols)]), axis=1)
         df = df.assign(**{colname: new_col})
         return df
 
-    func2.__name__ = f"Création colonne `{colname}`"
+    if msg is not None:
+        func2.__desc__ = msg
+    else:
+        func2.__desc__ = f"Calcul de la colonne `{colname}`"
 
     return func2
 
@@ -383,8 +373,8 @@ def aggregate_df(
     duplicated_columns = duplicated_columns.difference(set([left_on, right_on]))
 
     if preprocessing is not None:
-        if hasattr(preprocessing, "__name__"):
-            print(f"Preprocessing: {preprocessing.__name__}")
+        if hasattr(preprocessing, "__desc__"):
+            print(f"Preprocessing: {preprocessing.__desc__}")
         else:
             print("Preprocessing")
         right_df = preprocessing(right_df)
@@ -410,8 +400,8 @@ def aggregate_df(
         print("WARNING: identifiant présent dans le document à aggréger mais introuvable dans la base de données :", row[key])
 
     if postprocessing is not None:
-        if hasattr(postprocessing, "__name__"):
-            print(f"Postprocessing: {postprocessing.__name__}")
+        if hasattr(postprocessing, "__desc__"):
+            print(f"Postprocessing: {postprocessing.__desc__}")
         else:
             print("Postprocessing")
         agg_df = postprocessing(agg_df)
@@ -419,7 +409,7 @@ def aggregate_df(
     # Try to merge columns
     for c in duplicated_columns:
         c_y = c + '_y'
-        logger.warn("Fusion des colonnes '%s'" % c)
+        logger.warn("Fusion des colonnes `%s`" % c)
         if any(agg_df[c_y].notna() & agg_df[c].notna()):
             logger.warn("Fusion impossible")
             continue
@@ -442,25 +432,45 @@ def aggregate_df(
     return agg_df
 
 
-def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset=None, drop=None, rename=None, read_method=None, kw_read={}):
+def aggregate(
+    filename: str,
+    *,
+    left_on: Union[None, str, callable] = None,
+    right_on: Union[None, str, callable] = None,
+    on: Optional[str] = None,
+    subset: Union[None, str, List[str]] = None,
+    drop: Union[None, str, List[str]] = None,
+    rename: Optional[dict] = None,
+    preprocessing: Optional[Callable] = None,
+    postprocessing: Optional[Callable] = None,
+    read_method: Optional[Callable] = None,
+    kw_read: Optional[dict] = {}
+):
     """Renvoie une fonction qui réalise l'agrégation avec un fichier Excel/csv.
 
-    Les arguments ``left_on`` et ``right_on`` sont les clés pour réaliser
-    une jointure : ``left_on`` est la clé du DataFrame existant et
-    ``right_on`` est la clé du DataFrame à agréger présent dans le
-    fichier. ``left_on`` et ``right_on`` peuvent aussi être des callable
-    prenant en argument le DataFrame correspondant et renvoyant une
-    nouvelle colonne avec laquelle faire la jointure. ``subset`` est une
-    liste des colonnes à garder, ``drop`` une liste des colonnes à
-    enlever. ``rename`` est un dictionnaire des colonnes à renommer.
-    ``read_method`` est un callable appelé avec ``kw_read`` pour lire le
-    fichier contenant le DataFrame à agréger. ``preprocessing`` et
+    Les arguments ``left_on`` et ``right_on`` sont les clés pour
+    réaliser une jointure : ``left_on`` est la clé du DataFrame
+    existant et ``right_on`` est la clé du DataFrame à agréger présent
+    dans le fichier. ``left_on`` et ``right_on`` peuvent aussi être
+    des callable prenant en argument le DataFrame correspondant et
+    renvoyant une nouvelle colonne avec laquelle faire la jointure.
+    Dans le cas où ``left_on`` et ``right_on`` ont la même valeur, on
+    peut seulement spécifier ``on``.
+
+    ``subset`` est une liste des colonnes à garder si on ne veut pas
+    agréger la totalité des colonnes, ``drop`` une liste des colonnes
+    à enlever. ``rename`` est un dictionnaire des colonnes à renommer.
+    ``read_method`` est un callable appelé avec ``kw_read`` pour lire
+    le fichier contenant le DataFrame à agréger. ``preprocessing`` et
     ``postprocessing`` sont des callable qui prennent en argument un
     DataFrame et en renvoie un et qui réalise un pré ou post
     traitement sur l'agrégation.
 
     Parameters
     ----------
+
+    filename : :obj:`str`
+        Le chemin du fichier csv/Excel à agréger.
 
     left_on : :obj:`str`
         Le nom de colonne présent dans le fichier ``effectif.xlsx``
@@ -475,6 +485,10 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
         on peut spécifier une fonction prenant en argument le
         *DataFrame* et renvoyant une *Series* utilisée pour la
         jointure (voir fonction :func:`guv.utils.slugrot`).
+
+    on : :obj:`str`
+        Raccourci lorsque ``left_on`` et ``right_on`` ont la même
+        valeur.
 
     subset : :obj:`list`, optional
         Permet de sélectionner un nombre restreint de colonnes en
@@ -514,44 +528,47 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
 
     .. code:: python
 
-       from guv.helpers import aggregate
+       DOCS.aggregate(
+           "documents/notes.csv",
+           left_on="Courriel",
+           right_on="email"
+       )
+
        from guv.utils import slugrot
-       AGGREGATE_DOCUMENTS = [
-           [
-               "documents/notes.csv",
-               aggregate(
-                   left_on="Courriel",
-                   right_on="email"
-               )
-           ],
-           [
-               "documents/notes.csv",
-               aggregate(
-                   left_on=slugrot("Nom", "Prénom"),
-                   right_on=slugrot("Nom", "Prénom")
-               )
-           ]
-       ]
+       DOCS.aggregate(
+           "documents/notes.csv",
+           left_on=slugrot("Nom", "Prénom"),
+           right_on=slugrot("Nom", "Prénom")
+       )
 
     """
 
-    def aggregate0(left_df, path):
+    def aggregate0(left_df):
         # Infer a read method if not provided
         if read_method is None:
-            if path.endswith('.csv'):
-                right_df = pd.read_csv(path, **kw_read)
-            elif path.endswith('.xlsx') or path.endswith('.xls'):
-                right_df = pd.read_excel(path, engine="openpyxl", **kw_read)
+            if filename.endswith('.csv'):
+                right_df = pd.read_csv(filename, **kw_read)
+            elif filename.endswith('.xlsx') or filename.endswith('.xls'):
+                right_df = pd.read_excel(filename, engine="openpyxl", **kw_read)
             else:
                 raise Exception('No read method and unsupported file extension')
         else:
-            right_df = read_method(path, **kw_read)
+            right_df = read_method(filename, **kw_read)
+
+        if on is not None:
+            if left_on is not None or right_on is not None:
+                raise ImproperlyConfigured("On doit spécifier soit `on`, soit `left_on` et `right_on`.")
+
+            left_on_ = right_on_ = on
+        else:
+            left_on_ = left_on
+            right_on_ = right_on
 
         return aggregate_df(
             left_df,
             right_df,
-            left_on=left_on,
-            right_on=right_on,
+            left_on=left_on_,
+            right_on=right_on_,
             preprocessing=preprocessing,
             postprocessing=postprocessing,
             subset=subset,
@@ -559,10 +576,18 @@ def aggregate(left_on, right_on, preprocessing=None, postprocessing=None, subset
             rename=rename,
         )
 
+    aggregate0.__desc__ = f"Agrégation du fichier `{filename}`"
+
     return aggregate0
 
 
-def aggregate_org(colname, postprocessing=None, on=None):
+def aggregate_org(
+    filename: str,
+    *,
+    colname: str,
+    on: Optional[str] = None,
+    postprocessing: Optional[Callable] = None
+):
     """Renvoie une fonction d'agrégation d'un fichier Org.
 
     Le document à agréger est au format Org. Les titres servent de clé
@@ -570,6 +595,9 @@ def aggregate_org(colname, postprocessing=None, on=None):
 
     Parameters
     ----------
+
+    filename : :obj:`str`
+        Le chemin du fichier Org à agréger.
 
     colname : :obj:`str`
         Nom de la colonne dans lequel stocker les informations
@@ -601,10 +629,7 @@ def aggregate_org(colname, postprocessing=None, on=None):
 
       .. code:: python
 
-         from guv.helpers import aggregate_org
-         AGGREGATE_DOCUMENTS = [
-             ["documents/infos.org", aggregate_org("Informations")],
-         ]
+         DOCS.aggregate_org("documents/infos.org", colname="Informations")
 
     - Agrégation d'un fichier avec pour titres les éléments d'une
       colonne existante. Par exemple, on peut agréger les notes par
@@ -624,23 +649,12 @@ def aggregate_org(colname, postprocessing=None, on=None):
 
       .. code:: python
 
-         from guv.helpers import aggregate_org
-         AGGREGATE_DOCUMENTS = [
-             ["documents/infos.org", aggregate_org("Note projet 1", on="Projet1_Group")],
-         ]
+         DOCS.aggregate_org("documents/infos.org", colname="Note projet 1", on="Project1_group")
 
     """
 
-    def aggregate_org0(left_df, path):
-        if not path.endswith('.org'):
-            raise Exception(f"{path} n'est pas un fichier org")
-
-        if on is None:
-            left_on = slugrot("Nom", "Prénom")
-            right_on = slugrot("header")
-        else:
-            left_on = on
-            right_on = "header"
+    def aggregate_org0(left_df):
+        check_filename(filename)
 
         def parse_org(text):
             for chunk in re.split("^\\* *", text, flags=re.MULTILINE):
@@ -651,16 +665,104 @@ def aggregate_org(colname, postprocessing=None, on=None):
                 text = textwrap.dedent(text)
                 yield header, text
 
-        text = open(path, 'r').read()
+        text = open(filename, 'r').read()
         df_org = pd.DataFrame(parse_org(text), columns=["header", colname])
+
+        if on is None:
+            left_on = slugrot("Nom", "Prénom")
+            right_on = slugrot("header")
+        else:
+            left_on = on
+            right_on = "header"
 
         df = aggregate_df(left_df, df_org, left_on, right_on, postprocessing=postprocessing)
         return df
 
+    aggregate_org0.__desc__ = f"Agrégation du fichier `{filename}`"
+
     return aggregate_org0
 
 
-def switch(colname, backup=False, path=None, new_colname=None):
+def flag(filename: str, *, colname: str, flags: Optional[List[str]] = ["Oui", ""]):
+    """Signaler une liste d'étudiants dans une nouvelle colonne.
+
+    Le document à agréger est une liste de noms d'étudiants affichés
+    ligne par ligne.
+
+    Parameters
+    ----------
+
+    filename : :obj:`str`
+        Le chemin du fichier à agréger.
+
+    colname : :obj:`str`
+        Nom de la colonne dans laquelle mettre la drapeau.
+
+    flags : :obj:`str`, optional
+        Les drapeaux utilisés, par défaut "Oui" et vide.
+
+    Examples
+    --------
+
+    Agrégation d'un fichier avec les noms des étudiants pour titre :
+
+    Le fichier "tiers_temps.txt" :
+
+    .. code:: text
+
+       Bob Morane
+
+    L'instruction d'agrégation :
+
+    .. code:: python
+
+       DOCS.flag("documents/tiers_temps.txt", colname="Tiers-temps")
+
+    """
+
+    def func(df):
+        check_filename(filename)
+        check_columns(df, colname, error_when="exists")
+
+        df[colname] = flags[1]
+
+        # Add column that acts as a primary key
+        tf_df = slugrot("Nom", "Prénom")
+        df["fullname_slug"] = tf_df(df)
+
+        with open(filename, 'r') as fd:
+            for line in fd:
+                # Saute commentaire ou ligne vide
+                line = line.strip()
+                if line.startswith('#'):
+                    continue
+                if not line:
+                    continue
+
+                slugname = slugrot_string(line)
+
+                res = df.loc[df.fullname_slug == slugname]
+                if len(res) == 0:
+                    raise Exception('Pas de correspondance pour `{:s}`'.format(line))
+                elif len(res) > 1:
+                    raise Exception('Plusieurs correspondances pour `{:s}`'.format(line))
+                df.loc[res.index[0], colname] = flags[0]
+
+        df = df.drop('fullname_slug', axis=1)
+        return df
+
+    func.__desc__ = f"Agrégation du fichier `{filename}`"
+
+    return func
+
+
+def switch(
+    filename: str,
+    *,
+    colname: str,
+    backup: bool = False,
+    new_colname: Optional[str] = None
+):
     """Renvoie une fonction qui réalise des échanges dans une colonne.
 
     L'argument ``colname`` est la colonne dans laquelle opérer les
@@ -668,54 +770,38 @@ def switch(colname, backup=False, path=None, new_colname=None):
     sauvegardée (avec un suffixe ``.orig``) avant de faire les
     échanges.
 
-    Utilisable avec l'argument ``postprocessing`` ou ``preprocessing``
-    dans la fonction ``aggregate`` en spécifiant l'argument ``path`` ou
-    directement à la place de la fonction ``aggregate`` dans
-    ``AGGREGATE_DOCUMENTS``.
-
     Parameters
     ----------
 
+    filename : :obj:`str`
+        Le chemin du fichier à agréger.
     colname : :obj:`str`
         Nom de la colonne où opérer les changements
     backup : :obj:`bool`
         Sauvegarder la colonne avant tout changement
-    path : :obj:`str`
-        Chemin de fichier lorsque ``switch`` est utilisée dans un
-        argument ``postprocessing``.
+    new_colname : :obj:`str`
+        Le nom de la nouvelle colonne
 
     Examples
     --------
 
     .. code:: python
 
-       from guv.helpers import switch
-       AGGREGATE_DOCUMENTS = [
-           ["fichier_échange_TP", switch("TP")]
-       ]
-       AGGREGATE_DOCUMENTS = [
-           [
-               "fichier_à_agréger",
-               aggregate(..., postprocessing=switch("TP", path="fichier_échange_TP")),
-           ]
-       ]
+       DOCS.switch("fichier_échange_TP", colname="TP")
 
     """
 
     if backup is True and new_colname is not None:
-        raise Exception("Il faut soit un backup de la colonne (avec suffixe _orig), soit un nouveau nom de colonne")
+        raise ImproperlyConfigured(
+            "Les arguments `backup` et `new_colname` sont incompatibles."
+        )
 
-    def switch_func(df, agg_path):
-        """Apply switches specified in `fn` in DataFrame `df`"""
+    def switch_func(df):
+        """Apply switches in DataFrame `df`"""
 
-        if path is None and agg_path is None:
-            raise Exception("Il faut spécifier un chemin avec l'argument `path` ou dans `AGGREGATE_DOCUMENTS`.")
-
-        if agg_path is None:
-            agg_path = path
-
-        # Check that column exists
-        check_columns(df, columns=[colname])
+        # Check that filename and column exist
+        check_filename(filename)
+        check_columns(df, columns=colname, error_when="not_found")
 
         # Add slugname column
         tf_df = slugrot("Nom", "Prénom")
@@ -741,7 +827,7 @@ def switch(colname, backup=False, path=None, new_colname=None):
             df.loc[idx1, col] = df.loc[idx2, col]
             df.loc[idx2, col] = tmp
 
-        with open(agg_path, 'r') as fd:
+        with open(filename, 'r') as fd:
             for line in fd:
                 if line.strip().startswith('#'):
                     continue
@@ -786,7 +872,86 @@ def switch(colname, backup=False, path=None, new_colname=None):
         df = df.drop('fullname_slug', axis=1)
         return df
 
+    switch_func.__desc__ = f"Agrégation du fichier `{filename}`"
+
     return switch_func
+
+
+class Documents:
+    def __init__(self):
+        self._actions = []
+        self._deps = []
+
+    @property
+    def deps(self):
+        return self._deps
+
+    def _add_dep(self, dep):
+        self._deps.append(dep)
+
+    def _add_action(self, func):
+        self._actions.append(func)
+
+    def add_documents(self, doc):
+        for a in doc._actions:
+            self._add_action(a)
+        for d in doc._deps:
+            self._add_dep(d)
+
+    def apply_actions(self, df):
+        for action in self._actions:
+            print(action.__desc__)
+            df = action(df)
+        return df
+
+    def add(self, filename, func):
+        def func2(df):
+            return func(df, filename)
+
+        func2.__desc__ = f"Agrégation du fichier {filename}"
+        self._add_action(func2)
+        self._add_dep(filename)
+
+    @classmethod
+    def add_action_method(cls, func):
+        @functools.wraps(func)
+        def dummy(self, *args, **kwargs):
+            action = func(*args, **kwargs)
+            self._add_action(action)
+            return self
+        setattr(cls, func.__name__, dummy)
+
+    @classmethod
+    def add_action_file_method(cls, func):
+        @functools.wraps(func)
+        def dummy(self, *args, **kwargs):
+            action = func(*args, **kwargs)
+            self._add_dep(args[0])
+            self._add_action(action)
+            return self
+        setattr(cls, func.__name__, dummy)
+
+
+actions = [
+    fillna_column,
+    replace_regex,
+    replace_column,
+    apply,
+    compute_new_column
+]
+
+for a in actions:
+    Documents.add_action_method(a)
+
+actions_file = [
+    flag,
+    aggregate,
+    aggregate_org,
+    switch
+]
+
+for a in actions_file:
+    Documents.add_action_file_method(a)
 
 
 def skip_range(d1, d2):

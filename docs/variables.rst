@@ -56,5 +56,6 @@ Liste des variables reconnues dans les fichiers ``config.py`` d'UV
   et en sélectionnant ``Feuille de calcul Excel`` dans le menu
   déroulant et ensuite ``Télécharger``, voir :ref:`moodle-listing`.
 
-- ``AGGREGATE_DOCUMENTS`` : Liste des documents à agréger au fichier
-  central en plus des documents usuels, voir :ref:`incorporation`.
+- ``DOCS`` : Variable sur laquelle appeler des méthodes pour agréger
+  d'autres documents en plus des documents usuels, voir
+  :ref:`incorporation`.

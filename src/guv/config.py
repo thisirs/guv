@@ -118,19 +118,7 @@ _SETTING_LIST = [
         help="La variable 'TURN' est incorrecte : un dictionnaire d'objets vers un jour est attendu",
     ),
     Setting(
-        "AGGREGATE_DOCUMENTS",
-        schema=Schema(
-            Or(
-                And(None, Use(lambda x: [])),  # None -> []
-                (Iterable(Or(None, str), callable)),  # Tuple of pairs
-                [Iterable(Or(None, str), callable)],  # List of pairs
-                And(
-                    {Or(None, str): callable},
-                    Use(lambda x: [[k, v] for k, v in x.items()]),
-                ),
-            )
-        ),
-        help="La variable 'AGGREGATE_DOCUMENTS' est incorrecte : un itérable de paires est attendu",
+        "ENV",
     ),
 ]
 

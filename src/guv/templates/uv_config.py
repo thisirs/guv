@@ -14,16 +14,10 @@ AFFECTATION_LISTING = None
 MOODLE_LISTING = None
 
 # Documents supplémentaires à agréger au fichier Excel de l'effectif
-# de l'UV. C'est une liste de couples. Chaque couple est composé du
-# chemin du fichier à agréger et d'une fonction qui réalise
-# l'agrégation. Cette fonction prend en argument un DataFrame existant
-# ainsi que le chemin du fichier à agréger et renvoie le DataFrame mis
-# à jour. Plusieurs fonctions d'aide sont disponibles: aggregate,
-# aggregate_org, fillna_column, replace_regex, replace_column.
-
-from guv.helpers import aggregate
-
-AGGREGATE_DOCUMENTS = None
+# de l'UV. Il suffit d'appeler des méthodes de `DOCS`. La principale
+# est `aggregate` pour agréger des fichier csv/Excel.
+from guv.helpers import Documents
+DOCS = Documents()
 
 # Chemin relatif vers le fichier des tiers-temps
 # Il s'agit d'une liste d'édudiants, un par ligne bénéficiant d'un

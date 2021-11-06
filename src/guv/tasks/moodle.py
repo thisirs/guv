@@ -810,16 +810,11 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
 
     .. code:: python
 
-       AGGREGATE_DOCUMENTS = [
-           [
-               "generated/Projet1_groups.csv",
-               aggregate(
-                   kw_read={"header": None, "names": ["Courriel", "Groupe P1"]},
-                   left_on="Courriel",
-                   right_on="Courriel"
-               )
-           ],
-       ]
+       DOCS.aggregate(
+           "generated/Projet1_groups.csv",
+           on="Courriel",
+           kw_read={"header": None, "names": ["Courriel", "Groupe P1"]},
+       )
 
     """
 

@@ -206,8 +206,7 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
 
 
     Les notes finales peuvent ensuite être facilement incorporées au
-    fichier central en renseignant la variable
-    ``AGGREGATE_DOCUMENTS``.
+    fichier central en renseignant la variable ``DOCS``.
 
     {options}
 
@@ -444,7 +443,7 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
 
     Les notes finales peuvent ensuite être facilement incorporées au
     fichier central en renseignant la variable
-    ``AGGREGATE_DOCUMENTS``.
+    ``DOCS``.
 
     {options}
 
@@ -634,20 +633,15 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
 
     La note ECTS et la note agrégée peuvent ensuite être facilement
     incorporées au fichier central en renseignant la variable
-    ``AGGREGATE_DOCUMENTS``.
+    ``DOCS``.
 
     .. code:: python
 
-       AGGREGATE_DOCUMENTS = [
-           [
-               "generated/jury_gradebook.xlsx",
-               aggregate(
-                   left_on="Courriel",
-                   right_on="Courriel",
-                   subset=["Note agrégée", "Note ECTS"],
-               ),
-           ]
-       ]
+       DOCS.aggregate(
+           "generated/jury_gradebook.xlsx",
+           on="Courriel",
+           subset=["Note agrégée", "Note ECTS"],
+       )
 
     {options}
 

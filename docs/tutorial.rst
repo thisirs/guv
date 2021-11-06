@@ -383,16 +383,16 @@ correspondantes.
 Il arrive qu'on dispose d'informations extérieures concernant les
 étudiants (feuilles de notes Excel/csv, fichier csv de groupes
 provenant de Moodle ou généré avec **guv**,...) et qu'on veuille les
-incorporer au fichier central de l'UV. Pour cela, il faut renseigner
-la variable ``AGGREGATE_DOCUMENTS``. La variable
-``AGGREGATE_DOCUMENTS`` est une liste de listes de longueur 2. Chaque
-liste de longueur 2 est composée d'un chemin vers un fichier à
-incorporer et d'une fonction prenant en argument le fichier central
-sous forme de *DataFrame* Pandas auquel incorporer le fichier et le
-chemin du fichier à incorporer et retourne un *DataFrame* mis à jour
-avec les nouvelles informations.
+incorporer au fichier central de l'UV. Pour cela, il faut décrire les
+agrégations dans le fichier de configuration d'UV/UE à l'aide d'un
+objet de type ``Documents`` :
 
-Par exemple, si on dispose d'un fichier ``notes.csv`` situé dans le
+.. code:: python
+
+   from guv.helpers import Documents
+   DOCS = Documents()
+
+Ensuite, si on dispose d'un fichier ``notes.csv`` situé dans le
 sous-dossier ``documents`` de l'UV et qu'on veut l'incorporer, on écrira
 en toute généralité :
 
@@ -402,12 +402,7 @@ en toute généralité :
        # On incorpore le fichier dont le chemin est `file_path` au
        # DataFrame `df` et on renvoie le DataFrame mis à jour.
 
-   AGGREGATE_DOCUMENTS = [
-       [
-           "documents/notes.csv",
-           fonction_qui_incorpore
-       ]
-   ]
+   DOCS.add(filename="documents/notes.csv", func=fonction_qui_incorpore)
 
 À la prochaine exécution de **guv** sans argument, la tâche par défaut
 va reconstruire le fichier central et le fichier ``notes.csv`` sera
@@ -417,19 +412,21 @@ existe des fonctions spécialisées suivant le type d'information à
 incorporer.
 
 Pour incorporer des fichiers sous forme de tableau csv/Excel, on
-utilise ``aggregate`` :
+utilise ``aggregate``. On a alors
 
-   .. autofunction:: guv.helpers.aggregate
+.. code:: python
+
+   DOCS.aggregate("documents/notes.csv", on="Courriel")
+
+.. autofunction:: guv.helpers.aggregate
 
 Pour incorporer des fichiers au format Org, on utilise
 ``aggregate_org`` :
 
-   .. autofunction:: guv.helpers.aggregate_org
+.. autofunction:: guv.helpers.aggregate_org
 
 Pour créer/modifier une colonne seulement sans utiliser de fichier
-tiers, on peut utiliser les fonctions suivantes. Les transformations
-suivantes ne nécessitant pas de fichier à incorporer, on peut mettre
-``None`` à la place du chemin vers le fichier à incorporer.
+tiers, on peut utiliser les fonctions suivantes :
 
 -  Fonction ``fillna_column``
 
