@@ -249,6 +249,8 @@ class PdfAttendance(UVTask, CliArgsMixin):
                 check_columns(df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
 
             for gn, group in df.groupby(self.group or (lambda x: "all")):
+                if gn == "all":
+                    gn = None
                 context["group"] = gn
                 context["blank"] = self.blank
                 context["num"] = len(group)
