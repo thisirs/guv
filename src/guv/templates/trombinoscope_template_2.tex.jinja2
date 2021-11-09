@@ -14,12 +14,12 @@
 \begin{document}
 
 \begin{center}
-  {\Large (((title | escape_tex)))} \vspace{1cm}
+  {\Large ((( name_group | escape_tex )))} \vspace{1cm}
 \end{center}
 
-((* for group in data *))
-((* if 'title' in group *)) \paragraph{((( group['title'] | escape_tex )))} ((* endif *))
-((* for row in group['rows'] *))
+((* for name_subgroup, subgroup in subgroups.items() *))
+((* if name_subgroup *)) \paragraph{((( name_subgroup | escape_tex )))} ((* endif *))
+((* for row in subgroup *))
 \begin{center}
   \begin{tabular}{(((width)))}
     ((* for cell in row *))

@@ -10,7 +10,7 @@ import shutil
 import pandas as pd
 import latex
 
-from ..utils_config import Output
+from ..utils_config import Output, render_from_contexts
 from ..utils import (
     sort_values,
     check_columns,
@@ -22,33 +22,6 @@ from ..utils import (
 
 from .base import UVTask, CliArgsMixin
 from .students import XlsStudentDataMerge
-
-
-def pdf_attendance_list_render(df, tmpl_file, **kwargs):
-    """Render LaTeX template and compile it."""
-
-    latex_env = LaTeXEnvironment()
-    template = latex_env.get_template(tmpl_file)
-
-    df = sort_values(df, ["Nom", "Prénom"])
-    students = [{"name": f'{row["Nom"]} {row["Prénom"]}'} for _, row in df.iterrows()]
-
-    # Render template with provided data
-    tex = template.render(students=students, **kwargs)
-
-    temp_dir = tempfile.mkdtemp()
-
-    filename = kwargs["filename"]
-    pdf = latex.build_pdf(tex)
-    filepath = os.path.join(temp_dir, filename)
-    pdf.save_to(filepath)
-
-    tex_filename = os.path.splitext(filename)[0] + '.tex'
-    tex_filepath = os.path.join(temp_dir, tex_filename)
-    with open(tex_filepath, "w") as fd:
-        fd.write(tex)
-
-    return filepath, tex_filepath
 
 
 class PdfAttendance(UVTask, CliArgsMixin):
@@ -156,24 +129,6 @@ class PdfAttendance(UVTask, CliArgsMixin):
         latex_env = LaTeXEnvironment()
         self.template = latex_env.get_template(self.template_file)
 
-    def pdf_attendance_render(self, **context):
-        # Render template with context
-        tex = self.template.render(**context)
-
-        temp_dir = tempfile.mkdtemp()
-
-        filename = context["filename"]
-        pdf = latex.build_pdf(tex)
-        filepath = os.path.join(temp_dir, filename)
-        pdf.save_to(filepath)
-
-        tex_filename = os.path.splitext(filename)[0] + '.tex'
-        tex_filepath = os.path.join(temp_dir, tex_filename)
-        with open(tex_filepath, "w") as fd:
-            fd.write(tex)
-
-        return filepath, tex_filepath
-
     def generate_contexts(self):
         "Generate contexts to pass to Jinja2 templates."
 
@@ -198,7 +153,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
                 for num, name in zip(self.count, self.names):
                     context["group"] = name
                     context["num"] = num
-                    context["filename"] = f"{name}.pdf"
+                    context["filename_no_ext"] = f"{name}"
                     yield context
             else:
                 df = pd.read_excel(self.xls_merge, engine="openpyxl")
@@ -210,7 +165,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
                     df_tt = df[df["Tiers-temps"] == 1]
                     df = df[df["Tiers-temps"] != 1]
                     context["group"] = "Tiers-temps"
-                    context["filename"] = "Tiers_temps.pdf"
+                    context["filename_no_ext"] = "Tiers_temps"
                     students = [{"name": f'{row["Nom"]} {row["Prénom"]}'} for _, row in df_tt.iterrows()]
                     context["students"] = students
                     yield context
@@ -225,7 +180,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
                           " ".join(group.iloc[-1][["Nom", "Prénom"]]))
                     students = [{"name": f'{row["Nom"]} {row["Prénom"]}'} for _, row in group.iterrows()]
                     context["students"] = students
-                    context["filename"] = f"{name}.pdf"
+                    context["filename_no_ext"] = f"{name}"
                     context["group"] = name
                     yield context
 
@@ -240,7 +195,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
                 context["group"] = "Tiers-temps"
                 context["blank"] = self.blank
                 context["num"] = len(df_tt)
-                context["filename"] = "Tiers_temps.pdf"
+                context["filename_no_ext"] = "Tiers_temps"
                 students = [{"name": f'{row["Nom"]} {row["Prénom"]}'} for _, row in df_tt.iterrows()]
                 context["students"] = students
                 yield context
@@ -254,39 +209,17 @@ class PdfAttendance(UVTask, CliArgsMixin):
                 context["group"] = gn
                 context["blank"] = self.blank
                 context["num"] = len(group)
-                context["filename"] = f"{gn}.pdf"
+                context["filename_no_ext"] = f"{gn}"
                 students = [{"name": f'{row["Nom"]} {row["Prénom"]}'} for _, row in group.iterrows()]
                 context["students"] = students
                 yield context
 
     def run(self):
-        pdfs = []
-        texs = []
-        for context in self.generate_contexts():
-            pdf, tex = self.pdf_attendance_render(**context)
-            pdfs.append(pdf)
-            texs.append(tex)
+        contexts = self.generate_contexts()
 
-        # Écriture du pdf dans un zip si plusieurs
-        if len(pdfs) == 1:
-            with Output(self.target + ".pdf") as out:
-                shutil.move(pdfs[0], out.target)
-        else:
-            with Output(self.target + ".zip") as out:
-                with zipfile.ZipFile(out.target, "w") as z:
-                    for filepath in pdfs:
-                        z.write(filepath, os.path.basename(filepath))
-
-        # Écriture du tex dans un zip si plusieurs
-        if self.save_tex:
-            target = os.path.splitext(self.target)[0] + "_source.zip"
-            with Output(target) as out:
-                if len(pdfs) == 1:
-                    shutil.move(pdfs[0], out.target)
-                else:
-                    with zipfile.ZipFile(out.target, "w") as z:
-                        for filepath in texs:
-                            z.write(filepath, os.path.basename(filepath))
+        render_from_contexts(
+            self.template, contexts, save_tex=self.save_tex, target=self.target
+        )
 
 
 class PdfAttendanceFull(UVTask, CliArgsMixin):
@@ -306,7 +239,8 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
     """
 
     target_dir = "generated"
-    target_name = "attendance_{group}_full.zip"
+    target_name = "attendance_{group}_full"
+    template_file = "attendance_name_full.tex.jinja2"
     always_make = True
     cli_args = (
         argument(
@@ -328,6 +262,12 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
             default="{group_name}{number}",
             help="Modèle permettant de fixer le nom des séances successives dans la feuille de présence. Par défaut on a ``{group_name}{number}``. Les seuls mots-clés supportés sont ``group_name`` et ``number``.",
         ),
+        argument(
+            "--save-tex",
+            action="store_true",
+            default=False,
+            help="Permet de laisser les fichiers .tex générés pour modification éventuelle."
+        )
     )
 
     def setup(self):
@@ -344,9 +284,13 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
             df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
         )
 
-        template = "attendance_name_full.tex.jinja2"
-        pdfs = []
+        contexts = self.generate_contexts(df)
 
+        render_from_contexts(
+            self.template_file, contexts, save_tex=self.save_tex, target=self.target
+        )
+
+    def generate_contexts(self, df):
         base_context = {
             "slots_name": [
                 pformat(self.template, group_name=self.group, number=i+1)
@@ -359,15 +303,12 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
 
         for gn, group in df.groupby(self.group):
             group = sort_values(group, ["Nom", "Prénom"])
+            students = [
+                {"name": f'{row["Nom"]} {row["Prénom"]}'} for _, row in group.iterrows()
+            ]
             group_context = {
                 "group": gn,
-                "filename": f"{gn}.pdf"
+                "filename_no_ext": f"{gn}",
+                "students": students,
             }
-            context = {**base_context, **group_context}
-            pdf, tex = pdf_attendance_list_render(group, template, **context)
-            pdfs.append(pdf)
-
-        with Output(self.target) as out:
-            with zipfile.ZipFile(out.target, "w") as z:
-                for filepath in pdfs:
-                    z.write(filepath, os.path.basename(filepath))
+            yield {**base_context, **group_context}

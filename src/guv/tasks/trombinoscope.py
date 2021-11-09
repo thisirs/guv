@@ -17,8 +17,8 @@ import browser_cookie3
 import latex
 import guv
 
-from ..utils_config import Output
-from ..utils import sort_values, argument, check_columns, LaTeXEnvironment
+from ..utils_config import Output, render_from_contexts
+from ..utils import sort_values, argument, check_columns, LaTeXEnvironment, generate_groupby
 from .students import XlsStudentDataMerge
 from .base import UVTask, CliArgsMixin
 
@@ -50,13 +50,13 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
 
     always_make = True
     target_dir = "generated"
+    template_file = "trombinoscope_template_2.tex.jinja2"
     cli_args = (
         argument(
             "-g",
             "--group",
             metavar="GROUP",
             dest="groupby",
-            required=True,
             help="Nom de colonne utilisée pour réaliser le groupement. Un fichier pdf est généré pour chaque groupe. Lorsque le nom de groupe est ``all``, il y a un seul groupe (donc un seul fichier pdf) comportant la totalité des étudiants.",
         ),
         argument(
@@ -64,10 +64,14 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
             "--subgroup",
             metavar="SUBGROUP",
             dest="subgroupby",
-            required=False,
-            default=None,
             help="Nom de colonne utilisée pour faire des sous-groupes (binômes, trinômes) parmi le groupement déjà existant.",
         ),
+        argument(
+            "--save-tex",
+            action="store_true",
+            default=False,
+            help="Permet de laisser les fichiers .tex générés pour modification éventuelle."
+        )
     )
 
     def setup(self):
@@ -77,16 +81,16 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
         self.file_dep = [self.xls_merge]
 
         self.parse_args()
-        if self.groupby == "all":
+        if self.groupby is None:
             if self.subgroupby is not None:
-                target = "trombi_all_{subgroupby}.pdf"
+                target = "trombi_all_{subgroupby}"
             else:
-                target = "trombi_all.pdf"
+                target = "trombi_all"
         else:
             if self.subgroupby is not None:
-                target = "trombi_{groupby}_{subgroupby}.zip"
+                target = "trombi_{groupby}_{subgroupby}"
             else:
-                target = "trombi_{groupby}.zip"
+                target = "trombi_{groupby}"
 
         self.target = self.build_target(target_name=target)
         self.width = 5
@@ -94,14 +98,44 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
     def run(self):
         # On vérifie que GROUPBY et SUBGROUPBY sont licites
         df = pd.read_excel(self.xls_merge, engine="openpyxl")
-        if self.groupby == "all":
-            self.groupby = None
-        else:
+        if self.groupby is not None:
             check_columns(df, self.groupby, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
 
         if self.subgroupby is not None:
             check_columns(df, self.subgroupby, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
 
+        self.download_images(df)
+        contexts = self.generate_contexts(df)
+        render_from_contexts(
+            self.template_file, contexts, save_tex=self.save_tex, target=self.target
+        )
+
+    def student_context(self, row):
+        """Retourne le contexte d'un édudiant pour Jinja2"""
+
+        path = os.path.abspath(
+            os.path.join(
+                self.settings.SEMESTER_DIR, "documents", "images", f'{row["Login"]}.jpg'
+            )
+        )
+
+        context = {
+            "name": row["Prénom"],
+            "lastname": row["Nom"],
+            "photograph": path,
+        }
+
+        if "Numéro d'identification" in row:
+            context.update(
+                {
+                    "moodle_id": row["Numéro d'identification"],
+                    "link": "https://demeter.utc.fr/portal/pls/portal30/etudiants.CONSULT_DODDIER_ETU_ETU_DYN.show?p_arg_names=p_etudiant_cle&p_arg_values=%(moodle_id)s",
+                }
+            )
+
+        return context
+
+    def download_images(self, df):
         async def download_image(session, login):
             url = URL + login
             async with session.get(url) as response:
@@ -151,77 +185,34 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
         loop = asyncio.get_event_loop()
         loop.run_until_complete(download_session(loop))
 
-        latex_env = LaTeXEnvironment()
-        tmpl = latex_env.get_template("trombinoscope_template_2.tex.jinja2")
-        temp_dir = tempfile.mkdtemp()
-
+    def generate_contexts(self, df):
         # Diviser par groupe de TD/TP
-        for title, group in df.groupby(self.groupby or (lambda x: "all")):
+        for name_group, df_group in generate_groupby(df, self.groupby):
 
-            # Diviser par binomes, sous-groupes
-            dff = group.groupby(self.subgroupby or (lambda x: 0))
+            # Contexte à passer au gabarit Jinja2
+            context = {
+                "name_group": name_group or self.uv,
+                "width": "c" * self.width,
+                "filename_no_ext": name_group or "all"
+            }
 
-            # Nom de fichier
-            if len(dff) == 1:
-                fn = title + ".pdf"
-            else:
-                fn = title + "_" + self.subgroupby + ".pdf"
-            data = []
-            # Insérer sur ces sous-groupes des groupes de TP/TD
-            for name, df_group in dff:
-                group = {}
-                if len(dff) != 1:
-                    group["title"] = name
+            # Diviser par groupes de projets à l'intérieur de chaque groupe
+            subgroups = {}
+            for name_subgroup, df_subgroup in generate_groupby(df_group, self.subgroupby):
+                dfs = sort_values(df_subgroup, ["Nom", "Prénom"])
 
-                rows = []
-                dfs = sort_values(df_group, ["Nom", "Prénom"])
                 # Grouper par WIDTH sur une ligne si plus de WIDTH
-                for _, df_row in dfs.groupby(np.arange(len(df_group.index)) // self.width):
-                    cells = []
-                    for _, row in df_row.iterrows():
-                        path = os.path.abspath(
-                            os.path.join(
-                                self.settings.SEMESTER_DIR,
-                                "documents",
-                                "images",
-                                f'{row["Login"]}.jpg'
-                            )
-                        )
+                rows = [
+                    [self.student_context(row) for _, row in df_row.iterrows()]
+                    for _, df_row in dfs.groupby(
+                        np.arange(len(dfs.index)) // self.width
+                    )
+                ]
 
-                        cell = {
-                            "name": row["Prénom"],
-                            "lastname": row["Nom"],
-                            "photograph": path,
-                        }
+                subgroups[name_subgroup] = rows
 
-                        if "Numéro d'identification" in row:
-                            cell.update(
-                                {
-                                    "moodle_id": row["Numéro d'identification"],
-                                    "link": "https://demeter.utc.fr/portal/pls/portal30/etudiants.CONSULT_DODDIER_ETU_ETU_DYN.show?p_arg_names=p_etudiant_cle&p_arg_values=%(moodle_id)s",
-                                }
-                            )
+            context["subgroups"] = subgroups
 
-                        cells.append(cell)
-                    rows.append(cells)
+            yield context
 
-                group["rows"] = rows
-                data.append(group)
 
-            tex = tmpl.render(title=title, data=data, width="c" * self.width)
-            # with open(target0+'.tex', 'w') as fd:
-            #     fd.write(tex)
-
-            pdf = latex.build_pdf(tex)
-            pdf.save_to(os.path.join(temp_dir, fn))
-
-        # with Output(fn) as out:
-        #     pdf.save_to(out.target)
-        with Output(self.target) as out:
-            files = glob.glob(os.path.join(temp_dir, "*.pdf"))
-            if len(files) == 1:
-                shutil.move(files[0], out.target)
-            else:
-                with zipfile.ZipFile(out.target, "w") as z:
-                    for filepath in files:
-                        z.write(filepath, os.path.basename(filepath))

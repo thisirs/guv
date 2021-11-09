@@ -2,10 +2,12 @@ import os
 import re
 import string
 import hashlib
+import tempfile
 from types import SimpleNamespace
 import jinja2
 import unidecode
 import numpy as np
+import latex
 
 import guv
 
@@ -164,6 +166,16 @@ def sort_values(df, columns):
     return df
 
 
+def generate_groupby(df, key):
+    "Generate sub-dataframes by grouping by `key` in `df`."
+
+    if key is not None:
+        for title, group in df.groupby(key):
+            yield title, group
+    else:
+        yield None, df
+
+
 LATEX_SUBS = (
     (re.compile(r'\\'), r'\\textbackslash'),
     (re.compile(r'([{}_#%&$])'), r'\\\1'),
@@ -174,6 +186,8 @@ LATEX_SUBS = (
 
 
 def escape_tex(value):
+    if value is None:
+        return "None"
     newval = value
     for pattern, replacement in LATEX_SUBS:
         newval = pattern.sub(replacement, newval)
@@ -193,3 +207,28 @@ class LaTeXEnvironment(jinja2.Environment):
             comment_end_string="=))",
         )
         self.filters["escape_tex"] = escape_tex
+
+
+def render_latex_template(template, context):
+    """Render template with context"""
+
+    latex_env = LaTeXEnvironment()
+    tmpl = latex_env.get_template(template)
+
+    tex = tmpl.render(**context)
+    temp_dir = tempfile.mkdtemp()
+    filename_no_ext = context["filename_no_ext"]
+
+    # Write pdf
+    pdf = latex.build_pdf(tex)
+    filepath = os.path.join(temp_dir, filename_no_ext + ".pdf")
+    pdf.save_to(filepath)
+
+    # Write tex
+    tex_filepath = os.path.join(temp_dir, filename_no_ext + ".tex")
+    with open(tex_filepath, "w") as fd:
+        fd.write(tex)
+
+    return filepath, tex_filepath
+
+

@@ -1,11 +1,14 @@
 import os
 import time
+import zipfile
+import shutil
 from datetime import timedelta
 import pandas as pd
+import latex
 
 from .exceptions import NotUVDirectory, ImproperlyConfigured, SkipWithBody
-from .utils import rel_to_dir
-from .config import settings
+from .utils import rel_to_dir, render_latex_template
+from .config import settings, logger
 
 
 def selected_uv(all="dummy"):
@@ -270,3 +273,38 @@ def compute_slots(csv_inst_list, planning_type, empty_instructor=True, filter_uv
 
     dfm = pd.concat([df_Cm, df_Dm, df_Tm], ignore_index=True)
     return dfm
+
+
+def render_from_contexts(template, contexts, save_tex=False, target=None):
+    pdfs = []
+    texs = []
+    for context in contexts:
+        try:
+            filepath, tex_filepath = render_latex_template(template, context)
+        except latex.exc.LatexBuildError as e:
+            logger.warn("LaTeX build failed", e)
+            continue
+        pdfs.append(filepath)
+        texs.append(tex_filepath)
+
+    # Écriture du pdf dans un zip si plusieurs
+    if len(pdfs) == 1:
+        with Output(target + ".pdf") as out:
+            shutil.move(pdfs[0], out.target)
+    else:
+        with Output(target + ".zip") as out:
+            with zipfile.ZipFile(out.target, "w") as z:
+                for filepath in pdfs:
+                    z.write(filepath, os.path.basename(filepath))
+
+    # Écriture du tex dans un zip si plusieurs
+    if save_tex:
+        if len(texs) == 1:
+            with Output(target + ".tex") as out:
+                shutil.move(texs[0], out.target)
+        else:
+            with Output(target + "_source.zip") as out:
+                with zipfile.ZipFile(out.target, "w") as z:
+                    for filepath in texs:
+                        z.write(filepath, os.path.basename(filepath))
+
