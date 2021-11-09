@@ -135,14 +135,14 @@ class IcalInst(CliArgsMixin, TaskBase):
             if len(self.insts) == 1:
                 inst = self.insts[0]
                 dfm_inst = dfm.loc[dfm["Intervenants"].astype(str) == inst, :]
-                output = self.build_target(
+                target = self.build_target(
                     name=f'{inst.replace(" ", "_")}',
                     plannings=f"{'_'.join(self.plannings)}",
                     target_name="{name}_{plannings}.ics"
                 )
                 events = ical_events(dfm_inst, **settings)
-                with Output(output) as output:
-                    with open(output(), "wb") as fd:
+                with Output(target) as out:
+                    with open(out.target, "wb") as fd:
                         fd.write(events)
             else:
                 temp_dir = tempfile.mkdtemp()
@@ -154,8 +154,8 @@ class IcalInst(CliArgsMixin, TaskBase):
                     with open(os.path.join(temp_dir, output), "wb") as fd:
                         fd.write(events)
 
-                with Output(self.target) as output0:
-                    with zipfile.ZipFile(output0(), "w") as z:
+                with Output(self.target) as out:
+                    with zipfile.ZipFile(out.target, "w") as z:
                         for filepath in glob.glob(os.path.join(temp_dir, "*.ics")):
                             z.write(filepath, os.path.basename(filepath))
 

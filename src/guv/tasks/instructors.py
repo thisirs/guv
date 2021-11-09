@@ -92,8 +92,8 @@ class XlsInstructors(TaskBase):
                 )
             )
             columns = ["Intervenants", "Statut", "Email", "Website"]
-            with Output(self.target) as target:
-                pd.DataFrame(columns=columns).to_excel(target(), index=False)
+            with Output(self.target) as out:
+                pd.DataFrame(columns=columns).to_excel(out.target, index=False)
 
 
 class AddInstructors(TaskBase):
@@ -123,8 +123,8 @@ class AddInstructors(TaskBase):
         df_aff = pd.concat(df_affs, ignore_index=True)
         df_aff.Semaine = df_aff.Semaine.astype(object)
 
-        with Output(self.target) as target:
-            df_aff.to_csv(target(), index=False)
+        with Output(self.target) as out:
+            df_aff.to_csv(out.target, index=False)
 
 
 def read_xls_details(fn):
@@ -177,8 +177,8 @@ class XlsInstDetails(UVTask):
         for inst in inst_missing:
             logger.warning(f"Pas d'informations détaillées sur l'intervenant: {inst}")
 
-        with Output(self.target) as target:
-            df_left.to_excel(target(), index=False)
+        with Output(self.target) as out:
+            df_left.to_excel(out.target, index=False)
 
 
 class XlsUTP(UVTask):
@@ -217,8 +217,8 @@ class XlsUTP(UVTask):
         )
         dfs = dfs.reset_index()
 
-        with Output(self.target, protected=True) as target:
-            create_excel_file(target(), dfs)
+        with Output(self.target, protected=True) as out:
+            create_excel_file(out.target, dfs)
 
 
 class XlsAffectation(UVTask):
@@ -272,8 +272,8 @@ class XlsAffectation(UVTask):
             df_uv_select["Responsable"] = ""
 
         # Write to disk
-        with Output(self.target, protected=True) as target:
-            df_uv_select.to_excel(target(), sheet_name="Intervenants", index=False)
+        with Output(self.target, protected=True) as out:
+            df_uv_select.to_excel(out.target, sheet_name="Intervenants", index=False)
 
         # Return decision in Output
         return target

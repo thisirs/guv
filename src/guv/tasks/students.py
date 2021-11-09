@@ -165,8 +165,8 @@ class CsvInscrits(UVTask):
                 rel_to_dir(self.utc_listing, self.settings.SEMESTER_DIR)
             ))
         df = self.parse_UTC_listing()
-        with Output(self.target) as target:
-            df.to_csv(target(), index=False)
+        with Output(self.target) as out:
+            df.to_csv(out.target, index=False)
 
 
 class XlsStudentData(UVTask):
@@ -227,8 +227,8 @@ class XlsStudentData(UVTask):
 
         dff = sort_values(df, ["Nom", "Prénom"])
 
-        with Output(self.target) as target:
-            dff.to_excel(target(), index=False)
+        with Output(self.target) as out:
+            dff.to_excel(out.target, index=False)
 
     def load_ENT_data(self):
         df = pd.read_csv(self.extraction_ENT, sep="\t", encoding='ISO_8859_1')
@@ -558,12 +558,12 @@ class XlsStudentDataMerge(UVTask):
             if header_value:
                 ws.column_dimensions[cell.column_letter].width = 1.3*len(header_value)
 
-        with Output(self.target) as target0:
-            wb.save(target0())
+        with Output(self.target) as out:
+            wb.save(out.target)
 
         target = os.path.splitext(self.target)[0] + ".csv"
-        with Output(target) as target:
-            dff.to_csv(target(), index=False)
+        with Output(target) as out:
+            dff.to_csv(out.target, index=False)
 
     def add_tiers_temps(self, df, fn):
         # Aucun tiers-temps
@@ -679,11 +679,11 @@ class CsvExamGroups(UVTask, CliArgsMixin):
         else:
             dff = dff[["Courriel", "TPE"]]
 
-        with Output(self.target) as target0:
-            dff.to_csv(target0(), index=False)
+        with Output(self.target) as out:
+            dff.to_csv(out.target, index=False)
 
-        with Output(self.target_moodle) as target:
-            dff.to_csv(target(), index=False, header=False)
+        with Output(self.target_moodle) as out:
+            dff.to_csv(out.target, index=False, header=False)
 
 
 class CsvMoodleGroups(UVTask, CliArgsMixin):
@@ -879,11 +879,11 @@ class CsvMoodleGroups(UVTask, CliArgsMixin):
         )
         df = df.sort_values("group")
 
-        with Output(self.target_csv) as target:
-            df.to_csv(target(), index=False)
+        with Output(self.target_csv) as out:
+            df.to_csv(out.target, index=False)
 
-        with Output(self.target_moodle) as target:
-            df.to_csv(target(), index=False, header=False)
+        with Output(self.target_moodle) as out:
+            df.to_csv(out.target, index=False, header=False)
 
 
 class ZoomBreakoutRooms(UVTask, CliArgsMixin):
@@ -916,8 +916,8 @@ class ZoomBreakoutRooms(UVTask, CliArgsMixin):
             "Email Address": df["Courriel"]
         })
         df_group = df_group.sort_values("Pre-assign Room Name")
-        with Output(self.target, protected=True) as target:
-            df_group.to_csv(target(), index=False)
+        with Output(self.target, protected=True) as out:
+            df_group.to_csv(out.target, index=False)
 
 
 class MaggleTeams(UVTask, CliArgsMixin):
@@ -946,5 +946,5 @@ class MaggleTeams(UVTask, CliArgsMixin):
         )
 
         df_group = df[["Nom", "Prénom", "Courriel", "Login", self.group]]
-        with Output(self.target, protected=True) as target:
-            df_group.to_csv(target(), index=False)
+        with Output(self.target, protected=True) as out:
+            df_group.to_csv(out.target, index=False)

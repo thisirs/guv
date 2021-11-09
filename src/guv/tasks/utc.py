@@ -182,8 +182,8 @@ class UtcUvListToCsv(TaskBase):
 
         df = df.groupby(['Code enseig.', 'Activité']).apply(fix_semaineAB)
 
-        with Output(self.target) as target:
-            df.to_csv(target(), index=False)
+        with Output(self.target) as out:
+            df.to_csv(out.target, index=False)
 
 
 class CsvAllCourses(CliArgsMixin, TaskBase):
@@ -222,5 +222,5 @@ class CsvAllCourses(CliArgsMixin, TaskBase):
             tables.append(df)
 
         dfm = pd.concat(tables)
-        with Output(self.target) as target:
-            dfm.to_csv(target(), index=False)
+        with Output(self.target) as out:
+            dfm.to_csv(out.target, index=False)

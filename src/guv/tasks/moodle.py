@@ -96,14 +96,14 @@ class CsvGroups(UVTask, CliArgsMixin):
             if ctype == "singleton":
                 dff = df[["Courriel", "Login"]]
 
-                with Output(target) as target:
-                    dff.to_csv(target(), index=False, header=False)
+                with Output(target) as out:
+                    dff.to_csv(out.target, index=False, header=False)
             else:
                 check_columns(df, ctype, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
                 dff = df[["Courriel", ctype]]
 
-                with Output(target) as target:
-                    dff.to_csv(target(), index=False, header=False)
+                with Output(target) as out:
+                    dff.to_csv(out.target, index=False, header=False)
 
 
 class CsvGroupsGroupings(UVTask, CliArgsMixin):
@@ -197,8 +197,8 @@ class CsvGroupsGroupings(UVTask, CliArgsMixin):
                 groupings.append(grouping)
 
         df_groups = pd.DataFrame({"groupname": groups, 'groupingname': self.groupings})
-        with Output(self.target, protected=True) as target:
-            df_groups.to_csv(target(), index=False)
+        with Output(self.target, protected=True) as out:
+            df_groups.to_csv(out.target, index=False)
 
 
 class HtmlInst(UVTask):
@@ -260,8 +260,8 @@ class HtmlInst(UVTask):
         md = template.render(insts=insts, contact=contact)
         html = markdown.markdown(md)
 
-        with Output(self.target) as target:
-            with open(target(), "w") as fd:
+        with Output(self.target) as out:
+            with open(out.target, "w") as fd:
                 fd.write(html)
 
 
@@ -340,8 +340,8 @@ class HtmlTable(UVTask, CliArgsMixin):
         # Inline style for Moodle
         output = pynliner.fromString(html)
 
-        with Output(target) as target:
-            with open(target(), "w") as fd:
+        with Output(target) as out:
+            with open(out.target, "w") as fd:
                 fd.write(output)
 
     def run(self):
@@ -632,8 +632,8 @@ class JsonRestriction(UVTask, CliArgsMixin):
 
         moodle_date = dict(get_beg_end_date_each(name, g) for name, g in gb)
         max_len = max(len(s) for s in list(moodle_date.values())[0])
-        with Output(self.target, protected=True) as target:
-            with open(target(), "w") as fd:
+        with Output(self.target, protected=True) as out:
+            with open(out.target, "w") as fd:
                 s = (
                     "{\n"
                     + ",\n".join(
@@ -706,8 +706,8 @@ class JsonGroup(UVTask, CliArgsMixin):
             for group_name, group in dff.groupby(self.group)
         }
 
-        with Output(self.target, protected=True) as target:
-            with open(target(), "w") as fd:
+        with Output(self.target, protected=True) as out:
+            with open(out.target, "w") as fd:
                 s = (
                     "{\n"
                     + ",\n".join(
@@ -1004,15 +1004,15 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         df_out = pd.DataFrame({"Courriel": df["Courriel"], "group": s_groups})
         df_out = df_out.sort_values(["group", "Courriel"])
 
-        with Output(self.target) as target:
-            df_out.to_csv(target(), index=False, header=False)
+        with Output(self.target) as out:
+            df_out.to_csv(out.target, index=False, header=False)
 
         df_groups = pd.DataFrame({"groupname": df["Login"], 'groupingname': s_groups})
         df_groups = df_groups.sort_values(["groupingname", "groupname"])
 
         csv_target = os.path.splitext(self.target)[0] + '_secret.csv'
-        with Output(csv_target) as target:
-            df_groups.to_csv(target(), index=False)
+        with Output(csv_target) as out:
+            df_groups.to_csv(out.target, index=False)
             logger.warning(str(df_groups.head()))
 
     def make_groups(self, name, df, name_gen):
@@ -1241,8 +1241,8 @@ class FetchGroupId(CliArgsMixin, TaskBase):
             req = requests.post(pformat(self.url, id=id), cookies=cookies)
             groups = self.groups(req.text)
 
-            with Output(self.build_target(id=id)) as target:
-                with open(target(), "w") as f:
+            with Output(self.build_target(id=id)) as out:
+                with open(out.target, "w") as f:
                     msg = """\
 
 Copier le dictionnaire suivant dans le fichier config.py de l'UV. Tous

@@ -137,8 +137,8 @@ class CsvForUpload(UVTask, CliArgsMixin):
         df0 = df0[col_names]
         df0 = sort_values(df0, ["Nom", "Prénom"])
 
-        with Output(self.target, protected=True) as target:
-            df0.to_csv(target(), index=False, sep=";")
+        with Output(self.target, protected=True) as out:
+            df0.to_csv(out.target, index=False, sep=";")
 
 
 class XlsMergeFinalGrade(UVTask, CliArgsMixin):
@@ -182,11 +182,11 @@ class XlsMergeFinalGrade(UVTask, CliArgsMixin):
         df = sort_values(df, ["Nom", "Prénom"])
 
         csv_grades = os.path.splitext(self.target)[0] + ".csv"
-        with Output(csv_grades, protected=True) as csv_grades:
-            df.to_csv(csv_grades(), index=False)
+        with Output(csv_grades, protected=True) as out:
+            df.to_csv(out.target, index=False)
 
-        with Output(self.target, protected=True) as target:
-            df.to_excel(target(), index=False)
+        with Output(self.target, protected=True) as out:
+            df.to_excel(out.target, index=False)
 
 
 class YamlQCM(UVTask):
@@ -216,8 +216,8 @@ class YamlQCM(UVTask):
 
         rec = {"Students": rec, "Answers": ""}
 
-        with Output(self.target, protected=True) as yaml_fname:
-            with open(yaml_fname(), "w") as fd:
+        with Output(self.target, protected=True) as out:
+            with open(out.target, "w") as fd:
                 yaml.dump(rec, fd, default_flow_style=False)
 
 
@@ -249,8 +249,8 @@ class XlsAssignmentGrade(UVTask, CliArgsMixin):
         df = sort_values(df, ['Nom', 'Prénom'])
         df = df.assign(Note=np.nan)
 
-        with Output(self.target, protected=True) as target:
-            writer = pd.ExcelWriter(target())
+        with Output(self.target, protected=True) as out:
+            writer = pd.ExcelWriter(out.target)
             for inst in insts:
                 df.to_excel(writer, sheet_name=inst, index=False)
             writer.save()

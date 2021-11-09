@@ -108,8 +108,8 @@ def create_cal_from_dataframe(df, text, target):
 
     pdf = latex.build_pdf(tex)
 
-    with Output(target) as target:
-        pdf.save_to(target())
+    with Output(target) as out:
+        pdf.save_to(out.target)
 
 
 class CalUv(UVTask):

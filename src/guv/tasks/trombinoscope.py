@@ -215,13 +215,13 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
             pdf = latex.build_pdf(tex)
             pdf.save_to(os.path.join(temp_dir, fn))
 
-        # with Output(fn) as target0:
-        #     pdf.save_to(target0())
-        with Output(self.target) as target0:
+        # with Output(fn) as out:
+        #     pdf.save_to(out.target)
+        with Output(self.target) as out:
             files = glob.glob(os.path.join(temp_dir, "*.pdf"))
             if len(files) == 1:
-                shutil.move(files[0], target0())
+                shutil.move(files[0], out.target)
             else:
-                with zipfile.ZipFile(target0(), "w") as z:
+                with zipfile.ZipFile(out.target, "w") as z:
                     for filepath in files:
                         z.write(filepath, os.path.basename(filepath))

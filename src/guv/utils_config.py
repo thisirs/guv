@@ -66,47 +66,50 @@ def get_unique_uv():
 
 class Output():
     def __init__(self, target, protected=False):
-        self.target = target
+        self._target = target
         self.protected = protected
         self.choice = None
 
     def __enter__(self):
-        if os.path.exists(self.target):
+        if os.path.exists(self._target):
             if self.protected:
                 while True:
                     try:
-                        self.choice = input('Le fichier `%s'' existe déjà. Écraser (d), garder (g), sauvegarder (s), annuler (a) ? ' % rel_to_dir(self.target, settings.SEMESTER_DIR))
+                        self.choice = input('Le fichier `%s'' existe déjà. Écraser (d), garder (g), sauvegarder (s), annuler (a) ? ' % rel_to_dir(self._target, settings.SEMESTER_DIR))
                         if self.choice not in ["d", "g", "s", "a"]:
                             raise ValueError
 
                         if self.choice == 'd':
-                            os.remove(self.target)
+                            os.remove(self._target)
                         elif self.choice == 's':
-                            parts = os.path.splitext(self.target)
+                            parts = os.path.splitext(self._target)
                             timestr = time.strftime("_%Y%m%d-%H%M%S")
                             target0 = parts[0] + timestr + parts[1]
-                            os.rename(self.target, target0)
+                            os.rename(self._target, target0)
                     except ValueError:
                         continue
                     else:
                         break
             else:
                 print('Écrasement du fichier `%s\'' %
-                      rel_to_dir(self.target, settings.SEMESTER_DIR))
+                      rel_to_dir(self._target, settings.SEMESTER_DIR))
         else:
-            dirname = os.path.dirname(self.target)
+            dirname = os.path.dirname(self._target)
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
 
         return self
 
-    def __call__(self):
+    def _maybe_cancel(self):
         if self.choice == "g":
             raise SkipWithBody
-        elif self.choice == "a":
+        if self.choice == "a":
             raise Exception("Annulation")
-        else:
-            return self.target
+
+    @property
+    def target(self):
+        self._maybe_cancel()
+        return self._target
 
     def __exit__(self, type, value, traceback):
         if type is SkipWithBody:
@@ -114,7 +117,7 @@ class Output():
             return True
         if type is None:
             self.result = "write"
-            print(f"Wrote `{rel_to_dir(self.target, settings.SEMESTER_DIR)}'")
+            print(f"Wrote `{rel_to_dir(self.target, settings.SEMESTER_DIR)}`")
             return
 
         self.result = "cancel"

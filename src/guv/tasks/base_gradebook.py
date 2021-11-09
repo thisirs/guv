@@ -81,8 +81,8 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
         self.data_df = pd.read_excel(self.xls_merge, engine="openpyxl")
         self.create_first_worksheet()
         self.create_other_worksheets()
-        with Output(self.target, protected=True) as target:
-            self.workbook.save(target())
+        with Output(self.target, protected=True) as out:
+            self.workbook.save(out.target)
 
     def get_sorted_columns(self):
         """Return list of columns sorted by priority."""

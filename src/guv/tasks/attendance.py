@@ -269,22 +269,22 @@ class PdfAttendance(UVTask, CliArgsMixin):
 
         # Écriture du pdf dans un zip si plusieurs
         if len(pdfs) == 1:
-            with Output(self.target + ".pdf") as target0:
-                shutil.move(pdfs[0], target0())
+            with Output(self.target + ".pdf") as out:
+                shutil.move(pdfs[0], out.target)
         else:
-            with Output(self.target + ".zip") as target0:
-                with zipfile.ZipFile(target0(), "w") as z:
+            with Output(self.target + ".zip") as out:
+                with zipfile.ZipFile(out.target, "w") as z:
                     for filepath in pdfs:
                         z.write(filepath, os.path.basename(filepath))
 
         # Écriture du tex dans un zip si plusieurs
         if self.save_tex:
             target = os.path.splitext(self.target)[0] + "_source.zip"
-            with Output(target) as target0:
+            with Output(target) as out:
                 if len(pdfs) == 1:
-                    shutil.move(pdfs[0], target0())
+                    shutil.move(pdfs[0], out.target)
                 else:
-                    with zipfile.ZipFile(target0(), "w") as z:
+                    with zipfile.ZipFile(out.target, "w") as z:
                         for filepath in texs:
                             z.write(filepath, os.path.basename(filepath))
 
@@ -367,7 +367,7 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
             pdf, tex = pdf_attendance_list_render(group, template, **context)
             pdfs.append(pdf)
 
-        with Output(self.target) as target0:
-            with zipfile.ZipFile(target0(), "w") as z:
+        with Output(self.target) as out:
+            with zipfile.ZipFile(out.target, "w") as z:
                 for filepath in pdfs:
                     z.write(filepath, os.path.basename(filepath))
