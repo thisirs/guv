@@ -208,23 +208,31 @@ def create_plannings(planning_type):
     Chaque ligne est un créneau dans le planning associé.
     """
 
+    props = settings.PLANNINGS[planning_type]
+    beg = props["PL_BEG"]
+    end = props["PL_END"]
+    skip_days_c = props["SKIP_DAYS_C"]
+    skip_days_d = props["SKIP_DAYS_D"]
+    skip_days_t = props["SKIP_DAYS_T"]
+    turn = props["TURN"]
+
     planning_C = pd.DataFrame(
         generate_days(
-            beg, end, settings.SKIP_DAYS_C, settings.TURN, "C"
+            beg, end, skip_days_c, turn, "C"
         ),
         columns=["date", "dayname", "num", "weekAB", "numAB", "nweek"],
     )
 
     planning_D = pd.DataFrame(
         generate_days(
-            beg, end, settings.SKIP_DAYS_D, settings.TURN, "D"
+            beg, end, skip_days_d, turn, "D"
         ),
         columns=["date", "dayname", "num", "weekAB", "numAB", "nweek"],
     )
 
     planning_T = pd.DataFrame(
         generate_days(
-            beg, end, settings.SKIP_DAYS_T, settings.TURN, "T"
+            beg, end, skip_days_t, turn, "T"
         ),
         columns=["date", "dayname", "num", "weekAB", "numAB", "nweek"],
     )
