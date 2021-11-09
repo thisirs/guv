@@ -91,7 +91,7 @@ class Output():
                     else:
                         break
             else:
-                print('Écrasement du fichier `%s\'' %
+                print('Écrasement du fichier `%s`' %
                       rel_to_dir(self._target, settings.SEMESTER_DIR))
         else:
             dirname = os.path.dirname(self._target)
@@ -117,7 +117,7 @@ class Output():
             return True
         if type is None:
             self.result = "write"
-            print(f"Wrote `{rel_to_dir(self.target, settings.SEMESTER_DIR)}`")
+            print(f"Écriture du fichier `{rel_to_dir(self.target, settings.SEMESTER_DIR)}`")
             return
 
         self.result = "cancel"
