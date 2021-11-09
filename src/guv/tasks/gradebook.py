@@ -96,6 +96,8 @@ class MarkingScheme:
         self.tree = tree
         self.width = None
         self.height = None
+        self.coeff_cells = None
+        self.points_cells = None
 
     @property
     def points(self):
@@ -358,8 +360,19 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
             total = last_grade.below()
             total_20 = total.below()
 
-            range = get_range_from_cells(first_grade, last_grade)
-            formula = f'=IF(COUNTBLANK({range})>0, "", SUM({range}))'
+            marks_range = get_range_from_cells(first_grade, last_grade)
+            cells = get_segment(first_grade, last_grade)
+
+            formula = '=IF(COUNTBLANK({marks_range}) > 0, "", {formula})'.format(
+                marks_range=marks_range,
+                formula=" + ".join(
+                    "{mark} * {coeff}".format(
+                        mark=get_address_of_cell(group_cell),
+                        coeff=get_address_of_cell(coeff_cell, absolute=True),
+                    )
+                    for group_cell, coeff_cell in zip(cells, ms.coeff_cells)
+                )
+            )
             total.value = formula
 
             total_20.text(
