@@ -207,6 +207,31 @@ def create_plannings(planning_type):
 
 
 def compute_slots(csv_inst_list, planning_type, empty_instructor=True, filter_uvs=None):
+    """Renvoie un dataframe de tous les créneaux horaires pour un planning défini.
+
+    Le dataframe contient les colonnes :
+
+    - Code enseig.
+    - Activité
+    - Jour
+    - Heure début
+    - Heure fin
+    - Semaine
+    - Locaux
+    - Lib. créneau
+    - Planning
+    - Responsable enseig.
+    - Intervenants
+    - Responsable
+    - date
+    - dayname
+    - num
+    - weekAB
+    - numAB
+    - nweek
+
+    """
+
     # Filter by planning
     df = pd.read_csv(csv_inst_list)
     df = df.loc[df["Planning"] == planning_type]
