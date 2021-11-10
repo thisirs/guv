@@ -325,15 +325,26 @@ On peut le renseigner dans la variable ``TIERS_TEMPS``. Par exemple :
 Fichiers des changements de TD/TP
 +++++++++++++++++++++++++++++++++
 
-Il s'agit de fichiers de prise en compte des changements de groupes
-de TD/TP par rapport au groupes officiels tels que décrits par le
-fichier ``AFFECTATION_LISTING``.
+Il s'agit de fichiers de prise en compte des changements de groupes de
+TD/TP par rapport au groupes officiels tels que décrits par le fichier
+``AFFECTATION_LISTING`` et présents dans les colonnes "TD" et "TP" du
+fichier ``effectifs.xlsx``.
 
 Chaque ligne repère un changement qui est de la forme
-``id1 --- id2``. Les identifiants peuvent être des adresses email ou
+``id1 --- id2``. Les identifiants peuvent être des adresses courriel ou
 de la forme "nom prénom". L'identifiant ``id2`` peut également être
 un identifiant de séance (``D1``, ``D2``, ``T1``, ``T2``,...) au cas où
 il y a un transfert et non un échange.
+
+Par exemple, dans le fichier pointé par ``CHANGEMENT_TD`` :
+
+.. code:: text
+
+   # Échange autorisé
+   Ryland Grace --- Guy Montag
+
+   # Incompatibilité Master
+   Mycroft Canner --- D1
 
 On peut renseigner le chemin relatif vers ces fichiers dans les
 variables ``CHANGEMENT_TD`` et ``CHANGEMENT_TP``.
