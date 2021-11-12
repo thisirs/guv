@@ -249,6 +249,8 @@ class Settings:
             spec = importlib.util.spec_from_file_location(module_name, config_file)
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
+        except ImportError as e:
+            logger.warn(f"Problème de chargement du fichier {config_file}, ignoré")
         except Exception as e:
             raise ImproperlyConfigured(f"Problème de chargement du fichier {config_file}", e) from e
 
