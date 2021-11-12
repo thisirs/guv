@@ -385,24 +385,17 @@ Il arrive qu'on dispose d'informations extérieures concernant les
 provenant de Moodle ou généré avec **guv**,...) et qu'on veuille les
 incorporer au fichier central de l'UV. Pour cela, il faut décrire les
 agrégations dans le fichier de configuration d'UV/UE à l'aide d'un
-objet de type ``Documents`` :
+objet de type ``Documents`` impérativement appelé ``DOCS`` :
 
 .. code:: python
 
    from guv.helpers import Documents
    DOCS = Documents()
 
-Ensuite, si on dispose d'un fichier ``notes.csv`` situé dans le
-sous-dossier ``documents`` de l'UV et qu'on veut l'incorporer, on écrira
-en toute généralité :
+Pour déclarer une incorporation, on utiliser la méthode ``add`` sur
+``DOCS`` :
 
-.. code:: python
-
-   def fonction_qui_incorpore(df, file_path):
-       # On incorpore le fichier dont le chemin est `file_path` au
-       # DataFrame `df` et on renvoie le DataFrame mis à jour.
-
-   DOCS.add(filename="documents/notes.csv", func=fonction_qui_incorpore)
+.. automethod:: guv.helpers.Documents.add
 
 À la prochaine exécution de **guv** sans argument, la tâche par défaut
 va reconstruire le fichier central et le fichier ``notes.csv`` sera
@@ -418,39 +411,39 @@ utilise ``aggregate``. On a alors
 
    DOCS.aggregate("documents/notes.csv", on="Courriel")
 
-.. autofunction:: guv.helpers.aggregate
+.. automethod:: guv.helpers.Documents.aggregate
 
 Pour incorporer des fichiers au format Org, on utilise
 ``aggregate_org`` :
 
-.. autofunction:: guv.helpers.aggregate_org
+.. automethod:: guv.helpers.Documents.aggregate_org
 
 Pour créer/modifier une colonne seulement sans utiliser de fichier
 tiers, on peut utiliser les fonctions suivantes :
 
 -  Fonction ``fillna_column``
 
-   .. autofunction:: guv.helpers.fillna_column
+   .. automethod:: guv.helpers.Documents.fillna_column
 
 -  Fonction ``replace_regex``
 
-   .. autofunction:: guv.helpers.replace_regex
+   .. automethod:: guv.helpers.Documents.replace_regex
 
 -  Fonction ``replace_column``
 
-   .. autofunction:: guv.helpers.replace_column
+   .. automethod:: guv.helpers.Documents.replace_column
 
 -  Fonction ``switch``
 
-   .. autofunction:: guv.helpers.switch
+   .. automethod:: guv.helpers.Documents.switch
 
 -  Fonction ``apply``
 
-   .. autofunction:: guv.helpers.apply
+   .. automethod:: guv.helpers.Documents.apply
 
 -  Fonction ``compute_new_column``
 
-   .. autofunction:: guv.helpers.compute_new_column
+   .. automethod:: guv.helpers.Documents.compute_new_column
 
 Configurations supplémentaires
 ==============================
