@@ -4,6 +4,7 @@ from datetime import timedelta
 from collections.abc import Callable
 from typing import Optional, List, Union
 import functools
+import inspect
 
 from schema import Schema, Or, And, Use
 import pandas as pd
@@ -950,21 +951,39 @@ class Documents:
 
     @classmethod
     def add_action_method(cls, func):
+        sig = inspect.Signature(
+            (
+                inspect.Parameter(name="self", kind=inspect.Parameter.POSITIONAL_ONLY),
+                *tuple(inspect.signature(func).parameters.values()),
+            )
+        )
+
         @functools.wraps(func)
         def dummy(self, *args, **kwargs):
             action = func(*args, **kwargs)
             self._add_action(action)
             return self
+
+        dummy.__signature__ = sig
         setattr(cls, func.__name__, dummy)
 
     @classmethod
     def add_action_file_method(cls, func):
+        sig = inspect.Signature(
+            (
+                inspect.Parameter(name="self", kind=inspect.Parameter.POSITIONAL_ONLY),
+                *tuple(inspect.signature(func).parameters.values()),
+            )
+        )
+
         @functools.wraps(func)
         def dummy(self, *args, **kwargs):
             action = func(*args, **kwargs)
             self._add_dep(args[0])
             self._add_action(action)
             return self
+
+        dummy.__signature__ = sig
         setattr(cls, func.__name__, dummy)
 
 
