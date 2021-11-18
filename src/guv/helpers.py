@@ -949,42 +949,25 @@ class Documents:
         self._add_action(func2)
         self._add_dep(filename)
 
-    @classmethod
-    def add_action_method(cls, func):
-        sig = inspect.Signature(
-            (
-                inspect.Parameter(name="self", kind=inspect.Parameter.POSITIONAL_ONLY),
-                *tuple(inspect.signature(func).parameters.values()),
-            )
+
+def add_action_method(cls, func, file=False):
+    sig = inspect.Signature(
+        (
+            inspect.Parameter(name="self", kind=inspect.Parameter.POSITIONAL_ONLY),
+            *tuple(inspect.signature(func).parameters.values()),
         )
+    )
 
-        @functools.wraps(func)
-        def dummy(self, *args, **kwargs):
-            action = func(*args, **kwargs)
-            self._add_action(action)
-            return self
-
-        dummy.__signature__ = sig
-        setattr(cls, func.__name__, dummy)
-
-    @classmethod
-    def add_action_file_method(cls, func):
-        sig = inspect.Signature(
-            (
-                inspect.Parameter(name="self", kind=inspect.Parameter.POSITIONAL_ONLY),
-                *tuple(inspect.signature(func).parameters.values()),
-            )
-        )
-
-        @functools.wraps(func)
-        def dummy(self, *args, **kwargs):
-            action = func(*args, **kwargs)
+    @functools.wraps(func)
+    def dummy(self, *args, **kwargs):
+        action = func(*args, **kwargs)
+        if file:
             self._add_dep(args[0])
-            self._add_action(action)
-            return self
+        self._add_action(action)
+        return self
 
-        dummy.__signature__ = sig
-        setattr(cls, func.__name__, dummy)
+    dummy.__signature__ = sig
+    setattr(cls, func.__name__, dummy)
 
 
 actions = [
@@ -995,8 +978,10 @@ actions = [
     compute_new_column
 ]
 
+
 for a in actions:
-    Documents.add_action_method(a)
+    add_action_method(Documents, a)
+
 
 actions_file = [
     flag,
@@ -1005,8 +990,8 @@ actions_file = [
     switch
 ]
 
-for a in actions_file:
-    Documents.add_action_file_method(a)
+for a in actions:
+    add_action_method(Documents, a, file=True)
 
 
 def skip_range(d1, d2):
