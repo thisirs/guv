@@ -17,7 +17,7 @@ from .exceptions import ImproperlyConfigured
 def fillna_column(
     colname: str, *, na_value: Optional[str] = None, group_column: Optional[str] = None
 ):
-    """Renvoie une fonction qui remplace les valeurs non définies dans la colonne ``colname``.
+    """Remplace les valeurs non définies dans la colonne ``colname``.
 
     Une seule des options ``na_value`` et ``group_column`` doit être
     spécifiée. Si ``na_value`` est spécifiée, on remplace
@@ -93,9 +93,8 @@ def replace_regex(
 ):
     """Remplacements regex dans une colonne.
 
-    Renvoie une fonction qui remplace les occurrences de toutes les
-    expressions régulières renseignées dans ``reps`` dans la colonne
-    ``colname``.
+    Remplace dans la colonne ``colname`` les occurrences de toutes les
+    expressions régulières renseignées dans ``reps``.
 
     Si ``new_colname`` est spécifié, une nouvelle colonne est créée
     avec ce nom et ``colname`` est laissée telle quelle. Sinon les
@@ -110,7 +109,7 @@ def replace_regex(
 
     colname : :obj:`str`
         Nom de la colonne où effectuer les remplacements
-    *reps :
+    *reps : any number of :obj:`tuple`
         Les couples regex / remplacement
     new_colname : :obj:`str`
         Le nom de la nouvelle colonne
@@ -147,8 +146,8 @@ def replace_regex(
 def replace_column(colname: str, rep_dict: dict, new_colname: Optional[str] = None, msg: Optional[str] = None):
     """Remplacements dans une colonne.
 
-    Renvoie une fonction qui remplace les valeurs exactes renseignées
-    dans ``rep_dict`` dans la colonne ``colname``.
+    Remplace les valeurs renseignées dans ``rep_dict`` dans la colonne
+    ``colname``.
 
     Si ``new_colname`` est spécifié, une nouvelle colonne est créée
     avec ce nom et ``colname`` est laissée telle quelle. Sinon les
@@ -196,7 +195,7 @@ def replace_column(colname: str, rep_dict: dict, new_colname: Optional[str] = No
 
 
 def apply(colname: str, func: Callable, msg: Optional[str] = None):
-    """Renvoie une fonction qui applique une fonction sur une colonne.
+    """Modifie une colonne existance avec une fonction.
 
     ``colname`` est un nom de colonne existant et ``func`` une fonction
     prenant en argument un élément de la colonne et retournant un
@@ -238,18 +237,18 @@ def apply(colname: str, func: Callable, msg: Optional[str] = None):
     return func2
 
 
-def compute_new_column(*cols, func: Callable, colname: str, msg: Optional[str] = None):
-    """Création d'une colonne à partir d'autres.
+def compute_new_column(*cols: str, func: Callable, colname: str, msg: Optional[str] = None):
+    """Création d'une colonne à partir d'autres colonnes.
 
-    Renvoie une fonction qui calcule une nouvelle note à partir
-    d'autres colonnes. Les colonnes utilisées sont renseignées dans
-    ``cols``. La fonction ``func`` qui calcule la nouvelle colonne
-    reçoit une *Series* Pandas.
+    Les colonnes nécessaires au calcul sont renseignées dans ``cols``.
+    La fonction ``func`` qui calcule la nouvelle colonne reçoit une
+    *Series* Pandas de toutes les valeurs contenues dans les colonnes
+    spécifiées.
 
     Parameters
     ----------
 
-    *cols
+    *cols : list of :obj:`str`
         Liste des colonnes fournies à la fonction ``func``
     func : :obj:`callable`
         Fonction prenant en argument un dictionnaire "nom des
@@ -262,14 +261,27 @@ def compute_new_column(*cols, func: Callable, colname: str, msg: Optional[str] =
     Examples
     --------
 
+    - Moyenne pondérée de deux notes :
+
+      .. code:: python
+
+         from guv.helpers import compute_new_column
+
+         def moyenne(notes):
+             return .4 * notes["Note_médian"] + .6 * notes["Note_final"]
+
+         DOCS.compute_new_column("Note_médian", "Note_final", func=moyenne, colname="Note_moyenne")
+
+    - Moyenne sans tenir compte des valeurs non définies :
+
     .. code:: python
 
        from guv.helpers import compute_new_column
 
        def moyenne(notes):
-           return (notes["Note_médian"] + notes["Note_final"]) / 2
+           return notes.mean()
 
-       DOCS.compute_new_column("Note_médian", "Note_final", func=moyenne, colname="Note_moyenne")
+       DOCS.compute_new_column("note1", "note2", "note3", func=moyenne, colname="Note_moyenne")
 
     """
     def func2(df):
@@ -447,7 +459,7 @@ def aggregate(
     read_method: Optional[Callable] = None,
     kw_read: Optional[dict] = {}
 ):
-    """Renvoie une fonction qui réalise l'agrégation avec un fichier Excel/csv.
+    """Agrégation d'un tableau provenant d'un fichier Excel/csv.
 
     Les arguments ``left_on`` et ``right_on`` sont les clés pour
     réaliser une jointure : ``left_on`` est la clé du DataFrame
@@ -589,7 +601,7 @@ def aggregate_org(
     on: Optional[str] = None,
     postprocessing: Optional[Callable] = None
 ):
-    """Renvoie une fonction d'agrégation d'un fichier Org.
+    """Agrégation d'un fichier au format Org.
 
     Le document à agréger est au format Org. Les titres servent de clé
     pour l'agrégation et le contenu de ces titres et agréger.
@@ -764,12 +776,14 @@ def switch(
     backup: bool = False,
     new_colname: Optional[str] = None
 ):
-    """Renvoie une fonction qui réalise des échanges dans une colonne.
+    """Réalise des échanges de valeurs dans une colonne.
 
     L'argument ``colname`` est la colonne dans laquelle opérer les
-    échanges. L'argument ``backup`` spécifie si la colonne doit être
-    sauvegardée (avec un suffixe ``.orig``) avant de faire les
-    échanges.
+    échanges. Si l'argument ``backup`` est spécifié, la colonne est
+    sauvegardée avant toute modification (avec un suffixe ``.orig``).
+    Si l'argument ``new_colname`` est fourni la colonne est copiée
+    vers une nouvelle colonne de nom ``new_colname`` et les
+    modifications sont faites sur cette nouvelle colonnne.
 
     Parameters
     ----------
@@ -951,6 +965,8 @@ class Documents:
 
 
 def add_action_method(cls, func, file=False):
+    """Add `func` as a method in class `cls`"""
+
     sig = inspect.Signature(
         (
             inspect.Parameter(name="self", kind=inspect.Parameter.POSITIONAL_ONLY),
