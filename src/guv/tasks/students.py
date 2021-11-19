@@ -312,6 +312,7 @@ class XlsStudentData(UVTask):
 
             if choice:
                 row_merge = lo.loc[index, :].combine_first(ro.iloc[int(choice), :])
+                ro = ro.drop(index=ro.iloc[[int(choice)]].index)
                 row_merge["_merge"] = "both"
                 dfr_clean = dfr_clean.append(row_merge)
             else:
