@@ -15,7 +15,7 @@ MOODLE_LISTING = None
 
 # Documents supplémentaires à agréger au fichier Excel de l'effectif
 # de l'UV. Il suffit d'appeler des méthodes de `DOCS`. La principale
-# est `aggregate` pour agréger des fichier csv/Excel.
+# est `aggregate` pour agréger des fichiers csv/Excel.
 from guv.helpers import Documents
 DOCS = Documents()
 
