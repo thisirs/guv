@@ -987,27 +987,19 @@ def add_action_method(cls, func, file=False):
 
 
 actions = [
-    fillna_column,
-    replace_regex,
-    replace_column,
-    apply,
-    compute_new_column
+    (fillna_column, {}),
+    (replace_regex, {}),
+    (replace_column, {}),
+    (apply, {}),
+    (compute_new_column, {}),
+    (flag, {"file": True}),
+    (aggregate, {"file": True}),
+    (aggregate_org, {"file": True}),
+    (switch, {"file": True}),
 ]
 
-
-for a in actions:
-    add_action_method(Documents, a)
-
-
-actions_file = [
-    flag,
-    aggregate,
-    aggregate_org,
-    switch
-]
-
-for a in actions:
-    add_action_method(Documents, a, file=True)
+for action, kwargs in actions:
+    add_action_method(Documents, action, **kwargs)
 
 
 def skip_range(d1, d2):
