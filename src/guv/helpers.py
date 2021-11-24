@@ -392,6 +392,10 @@ def aggregate_df(
     else:
         raise Exception("Unsupported type for right_on")
 
+    # Warn if right_on contains duplicates
+    if any(right_df[right_on].duplicated()):
+        logger.warning("La colonne `right_on` du fichier à agréger contient des clés identiques")
+
     # Extract subset of columns, right_on included
     if subset is not None:
         sc_columns = Or(*right_df.columns)
