@@ -194,7 +194,48 @@ def replace_column(colname: str, rep_dict: dict, new_colname: Optional[str] = No
     return func
 
 
-def apply(colname: str, func: Callable, msg: Optional[str] = None):
+def apply_df(func: Callable, msg: Optional[str] = None):
+    """Modifie une colonne existance avec une fonction.
+
+    ``func`` est une fonction prenant en argument un DataFrame et
+    retournant le DataFrame modifié.
+
+    Un message ``msg`` peut être spécifié pour décrire ce que fait la
+    fonction, il sera affiché lorsque l'agrégation sera effectuée.
+    Sinon, un message générique sera affiché.
+
+    Parameters
+    ----------
+
+    func : :obj:`callable`
+        Fonction prenant en argument un DataFrame et renvoyant un
+        DataFrame modifié
+    msg : :obj:`str`
+        Un message descriptif utilisé
+
+    Examples
+    --------
+
+    .. code:: python
+
+       DOCS.apply_df(
+           lambda df: df.loc[~df["Adresse de courriel"].duplicated(), :],
+           msg="Retirer les utilisateurs dupliqués"
+       )
+
+    """
+    def func2(df):
+        return func(df)
+
+    if msg is not None:
+        func2.__desc__ = msg
+    else:
+        func2.__desc__ = f"Appliquer une fonction au Dataframe"
+
+    return func2
+
+
+def apply_column(colname: str, func: Callable, msg: Optional[str] = None):
     """Modifie une colonne existance avec une fonction.
 
     ``colname`` est un nom de colonne existant et ``func`` une fonction
@@ -990,7 +1031,8 @@ actions = [
     (fillna_column, {}),
     (replace_regex, {}),
     (replace_column, {}),
-    (apply, {}),
+    (apply_column, {}),
+    (apply_df, {}),
     (compute_new_column, {}),
     (flag, {"file": True}),
     (aggregate, {"file": True}),
