@@ -118,7 +118,7 @@ _SETTING_LIST = [
         help="La variable 'TURN' est incorrecte : un dictionnaire d'objets vers un jour est attendu",
     ),
     Setting(
-        "ENV",
+        "DOCS",
     ),
 ]
 
