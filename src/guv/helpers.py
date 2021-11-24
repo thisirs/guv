@@ -311,6 +311,13 @@ def aggregate_df(
 ):
     """Merge two dataframes"""
 
+    if preprocessing is not None:
+        if hasattr(preprocessing, "__desc__"):
+            logger.info(f"Preprocessing: {preprocessing.__desc__}")
+        else:
+            logger.info("Preprocessing")
+        right_df = preprocessing(right_df)
+
     # Columns that will be removed after merging
     drop_cols = []
 
@@ -384,13 +391,6 @@ def aggregate_df(
     # merge them eventually
     duplicated_columns = set(left_df.columns).intersection(set(right_df.columns))
     duplicated_columns = duplicated_columns.difference(set([left_on, right_on]))
-
-    if preprocessing is not None:
-        if hasattr(preprocessing, "__desc__"):
-            print(f"Preprocessing: {preprocessing.__desc__}")
-        else:
-            print("Preprocessing")
-        right_df = preprocessing(right_df)
 
     # Outer merge
     merged_df = left_df.merge(right_df,
