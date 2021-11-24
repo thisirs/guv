@@ -96,6 +96,7 @@ _SETTING_LIST = [
         "TASKS",
         schema=Schema([str]),
         help="La variable 'TASKS' est incorrecte : une liste de chemin vers des fichiers est attendue",
+        default=[]
     ),
     Setting(
         "SKIP_DAYS_C",
