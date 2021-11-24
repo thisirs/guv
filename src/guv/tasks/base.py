@@ -33,7 +33,7 @@ class TaskBase:
 
         """
 
-        logger.info("Setting up task `{}`".format(self.task_name()))
+        logger.debug("Setting up task `{}`".format(self.task_name()))
 
     def run(self):
         """Exécution de la tâche.
@@ -47,7 +47,7 @@ class TaskBase:
 
     @property
     def settings(self):
-        logger.info("Get settings for TaskBase {}".format(self.task_name()))
+        logger.debug("Get settings for TaskBase {}".format(self.task_name()))
 
         return settings
 
@@ -109,7 +109,7 @@ class TaskBase:
                 if hasattr(self, "target"):
                     doit_task["targets"] = [self.target]
 
-            logger.info("Task `{}` failed: {}".format(self.task_name(), type(e)))
+            logger.debug("Task `{}` failed: {}".format(self.task_name(), type(e)))
             return doit_task
 
         doit_task.update(
@@ -145,7 +145,7 @@ class TaskBase:
         def format_task(doit_task):
             return "\n".join(f"{key}: {value}" for key, value in doit_task.items())
 
-        logger.info(f"Task properties are:\n{format_task(doit_task)}")
+        logger.debug(f"Task properties are:\n{format_task(doit_task)}")
 
         return doit_task
 
@@ -193,7 +193,7 @@ class TaskBase:
 
         # Raised by get_unique_uv or selected_uv if not in UV/semester directory
         except (NotUVDirectory, ImproperlyConfigured) as e:
-            logger.info("Task `{}` failed: {}".format(cls.task_name(), type(e)))
+            logger.debug("Task `{}` failed: {}".format(cls.task_name(), type(e)))
             tf = TaskFailed(e.args[0])
             return {
                 "basename": cls.task_name(),
@@ -255,7 +255,7 @@ class UVTask(TaskBase):
 
     @property
     def settings(self):
-        logger.info("Get settings for UVTask {}".format(self.uv))
+        logger.debug("Get settings for UVTask {}".format(self.uv))
 
         if self._settings is None:
             self._settings = Settings(str(Path(settings.SEMESTER_DIR) / self.uv))

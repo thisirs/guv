@@ -90,7 +90,7 @@ _SETTING_LIST = [
             ),
         )),
         help="La variable 'DEBUG' est incorrecte : un entier est attendu",
-        default=logging.WARNING
+        default=logging.INFO
     ),
     Setting(
         "TASKS",
@@ -148,7 +148,7 @@ class Settings:
         return list(self.PLANNINGS.keys())
 
     def __getattr__(self, name):
-        logger.info(f"Accessing setting '{name}'")
+        logger.debug(f"Accessing setting '{name}'")
 
         if name.startswith("__"):  # for copy to succeed ignore __getattr__
             raise AttributeError(name)
@@ -228,10 +228,10 @@ class Settings:
             self.load_file(Path(self.cwd) / "config.py")
 
         else:
-            logger.info("Not in UV or semester directory")
+            logger.debug("Not in UV or semester directory")
 
     def load_file(self, config_file):
-        logger.info("Loading configuration file: {}".format(config_file))
+        logger.debug("Loading configuration file: {}".format(config_file))
 
         try:
             module_name = os.path.splitext(os.path.basename(config_file))[0]
@@ -239,7 +239,7 @@ class Settings:
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
         except ImportError as e:
-            logger.warn(f"Problème de chargement du fichier {config_file}, ignoré")
+            logger.warning(f"Problème de chargement du fichier {config_file}, ignoré")
         except Exception as e:
             raise ImproperlyConfigured(f"Problème de chargement du fichier {config_file}", e) from e
 
@@ -256,6 +256,20 @@ else:
 
 settings = Settings(wd)
 
-logging.basicConfig(format="%(message)s")
+class LogFormatter(logging.Formatter):
+
+    formats = {
+        logging.DEBUG: "DEBUG: %(msg)s",
+        logging.INFO: "%(msg)s",
+        logging.WARN: "\033[33mWARNING\033[0m: %(msg)s",
+        logging.ERROR: "\033[31mERROR\033[0m: %(msg)s",
+    }
+    def format(self, record):
+        return LogFormatter.formats.get(
+            record.levelno, self._fmt) % record.__dict__
+
 logger = logging.getLogger("guv")
+handler = logging.StreamHandler()
+handler.setFormatter(LogFormatter())
 logger.setLevel(settings.DEBUG)
+logger.addHandler(handler)

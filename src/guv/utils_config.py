@@ -282,7 +282,7 @@ def render_from_contexts(template, contexts, save_tex=False, target=None):
         try:
             filepath, tex_filepath = render_latex_template(template, context)
         except latex.exc.LatexBuildError as e:
-            logger.warn("LaTeX build failed", e)
+            logger.warning("LaTeX build failed", e)
             continue
         pdfs.append(filepath)
         texs.append(tex_filepath)

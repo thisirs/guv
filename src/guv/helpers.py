@@ -410,13 +410,13 @@ def aggregate_df(
         key = key + "_y"
 
     for index, row in merged_df_ro.iterrows():
-        print("WARNING: identifiant présent dans le document à aggréger mais introuvable dans la base de données :", row[key])
+        logger.warning("Identifiant présent dans le document à aggréger mais introuvable dans la base de données :", row[key])
 
     if postprocessing is not None:
         if hasattr(postprocessing, "__desc__"):
-            print(f"Postprocessing: {postprocessing.__desc__}")
+            logger.info(f"Postprocessing: {postprocessing.__desc__}")
         else:
-            print("Postprocessing")
+            logger.info("Postprocessing")
         agg_df = postprocessing(agg_df)
 
     # Try to merge columns
@@ -836,7 +836,7 @@ def switch(
         def swap_record(df, idx1, idx2, col):
             nom1 = " ".join(df.loc[idx1, ["Nom", "Prénom"]])
             nom2 = " ".join(df.loc[idx2, ["Nom", "Prénom"]])
-            logger.warning(f"Swapping '{nom1}' and '{nom2}' in column '{col}'")
+            logger.info(f"Échange de '{nom1}' et '{nom2}' dans la colonne '{col}'")
 
             tmp = df.loc[idx1, col]
             df.loc[idx1, col] = df.loc[idx2, col]
@@ -869,7 +869,7 @@ def switch(
                     stu1idx = stu1row.index[0]
 
                 if stu2 in names: # Le deuxième élément est une colonne
-                    logger.warning(f"Étudiant(e) '{stu1}' affecté(e) au groupe '{stu2}'")
+                    logger.info(f"Étudiant(e) '{stu1}' affecté(e) au groupe '{stu2}'")
                     df.loc[stu1idx, target_colname] = stu2
                 elif '@etu' in stu2: # Le deuxième élément est une adresse email
                     stu2row = df.loc[df['Courriel'] == stu2]
@@ -915,7 +915,7 @@ class Documents:
 
     def apply_actions(self, df):
         for action in self._actions:
-            print(action.__desc__)
+            logger.info(action.__desc__)
             df = action(df)
         return df
 

@@ -52,7 +52,7 @@ class ModulesTaskLoader(NamespaceTaskLoader):
                 and issubclass(v, TaskBase)
                 and v not in [TaskBase, UVTask, CliArgsMixin],
             )
-            logger.info("{} tasks loaded from module {}".format(len(m), module))
+            logger.debug("{} tasks loaded from module {}".format(len(m), module))
             self.tasks.update(dict(m))
             self.namespace.update(dict(m))
 
@@ -76,8 +76,8 @@ try:
         attendance,
         gradebook,
     )
-    logger.info("{} tasks loaded".format(len(task_loader.tasks)))
-    logger.info("{} variables loaded".format(len(task_loader.variables)))
+    logger.debug("{} tasks loaded".format(len(task_loader.tasks)))
+    logger.debug("{} variables loaded".format(len(task_loader.variables)))
 except ImproperlyConfigured as e:
     msg = e.args[0]
     print(f"{msg} : {e.args[1]}")
@@ -97,7 +97,7 @@ try:
         else:
             raise Exception("Le fichier de tâches n'existe pas :", fp)
 except ImproperlyConfigured:
-    logger.info("Unable to load custom tasks")
+    logger.warning("Unable to load custom tasks")
 
 
 def run_doit(args):
