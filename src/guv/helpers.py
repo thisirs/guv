@@ -315,14 +315,14 @@ def compute_new_column(*cols: str, func: Callable, colname: str, msg: Optional[s
 
     - Moyenne sans tenir compte des valeurs non définies :
 
-    .. code:: python
+      .. code:: python
 
-       from guv.helpers import compute_new_column
+         from guv.helpers import compute_new_column
 
-       def moyenne(notes):
-           return notes.mean()
+         def moyenne(notes):
+             return notes.mean()
 
-       DOCS.compute_new_column("note1", "note2", "note3", func=moyenne, colname="Note_moyenne")
+         DOCS.compute_new_column("note1", "note2", "note3", func=moyenne, colname="Note_moyenne")
 
     """
     def func2(df):
