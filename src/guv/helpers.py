@@ -195,7 +195,7 @@ def replace_column(colname: str, rep_dict: dict, new_colname: Optional[str] = No
 
 
 def apply_df(func: Callable, msg: Optional[str] = None):
-    """Modifie une colonne existance avec une fonction.
+    """Modifie une colonne existante avec une fonction.
 
     ``func`` est une fonction prenant en argument un DataFrame et
     retournant le DataFrame modifié.
