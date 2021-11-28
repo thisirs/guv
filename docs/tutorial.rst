@@ -418,8 +418,8 @@ Pour incorporer des fichiers au format Org, on utilise
 
 .. automethod:: guv.helpers.Documents.aggregate_org
 
-Pour créer/modifier une colonne seulement sans utiliser de fichier
-tiers, on peut utiliser les fonctions suivantes :
+Pour créer/modifier le fichier central sans utiliser de fichier tiers,
+on peut utiliser les fonctions suivantes :
 
 -  Fonction ``fillna_column``
 
@@ -437,9 +437,13 @@ tiers, on peut utiliser les fonctions suivantes :
 
    .. automethod:: guv.helpers.Documents.switch
 
--  Fonction ``apply``
+-  Fonction ``apply_df``
 
-   .. automethod:: guv.helpers.Documents.apply
+   .. automethod:: guv.helpers.Documents.apply_df
+
+-  Fonction ``apply_column``
+
+   .. automethod:: guv.helpers.Documents.apply_column
 
 -  Fonction ``compute_new_column``
 
