@@ -731,7 +731,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
     de chaque sous-groupe (de TP ou TD par exemple).
 
     Le nombre de groupes créés (au total ou par sous-groupes suivant
-    ``--grouping``) est controlé par une les options mutuellement
+    ``--grouping``) est controlé par une des options mutuellement
     exclusives ``--proportions``, ``--group-size`` et
     ``--num-groups``.
 
@@ -746,13 +746,13 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
     - ``{group_name}`` : nom du groupe en construction (si on a
       spécifié ``--names``)
     - ``#`` : numérotation séquentielle du groupe en construction (si
-      `names` n'est pas spécifié)
+      ``--names`` n'est pas spécifié)
     - ``@`` : lettre séquentielle du groupe en construction (si
-      `names` n'est pas spécifié)
+      ``--names`` n'est pas spécifié)
 
     L'option ``--names`` peut être une liste de noms à utiliser ou un
     fichier contenant une liste de noms ligne par ligne. Il sont pris
-    aléatoirement si on spécifie le drapeau `--random`.
+    aléatoirement si on spécifie le drapeau ``--random``.
 
     Le drapeau ``--global`` permet de ne pas remettre à zéro la
     génération des noms de groupes lorsqu'on change le groupement à
