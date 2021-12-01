@@ -458,11 +458,18 @@ def aggregate_df(
         logger.warning("Identifiant présent dans le document à aggréger mais introuvable dans la base de données :", row[key])
 
     if postprocessing is not None:
-        if hasattr(postprocessing, "__desc__"):
-            logger.info(f"Postprocessing: {postprocessing.__desc__}")
-        else:
-            logger.info("Postprocessing")
-        agg_df = postprocessing(agg_df)
+        def apply_postprocessing(df, func):
+            if hasattr(func, "__desc__"):
+                logger.info(f"Postprocessing: {func.__desc__}")
+            else:
+                logger.info("Postprocessing")
+            return func(df)
+
+        if not isinstance(postprocessing, tuple):
+            postprocessing = (postprocessing,)
+
+        for func in postprocessing:
+            agg_df = apply_postprocessing(agg_df, func)
 
     # Try to merge columns
     for c in duplicated_columns:
