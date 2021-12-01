@@ -445,6 +445,10 @@ on peut utiliser les fonctions suivantes :
 
    .. automethod:: guv.helpers.Documents.apply_column
 
+-  Fonction ``apply_cell``
+
+   .. automethod:: guv.helpers.Documents.apply_cell
+
 -  Fonction ``compute_new_column``
 
    .. automethod:: guv.helpers.Documents.compute_new_column

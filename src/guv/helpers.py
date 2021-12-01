@@ -821,6 +821,66 @@ def flag(filename: str, *, colname: str, flags: Optional[List[str]] = ["Oui", ""
     return func
 
 
+def apply_cell(name_or_email: str, colname: str, value):
+    """Remplace la valeur d'une cellule.
+
+    ``name_or_email`` est le nom de l'édudiant ou son adresse courriel
+    et ``colname`` est le nom de la colonne où faire le changement. La
+    nouvelle valeur est renseignée par ``value``.
+
+    Parameters
+    ----------
+
+    name_or_email : :obj:`str`
+        Le nom ou l'adresse courriel de l'étudiant.
+
+    colname : :obj:`str`
+        Le nom de la colonne où faire les modifications.
+
+    value :
+        La valeur à affecter.
+
+    Examples
+    --------
+
+    .. code:: python
+
+       DOCS.apply_cell("Mark Watney", "Note bricolage", 20)
+
+    """
+
+    def apply_cell_func(df):
+        check_columns(df, columns=colname, error_when="not_found")
+
+        # Add slugname column
+        tf_df = slugrot("Nom", "Prénom")
+        df["fullname_slug"] = tf_df(df)
+
+        if '@etu' in name_or_email:
+            sturow = df.loc[df['Courriel'] == name_or_email]
+            if len(stu1row) > 1:
+                raise Exception(f'Adresse courriel `{name_or_email}` présente plusieurs fois')
+            if len(stu1row) == 0:
+                raise Exception(f'Adresse courriel `{name_or_email}` non présente dans la base de données')
+            stuidx = sturow.index[0]
+        else:
+            sturow = df.loc[df.fullname_slug == slugrot_string(name_or_email)]
+            if len(sturow) > 1:
+                raise Exception(f'Étudiant de nom `{name_or_email}` présent plusieurs fois')
+            if len(sturow) == 0:
+                raise Exception(f'Étudiant de nom `{name_or_email}` non présent dans la base de données')
+            stuidx = sturow.index[0]
+
+        df.loc[stuidx, colname] = value
+
+        df = df.drop('fullname_slug', axis=1)
+        return df
+
+    apply_cell_func.__desc__ = f"Modification de la colonne `{colname}` pour l'identifiant `{name_or_email}`"
+
+    return apply_cell_func
+
+
 def switch(
     filename: str,
     *,
@@ -1042,6 +1102,7 @@ actions = [
     (fillna_column, {}),
     (replace_regex, {}),
     (replace_column, {}),
+    (apply_cell, {}),
     (apply_column, {}),
     (apply_df, {}),
     (compute_new_column, {}),
