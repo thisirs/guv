@@ -172,15 +172,16 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
     Cette tâche permet de générer un fichier Excel pour rentrer
     facilement des notes avec un barème détaillé. Le fichier Excel
     peut être divisé en plusieurs feuilles suivant une colonne du
-    fichier ``effectifs.xlsx`` et l'argument ``--worksheets`` et
-    chaque feuille peut être ordonnée suivant l'argument
-    ``--order-by``. Un fichier de barème détaillé doit être fourni via
-    l'argument ``--marking-scheme``. Le fichier doit être au format
-    YAML. La structure du devoir est spécifiée de manière arborescente
-    avec une liste finale pour les questions contenant les points
-    accordés à cette question et éventuellement le coefficient (par
-    défaut 1) et des détails (ne figurant pas dans le fichier Excel).
-    Par exemple :
+    fichier ``effectifs.xlsx`` et l'argument ``--worksheets`` et les
+    étudiants dans chaque feuille peut être ordonnés suivant
+    l'argument ``--order-by``. Un fichier de barème détaillé peut être
+    fourni via l'argument ``--marking-scheme``. Par défaut, un barème
+    d'une seule note sur 5 sera utilisé. Le fichier de barème doit
+    être au format YAML. La structure du devoir est spécifiée de
+    manière arborescente avec une liste finale pour les questions
+    contenant les points accordés à cette question et éventuellement
+    le coefficient (par défaut 1) et des détails (ne figurant pas dans
+    le fichier Excel). Par exemple :
 
     .. code:: yaml
 
@@ -412,10 +413,11 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
     Cette tâche permet de créer un fichier Excel pour attribuer des
     notes par groupes évitant ainsi de recopier la note pour chaque
     membre du groupe. Les groupes d'étudiants sont spécifiés par
-    l'argument ``--group-by``. Un barème détaillé doit être fourni via
-    l'argument ``--marking-scheme``. Le fichier peut être divisé en
-    plusieurs feuilles suivant l'argument ``--worksheets`` et chaque
-    feuille peut être ordonnée suivant l'argument ``--order-by``.
+    l'argument ``--group-by``. Un barème détaillé peut être fourni via
+    l'argument ``--marking-scheme``. Par défaut, un barème d'une seule
+    note sur 5 sera utilisé. Le fichier peut être divisé en plusieurs
+    feuilles suivant l'argument ``--worksheets`` et chaque feuille
+    peut être ordonnée suivant l'argument ``--order-by``.
 
     Le fichier spécifiant le barème est au format YAML. La structure
     du devoir est spécifiée de manière arborescente avec une liste
