@@ -682,7 +682,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
         columns.append(("Note admis", "cell", 0))
 
         # Les colonnes spécifiées dans le fichier de configuration
-        for name, props in self.config["columns"].items():
+        for name, props in self.config["marks"].items():
             col_type = props.get("type") if props is not None else None
             columns.append((name, col_type, 0))
 
@@ -787,12 +787,12 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
         validated_config = sc.validate(config)
 
         # Validation does not preserve order
-        old_columns = validated_config["columns"].copy()
+        old_columns = validated_config["marks"].copy()
         new_columns = {}
-        for name in list(config["columns"].keys()):
+        for name in list(config["marks"].keys()):
             new_columns[name] = old_columns.pop(name)
         new_columns.update(old_columns)
-        validated_config["columns"] = new_columns
+        validated_config["marks"] = new_columns
 
         return validated_config
 
@@ -800,7 +800,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
     def grade_columns(self):
         """Colonnes associées à des notes"""
 
-        for name, props in self.config["columns"].items():
+        for name, props in self.config["marks"].items():
             if props["type"] == "grade":
                 props2 = props.copy()
                 del props2["type"]
@@ -913,7 +913,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
                     "IF(ISNUMBER({0}), {0}>={1}, 1)".format(
                         get_address_of_cell(record[name]),
                         get_address_of_cell(
-                            self.grades_options[name]["Note éliminatoire"],
+                            self.grades_options[name]["passing mark"],
                             absolute=True,
                         ),
                     )
@@ -996,7 +996,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
         )
 
         for name, opts in self.grades_options.items():
-            threshold_cell = opts["Note éliminatoire"]
+            threshold_cell = opts["passing mark"]
             threshold_addr = get_address_of_cell(threshold_cell, compat=True)
             self.first_ws.conditional_formatting.add(
                 self.get_column_range(name),
