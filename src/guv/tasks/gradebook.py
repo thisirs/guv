@@ -214,6 +214,13 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
     Examples
     --------
 
+    - Fichier de notes sans barème sur 5 points sur une seule feuille
+      Excel :
+
+      .. code:: bash
+
+         guv xls_grade_book_no_group --name Devoir1
+
     - Fichier de notes pour un devoir en divisant par groupe de TD :
 
       .. code:: bash
