@@ -301,13 +301,13 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
 
         return columns
 
-
     def add_arguments(self):
         super().add_arguments()
 
         self.add_argument(
             "-o",
             "--order-by",
+            metavar="colname",
             required=False,
             help="Colonne utilisée pour ordonner les noms dans chaque feuille"
         )
@@ -316,6 +316,7 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
             "-w",
             "--worksheets",
             required=False,
+            metavar="colname",
             dest="group_by",
             help="Colonne utilisée pour grouper en plusieurs feuilles"
         )
@@ -492,6 +493,7 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
             "-g",
             "--group-by",
             dest="subgroup_by",
+            metavar="colname",
             required=True,
             help="Colonne de groupes utilisée pour noter des groupes d'étudiants"
         )
