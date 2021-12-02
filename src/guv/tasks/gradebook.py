@@ -257,12 +257,16 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
 
     config_argname = "--marking-scheme"
     config_help = "Fichier contenant le barème détaillé"
+    config_required = False
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
 
     def validate_config(self, config):
         """Validate marking scheme"""
+
+        if config is None:
+            return {"Note": [{"points": 5}]}
 
         def validate_subsections(data):
             return Schema(

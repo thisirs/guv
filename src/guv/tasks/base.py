@@ -336,6 +336,7 @@ class ConfigOpt(CliArgsInheritMixin):
 
     config_argname = "--config"
     config_help="Fichier de configuration"
+    config_required=True
 
     def add_arguments(self):
         super().add_arguments()
@@ -345,7 +346,7 @@ class ConfigOpt(CliArgsInheritMixin):
             metavar=metavar,
             dest="config_file",
             help=self.config_help,
-            required=True,
+            required=self.config_required,
         )
 
     @property
@@ -359,13 +360,16 @@ class ConfigOpt(CliArgsInheritMixin):
 
     def parse_config(self):
         config_file = self.config_file
-        if not os.path.exists(config_file):
-            raise Exception(f"Configuration file '{config_file}' not found")
+        if config_file is not None:
+            if not os.path.exists(config_file):
+                raise Exception(f"Configuration file '{config_file}' not found")
 
-        with open(config_file, "r") as stream:
-            config = list(yaml.load_all(stream, Loader=yaml.SafeLoader))[0]
-            config = self.validate_config(config)
-            return config
+            with open(config_file, "r") as stream:
+                config = list(yaml.load_all(stream, Loader=yaml.SafeLoader))[0]
+                config = self.validate_config(config)
+                return config
+        else:
+            return self.validate_config(None)
 
 
 class GroupOpt(CliArgsInheritMixin):
