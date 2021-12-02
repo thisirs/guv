@@ -88,17 +88,39 @@ def fillna_column(
     return func
 
 
+def replace_column_aux(df, colname=None, new_column=None, backup=False, msg=None):
+    """Helper function for `replace_regex` and `replace_column`."""
+
+    if backup:
+        df = df.assign(**{f"{colname}_orig": df[colname]})
+        target_colname = colname
+    elif new_colname is not None:
+        target_colname = new_colname
+    else:
+        target_colname = colname
+
+    df = df.assign(**{target_colname: new_column})
+
+    return df
+
+
 def replace_regex(
-    colname: str, *reps, new_colname: Optional[str] = None, msg: Optional[str] = None
+    colname: str,
+    *reps,
+    new_colname: Optional[str] = None,
+    backup: Optional[bool] = False,
+    msg: Optional[str] = None,
 ):
     """Remplacements regex dans une colonne.
 
     Remplace dans la colonne ``colname`` les occurrences de toutes les
     expressions régulières renseignées dans ``reps``.
 
-    Si ``new_colname`` est spécifié, une nouvelle colonne est créée
-    avec ce nom et ``colname`` est laissée telle quelle. Sinon les
-    valeurs sont directement remplacées dans le colonne ``colname``.
+    Si l'argument ``backup`` est spécifié, la colonne est sauvegardée
+    avant toute modification (avec un suffixe ``.orig``). Si
+    l'argument ``new_colname`` est fourni la colonne est copiée vers
+    une nouvelle colonne de nom ``new_colname`` et les modifications
+    sont faites sur cette nouvelle colonnne.
 
     Un message ``msg`` peut être spécifié pour décrire ce que fait la
     fonction, il sera affiché lorsque l'agrégation sera effectuée.
@@ -113,6 +135,8 @@ def replace_regex(
         Les couples regex / remplacement
     new_colname : :obj:`str`
         Le nom de la nouvelle colonne
+    backup : :obj:`bool`
+        Sauvegarder la colonne avant tout changement
     msg : :obj:`str`
         Un message descriptif utilisé
 
@@ -125,14 +149,21 @@ def replace_regex(
 
     """
 
+    if backup is True and new_colname is not None:
+        raise ImproperlyConfigured(
+            "Les arguments `backup` et `new_colname` sont incompatibles."
+        )
+
     def func(df):
         check_columns(df, colname)
-        s = df[colname].copy()
+
+        new_column = df[colname].copy()
         for rep in reps:
-            s = s.str.replace(*rep, regex=True)
-        cn = new_colname if new_colname is not None else colname
-        df = df.assign(**{cn: s})
-        return df
+            new_column = new_column.str.replace(*rep, regex=True)
+
+        return replace_column_aux(
+            df, colname=colname, new_column=new_column, backup=backup, msg=msg
+        )
 
     if msg is not None:
         func.__desc__ = msg
@@ -140,18 +171,27 @@ def replace_regex(
         func.__desc__ = f"Remplacement regex dans colonne `{colname}`"
     else:
         func.__desc__ = f"Remplacement regex dans colonne `{colname} vers colonne `{new_colname}`"
+
     return func
 
 
-def replace_column(colname: str, rep_dict: dict, new_colname: Optional[str] = None, msg: Optional[str] = None):
+def replace_column(
+    colname: str,
+    rep_dict: dict,
+    new_colname: Optional[str] = None,
+    backup: Optional[bool] = False,
+    msg: Optional[str] = None,
+):
     """Remplacements dans une colonne.
 
     Remplace les valeurs renseignées dans ``rep_dict`` dans la colonne
     ``colname``.
 
-    Si ``new_colname`` est spécifié, une nouvelle colonne est créée
-    avec ce nom et ``colname`` est laissée telle quelle. Sinon les
-    valeurs sont directement remplacées dans le colonne ``colname``.
+    Si l'argument ``backup`` est spécifié, la colonne est sauvegardée
+    avant toute modification (avec un suffixe ``.orig``). Si
+    l'argument ``new_colname`` est fourni la colonne est copiée vers
+    une nouvelle colonne de nom ``new_colname`` et les modifications
+    sont faites sur cette nouvelle colonnne.
 
     Un message ``msg`` peut être spécifié pour décrire ce que fait la
     fonction, il sera affiché lorsque l'agrégation sera effectuée.
@@ -166,6 +206,8 @@ def replace_column(colname: str, rep_dict: dict, new_colname: Optional[str] = No
         Dictionnaire des remplacements
     new_colname : :obj:`str`
         Nom de la nouvelle colonne
+    backup : :obj:`bool`
+        Sauvegarder la colonne avant tout changement
     msg : :obj:`str`
         Un message descriptif utilisé
 
@@ -178,12 +220,17 @@ def replace_column(colname: str, rep_dict: dict, new_colname: Optional[str] = No
 
     """
 
+    if backup is True and new_colname is not None:
+        raise ImproperlyConfigured(
+            "Les arguments `backup` et `new_colname` sont incompatibles."
+        )
+
     def func(df):
         check_columns(df, colname)
-        col_ref = df[colname].replace(rep_dict)
-        cn = new_colname if new_colname is not None else colname
-        df = df.assign(**{cn: col_ref})
-        return df
+        new_column = df[colname].replace(rep_dict)
+        return replace_column_aux(
+            df, colname=colname, new_column=new_column, backup=backup, msg=msg
+        )
 
     if msg is not None:
         func.__desc__ = msg
@@ -191,6 +238,7 @@ def replace_column(colname: str, rep_dict: dict, new_colname: Optional[str] = No
         func.__desc__ = f"Remplacement dans colonne `{colname}`"
     else:
         func.__desc__ = f"Replacement dans colonne `{colname}` vers colonne `{new_colname}`"
+
     return func
 
 
