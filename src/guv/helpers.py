@@ -508,7 +508,7 @@ def aggregate_df(
         key = key + "_y"
 
     for index, row in merged_df_ro.iterrows():
-        logger.warning(f"Identifiant présent dans le document à aggréger mais introuvable dans la base de données : {row[key]}")
+        logger.warning(f"Identifiant présent dans le document à aggréger mais introuvable dans le fichier central : `{row[key]}`")
 
     if postprocessing is not None:
         def apply_postprocessing(df, func):
@@ -914,14 +914,14 @@ def apply_cell(name_or_email: str, colname: str, value):
             if len(stu1row) > 1:
                 raise Exception(f'Adresse courriel `{name_or_email}` présente plusieurs fois')
             if len(stu1row) == 0:
-                raise Exception(f'Adresse courriel `{name_or_email}` non présente dans la base de données')
+                raise Exception(f'Adresse courriel `{name_or_email}` non présente dans le fichier central')
             stuidx = sturow.index[0]
         else:
             sturow = df.loc[df.fullname_slug == slugrot_string(name_or_email)]
             if len(sturow) > 1:
                 raise Exception(f'Étudiant de nom `{name_or_email}` présent plusieurs fois')
             if len(sturow) == 0:
-                raise Exception(f'Étudiant de nom `{name_or_email}` non présent dans la base de données')
+                raise Exception(f'Étudiant de nom `{name_or_email}` non présent dans le fichier central')
             stuidx = sturow.index[0]
 
         df.loc[stuidx, colname] = value
@@ -1025,12 +1025,12 @@ def switch(
                 if '@etu' in stu1:
                     stu1row = df.loc[df['Courriel'] == stu1]
                     if len(stu1row) != 1:
-                        raise Exception(f'Adresse courriel `{stu1}` non présente dans la base de données')
+                        raise Exception(f'Adresse courriel `{stu1}` non présente dans le fichier central')
                     stu1idx = stu1row.index[0]
                 else:
                     stu1row = df.loc[df.fullname_slug == slugrot_string(stu1)]
                     if len(stu1row) != 1:
-                        raise Exception(f'Étudiant de nom `{stu1}` non présent ou reconnu dans la base de données')
+                        raise Exception(f'Étudiant de nom `{stu1}` non présent ou reconnu dans le fichier central')
                     stu1idx = stu1row.index[0]
 
                 if stu2 in names: # Le deuxième élément est une colonne
@@ -1039,13 +1039,13 @@ def switch(
                 elif '@etu' in stu2: # Le deuxième élément est une adresse email
                     stu2row = df.loc[df['Courriel'] == stu2]
                     if len(stu2row) != 1:
-                        raise Exception(f'Adresse courriel `{stu2}` non présente dans la base de données')
+                        raise Exception(f'Adresse courriel `{stu2}` non présente dans le fichier central')
                     stu2idx = stu2row.index[0]
                     swap_record(df, stu1idx, stu2idx, target_colname)
                 else:
                     stu2row = df.loc[df.fullname_slug == slugrot_string(stu2)]
                     if len(stu2row) != 1:
-                        raise Exception(f'Étudiant ou nom de séance `{stu2}` non reconnu dans la base de données')
+                        raise Exception(f'Étudiant ou nom de séance `{stu2}` non reconnu dans le fichier central')
                     stu2idx = stu2row.index[0]
                     swap_record(df, stu1idx, stu2idx, target_colname)
 
