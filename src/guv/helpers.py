@@ -217,6 +217,18 @@ def replace_column(
 
        DOCS.replace_column("group", {"TD 1": "TD1", "TD 2": "TD2"})
 
+    .. code:: python
+
+       ECTS_TO_NUM = {
+           "A": 5,
+           "B": 4,
+           "C": 3,
+           "D": 2,
+           "E": 1,
+           "F": 0
+       }
+       DOCS.replace_column("Note_TP", ECTS_TO_NUM, backup=True)
+
     """
 
     if backup is True and new_colname is not None:
