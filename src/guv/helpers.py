@@ -446,24 +446,29 @@ def aggregate_df(
 
     # Extract subset of columns, right_on included
     if subset is not None:
-        sc_columns = Or(*right_df.columns)
-        subset = Schema(Or(And(sc_columns, Use(lambda x: [x])), [sc_columns])).validate(subset)
-        subset0 = list({s: 1 for s in [right_on] + subset}.keys())
-        right_df = right_df[subset0]
+        if isinstance(subset, str):
+            subset = [subset]
+
+        check_columns(right_df, subset)
+        right_df = right_df[[right_on] + subset]
 
     # Allow to drop columns, right_on not allowed
     if drop is not None:
-        sc_columns = Or(*right_df.columns)
-        drop = Schema(Or(And(sc_columns, Use(lambda x: [x])), [sc_columns])).validate(drop)
+        if isinstance(drop, str):
+            drop = [drop]
+
         if right_on in drop:
-            raise Exception('On enlève pas la clé')
+            raise Exception("Impossible d'enlever la clé")
+
+        check_columns(right_df, drop)
         right_df = right_df.drop(drop, axis=1)
 
     # Rename columns in data to be merged
     if rename is not None:
         if right_on in rename:
-            raise Exception('Pas de renommage de la clé possible')
-        rename = Schema({str: str}).validate(rename)
+            raise Exception("Pas de renommage de la clé possible")
+
+        check_columns(right_df, rename.keys())
         right_df = right_df.rename(columns=rename)
 
     # Columns to drop after merge: primary key of right dataframe
