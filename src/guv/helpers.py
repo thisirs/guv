@@ -6,7 +6,6 @@ from typing import Optional, List, Union
 import functools
 import inspect
 
-from schema import Schema, Or, And, Use
 import pandas as pd
 
 from .config import logger
