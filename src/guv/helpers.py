@@ -508,7 +508,7 @@ def aggregate_df(
         key = key + "_y"
 
     for index, row in merged_df_ro.iterrows():
-        logger.warning("Identifiant présent dans le document à aggréger mais introuvable dans la base de données :", row[key])
+        logger.warning(f"Identifiant présent dans le document à aggréger mais introuvable dans la base de données : {row[key]}")
 
     if postprocessing is not None:
         def apply_postprocessing(df, func):
