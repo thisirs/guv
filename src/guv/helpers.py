@@ -254,10 +254,11 @@ def replace_column(
 
 
 def apply_df(func: Callable, msg: Optional[str] = None):
-    """Modifie une colonne existante avec une fonction.
+    """Modifie le fichier central avec une fonction.
 
-    ``func`` est une fonction prenant en argument un DataFrame et
-    retournant le DataFrame modifié.
+    ``func`` est une fonction prenant en argument un DataFrame
+    représentant le fichier central et retournant le DataFrame
+    modifié.
 
     Un message ``msg`` peut être spécifié pour décrire ce que fait la
     fonction, il sera affiché lorsque l'agrégation sera effectuée.
@@ -295,7 +296,7 @@ def apply_df(func: Callable, msg: Optional[str] = None):
 
 
 def apply_column(colname: str, func: Callable, msg: Optional[str] = None):
-    """Modifie une colonne existance avec une fonction.
+    """Modifie une colonne existente avec une fonction.
 
     ``colname`` est un nom de colonne existant et ``func`` une fonction
     prenant en argument un élément de la colonne et retournant un
