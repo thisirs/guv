@@ -116,7 +116,7 @@ def replace_regex(
     expressions régulières renseignées dans ``reps``.
 
     Si l'argument ``backup`` est spécifié, la colonne est sauvegardée
-    avant toute modification (avec un suffixe ``.orig``). Si
+    avant toute modification (avec un suffixe ``_orig``). Si
     l'argument ``new_colname`` est fourni la colonne est copiée vers
     une nouvelle colonne de nom ``new_colname`` et les modifications
     sont faites sur cette nouvelle colonnne.
@@ -187,7 +187,7 @@ def replace_column(
     ``colname``.
 
     Si l'argument ``backup`` est spécifié, la colonne est sauvegardée
-    avant toute modification (avec un suffixe ``.orig``). Si
+    avant toute modification (avec un suffixe ``_orig``). Si
     l'argument ``new_colname`` est fourni la colonne est copiée vers
     une nouvelle colonne de nom ``new_colname`` et les modifications
     sont faites sur cette nouvelle colonnne.
@@ -944,7 +944,7 @@ def switch(
 
     L'argument ``colname`` est la colonne dans laquelle opérer les
     échanges. Si l'argument ``backup`` est spécifié, la colonne est
-    sauvegardée avant toute modification (avec un suffixe ``.orig``).
+    sauvegardée avant toute modification (avec un suffixe ``_orig``).
     Si l'argument ``new_colname`` est fourni la colonne est copiée
     vers une nouvelle colonne de nom ``new_colname`` et les
     modifications sont faites sur cette nouvelle colonnne.
