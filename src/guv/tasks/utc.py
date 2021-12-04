@@ -10,6 +10,7 @@ import pandas as pd
 from PyPDF2 import PdfFileReader
 from tabula import read_pdf
 
+from ..config import logger
 from ..utils_config import Output, selected_uv, compute_slots
 from ..utils import argument, rel_to_dir
 from .base import CliArgsMixin, TaskBase
@@ -51,7 +52,7 @@ class UtcUvListToCsv(TaskBase):
         tables = []
         pdo = {"header": None}
         for i in range(npages):
-            print(f'Processing page ({i+1}/{npages})')
+            logger.info(f'Processing page ({i+1}/{npages})')
             page = i + 1
             tabula_args = {'pages': page}
             # Use pdo.copy(): pdo is changed by read_pdf
@@ -63,12 +64,11 @@ class UtcUvListToCsv(TaskBase):
                                  (re.match('[A-Z]{,3}[0-9]+', str(df.iloc[1, 0])) is None))
                 if header_height == 0:
                     raise Exception("No header detected")
-                print(f'Detected header has {header_height} lines')
+                logger.info(f'Detected header has {header_height} lines')
 
                 # Compute single line/multiline header
                 header = df.iloc[:header_height].fillna('').agg(['sum']).iloc[0]
-                print("Header is:")
-                print(" ".join(header))
+                logger.info("Header is: {' '.join(header)}")
 
                 # Extract real data
                 df = df.iloc[header_height:]
@@ -105,10 +105,10 @@ class UtcUvListToCsv(TaskBase):
                 else:
                     week_idx = cols.index('Heure fin') + 1
 
-                print('%d columns found' % len(df.columns))
-                print(" ".join(df.columns))
+                logger.info("%d columns found" % len(df.columns))
+                logger.info(" ".join(df.columns))
             else:
-                print('%d columns found' % len(df.columns))
+                logger.info("%d columns found" % len(df.columns))
 
                 # Semaine column might be empty and not detected
                 if len(df.columns) == len(cols):
@@ -122,7 +122,7 @@ class UtcUvListToCsv(TaskBase):
                 # Detect possible multiline header
                 header_height = ((re.match('[A-Z]{,3}[0-9]+', str(df.iloc[0, 0])) is None) +
                                  (re.match('[A-Z]{,3}[0-9]+', str(df.iloc[1, 0])) is None))
-                print(f'Header has {header_height} lines')
+                logger.info(f"Header has {header_height} lines")
                 df = df.iloc[header_height:]
 
             tables.append(df)

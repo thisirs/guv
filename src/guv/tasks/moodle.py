@@ -612,7 +612,7 @@ class JsonRestriction(UVTask, CliArgsMixin):
                     ]
 
                 if "MOODLE_GROUPS" not in self.settings or not self.settings.MOODLE_GROUPS:
-                    print("WARNING: Plusieurs groupes de Cours/TD/TP et MOODLE_GROUPS non spécifié")
+                    logger.warning("Plusieurs groupes de Cours/TD/TP et MOODLE_GROUPS non spécifié")
                 else:
                     info = dict(groups=self.settings.MOODLE_GROUPS)
                     no_group.update({

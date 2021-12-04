@@ -72,10 +72,9 @@ def fillna_column(
                 if idx_first == idx_last:
                     g[colname] = g.loc[idx_first, colname]
                 else:
-                    logger.warning("Plusieurs valeurs non-NA dans le groupe")
-                    print(g[["Nom", "Prénom", colname]])
+                    logger.warning(f"Plusieurs valeurs non-NA dans le groupe `{g}`")
             else:
-                logger.warning("Aucune valeur non-NA dans le groupe")
+                logger.warning(f"Aucune valeur non-NA dans le groupe `{g}`")
             return g
 
         def func(df):

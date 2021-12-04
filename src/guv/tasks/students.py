@@ -214,15 +214,15 @@ class XlsStudentData(UVTask):
         if not os.path.exists(self.extraction_ENT):
             raise Exception("Le fichier '{}' n'existe pas".format(self.extraction_ENT))
 
-        print("Chargement de données issues de l'ENT")
+        logger.info("Chargement de données issues de l'ENT")
         df = self.load_ENT_data()
 
         if self.csv_moodle is not None:
-            print("Ajout des données issues de Moodle")
+            logger.info("Ajout des données issues de Moodle")
             df = self.add_moodle_data(df, self.csv_moodle)
 
         if self.csv_UTC is not None:
-            print("Ajout des affectations aux Cours/TD/TP")
+            logger.info("Ajout des affectations aux Cours/TD/TP")
             df = self.add_UTC_data(df, self.csv_UTC)
 
         dff = sort_values(df, ["Nom", "Prénom"])
@@ -283,19 +283,19 @@ class XlsStudentData(UVTask):
             key = row["fullname_slug"]
             branch = row["Branche"]
             semester = row["Semestre"]
-            print(f"(`{key}`, `{branch}`, `{semester}`) not in UTC data")
+            logger.warning(f"(`{key}`, `{branch}`, `{semester}`) not in UTC data")
 
         ro = dfr.loc[dfr["_merge"] == "right_only"]
         for index, row in ro.iterrows():
             key = row["Name"]
             branch = row["Branche"]
             semester = row["Semestre"]
-            print(f"(`{key}`, `{branch}`, `{semester}`) only in UTC data")
+            logger.warning(f"(`{key}`, `{branch}`, `{semester}`) only in UTC data")
 
         # Trying to merge manually lo and ro
         for index, row in lo.iterrows():
             fullname = row["Nom"] + " " + row["Prénom"]
-            print(f"Trying to find a match for {fullname}")
+            logger.info(f"Trying to find a match for {fullname}")
             for i, (index_ro, row_ro) in enumerate(ro.iterrows()):
                 fullname_ro = row_ro["Name"]
                 print(f"({i}) {fullname_ro}")
@@ -358,12 +358,12 @@ class XlsStudentData(UVTask):
             lo = dfr.loc[dfr["_merge"] == "left_only"]
             for index, row in lo.iterrows():
                 fullname = row["Nom"] + " " + row["Prénom"]
-                print(f"add_moodle_data: {fullname} not in Moodle data")
+                logger.warning(f"add_moodle_data: {fullname} not in Moodle data")
 
             ro = dfr.loc[dfr["_merge"] == "right_only"]
             for index, row in ro.iterrows():
                 fullname = row["Nom_moodle"] + " " + row["Prénom_moodle"]
-                print(f"add_moodle_data: {fullname} only in Moodle data")
+                logger.warning(f"add_moodle_data: {fullname} only in Moodle data")
 
             dfr = dfr.drop("_merge", axis=1)
             dfr = dfr.loc[~pd.isnull(dfr.Nom)]
@@ -389,12 +389,12 @@ class XlsStudentData(UVTask):
             lo = dfr.loc[dfr["_merge"] == "left_only"]
             for index, row in lo.iterrows():
                 fullname = row["Name"]
-                print(f"add_moodle_data: {fullname} not in Moodle data")
+                logger.warning(f"add_moodle_data: {fullname} not in Moodle data")
 
             ro = dfr.loc[dfr["_merge"] == "right_only"]
             for index, row in ro.iterrows():
                 fullname = row["Nom"] + " " + row["Prénom"]
-                print(f"add_moodle_data: {fullname} only in Moodle data")
+                logger.warning(f"add_moodle_data: {fullname} only in Moodle data")
 
         else:
             raise Exception("Pas de colonne Courriel ou Nom, Prénom")
@@ -402,7 +402,7 @@ class XlsStudentData(UVTask):
         # On demande à l'utilisateur de réaliser les correspondances
         for index, row in lo.iterrows():
             fullname = row["Nom"] + " " + row["Prénom"]
-            print(f"Trying to find a match for {fullname}")
+            logger.info(f"Trying to find a match for {fullname}")
             for i, (index_ro, row_ro) in enumerate(ro.iterrows()):
                 fullname_ro = row_ro["Nom_moodle"] + " " + row_ro["Prénom_moodle"]
                 print(f"({i}) {fullname_ro}")

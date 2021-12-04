@@ -80,7 +80,7 @@ try:
     logger.debug("{} variables loaded".format(len(task_loader.variables)))
 except ImproperlyConfigured as e:
     msg = e.args[0]
-    print(f"{msg} : {e.args[1]}")
+    logger.error(f"{msg} : {e.args[1]}")
     sys.exit()
 
 # Load custom tasks
@@ -107,7 +107,7 @@ def run_doit(args):
         if settings.DEBUG < logging.WARNING:
             raise e from e
         else:
-            print(e)
+            logger.error(e)
             sys.exit()
 
 

@@ -86,7 +86,7 @@ class XlsInstructors(TaskBase):
 
     def run(self):
         if not os.path.exists(self.target):
-            print(
+            logger.info(
                 "Le fichier '{}' n'existe pas, création d'un fichier vide".format(
                     rel_to_dir(self.target, self.settings.SEMESTER_DIR)
                 )
