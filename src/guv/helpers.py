@@ -87,7 +87,9 @@ def fillna_column(
     return func
 
 
-def replace_column_aux(df, colname=None, new_column=None, backup=False, msg=None):
+def replace_column_aux(
+    df, new_colname=None, colname=None, new_column=None, backup=False, msg=None
+):
     """Helper function for `replace_regex` and `replace_column`."""
 
     if backup:
@@ -161,7 +163,12 @@ def replace_regex(
             new_column = new_column.str.replace(*rep, regex=True)
 
         return replace_column_aux(
-            df, colname=colname, new_column=new_column, backup=backup, msg=msg
+            df,
+            new_colname=new_colname,
+            colname=colname,
+            new_column=new_column,
+            backup=backup,
+            msg=msg,
         )
 
     if msg is not None:
@@ -240,7 +247,12 @@ def replace_column(
         check_columns(df, colname)
         new_column = df[colname].replace(rep_dict)
         return replace_column_aux(
-            df, colname=colname, new_column=new_column, backup=backup, msg=msg
+            df,
+            new_colname=new_colname,
+            colname=colname,
+            new_column=new_column,
+            backup=backup,
+            msg=msg,
         )
 
     if msg is not None:
