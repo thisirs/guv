@@ -1008,7 +1008,6 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         csv_target = os.path.splitext(self.target)[0] + '_secret.csv'
         with Output(csv_target) as out:
             df_groups.to_csv(out.target, index=False)
-            logger.warning(str(df_groups.head()))
 
     def make_groups(self, name, df, name_gen):
         """Try to make subgroups in dataframe `df`.
