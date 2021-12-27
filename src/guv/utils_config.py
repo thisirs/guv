@@ -6,7 +6,7 @@ from datetime import timedelta
 import pandas as pd
 import latex
 
-from .exceptions import NotUVDirectory, ImproperlyConfigured, SkipWithBody
+from .exceptions import NotUVDirectory, ImproperlyConfigured, AbortWithBody
 from .utils import rel_to_dir, render_latex_template
 from .config import settings, logger
 
@@ -67,64 +67,83 @@ def get_unique_uv():
         raise NotUVDirectory("La tâche doit être exécutée dans un dossier d'UV")
 
 
-class Output():
+def ask_choice(prompt, choices={}):
+    while True:
+        try:
+            choice = input(prompt)
+            if choice not in choices.keys():
+                raise ValueError
+        except ValueError:
+            continue
+        else:
+            break
+
+    return choices[choice]
+
+
+class Output:
     def __init__(self, target, protected=False):
         self._target = target
         self.protected = protected
-        self.choice = None
+        self.action = None
 
     def __enter__(self):
         if os.path.exists(self._target):
             if self.protected:
-                while True:
-                    try:
-                        self.choice = input('Le fichier `%s'' existe déjà. Écraser (d), garder (g), sauvegarder (s), annuler (a) ? ' % rel_to_dir(self._target, settings.SEMESTER_DIR))
-                        if self.choice not in ["d", "g", "s", "a"]:
-                            raise ValueError
-
-                        if self.choice == 'd':
-                            os.remove(self._target)
-                        elif self.choice == 's':
-                            parts = os.path.splitext(self._target)
-                            timestr = time.strftime("_%Y%m%d-%H%M%S")
-                            target0 = parts[0] + timestr + parts[1]
-                            os.rename(self._target, target0)
-                    except ValueError:
-                        continue
-                    else:
-                        break
+                self.action = ask_choice(
+                    "Le fichier `{rel_to_dir(self._target, settings.SEMESTER_DIR)}` existe déjà. "
+                    "Écraser (d), garder (g), sauvegarder (s), annuler (a) ? ",
+                    choices={
+                        "d": "overwrite",
+                        "g": "keep",
+                        "s": "backup",
+                        "a": "abort",
+                    },
+                )
             else:
-                print('Écrasement du fichier `%s`' %
-                      rel_to_dir(self._target, settings.SEMESTER_DIR))
+                self.action = "overwrite"
         else:
-            dirname = os.path.dirname(self._target)
-            if not os.path.exists(dirname):
-                os.makedirs(dirname)
+            self.action = "write"
 
         return self
 
-    def _maybe_cancel(self):
-        if self.choice == "g":
-            raise SkipWithBody
-        if self.choice == "a":
+    def _prepare(self):
+        if self.action == "abort":
             raise Exception("Annulation")
+        if self.action == "keep":
+            raise AbortWithBody
+        if self.action == "backup":
+            parts = os.path.splitext(self._target)
+            timestr = time.strftime("_%Y%m%d-%H%M%S")
+            target0 = parts[0] + timestr + parts[1]
+            os.rename(self._target, target0)
+            logger.info(
+                f"Sauvegarde vers `{rel_to_dir(target0, settings.SEMESTER_DIR)}`"
+            )
+        elif self.action == "overwrite":
+            logger.info(
+                f"Écrasement du fichier `{rel_to_dir(self._target, settings.SEMESTER_DIR)}`"
+            )
+        elif self.action == "write":
+            dirname = os.path.dirname(self._target)
+            if not os.path.exists(dirname):
+                os.makedirs(dirname)
+            logger.info(
+                f"Écriture du fichier `{rel_to_dir(self._target, settings.SEMESTER_DIR)}`"
+            )
 
     @property
     def target(self):
-        self._maybe_cancel()
+        self._prepare()
         return self._target
 
     def __exit__(self, type, value, traceback):
-        if type is SkipWithBody:
-            self.result = "keep"
-            return True
         if type is None:
-            self.result = "write"
-            print(f"Écriture du fichier `{rel_to_dir(self.target, settings.SEMESTER_DIR)}`")
             return
-
-        self.result = "cancel"
-        return
+        if type is AbortWithBody:
+            return True
+        if issubclass(type, Exception):
+            return False
 
 
 def generate_days(beg, end, skip, turn, course_type):
