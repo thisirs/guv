@@ -957,12 +957,97 @@ def apply_cell(name_or_email: str, colname: str, value):
     return apply_cell_func
 
 
+def read_pairs(filename):
+    """Generate pairs read in `filename`."""
+
+    with open(filename, "r") as fd:
+        for line in fd:
+            if line.strip().startswith("#"):
+                continue
+            if not line.strip():
+                continue
+            try:
+                parts = [e.strip() for e in line.split("---")]
+                stu1, stu2 = parts
+                if not stu1 or not stu2:
+                    raise Exception(f"Ligne incorrecte: `{line.strip()}`")
+                yield stu1, stu2
+            except ValueError:
+                raise Exception(f"Ligne incorrecte: `{line.strip()}`")
+
+
+def validate_pair(df, colname, part1, part2):
+    """Return action to do with a pair `part1`, `part2`."""
+
+    names = df[colname].unique()
+
+    # Indice de l'étudiant 1
+    if "@etu" in part1:
+        stu1row = df.loc[df["Courriel"] == part1]
+        if len(stu1row) != 1:
+            raise Exception(
+                f"Adresse courriel `{stu1}` non présente dans le fichier central"
+            )
+        stu1idx = stu1row.index[0]
+    else:
+        stu1row = df.loc[df.fullname_slug == slugrot_string(part1)]
+        if len(stu1row) != 1:
+            raise Exception(
+                f"Étudiant de nom `{stu1}` non présent ou reconnu dans le fichier central"
+            )
+        stu1idx = stu1row.index[0]
+
+    if part2 in names:  # Le deuxième élément est une colonne
+        return "move", stu1idx, part2
+    elif "@etu" in part2:  # Le deuxième élément est une adresse email
+        stu2row = df.loc[df["Courriel"] == part2]
+        if len(stu2row) != 1:
+            raise Exception(
+                f"Adresse courriel `{stu2}` non présente dans le fichier central"
+            )
+        stu2idx = stu2row.index[0]
+        return "swap", stu1idx, stu2idx
+    else:
+        stu2row = df.loc[df.fullname_slug == slugrot_string(part2)]
+        if len(stu2row) != 1:
+            raise Exception(
+                f"Étudiant ou nom de séance `{stu2}` non reconnu dans le fichier central"
+            )
+        stu2idx = stu2row.index[0]
+        return "swap", stu1idx, stu2idx
+
+
+def swap_column(df, filename, colname):
+    """Return copy of column `colname` modified by swaps from `filename`."""
+
+    new_column = df[colname].copy()
+
+    for part1, part2 in read_pairs(filename):
+        type, idx1, idx2 = validate_pair(df, colname, part1, part2)
+
+        if type == "swap":
+            nom1 = " ".join(df.loc[idx1, ["Nom", "Prénom"]])
+            nom2 = " ".join(df.loc[idx2, ["Nom", "Prénom"]])
+            logger.info(f"Échange de '{nom1}' et '{nom2}' dans la colonne '{colname}'")
+
+            tmp = new_column[idx1]
+            new_column[idx1] = new_column[idx2]
+            new_column[idx2] = tmp
+        elif type == "move":
+            nom = " ".join(df.loc[idx1, ["Nom", "Prénom"]])
+            logger.info(f"Étudiant(e) '{nom}' affecté(e) au groupe '{idx2}'")
+
+            new_column[idx1] = idx2
+
+    return new_column
+
+
 def switch(
     filename: str,
     *,
     colname: str,
     backup: bool = False,
-    new_colname: Optional[str] = None
+    new_colname: Optional[str] = None,
 ):
     """Réalise des échanges de valeurs dans une colonne.
 
@@ -1004,75 +1089,23 @@ def switch(
 
         # Check that filename and column exist
         check_filename(filename)
-        check_columns(df, columns=colname, error_when="not_found")
+        check_columns(df, columns=colname)
 
         # Add slugname column
         tf_df = slugrot("Nom", "Prénom")
         df["fullname_slug"] = tf_df(df)
 
-        if backup:
-            df[f'{colname}_orig'] = df[colname]
-            target_colname = colname
-        elif new_colname is not None:
-            df[new_colname] = df[colname]
-            target_colname = new_colname
-        else:
-            target_colname = colname
+        new_column = swap_column(df, filename, colname)
+        df = replace_column_aux(
+            df,
+            colname=colname,
+            new_colname=new_colname,
+            new_column=new_column,
+            backup=False,
+            msg=None,
+        )
 
-        names = df[target_colname].unique()
-
-        def swap_record(df, idx1, idx2, col):
-            nom1 = " ".join(df.loc[idx1, ["Nom", "Prénom"]])
-            nom2 = " ".join(df.loc[idx2, ["Nom", "Prénom"]])
-            logger.info(f"Échange de '{nom1}' et '{nom2}' dans la colonne '{col}'")
-
-            tmp = df.loc[idx1, col]
-            df.loc[idx1, col] = df.loc[idx2, col]
-            df.loc[idx2, col] = tmp
-
-        with open(filename, 'r') as fd:
-            for line in fd:
-                if line.strip().startswith('#'):
-                    continue
-                if not line.strip():
-                    continue
-
-                try:
-                    stu1, stu2, = [e.strip() for e in line.split('---')]
-                except ValueError:
-                    raise Exception(f"Ligne incorrecte: `{line.strip()}`")
-                if not stu1 or not stu2:
-                    raise Exception(f"Ligne incorrecte: `{line.strip()}`")
-
-                # Indice de l'étudiant 1
-                if '@etu' in stu1:
-                    stu1row = df.loc[df['Courriel'] == stu1]
-                    if len(stu1row) != 1:
-                        raise Exception(f'Adresse courriel `{stu1}` non présente dans le fichier central')
-                    stu1idx = stu1row.index[0]
-                else:
-                    stu1row = df.loc[df.fullname_slug == slugrot_string(stu1)]
-                    if len(stu1row) != 1:
-                        raise Exception(f'Étudiant de nom `{stu1}` non présent ou reconnu dans le fichier central')
-                    stu1idx = stu1row.index[0]
-
-                if stu2 in names: # Le deuxième élément est une colonne
-                    logger.info(f"Étudiant(e) '{stu1}' affecté(e) au groupe '{stu2}'")
-                    df.loc[stu1idx, target_colname] = stu2
-                elif '@etu' in stu2: # Le deuxième élément est une adresse email
-                    stu2row = df.loc[df['Courriel'] == stu2]
-                    if len(stu2row) != 1:
-                        raise Exception(f'Adresse courriel `{stu2}` non présente dans le fichier central')
-                    stu2idx = stu2row.index[0]
-                    swap_record(df, stu1idx, stu2idx, target_colname)
-                else:
-                    stu2row = df.loc[df.fullname_slug == slugrot_string(stu2)]
-                    if len(stu2row) != 1:
-                        raise Exception(f'Étudiant ou nom de séance `{stu2}` non reconnu dans le fichier central')
-                    stu2idx = stu2row.index[0]
-                    swap_record(df, stu1idx, stu2idx, target_colname)
-
-        df = df.drop('fullname_slug', axis=1)
+        df = df.drop("fullname_slug", axis=1)
         return df
 
     switch_func.__desc__ = f"Agrégation du fichier `{filename}`"
