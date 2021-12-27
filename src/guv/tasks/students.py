@@ -3,18 +3,20 @@ Ce module rassemble les tâches de création d'un fichier Excel central
 sur l'effectif d'une UV.
 """
 
-import os
-import re
 import math
+import os
 import random
+import re
 import textwrap
+
 import numpy as np
+# Patch openpyxl
+import openpyxl
 import pandas as pd
 from unidecode import unidecode
 
-# Patch openpyxl
-import openpyxl
 from ..openpyxl_patched import fixit
+
 fixit(openpyxl)
 
 from openpyxl import Workbook
@@ -23,15 +25,10 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 
 from ..config import logger
 from ..exceptions import ImproperlyConfigured
+from ..helpers import Documents, slugrot, slugrot_string, switch
+from ..utils import argument, check_columns, rel_to_dir, sort_values
 from ..utils_config import Output
-from ..helpers import switch, slugrot, slugrot_string, Documents
-from ..utils import (
-    sort_values,
-    argument,
-    check_columns,
-    rel_to_dir,
-)
-from .base import UVTask, CliArgsMixin
+from .base import CliArgsMixin, UVTask
 
 
 class CsvInscrits(UVTask):

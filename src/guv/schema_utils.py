@@ -1,4 +1,4 @@
-from schema import Schema, And, Use
+from schema import And, Schema, Use
 
 
 class Iterable:

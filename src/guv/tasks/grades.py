@@ -3,22 +3,19 @@ Ce module rassemble les tâches liées aux notes : chargement de notes
 numériques ou ECTS sur l'ENT.
 """
 
+import argparse
 import os
 import sys
-import numpy as np
-import pandas as pd
-import oyaml as yaml            # Ordered yaml
-import argparse
 
+import numpy as np
+import oyaml as yaml  # Ordered yaml
+import pandas as pd
+
+from ..utils import argument, check_columns, sort_values
 from ..utils_config import Output
-from ..utils import (
-    sort_values,
-    argument,
-    check_columns,
-)
 from .base import CliArgsMixin, UVTask
-from .students import XlsStudentDataMerge
 from .instructors import XlsAffectation
+from .students import XlsStudentDataMerge
 
 
 class CsvForUpload(UVTask, CliArgsMixin):

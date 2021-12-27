@@ -5,14 +5,16 @@ semaine d'une UV ou d'un intervenant.
 
 import os
 import re
-import pandas as pd
+
 import latex
+import pandas as pd
+
 import guv
 
+from ..utils import LaTeXEnvironment, argument
 from ..utils_config import Output
-from ..utils import argument, LaTeXEnvironment
-from .base import UVTask, CliArgsMixin, TaskBase
-from .instructors import XlsAffectation, AddInstructors
+from .base import CliArgsMixin, TaskBase, UVTask
+from .instructors import AddInstructors, XlsAffectation
 
 
 def create_cal_from_dataframe(df, text, target):

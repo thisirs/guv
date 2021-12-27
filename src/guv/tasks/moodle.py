@@ -8,41 +8,38 @@ fichier Json pour copier-coller des restrictions d'accès en fonction
 de l'appartenance à un groupe.
 """
 
-import os
-import math
-import random
 import argparse
-import json
 import datetime as dt
+import json
+import math
+import os
 import pprint
-import markdown
-import pandas as pd
-import numpy as np
-import pynliner
-import jinja2
-import browser_cookie3
+import random
 import textwrap
+
+import browser_cookie3
+import jinja2
+import markdown
+import numpy as np
+import pandas as pd
+import pynliner
+import requests
 import yapf.yapflib.yapf_api as yapf
 from bs4 import BeautifulSoup
-import requests
+
 import guv
 
 from ..config import logger
-from ..utils_config import Output, compute_slots
-from ..utils import argument, check_columns, lib_list, sort_values, pformat, make_groups
 from ..exceptions import InvalidGroups
-from .base import CliArgsMixin, UVTask, TaskBase
+from ..scripts.moodle_date import CondDate, CondGroup, CondOr, CondProfil
+from ..utils import (argument, check_columns, lib_list, make_groups, pformat,
+                     sort_values)
+from ..utils_config import Output, compute_slots
+from .base import CliArgsMixin, TaskBase, UVTask
+from .instructors import (AddInstructors, XlsAffectation, XlsInstructors,
+                          create_insts_list, read_xls_details)
 from .students import XlsStudentDataMerge
 from .utc import CsvAllCourses
-from .instructors import (
-    XlsInstructors,
-    AddInstructors,
-    create_insts_list,
-    read_xls_details,
-    XlsAffectation,
-)
-
-from ..scripts.moodle_date import CondDate, CondGroup, CondOr, CondProfil
 
 DATE_FORMAT = "%Y-%m-%d"
 TIME_FORMAT = "%H:%M"

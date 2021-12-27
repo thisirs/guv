@@ -1,16 +1,16 @@
-import re
-import textwrap
-from datetime import timedelta
-from collections.abc import Callable
-from typing import Optional, List, Union
 import functools
 import inspect
+import re
+import textwrap
+from collections.abc import Callable
+from datetime import timedelta
+from typing import List, Optional, Union
 
 import pandas as pd
 
 from .config import logger
-from .utils import check_columns, check_filename, slugrot, slugrot_string
 from .exceptions import ImproperlyConfigured
+from .utils import check_columns, check_filename, slugrot, slugrot_string
 
 
 def fillna_column(

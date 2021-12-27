@@ -1,18 +1,19 @@
-import os
-import sys
-import re
-from pathlib import Path
 import argparse
 import logging
+import os
 import pprint
-import yaml
+import re
+import sys
+from pathlib import Path
 
+import yaml
 from doit.exceptions import TaskFailed
 
-from ..exceptions import ImproperlyConfigured, NotUVDirectory, DependentTaskParserError
-from ..config import settings, Settings, logger
-from ..utils_config import selected_uv, get_unique_uv
+from ..config import Settings, logger, settings
+from ..exceptions import (DependentTaskParserError, ImproperlyConfigured,
+                          NotUVDirectory)
 from ..utils import pformat
+from ..utils_config import get_unique_uv, selected_uv
 
 
 class TaskBase:

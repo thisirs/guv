@@ -1,13 +1,14 @@
+import hashlib
 import os
 import re
 import string
-import hashlib
 import tempfile
 from types import SimpleNamespace
+
 import jinja2
-import unidecode
-import numpy as np
 import latex
+import numpy as np
+import unidecode
 
 import guv
 

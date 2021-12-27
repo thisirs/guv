@@ -1,10 +1,10 @@
 def fixit(openpyxl):
     from openpyxl.cell import Cell as _Cell
     from openpyxl.cell import MergedCell as _MergedCell
-    from openpyxl.worksheet.worksheet import Worksheet as _Worksheet
     from openpyxl.styles import Alignment as _Alignment
-    from openpyxl.styles import Side as _Side
     from openpyxl.styles import Border as _Border
+    from openpyxl.styles import Side as _Side
+    from openpyxl.worksheet.worksheet import Worksheet as _Worksheet
 
     # Custom navigation functions
     def _left(self, step=1):

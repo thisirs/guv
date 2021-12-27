@@ -1,40 +1,26 @@
-import os
-import sys
-import importlib
-import re
-import inspect
 import argparse
-import jinja2
-import textwrap
+import importlib
+import inspect
 import logging
+import os
+import re
+import sys
+import textwrap
 
-from doit.doit_cmd import DoitMain
+import jinja2
 from doit.cmd_base import NamespaceTaskLoader
+from doit.doit_cmd import DoitMain
+
 import guv
 
-from .exceptions import ImproperlyConfigured
-from .tasks.base import (
-    TaskBase,
-    UVTask,
-    CliArgsMixin,
-    CliArgsInheritMixin,
-    ConfigOpt,
-    GroupOpt,
-)
-from .utils import argument
-
 # Load settings from configuration files
-from .config import settings, logger
-from .tasks import instructors
-from .tasks import utc
-from .tasks import grades
-from .tasks import students
-from .tasks import trombinoscope
-from .tasks import moodle
-from .tasks import ical
-from .tasks import calendar
-from .tasks import attendance
-from .tasks import gradebook
+from .config import logger, settings
+from .exceptions import ImproperlyConfigured
+from .tasks import (attendance, calendar, gradebook, grades, ical, instructors,
+                    moodle, students, trombinoscope, utc)
+from .tasks.base import (CliArgsInheritMixin, CliArgsMixin, ConfigOpt,
+                         GroupOpt, TaskBase, UVTask)
+from .utils import argument
 
 
 class ModulesTaskLoader(NamespaceTaskLoader):

@@ -3,20 +3,21 @@ Ce module rassemble les tâches de génération de fichiers iCal des
 créneaux d'une UV ou d'un intervenant.
 """
 
-import os
+import datetime
 import glob
+import os
 import tempfile
 import zipfile
-import datetime
-import pytz
-from icalendar import Event, Calendar
+
 import numpy as np
 import pandas as pd
+import pytz
+from icalendar import Calendar, Event
 
-from ..utils_config import Output, compute_slots
 from ..utils import argument
-from .instructors import AddInstructors
+from ..utils_config import Output, compute_slots
 from .base import CliArgsMixin, TaskBase
+from .instructors import AddInstructors
 
 
 def ical_events(dataframe, **settings):

@@ -3,16 +3,17 @@ Create Excel files
 """
 
 import openpyxl
+
 from ..openpyxl_patched import fixit
+
 fixit(openpyxl)
 
+import numpy as np
 from openpyxl import Workbook
-from openpyxl.utils import get_column_letter
 from openpyxl.styles import PatternFill
+from openpyxl.utils import get_column_letter
 
 from ..openpyxl_utils import row_and_col
-
-import numpy as np
 
 
 def create_excel_file(filename, df):

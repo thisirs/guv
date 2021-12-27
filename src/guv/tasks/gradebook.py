@@ -9,30 +9,24 @@ pour :
 
 import math
 from collections import OrderedDict
-from schema import Schema, And, Use, Or, Optional
 
 import openpyxl
+from schema import And, Optional, Or, Schema, Use
+
 from ..openpyxl_patched import fixit
+
 fixit(openpyxl)
 
-from openpyxl.utils import get_column_letter
-from openpyxl.styles import Alignment
-from openpyxl.styles import PatternFill
 from openpyxl.formatting.rule import CellIsRule
+from openpyxl.styles import Alignment, PatternFill
+from openpyxl.utils import get_column_letter
 
-from ..openpyxl_utils import (
-    frame_range,
-    get_address_of_cell,
-    get_range_from_cells,
-    get_segment,
-    row_and_col,
-    fit_cells_at_col,
-    generate_ranges
-)
-
-from . import base_gradebook as baseg
-from . import base
+from ..openpyxl_utils import (fit_cells_at_col, frame_range, generate_ranges,
+                              get_address_of_cell, get_range_from_cells,
+                              get_segment, row_and_col)
 from ..utils import sort_values
+from . import base
+from . import base_gradebook as baseg
 from .students import XlsStudentDataMerge
 
 

@@ -21,6 +21,7 @@ UVS = [{{ UVS }}]
 #     }
 # }
 from datetime import date
+
 PLANNINGS = {
     "{{ SEMESTER }}": {
         "UVS": [{{ UVS }}],
@@ -71,7 +72,8 @@ TURN = {
 # SKIP_DAYS_C = ferie + vacances_printemps + median + final
 # SKIP_DAYS_D = ferie + vacances_printemps + debut + median + final
 # SKIP_DAYS_T = ferie + vacances_printemps + debut + final
-from guv.helpers import skip_week, skip_range
+from guv.helpers import skip_range, skip_week
+
 debut = skip_week(PLANNINGS["A2021"]['PL_BEG'])
 median = skip_range(date(2021, 11, 3), date(2021, 11, 9))
 final = skip_range(date(2022, 1, 8), date(2022, 1, 15))

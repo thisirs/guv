@@ -17,6 +17,7 @@ MOODLE_LISTING = None
 # de l'UV. Il suffit d'appeler des méthodes de `DOCS`. La principale
 # est `aggregate` pour agréger des fichiers csv/Excel.
 from guv.helpers import Documents
+
 DOCS = Documents()
 
 # Chemin relatif vers le fichier des tiers-temps

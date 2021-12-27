@@ -1,20 +1,17 @@
+import openpyxl
 import pandas as pd
 
-from .students import XlsStudentDataMerge
-from .base import UVTask, CliArgsInheritMixin
-from ..utils_config import Output
-
-import openpyxl
 from ..openpyxl_patched import fixit
+from ..utils_config import Output
+from .base import CliArgsInheritMixin, UVTask
+from .students import XlsStudentDataMerge
+
 fixit(openpyxl)
 
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 
-from ..openpyxl_utils import (
-    get_range_from_cells,
-    fit_cells_at_col,
-)
+from ..openpyxl_utils import fit_cells_at_col, get_range_from_cells
 
 
 class AbstractGradeBook(UVTask, CliArgsInheritMixin):

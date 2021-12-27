@@ -8,66 +8,18 @@ la classe. Par exemple
 
 """
 
-from .utc import (
-    UtcUvListToCsv,
-    CsvAllCourses,
-)
-
-from .ical import (
-    IcalInst,
-)
-
-from .trombinoscope import (
-    PdfTrombinoscope,
-)
-
-from .attendance import (
-    PdfAttendance,
-    PdfAttendanceFull,
-)
-
-from .calendar import (
-    CalUv,
-    CalInst,
-)
-
-from .students import (
-    CsvInscrits,
-    XlsStudentData,
-    XlsStudentDataMerge,
-    CsvExamGroups,
-    CsvMoodleGroups,
-    ZoomBreakoutRooms,
-)
-
-from .grades import (
-    CsvForUpload,
-    XlsMergeFinalGrade,
-    YamlQCM,
-    XlsAssignmentGrade,
-)
-
-from .instructors import (
-    XlsInstructors,
-    AddInstructors,
-    XlsInstDetails,
-    XlsUTP,
-    XlsAffectation,
-)
-
-from .moodle import (
-    CsvGroups,
-    CsvGroupsGroupings,
-    HtmlInst,
-    HtmlTable,
-    JsonRestriction,
-    JsonGroup,
-    CsvCreateGroups,
-    FetchGroupId,
-)
-
-from .gradebook import (
-    XlsGradeBookNoGroup,
-    XlsGradeBookGroup,
-    XlsGradeBookJury
-)
+from .attendance import PdfAttendance, PdfAttendanceFull
+from .calendar import CalInst, CalUv
+from .gradebook import XlsGradeBookGroup, XlsGradeBookJury, XlsGradeBookNoGroup
+from .grades import (CsvForUpload, XlsAssignmentGrade, XlsMergeFinalGrade,
+                     YamlQCM)
+from .ical import IcalInst
+from .instructors import (AddInstructors, XlsAffectation, XlsInstDetails,
+                          XlsInstructors, XlsUTP)
+from .moodle import (CsvCreateGroups, CsvGroups, CsvGroupsGroupings,
+                     FetchGroupId, HtmlInst, HtmlTable, JsonGroup,
+                     JsonRestriction)
+from .students import (CsvExamGroups, CsvInscrits, CsvMoodleGroups,
+                       XlsStudentData, XlsStudentDataMerge, ZoomBreakoutRooms)
+from .trombinoscope import PdfTrombinoscope
+from .utc import CsvAllCourses, UtcUvListToCsv

@@ -1,9 +1,11 @@
-import os
-from pathlib import Path
 import importlib
-from datetime import date
 import logging
-from schema import Schema, Or, And, Use, SchemaError
+import os
+from datetime import date
+from pathlib import Path
+
+from schema import And, Or, Schema, SchemaError, Use
+
 from .exceptions import ImproperlyConfigured
 from .schema_utils import Iterable
 from .utils import pformat

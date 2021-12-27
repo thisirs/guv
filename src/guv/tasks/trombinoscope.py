@@ -3,24 +3,27 @@ Ce module rassemble les tâches de création de trombinoscopes en
 fonction de groupes de Cours/TD/TP ou de projet.
 """
 
-import os
-import hashlib
-import shutil
+import asyncio
 import glob
+import hashlib
+import os
+import shutil
 import tempfile
 import zipfile
-import asyncio
+
 import aiohttp
-import pandas as pd
-import numpy as np
 import browser_cookie3
 import latex
+import numpy as np
+import pandas as pd
+
 import guv
 
+from ..utils import (LaTeXEnvironment, argument, check_columns,
+                     generate_groupby, sort_values)
 from ..utils_config import Output, render_from_contexts
-from ..utils import sort_values, argument, check_columns, LaTeXEnvironment, generate_groupby
+from .base import CliArgsMixin, UVTask
 from .students import XlsStudentDataMerge
-from .base import UVTask, CliArgsMixin
 
 URL = 'https://demeter.utc.fr/portal/pls/portal30/portal30.get_photo_utilisateur?username='
 

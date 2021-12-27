@@ -5,14 +5,15 @@ Cours/TD/TP.
 
 import os
 import re
+
 import numpy as np
 import pandas as pd
 from PyPDF2 import PdfFileReader
 from tabula import read_pdf
 
 from ..config import logger
-from ..utils_config import Output, selected_uv, compute_slots
 from ..utils import argument, rel_to_dir
+from ..utils_config import Output, compute_slots, selected_uv
 from .base import CliArgsMixin, TaskBase
 
 

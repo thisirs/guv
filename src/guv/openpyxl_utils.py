@@ -1,8 +1,8 @@
-from operator import attrgetter
 from itertools import groupby
+from operator import attrgetter
 
 from openpyxl import utils
-from openpyxl.styles import Side, Border
+from openpyxl.styles import Border, Side
 from openpyxl.utils.cell import absolute_coordinate
 
 

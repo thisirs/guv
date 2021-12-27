@@ -4,23 +4,17 @@ présence.
 """
 
 import os
-import zipfile
-import tempfile
 import shutil
-import pandas as pd
+import tempfile
+import zipfile
+
 import latex
+import pandas as pd
 
+from ..utils import (LaTeXEnvironment, argument, check_columns, make_groups,
+                     pformat, sort_values)
 from ..utils_config import Output, render_from_contexts
-from ..utils import (
-    sort_values,
-    check_columns,
-    argument,
-    pformat,
-    LaTeXEnvironment,
-    make_groups
-)
-
-from .base import UVTask, CliArgsMixin
+from .base import CliArgsMixin, UVTask
 from .students import XlsStudentDataMerge
 
 
