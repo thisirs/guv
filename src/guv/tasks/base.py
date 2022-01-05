@@ -136,7 +136,7 @@ class TaskBase:
             try:
                 return self.run()
             except Exception as e:
-                if settings.DEBUG < logging.WARNING:
+                if settings.DEBUG <= logging.DEBUG:
                     raise e from e
                 msg = " ".join(str(o) for o in e.args)
                 return TaskFailed(msg)
