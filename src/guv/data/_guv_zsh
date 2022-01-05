@@ -25,7 +25,7 @@ _shtab_guv_commands_() {
     "ical_inst:Fichier iCal de tous les créneaux par intervenant."
     "json_group:Fichier json des restrictions d\'accès aux ressources sur Moodle par addresse email"
     "json_restriction:Fichier json de restrictions d\'accès aux ressources Moodle basées sur le début\/fin des séances"
-    "moodle_log:Log Moodle"
+    "maggle_teams:Crée un fichier csv prêt à charger sur django-maggle pour faire des groupes"
     "pdf_attendance:Fichier pdf de feuilles de présence."
     "pdf_attendance_full:Fichier zip de feuilles de présence nominatives par groupe et par semestre."
     "pdf_trombinoscope:Fichier PDF des trombinoscopes par groupes et\/ou sous-groupes."
@@ -73,7 +73,7 @@ _shtab_guv_csv_create_groups=(
   {-t,--template}"[Modèle pour donner des noms aux groupes]:template:"
   {-l,--names}"[Liste de mots clés pour construire les noms des groupes]:names:"
   {-o,--ordered}"[Ordonner la liste des étudiants par ordre alphabétique]"
-  {-g,--global}"[Remettre à zéro la suite des noms de sous-groupes]"
+  {-g,--global}"[Ne pas remettre à zéro la suite des noms de groupes entre chaque groupement]"
   {-r,--random}"[Permuter aléatoirement les noms de groupes]"
   "--other-groups[Liste de colonnes de groupes déjà formés qui ne doivent plus être reformés. Valable uniquement pour les binomes et trinomes.]:other_groups:"
   ":Nom associé à l\'ensemble des groupes créés. Repris dans le nom du fichier créé et dans le nom des groupes créés suivant la \*template\* utilisée.:"
@@ -154,16 +154,17 @@ _shtab_guv_json_restriction=(
   {-a,--num-AB}"[Permet de prendre en compte les semaines A\/B. Ainsi, la fin d\'une séance est à la fin de la semaine B.]"
 )
 
-_shtab_guv_moodle_log=(
+_shtab_guv_maggle_teams=(
   "(- :)"{-h,--help}"[show this help message and exit]"
+  ":Le nom de la colonne des groupes:"
 )
 
 _shtab_guv_pdf_attendance=(
   "(- :)"{-h,--help}"[show this help message and exit]"
   {-t,--title}"[Spécifie un titre qui sera utilisé dans les feuilles de présence.]:title:"
   {-g,--group}"[Permet de créer des groupes pour faire autant de feuilles de présence. Il faut spécifier une colonne du fichier central \`\`effectif.xlsx\`\`.]:group:"
-  {-b,--blank}"[Ne pas faire apparaitre le nom des étudiants (utile seulement avec --group).]:blank:"
-  {-c,--count}"[Utilise une liste d\'effectifs au lieu de \`\`--group\`\`. Le noms des groupes peut être spécifier par \`\`--names\`\`. Sinon, les noms de groupe sont de la forme \`\`Groupe 1\`\`, \`\`Groupe 2\`\`,...]:count:"
+  {-b,--blank}"[Ne pas faire apparaitre le nom des étudiants (utile seulement avec --group).]"
+  {-c,--count}"[Utilise une liste d\'effectifs au lieu de \`\`--group\`\`. Le nom des groupes peut être spécifié par \`\`--names\`\`. Sinon, les noms de groupe sont de la forme \`\`Groupe 1\`\`, \`\`Groupe 2\`\`,...]:count:"
   {-n,--names}"[Spécifie le nom des groupes correspondants à \`\`--count\`\`. La liste doit être de même taille que \`\`--count\`\`.]:names:"
   {-e,--extra}"[Permet de rajouter des lignes supplémentaires vides en plus de celles déjà présentes induites par \`\`--group\`\` ou fixées par \`\`--count\`\`.]:extra:"
   "--tiers-temps[Permet de dédier une feuille de présence spécifique pour les étudiants marqués comme tiers-temps dans le fichier central \`\`effectifs.xlsx\`\`.]"
@@ -175,12 +176,14 @@ _shtab_guv_pdf_attendance_full=(
   {-g,--group}"[Permet de spécifier une colonne de groupes pour faire des feuilles de présence par groupes.]:group:"
   {-n,--slots}"[Permet de spécifier le nombre de séances pour le semestre c\'est à dire le nombre de colonne dans la feuille de présence.]:slots:"
   {-t,--template}"[Modèle permettant de fixer le nom des séances successives dans la feuille de présence. Par défaut on a \`\`\{group_name\}\{number\}\`\`. Les seuls mots-clés supportés sont \`\`group_name\`\` et \`\`number\`\`.]:template:"
+  "--save-tex[Permet de laisser les fichiers .tex générés pour modification éventuelle.]"
 )
 
 _shtab_guv_pdf_trombinoscope=(
   "(- :)"{-h,--help}"[show this help message and exit]"
   {-g,--group}"[Nom de colonne utilisée pour réaliser le groupement. Un fichier pdf est généré pour chaque groupe. Lorsque le nom de groupe est \`\`all\`\`, il y a un seul groupe (donc un seul fichier pdf) comportant la totalité des étudiants.]:groupby:"
   {-s,--subgroup}"[Nom de colonne utilisée pour faire des sous-groupes (binômes, trinômes) parmi le groupement déjà existant.]:subgroupby:"
+  "--save-tex[Permet de laisser les fichiers .tex générés pour modification éventuelle.]"
 )
 
 _shtab_guv_xls_affectation=(
@@ -260,7 +263,7 @@ case $words[1] in
   ical_inst) _arguments $_shtab_guv_ical_inst ;;
   json_group) _arguments $_shtab_guv_json_group ;;
   json_restriction) _arguments $_shtab_guv_json_restriction ;;
-  moodle_log) _arguments $_shtab_guv_moodle_log ;;
+  maggle_teams) _arguments $_shtab_guv_maggle_teams ;;
   pdf_attendance) _arguments $_shtab_guv_pdf_attendance ;;
   pdf_attendance_full) _arguments $_shtab_guv_pdf_attendance_full ;;
   pdf_trombinoscope) _arguments $_shtab_guv_pdf_trombinoscope ;;
