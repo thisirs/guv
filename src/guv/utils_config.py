@@ -92,7 +92,7 @@ class Output:
         if os.path.exists(self._target):
             if self.protected:
                 self.action = ask_choice(
-                    "Le fichier `{rel_to_dir(self._target, settings.SEMESTER_DIR)}` existe déjà. "
+                    f"Le fichier `{rel_to_dir(self._target, settings.SEMESTER_DIR)}` existe déjà. "
                     "Écraser (d), garder (g), sauvegarder (s), annuler (a) ? ",
                     choices={
                         "d": "overwrite",
