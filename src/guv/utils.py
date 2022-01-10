@@ -11,6 +11,8 @@ import numpy as np
 import unidecode
 
 import guv
+from .exceptions import ImproperlyConfigured
+
 
 
 def rel_to_dir(path, root):
