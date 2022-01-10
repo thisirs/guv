@@ -986,14 +986,14 @@ def validate_pair(df, colname, part1, part2):
         stu1row = df.loc[df["Courriel"] == part1]
         if len(stu1row) != 1:
             raise Exception(
-                f"Adresse courriel `{stu1}` non présente dans le fichier central"
+                f"Adresse courriel `{part1}` non présente dans le fichier central"
             )
         stu1idx = stu1row.index[0]
     else:
         stu1row = df.loc[df.fullname_slug == slugrot_string(part1)]
         if len(stu1row) != 1:
             raise Exception(
-                f"Étudiant de nom `{stu1}` non présent ou reconnu dans le fichier central"
+                f"Étudiant de nom `{part1}` non présent ou reconnu dans le fichier central"
             )
         stu1idx = stu1row.index[0]
 
@@ -1003,7 +1003,7 @@ def validate_pair(df, colname, part1, part2):
         stu2row = df.loc[df["Courriel"] == part2]
         if len(stu2row) != 1:
             raise Exception(
-                f"Adresse courriel `{stu2}` non présente dans le fichier central"
+                f"Adresse courriel `{part2}` non présente dans le fichier central"
             )
         stu2idx = stu2row.index[0]
         return "swap", stu1idx, stu2idx
@@ -1011,7 +1011,7 @@ def validate_pair(df, colname, part1, part2):
         stu2row = df.loc[df.fullname_slug == slugrot_string(part2)]
         if len(stu2row) != 1:
             raise Exception(
-                f"Étudiant ou nom de séance `{stu2}` non reconnu dans le fichier central"
+                f"Étudiant ou nom de séance `{part2}` non reconnu dans le fichier central"
             )
         stu2idx = stu2row.index[0]
         return "swap", stu1idx, stu2idx
