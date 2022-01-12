@@ -864,7 +864,8 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         argument(
             "-o",
             "--ordered",
-            action="store_true",
+            nargs="*",
+            required=False,
             help="Ordonner la liste des étudiants par ordre alphabétique",
         ),
         argument(
@@ -965,10 +966,13 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             check_columns(df, self.other_groups, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
 
         # Shuffled or ordered rows according to `ordered`
-        if not self.ordered:
+        if self.ordered is None:
             df = df.sample(frac=1).reset_index(drop=True)
-        else:
+        elif len(self.ordered) == 0:
             df = sort_values(df, ["Nom", "Prénom"])
+        else:
+            check_columns(df, self.ordered, file=self.xls_merge, base_dir=self.settings.CWD)
+            df = sort_values(df, self.ordered)
 
         # Add title to template
         tmpl = self.template
@@ -1039,7 +1043,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         series_list = self.add_names_to_grouping(groups, name, name_gen)
 
         # Print when groups are in alphabetical order
-        if self.ordered:
+        if self.ordered is not None and len(self.ordered) == 0:
             for series in series_list:
                 first = df.loc[series.index].iloc[0]
                 last = df.loc[series.index].iloc[-1]
