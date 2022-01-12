@@ -46,7 +46,7 @@ def check_columns(dataframe, columns, **kwargs):
             avail_cols = ", ".join(f"`{e}`" for e in dataframe.columns)
             if "file" in kwargs and "base_dir" in kwargs:
                 fn = rel_to_dir(kwargs["file"], kwargs["base_dir"])
-                msg = f"Colonne{s} manquante{s}: {missing_cols} dans le dataframe issu du fichier {fn}. Colonnes disponibles: {avail_cols}"
+                msg = f"Colonne{s} manquante{s}: {missing_cols} dans le dataframe issu du fichier `{fn}`. Colonnes disponibles: {avail_cols}"
             else:
                 msg = f"Colonne{s} manquante{s}: {missing_cols}. Colonnes disponibles: {avail_cols}"
             raise Exception(msg)
@@ -57,7 +57,7 @@ def check_columns(dataframe, columns, **kwargs):
             common_cols = ", ".join(f"`{e}`" for e in common_cols)
             s = "s" if len(common_cols) > 1 else ""
             if "file" in kwargs and "base_dir" in kwargs:
-                msg = f"Colonne{s} déjà existante{s}: {common_cols} dans le dataframe issu du fichier {fn}."
+                msg = f"Colonne{s} déjà existante{s}: {common_cols} dans le dataframe issu du fichier `{fn}`."
             else:
                 msg = f"Colonne{s} déjà existante{s}: {common_cols}"
 
