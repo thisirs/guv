@@ -960,10 +960,10 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         df = pd.read_excel(self.xls_merge, engine="openpyxl")
 
         if self.grouping is not None:
-            check_columns(df, self.grouping, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
+            check_columns(df, self.grouping, file=self.xls_merge, base_dir=self.settings.CWD)
 
         if self.other_groups is not None:
-            check_columns(df, self.other_groups, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
+            check_columns(df, self.other_groups, file=self.xls_merge, base_dir=self.settings.CWD)
 
         # Shuffled or ordered rows according to `ordered`
         if self.ordered is None:

@@ -42,7 +42,7 @@ def selected_uv(all="dummy"):
 
 def get_unique_uv():
     if "UV_DIR" in settings and settings.UV_DIR is not None:
-        uv = settings.UV_DIR
+        uv = os.path.basename(settings.UV_DIR)
         if uv not in settings.UVS:
             raise NotUVDirectory(
                 f"Le dossier courant '{uv}' n'est pas reconnu en tant que "
@@ -119,18 +119,18 @@ class Output:
             target0 = parts[0] + timestr + parts[1]
             os.rename(self._target, target0)
             logger.info(
-                f"Sauvegarde vers `{rel_to_dir(target0, settings.SEMESTER_DIR)}`"
+                f"Sauvegarde vers `{rel_to_dir(target0, settings.CWD)}`"
             )
         elif self.action == "overwrite":
             logger.info(
-                f"Écrasement du fichier `{rel_to_dir(self._target, settings.SEMESTER_DIR)}`"
+                f"Écrasement du fichier `{rel_to_dir(self._target, settings.CWD)}`"
             )
         elif self.action == "write":
             dirname = os.path.dirname(self._target)
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
             logger.info(
-                f"Écriture du fichier `{rel_to_dir(self._target, settings.SEMESTER_DIR)}`"
+                f"Écriture du fichier `{rel_to_dir(self._target, settings.CWD)}`"
             )
 
     @property

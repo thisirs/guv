@@ -139,8 +139,16 @@ VALIDATION_SCHEMES = {
 
 
 class Settings:
-    def __init__(self, cwd):
-        self.cwd = cwd
+    def __init__(self, conf_dir=None):
+        if conf_dir is None:
+            if SEMESTER_VARIABLE in os.environ:
+                self.conf_dir = os.environ.get(SEMESTER_VARIABLE)
+            else:
+                self.conf_dir = os.getcwd()
+        else:
+            self.conf_dir = conf_dir
+
+        self.cwd = os.getcwd()
         self._settings = None
 
     def __contains__(self, name):
@@ -186,21 +194,22 @@ class Settings:
 
     @property
     def is_uv_dir(self):
-        return (Path(self.cwd) / "config.py").exists() and (
-            Path(self.cwd).parent / "config.py"
+        return (Path(self.conf_dir) / "config.py").exists() and (
+            Path(self.conf_dir).parent / "config.py"
         ).exists()
 
     @property
     def is_semester_dir(self):
-        return (Path(self.cwd) / "config.py").exists() and not (
-            Path(self.cwd).parent / "config.py"
+        return (Path(self.conf_dir) / "config.py").exists() and not (
+            Path(self.conf_dir).parent / "config.py"
         ).exists()
 
     def load_settings(self):
         self._settings = {}
+        self._settings["CWD"] = str(Path(self.cwd))
         if self.is_semester_dir:
-            self.config_files = [str(Path(self.cwd) / "config.py")]
-            self.semester_directory = str(Path(self.cwd))
+            self.config_files = [str(Path(self.conf_dir) / "config.py")]
+            self.semester_directory = str(Path(self.conf_dir))
             self._settings["UV_DIR"] = None
             self._settings["SEMESTER"] = os.path.basename(self.semester_directory)
             self._settings["SEMESTER_DIR"] = self.semester_directory
@@ -209,15 +218,15 @@ class Settings:
                 "verbosity": 2,
                 "default_tasks": ["xls_affectation"],
             }
-            self.load_file(Path(self.cwd) / "config.py")
+            self.load_file(Path(self.conf_dir) / "config.py")
 
         elif self.is_uv_dir:
             self.config_files = [
-                str(Path(self.cwd) / "config.py"),
-                str(Path(self.cwd).parent / "config.py"),
+                str(Path(self.conf_dir) / "config.py"),
+                str(Path(self.conf_dir).parent / "config.py"),
             ]
-            self.semester_directory = str(Path(self.cwd).parent)
-            self._settings["UV_DIR"] = os.path.basename(self.cwd)
+            self.semester_directory = str(Path(self.conf_dir).parent)
+            self._settings["UV_DIR"] = self.conf_dir
             self._settings["SEMESTER"] = os.path.basename(self.semester_directory)
             self._settings["SEMESTER_DIR"] = self.semester_directory
             self._settings["DOIT_CONFIG"] = {
@@ -226,8 +235,8 @@ class Settings:
                 "default_tasks": ["utc_uv_list_to_csv", "xls_student_data_merge"],
             }
 
-            self.load_file(Path(self.cwd).parent / "config.py")
-            self.load_file(Path(self.cwd) / "config.py")
+            self.load_file(Path(self.conf_dir).parent / "config.py")
+            self.load_file(Path(self.conf_dir) / "config.py")
 
         else:
             logger.debug("Not in UV or semester directory")
@@ -251,12 +260,7 @@ class Settings:
             self._settings[setting] = setting_value
 
 
-if SEMESTER_VARIABLE in os.environ:
-    wd = os.environ.get(SEMESTER_VARIABLE)
-else:
-    wd = os.getcwd()
-
-settings = Settings(wd)
+settings = Settings()
 
 class LogFormatter(logging.Formatter):
 
