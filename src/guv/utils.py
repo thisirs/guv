@@ -16,12 +16,19 @@ from .exceptions import ImproperlyConfigured
 
 
 def rel_to_dir(path, root):
-    common_prefix = os.path.commonprefix([path, root])
-    return os.path.relpath(path, common_prefix)
+    if not os.path.isabs(path):
+        return path
+
+    if os.path.commonpath([root]) == os.path.commonpath([path, root]):
+        return os.path.relpath(path, root)
+
+    return path
+
 
 def check_filename(filename):
     if not os.path.exists(filename):
         raise ImproperlyConfigured("Le fichier `{filename}` n'existe pas")
+
 
 def check_columns(dataframe, columns, **kwargs):
     """Vérifie que la ou les colonnes `columns` sont dans `dataframe`"""
