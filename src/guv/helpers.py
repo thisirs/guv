@@ -593,10 +593,10 @@ class Aggregate(FileOperation):
     ``subset`` est une liste des colonnes à garder si on ne veut pas
     agréger la totalité des colonnes, ``drop`` une liste des colonnes
     à enlever. ``rename`` est un dictionnaire des colonnes à renommer.
-    ``read_method`` est un callable appelé avec ``kw_read`` pour lire
-    le fichier contenant le DataFrame à agréger. ``preprocessing`` et
-    ``postprocessing`` sont des callable qui prennent en argument un
-    DataFrame et en renvoie un et qui réalise un pré ou post
+    ``read_method`` est un *callable* appelé avec ``kw_read`` pour lire
+    le fichier contenant le *DataFrame* à agréger. ``preprocessing`` et
+    ``postprocessing`` sont des *callable* qui prennent en argument un
+    *DataFrame* et en renvoie un et qui réalise un pré ou post
     traitement sur l'agrégation.
 
     Parameters
@@ -648,7 +648,7 @@ class Aggregate(FileOperation):
         .. code:: python
 
            kw_read={"header": None, "names": ["Courriel", "TP_pres"]}
-           kw_read={"na_values": "-"},
+           kw_read={"na_values": "-"}
 
     preprocessing : :obj:`callable`, optional
         Pré-traitement à appliquer au `DataFrame` avant de l'intégrer.
@@ -659,20 +659,68 @@ class Aggregate(FileOperation):
     Examples
     --------
 
-    .. code:: python
+    - Agrégation des colonnes d'un fichier csv suivant la colonne
+      ``email`` du fichier csv et ``Courriel`` du fichier central :
 
-       DOCS.aggregate(
-           "documents/notes.csv",
-           left_on="Courriel",
-           right_on="email"
-       )
+      .. code:: python
 
-       from guv.utils import slugrot
-       DOCS.aggregate(
-           "documents/notes.csv",
-           left_on=slugrot("Nom", "Prénom"),
-           right_on=slugrot("Nom", "Prénom")
-       )
+         DOCS.aggregate(
+             "documents/notes.csv",
+             left_on="Courriel",
+             right_on="email"
+         )
+
+    - Agrégation de la colonne ``Note`` d'un fichier csv suivant la
+      colonne ``email`` du fichier csv et ``Courriel`` du fichier
+      central :
+
+      .. code:: python
+
+         DOCS.aggregate(
+             "documents/notes.csv",
+             left_on="Courriel",
+             right_on="email",
+             subset="Note"
+         )
+
+    - Agrégation de la colonne ``Note`` renommée en ``Note_médian``
+      d'un fichier csv suivant la colonne ``email`` du fichier csv et
+      ``Courriel`` du fichier central :
+
+      .. code:: python
+
+         DOCS.aggregate(
+             "documents/notes.csv",
+             left_on="Courriel",
+             right_on="email",
+             subset="Note",
+             rename={"Note": "Note_médian"}
+         )
+
+    - Agrégation de la colonne ``Note`` suivant ``Courriel`` en
+      spécifiant l'en-tête absente du fichier csv :
+
+      .. code:: python
+
+         DOCS.aggregate(
+             "documents/notes.csv",
+             on="Courriel",
+             kw_read={"header": None, "names": ["Courriel", "Note"]},
+         )
+
+    - Agrégation d'un fichier csv de notes suivant les colonnes
+      ``Nom`` et ``Prénom`` en calculant un *slug* sur ces deux
+      colonnes pour une mise en correspondance plus souple (accents,
+      majuscules, tirets,...) :
+
+      .. code:: python
+
+         from guv.utils import slugrot
+         DOCS.aggregate(
+             "documents/notes.csv",
+             left_on=slugrot("Nom", "Prénom"),
+             right_on=slugrot("Nom", "Prénom")
+         )
 
     """
 
