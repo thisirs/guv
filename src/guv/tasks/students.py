@@ -25,7 +25,7 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 
 from ..config import logger
 from ..exceptions import ImproperlyConfigured
-from ..helpers import Documents, slugrot, slugrot_string, switch
+from ..helpers import Documents, slugrot, slugrot_string
 from ..utils import argument, check_columns, rel_to_dir, sort_values
 from ..utils_config import Output
 from .base import CliArgsMixin, UVTask
@@ -442,49 +442,46 @@ class XlsStudentDataMerge(UVTask):
         self.student_data = XlsStudentData.target_from(**self.info)
         self.target = self.build_target()
 
-        documents = Documents()
+        base_dir = os.path.join(self.settings.SEMESTER_DIR, self.uv)
+        documents = Documents(base_dir=base_dir)
 
         if "CHANGEMENT_COURS" in self.settings and self.settings.CHANGEMENT_COURS:
-            cours_switches = self.build_dep(self.settings.CHANGEMENT_COURS)
             documents.switch(
-                cours_switches,
+                self.settings.CHANGEMENT_COURS,
                 colname="Cours",
                 backup=True
             )
 
         if "CHANGEMENT_TD" in self.settings and self.settings.CHANGEMENT_TD:
-            TD_switches = self.build_dep(self.settings.CHANGEMENT_TD)
             documents.switch(
-                TD_switches,
+                self.settings.CHANGEMENT_TD,
                 colname="TD",
                 backup=True
             )
 
         if "CHANGEMENT_TP" in self.settings and self.settings.CHANGEMENT_TP:
-            TP_switches = self.build_dep(self.settings.CHANGEMENT_TP)
             documents.switch(
-                TP_switches,
+                self.settings.CHANGEMENT_TP,
                 colname="TP",
                 backup=True
             )
 
         if "TIERS_TEMPS" in self.settings and self.settings.TIERS_TEMPS:
-            tiers_temps = self.build_dep(self.settings.TIERS_TEMPS)
             documents.flag(
-                tiers_temps,
+                self.settings.TIERS_TEMPS,
                 colname="Tiers-temps",
                 flags=["Oui", "Non"]
             )
 
         if "INFO_ETUDIANT" in self.settings and self.settings.INFO_ETUDIANT:
-            info_etu = self.build_dep(self.settings.INFO_ETUDIANT)
             documents.aggregate_org(
-                info_etu,
+                self.settings.INFO_ETUDIANT,
                 colname="Info"
             )
 
         if "DOCS" in self.settings:
-            documents.add_documents(self.settings.DOCS)
+            for action in self.settings.DOCS.actions:
+                documents.add_action(action)
 
         self.documents = documents
         self.file_dep = documents.deps + [self.student_data] + self.settings.config_files
@@ -493,7 +490,7 @@ class XlsStudentDataMerge(UVTask):
         df = pd.read_excel(self.student_data, engine="openpyxl")
 
         # Aggregate documents
-        df = self.documents.apply_actions(df)
+        df = self.documents.apply_actions(df, ref_dir=self.settings.CWD)
 
         dff = sort_values(df, ["Nom", "Prénom"])
 

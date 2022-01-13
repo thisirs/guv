@@ -1,3 +1,4 @@
+import os
 import functools
 import inspect
 import re
@@ -10,12 +11,22 @@ import pandas as pd
 
 from .config import logger
 from .exceptions import ImproperlyConfigured
-from .utils import check_columns, check_filename, slugrot, slugrot_string
+from .utils import check_columns, check_filename, slugrot, slugrot_string, rel_to_dir
 
 
-def fillna_column(
-    colname: str, *, na_value: Optional[str] = None, group_column: Optional[str] = None
-):
+class Operation:
+    def message(self, **kwargs):
+        return "Pas de message"
+
+    @property
+    def deps(self):
+        return []
+
+    def apply(self, df):
+        pass
+
+
+class FillnaColumn(Operation):
     """Remplace les valeurs non définies dans la colonne ``colname``.
 
     Une seule des options ``na_value`` et ``group_column`` doit être
@@ -53,64 +64,52 @@ def fillna_column(
          DOCS.fillna_column("note_projet", group_column="groupe_projet")
 
     """
-    if not((na_value is None) ^ (group_column is None)):
-        raise Exception("Une seule des options `na_value` et `group_column` doit être spécifiée")
 
-    if na_value is not None:
-        def func(df):
-            check_columns(df, [colname])
-            df[colname].fillna(na_value, inplace=True)
-            return df
+    def __init__(
+        self,
+        colname: str,
+        *,
+        na_value: Optional[str] = None,
+        group_column: Optional[str] = None
+    ):
+        super().__init__()
+        self.colname = colname
+        self.na_value = na_value
+        self.group_column = group_column
 
-        func.__desc__ = f"Remplace les NA dans la colonne `{colname}` par la valeur `{na_value}`"
+    def apply(self, df):
+        if not((self.na_value is None) ^ (self.group_column is None)):
+            raise Exception("Une seule des options `na_value` et `group_column` doit être spécifiée")
 
-    else:
-        def fill_by_group(g):
-            idx_first = g[colname].first_valid_index()
-            idx_last = g[colname].last_valid_index()
-            if idx_first is not None:
-                if idx_first == idx_last:
-                    g[colname] = g.loc[idx_first, colname]
+        if self.na_value is not None:
+            check_columns(df, [self.colname])
+            df[self.colname].fillna(self.na_value, inplace=True)
+        else:
+            def fill_by_group(g):
+                idx_first = g[self.colname].first_valid_index()
+                idx_last = g[self.colname].last_valid_index()
+                if idx_first is not None:
+                    if idx_first == idx_last:
+                        g[self.colname] = g.loc[idx_first, self.colname]
+                    else:
+                        logger.warning(f"Plusieurs valeurs non-NA dans le groupe `{g}`")
                 else:
-                    logger.warning(f"Plusieurs valeurs non-NA dans le groupe `{g}`")
-            else:
-                logger.warning(f"Aucune valeur non-NA dans le groupe `{g}`")
-            return g
+                    logger.warning(f"Aucune valeur non-NA dans le groupe `{g}`")
+                return g
 
-        def func(df):
-            check_columns(df, [colname, group_column])
-            return df.groupby(group_column).apply(fill_by_group)
+            check_columns(df, [self.colname, self.group_column])
+            df = df.groupby(self.group_column).apply(fill_by_group)
 
-        func.__desc__ = f"Remplace les NA dans la colonne `{colname}` en groupant par `{group_column}`"
+        return df
 
-    return func
-
-
-def replace_column_aux(
-    df, new_colname=None, colname=None, new_column=None, backup=False, msg=None
-):
-    """Helper function for `replace_regex` and `replace_column`."""
-
-    if backup:
-        df = df.assign(**{f"{colname}_orig": df[colname]})
-        target_colname = colname
-    elif new_colname is not None:
-        target_colname = new_colname
-    else:
-        target_colname = colname
-
-    df = df.assign(**{target_colname: new_column})
-
-    return df
+    def message(self, **kwargs):
+        if self.na_value is not None:
+            return f"Remplace les NA dans la colonne `{self.colname}` par la valeur `{self.na_value}`"
+        else:
+            return f"Remplace les NA dans la colonne `{self.colname}` en groupant par `{self.group_column}`"
 
 
-def replace_regex(
-    colname: str,
-    *reps,
-    new_colname: Optional[str] = None,
-    backup: Optional[bool] = False,
-    msg: Optional[str] = None,
-):
+class ReplaceRegex(Operation):
     """Remplacements regex dans une colonne.
 
     Remplace dans la colonne ``colname`` les occurrences de toutes les
@@ -149,44 +148,51 @@ def replace_regex(
 
     """
 
-    if backup is True and new_colname is not None:
-        raise ImproperlyConfigured(
-            "Les arguments `backup` et `new_colname` sont incompatibles."
-        )
+    def __init__(
+        self,
+        colname: str,
+        *reps,
+        new_colname: Optional[str] = None,
+        backup: Optional[bool] = False,
+        msg: Optional[str] = None,
+    ):
+        super().__init__()
+        self.colname = colname
+        self.reps = reps
+        self.new_colname = new_colname
+        self.backup = backup
+        self.msg = msg
 
-    def func(df):
-        check_columns(df, colname)
+    def apply(self, df):
+        if self.backup is True and self.new_colname is not None:
+            raise ImproperlyConfigured(
+                "Les arguments `backup` et `new_colname` sont incompatibles."
+            )
 
-        new_column = df[colname].copy()
-        for rep in reps:
+        check_columns(df, self.colname)
+
+        new_column = df[self.colname].copy()
+        for rep in self.reps:
             new_column = new_column.str.replace(*rep, regex=True)
 
         return replace_column_aux(
             df,
-            new_colname=new_colname,
-            colname=colname,
+            new_colname=self.new_colname,
+            colname=self.colname,
             new_column=new_column,
-            backup=backup,
-            msg=msg,
+            backup=self.backup,
         )
 
-    if msg is not None:
-        func.__desc__ = msg
-    elif new_colname is None:
-        func.__desc__ = f"Remplacement regex dans colonne `{colname}`"
-    else:
-        func.__desc__ = f"Remplacement regex dans colonne `{colname} vers colonne `{new_colname}`"
+    def message(self, **kwargs):
+        if self.msg is not None:
+            return self.msg
+        elif self.new_colname is None:
+            return f"Remplacement regex dans colonne `{self.colname}`"
+        else:
+            return f"Remplacement regex dans colonne `{self.colname} vers colonne `{self.new_colname}`"
 
-    return func
 
-
-def replace_column(
-    colname: str,
-    rep_dict: dict,
-    new_colname: Optional[str] = None,
-    backup: Optional[bool] = False,
-    msg: Optional[str] = None,
-):
+class ReplaceColumn(Operation):
     """Remplacements dans une colonne.
 
     Remplace les valeurs renseignées dans ``rep_dict`` dans la colonne
@@ -237,34 +243,47 @@ def replace_column(
 
     """
 
-    if backup is True and new_colname is not None:
-        raise ImproperlyConfigured(
-            "Les arguments `backup` et `new_colname` sont incompatibles."
-        )
+    def __init__(
+        self,
+        colname: str,
+        rep_dict: dict,
+        new_colname: Optional[str] = None,
+        backup: Optional[bool] = False,
+        msg: Optional[str] = None,
+    ):
+        super().__init__()
+        self.colname = colname
+        self.rep_dict = rep_dict
+        self.new_colname = new_colname
+        self.backup = backup
+        self.msg = msg
 
-    def func(df):
-        check_columns(df, colname)
-        new_column = df[colname].replace(rep_dict)
+    def apply(self, df):
+        if self.backup is True and self.new_colname is not None:
+            raise ImproperlyConfigured(
+                "Les arguments `backup` et `new_colname` sont incompatibles."
+            )
+
+        check_columns(df, self.colname)
+        new_column = df[self.colname].replace(self.rep_dict)
         return replace_column_aux(
             df,
-            new_colname=new_colname,
-            colname=colname,
+            new_colname=self.new_colname,
+            colname=self.colname,
             new_column=new_column,
-            backup=backup,
-            msg=msg,
+            backup=self.backup,
         )
 
-    if msg is not None:
-        func.__desc__ = msg
-    elif new_colname is None:
-        func.__desc__ = f"Remplacement dans colonne `{colname}`"
-    else:
-        func.__desc__ = f"Replacement dans colonne `{colname}` vers colonne `{new_colname}`"
+    def message(self, **kwargs):
+        if self.msg is not None:
+            return self.msg
+        elif self.new_colname is None:
+            return f"Remplacement dans colonne `{self.colname}`"
+        else:
+            return f"Replacement dans colonne `{self.colname}` vers colonne `{self.new_colname}`"
 
-    return func
 
-
-def apply_df(func: Callable, msg: Optional[str] = None):
+class ApplyDf(Operation):
     """Modifie le fichier central avec une fonction.
 
     ``func`` est une fonction prenant en argument un DataFrame
@@ -295,18 +314,23 @@ def apply_df(func: Callable, msg: Optional[str] = None):
        )
 
     """
-    def func2(df):
-        return func(df)
 
-    if msg is not None:
-        func2.__desc__ = msg
-    else:
-        func2.__desc__ = f"Appliquer une fonction au Dataframe"
+    def __init__(self, func: Callable, msg: Optional[str] = None):
+        super().__init__()
+        self.func = func
+        self.msg = msg
 
-    return func2
+    def apply(self, df):
+        return self.func(df)
+
+    def message(self, **kwargs):
+        if self.msg is not None:
+            return self.msg
+        else:
+            return "Appliquer une fonction au Dataframe"
 
 
-def apply_column(colname: str, func: Callable, msg: Optional[str] = None):
+class ApplyColumn(Operation):
     """Modifie une colonne existente avec une fonction.
 
     ``colname`` est un nom de colonne existant et ``func`` une fonction
@@ -336,20 +360,26 @@ def apply_column(colname: str, func: Callable, msg: Optional[str] = None):
        DOCS.apply("note", lambda e: float(str(e).replace(",", ".")))
 
     """
-    def func2(df):
-        check_columns(df, colname)
-        df.loc[:, colname] = df[colname].apply(func)
+
+    def __init__(self, colname: str, func: Callable, msg: Optional[str] = None):
+        super().__init__()
+        self.colname = colname
+        self.func = func
+        self.msg = msg
+
+    def apply(self, df):
+        check_columns(df, self.colname)
+        df.loc[:, self.colname] = df[self.colname].apply(self.func)
         return df
 
-    if msg is not None:
-        func2.__desc__ = msg
-    else:
-        func2.__desc__ = f"Appliquer une fonction à la colonne `{colname}`"
+    def message(self, **kwargs):
+        if self.msg is not None:
+            return self.msg
+        else:
+            return f"Appliquer une fonction à la colonne `{self.colname}`"
 
-    return func2
 
-
-def compute_new_column(*cols: str, func: Callable, colname: str, msg: Optional[str] = None):
+class ComputeNewColumn(Operation):
     """Création d'une colonne à partir d'autres colonnes.
 
     Les colonnes nécessaires au calcul sont renseignées dans ``cols``.
@@ -396,197 +426,159 @@ def compute_new_column(*cols: str, func: Callable, colname: str, msg: Optional[s
          DOCS.compute_new_column("note1", "note2", "note3", func=moyenne, colname="Note_moyenne")
 
     """
-    def func2(df):
-        check_columns(df, cols)
-        new_col = df.apply(lambda x: func(x.loc[list(cols)]), axis=1)
-        df = df.assign(**{colname: new_col})
+
+    def __init__(self, *cols: str, func: Callable, colname: str, msg: Optional[str] = None):
+        super().__init__()
+        self.cols = cols
+        self.func = func
+        self.colname = colname
+        self.msg = msg
+
+    def apply(self, df):
+        check_columns(df, self.cols)
+        new_col = df.apply(lambda x: self.func(x.loc[list(self.cols)]), axis=1)
+        df = df.assign(**{self.colname: new_col})
         return df
 
-    if msg is not None:
-        func2.__desc__ = msg
-    else:
-        func2.__desc__ = f"Calcul de la colonne `{colname}`"
-
-    return func2
-
-
-def aggregate_df(
-    left_df,
-    right_df,
-    left_on,
-    right_on,
-    preprocessing=None,
-    postprocessing=None,
-    subset=None,
-    drop=None,
-    rename=None,
-):
-    """Merge two dataframes"""
-
-    if preprocessing is not None:
-        if hasattr(preprocessing, "__desc__"):
-            logger.info(f"Preprocessing: {preprocessing.__desc__}")
+    def message(self, **kwargs):
+        if self.msg is not None:
+            return self.msg
         else:
-            logger.info("Preprocessing")
-        right_df = preprocessing(right_df)
+            return f"Calcul de la colonne `{self.colname}`"
 
-    # Columns that will be removed after merging
-    drop_cols = []
 
-    # Flag if left_on is a computed column
-    left_on_is_added = False
+class ApplyCell(Operation):
+    """Remplace la valeur d'une cellule.
 
-    # Add column if callable, callable should return of pandas
-    # Series
-    if callable(left_on):
-        left_on = left_on(left_df)
-        left_df = left_df.assign(**{left_on.name: left_on.values})
-        left_on = left_on.name
-        left_on_is_added = True
+    ``name_or_email`` est le nom de l'édudiant ou son adresse courriel
+    et ``colname`` est le nom de la colonne où faire le changement. La
+    nouvelle valeur est renseignée par ``value``.
 
-    # Check if it exists
-    if isinstance(left_on, str):
-        # Check that left_on column exists
-        check_columns(left_df, left_on)
-    else:
-        raise Exception("L'argument 'left_on' doit être un callable ou une chaine de caractères")
+    Parameters
+    ----------
 
-    # Add column if callable
-    if callable(right_on):
-        right_on = right_on(right_df)
-        right_df = right_df.assign(**{right_on.name: right_on.values})
-        right_on = right_on.name
+    name_or_email : :obj:`str`
+        Le nom ou l'adresse courriel de l'étudiant.
 
-    # Check if it exists
-    if isinstance(right_on, str):
-        check_columns(right_df, right_on)
-    else:
-        raise Exception("Unsupported type for right_on")
+    colname : :obj:`str`
+        Le nom de la colonne où faire les modifications.
 
-    # Warn if right_on contains duplicates
-    if any(right_df[right_on].duplicated()):
-        logger.warning("La colonne `right_on` du fichier à agréger contient des clés identiques")
+    value :
+        La valeur à affecter.
 
-    # Extract subset of columns, right_on included
-    if subset is not None:
-        if isinstance(subset, str):
-            subset = [subset]
+    Examples
+    --------
 
-        check_columns(right_df, subset)
-        right_df = right_df[[right_on] + subset]
+    .. code:: python
 
-    # Allow to drop columns, right_on not allowed
-    if drop is not None:
-        if isinstance(drop, str):
-            drop = [drop]
+       DOCS.apply_cell("Mark Watney", "Note bricolage", 20)
 
-        if right_on in drop:
-            raise Exception("Impossible d'enlever la clé")
+    """
 
-        check_columns(right_df, drop)
-        right_df = right_df.drop(drop, axis=1)
+    def __init__(self, name_or_email: str, colname: str, value):
+        super().__init__()
+        self.name_or_email = name_or_email
+        self.colname = colname
+        self.value = value
 
-    # Rename columns in data to be merged
-    if rename is not None:
-        if right_on in rename:
-            raise Exception("Pas de renommage de la clé possible")
+    def apply(self, df):
+        check_columns(df, columns=self.colname, error_when="not_found")
 
-        check_columns(right_df, rename.keys())
-        right_df = right_df.rename(columns=rename)
+        # Add slugname column
+        tf_df = slugrot("Nom", "Prénom")
+        df["fullname_slug"] = tf_df(df)
 
-    # Columns to drop after merge: primary key of right dataframe
-    # only if name is different, _merge column added by pandas
-    # during merge, programmatically added column is
-    # left_on_is_added is set
-    drop_cols = ['_merge']
-    if right_on != left_on:
-        if right_on in left_df.columns:
-            drop_cols += [right_on + "_y"]
+        if '@etu' in self.name_or_email:
+            sturow = df.loc[df['Courriel'] == self.name_or_email]
+            if len(sturow) > 1:
+                raise Exception(f'Adresse courriel `{self.name_or_email}` présente plusieurs fois')
+            if len(sturow) == 0:
+                raise Exception(f'Adresse courriel `{self.name_or_email}` non présente dans le fichier central')
+            stuidx = sturow.index[0]
         else:
-            drop_cols += [right_on]
+            sturow = df.loc[df.fullname_slug == slugrot_string(self.name_or_email)]
+            if len(sturow) > 1:
+                raise Exception(f'Étudiant de nom `{self.name_or_email}` présent plusieurs fois')
+            if len(sturow) == 0:
+                raise Exception(f'Étudiant de nom `{self.name_or_email}` non présent dans le fichier central')
+            stuidx = sturow.index[0]
 
-    if left_on_is_added:
-        drop_cols += [left_on]
+        df.loc[stuidx, self.colname] = self.value
 
-    # Record same column name between right_df and left_df to
-    # merge them eventually
-    duplicated_columns = set(left_df.columns).intersection(set(right_df.columns))
-    duplicated_columns = duplicated_columns.difference(set([left_on, right_on]))
+        df = df.drop('fullname_slug', axis=1)
+        return df
 
-    # Outer merge
-    merged_df = left_df.merge(right_df,
-                              left_on=left_on,
-                              right_on=right_on,
-                              how='outer',
-                              suffixes=('', '_y'),
-                              indicator=True)
+    def message(self, **kwargs):
+        return f"Modification de la colonne `{self.colname}` pour l'identifiant `{self.name_or_email}`"
 
-    # Select like how='left' as result
-    agg_df = merged_df[merged_df["_merge"].isin(['left_only', 'both'])]
 
-    # Select right only and report
-    merged_df_ro = merged_df[merged_df["_merge"] == 'right_only']
-    key = right_on
-    if (right_on != left_on and right_on in left_df.columns):
-        key = key + "_y"
+class FileOperation(Operation):
+    def __init__(self, filename, base_dir=None):
+        super().__init__()
+        self._filename = filename
+        self.base_dir = base_dir
 
-    for index, row in merged_df_ro.iterrows():
-        logger.warning(f"Identifiant présent dans le document à aggréger mais introuvable dans le fichier central : `{row[key]}`")
-
-    if postprocessing is not None:
-        def apply_postprocessing(df, func):
-            if hasattr(func, "__desc__"):
-                logger.info(f"Postprocessing: {func.__desc__}")
-            else:
-                logger.info("Postprocessing")
-            return func(df)
-
-        if not isinstance(postprocessing, tuple):
-            postprocessing = (postprocessing,)
-
-        for func in postprocessing:
-            agg_df = apply_postprocessing(agg_df, func)
-
-    # Try to merge columns
-    for c in duplicated_columns:
-        c_y = c + '_y'
-        logger.warn("Fusion des colonnes `%s`" % c)
-        if any(agg_df[c_y].notna() & agg_df[c].notna()):
-            logger.warn("Fusion impossible")
-            continue
+    @property
+    def filename(self):
+        if self.base_dir:
+            return os.path.join(self.base_dir, self._filename)
         else:
-            dtype = agg_df.loc[:, c].dtype
-            agg_df.loc[:, c] = agg_df.loc[:, c].fillna(agg_df.loc[:, c_y])
-            new_dtype = agg_df.loc[:, c].dtype
-            if new_dtype != dtype:
-                logger.warn(f"Le type de la colonne a changé suite à la fusion: {dtype} -> {new_dtype}")
-                try:
-                    logger.warn("Conversion de type")
-                    agg_df.loc[:, c] = agg_df[c].astype(dtype)
-                except ValueError:
-                    logger.warn("Conversion impossible")
-            drop_cols.append(c_y)
+            return self._filename
 
-    # Drop useless columns
-    agg_df = agg_df.drop(drop_cols, axis=1, errors='ignore')
+    @property
+    def deps(self):
+        return [self.filename]
 
-    return agg_df
+    def message(self, ref_dir=""):
+        return f"Agrégation du fichier `{rel_to_dir(self.filename, ref_dir)}`"
 
 
-def aggregate(
-    filename: str,
-    *,
-    left_on: Union[None, str, callable] = None,
-    right_on: Union[None, str, callable] = None,
-    on: Optional[str] = None,
-    subset: Union[None, str, List[str]] = None,
-    drop: Union[None, str, List[str]] = None,
-    rename: Optional[dict] = None,
-    preprocessing: Optional[Callable] = None,
-    postprocessing: Optional[Callable] = None,
-    read_method: Optional[Callable] = None,
-    kw_read: Optional[dict] = {}
-):
+class Add(FileOperation):
+    """Déclare une agrégation d'un fichier à l'aide d'une fonction.
+
+    Fonction générale pour déclarer l'agrégation d'un fichier de
+    chemin ``filename`` à l'aide d'une fonction ``func`` prenant
+    en argument le DataFrame déjà existant, le chemin vers le
+    fichier et renvoie le DataFrame mis à jour.
+
+    Voir fonctions spécialisées pour l'incorporation de documents
+    classiques :
+
+    - :func:`~guv.helpers.Documents.aggregate` : Document csv/Excel
+    - :func:`~guv.helpers.Documents.aggregate_org` : Document Org
+
+    Parameters
+    ----------
+
+    filename : :obj:`str`
+        Le chemin du fichier à agréger.
+
+    func : :obj:`callable`
+        Une fonction de signature `DataFrame`, filename: str ->
+        `DataFrame` qui réalise l'agrégation.
+
+    Examples
+    --------
+
+    .. code:: python
+
+       def fonction_qui_incorpore(df, file_path):
+           # On incorpore le fichier dont le chemin est `file_path` au
+           # DataFrame `df` et on renvoie le DataFrame mis à jour.
+
+       DOCS.add("documents/notes.csv", func=fonction_qui_incorpore)
+
+    """
+
+    def __init__(self, filename, func):
+        super().__init__(filename)
+        self.func = func
+
+    def apply(self, df):
+        return self.func(df, self.filename)
+
+
+class Aggregate(FileOperation):
     """Agrégation d'un tableau provenant d'un fichier Excel/csv.
 
     Les arguments ``left_on`` et ``right_on`` sont les clés pour
@@ -684,51 +676,69 @@ def aggregate(
 
     """
 
-    def aggregate0(left_df):
+    def __init__(
+        self,
+        filename: str,
+        *,
+        left_on: Union[None, str, callable] = None,
+        right_on: Union[None, str, callable] = None,
+        on: Optional[str] = None,
+        subset: Union[None, str, List[str]] = None,
+        drop: Union[None, str, List[str]] = None,
+        rename: Optional[dict] = None,
+        preprocessing: Union[None, Callable, Operation] = None,
+        postprocessing: Union[None, Callable, Operation] = None,
+        read_method: Optional[Callable] = None,
+        kw_read: Optional[dict] = {}
+    ):
+        super().__init__(filename)
+        self._filename = filename
+        self.left_on = left_on
+        self.right_on = right_on
+        self.on = on
+        self.subset = subset
+        self.drop = drop
+        self.rename = rename
+        self.preprocessing = preprocessing
+        self.postprocessing = postprocessing
+        self.read_method = read_method
+        self.kw_read = kw_read
+
+    def apply(self, left_df):
         # Infer a read method if not provided
-        if read_method is None:
-            if filename.endswith('.csv'):
-                right_df = pd.read_csv(filename, **kw_read)
-            elif filename.endswith('.xlsx') or filename.endswith('.xls'):
-                right_df = pd.read_excel(filename, engine="openpyxl", **kw_read)
+        if self.read_method is None:
+            if self.filename.endswith('.csv'):
+                right_df = pd.read_csv(self.filename, **self.kw_read)
+            elif self.filename.endswith('.xlsx') or self.filename.endswith('.xls'):
+                right_df = pd.read_excel(self.filename, engine="openpyxl", **self.kw_read)
             else:
                 raise Exception('No read method and unsupported file extension')
         else:
-            right_df = read_method(filename, **kw_read)
+            right_df = self.read_method(self.filename, **self.kw_read)
 
-        if on is not None:
-            if left_on is not None or right_on is not None:
+        if self.on is not None:
+            if self.left_on is not None or self.right_on is not None:
                 raise ImproperlyConfigured("On doit spécifier soit `on`, soit `left_on` et `right_on`.")
 
-            left_on_ = right_on_ = on
+            left_on = right_on = self.on
         else:
-            left_on_ = left_on
-            right_on_ = right_on
+            left_on = self.left_on
+            right_on = self.right_on
 
         return aggregate_df(
             left_df,
             right_df,
-            left_on=left_on_,
-            right_on=right_on_,
-            preprocessing=preprocessing,
-            postprocessing=postprocessing,
-            subset=subset,
-            drop=drop,
-            rename=rename,
+            left_on=left_on,
+            right_on=right_on,
+            preprocessing=self.preprocessing,
+            postprocessing=self.postprocessing,
+            subset=self.subset,
+            drop=self.drop,
+            rename=self.rename,
         )
 
-    aggregate0.__desc__ = f"Agrégation du fichier `{filename}`"
 
-    return aggregate0
-
-
-def aggregate_org(
-    filename: str,
-    *,
-    colname: str,
-    on: Optional[str] = None,
-    postprocessing: Optional[Callable] = None
-):
+class AggregateOrg(FileOperation):
     """Agrégation d'un fichier au format Org.
 
     Le document à agréger est au format Org. Les titres servent de clé
@@ -750,7 +760,8 @@ def aggregate_org(
         doivent contenir les nom et prénom des étudiants.
 
     postprocessing : :obj:`callable`, optional
-        Post-traitement à appliquer au `DataFrame` après intégration du fichier Org.
+        Post-traitement à appliquer au `DataFrame` après intégration
+        du fichier Org.
 
     Examples
     --------
@@ -794,8 +805,20 @@ def aggregate_org(
 
     """
 
-    def aggregate_org0(left_df):
-        check_filename(filename)
+    def __init__(self,
+        filename: str,
+        colname: str,
+        on: Optional[str] = None,
+        postprocessing: Union[None, Callable, Operation] = None
+    ):
+        super().__init__(filename)
+        self._filename = filename
+        self.colname = colname
+        self.on = on
+        self.postprocessing = postprocessing
+
+    def apply(self, left_df):
+        check_filename(self.filename)
 
         def parse_org(text):
             for chunk in re.split("^\\* *", text, flags=re.MULTILINE):
@@ -806,25 +829,21 @@ def aggregate_org(
                 text = textwrap.dedent(text)
                 yield header, text
 
-        text = open(filename, 'r').read()
-        df_org = pd.DataFrame(parse_org(text), columns=["header", colname])
+        text = open(self.filename, 'r').read()
+        df_org = pd.DataFrame(parse_org(text), columns=["header", self.colname])
 
-        if on is None:
+        if self.on is None:
             left_on = slugrot("Nom", "Prénom")
             right_on = slugrot("header")
         else:
-            left_on = on
+            left_on = self.on
             right_on = "header"
 
-        df = aggregate_df(left_df, df_org, left_on, right_on, postprocessing=postprocessing)
+        df = aggregate_df(left_df, df_org, left_on, right_on, postprocessing=self.postprocessing)
         return df
 
-    aggregate_org0.__desc__ = f"Agrégation du fichier `{filename}`"
 
-    return aggregate_org0
-
-
-def flag(filename: str, *, colname: str, flags: Optional[List[str]] = ["Oui", ""]):
+class Flag(FileOperation):
     """Signaler une liste d'étudiants dans une nouvelle colonne.
 
     Le document à agréger est une liste de noms d'étudiants affichés
@@ -861,17 +880,22 @@ def flag(filename: str, *, colname: str, flags: Optional[List[str]] = ["Oui", ""
 
     """
 
-    def func(df):
-        check_filename(filename)
-        check_columns(df, colname, error_when="exists")
+    def __init__(self, filename: str, *, colname: str, flags: Optional[List[str]] = ["Oui", ""]):
+        super().__init__(filename)
+        self.colname = colname
+        self.flags = flags
 
-        df[colname] = flags[1]
+    def apply(self, df):
+        check_filename(self.filename)
+        check_columns(df, self.colname, error_when="exists")
+
+        df[self.colname] = self.flags[1]
 
         # Add column that acts as a primary key
         tf_df = slugrot("Nom", "Prénom")
         df["fullname_slug"] = tf_df(df)
 
-        with open(filename, 'r') as fd:
+        with open(self.filename, 'r') as fd:
             for line in fd:
                 # Saute commentaire ou ligne vide
                 line = line.strip()
@@ -887,75 +911,275 @@ def flag(filename: str, *, colname: str, flags: Optional[List[str]] = ["Oui", ""
                     raise Exception('Pas de correspondance pour `{:s}`'.format(line))
                 elif len(res) > 1:
                     raise Exception('Plusieurs correspondances pour `{:s}`'.format(line))
-                df.loc[res.index[0], colname] = flags[0]
+                df.loc[res.index[0], self.colname] = self.flags[0]
 
         df = df.drop('fullname_slug', axis=1)
         return df
 
-    func.__desc__ = f"Agrégation du fichier `{filename}`"
 
-    return func
+class Switch(FileOperation):
+    """Réalise des échanges de valeurs dans une colonne.
 
-
-def apply_cell(name_or_email: str, colname: str, value):
-    """Remplace la valeur d'une cellule.
-
-    ``name_or_email`` est le nom de l'édudiant ou son adresse courriel
-    et ``colname`` est le nom de la colonne où faire le changement. La
-    nouvelle valeur est renseignée par ``value``.
+    L'argument ``colname`` est la colonne dans laquelle opérer les
+    échanges. Si l'argument ``backup`` est spécifié, la colonne est
+    sauvegardée avant toute modification (avec un suffixe ``_orig``).
+    Si l'argument ``new_colname`` est fourni la colonne est copiée
+    vers une nouvelle colonne de nom ``new_colname`` et les
+    modifications sont faites sur cette nouvelle colonnne.
 
     Parameters
     ----------
 
-    name_or_email : :obj:`str`
-        Le nom ou l'adresse courriel de l'étudiant.
-
+    filename : :obj:`str`
+        Le chemin du fichier à agréger.
     colname : :obj:`str`
-        Le nom de la colonne où faire les modifications.
-
-    value :
-        La valeur à affecter.
+        Nom de la colonne où opérer les changements
+    backup : :obj:`bool`
+        Sauvegarder la colonne avant tout changement
+    new_colname : :obj:`str`
+        Le nom de la nouvelle colonne
 
     Examples
     --------
 
     .. code:: python
 
-       DOCS.apply_cell("Mark Watney", "Note bricolage", 20)
+       DOCS.switch("fichier_échange_TP", colname="TP")
 
     """
+    def __init__(
+        self,
+        filename: str,
+        *,
+        colname: str,
+        backup: bool = False,
+        new_colname: Optional[str] = None,
+    ):
+        super().__init__(filename)
+        self.colname = colname
+        self.backup = backup
+        self.new_colname = new_colname
 
-    def apply_cell_func(df):
-        check_columns(df, columns=colname, error_when="not_found")
+    def apply(self, df):
+
+        if self.backup is True and self.new_colname is not None:
+            raise ImproperlyConfigured(
+                "Les arguments `backup` et `new_colname` sont incompatibles."
+            )
+
+        # Check that filename and column exist
+        check_filename(self.filename)
+        check_columns(df, columns=self.colname)
 
         # Add slugname column
         tf_df = slugrot("Nom", "Prénom")
         df["fullname_slug"] = tf_df(df)
 
-        if '@etu' in name_or_email:
-            sturow = df.loc[df['Courriel'] == name_or_email]
-            if len(stu1row) > 1:
-                raise Exception(f'Adresse courriel `{name_or_email}` présente plusieurs fois')
-            if len(stu1row) == 0:
-                raise Exception(f'Adresse courriel `{name_or_email}` non présente dans le fichier central')
-            stuidx = sturow.index[0]
-        else:
-            sturow = df.loc[df.fullname_slug == slugrot_string(name_or_email)]
-            if len(sturow) > 1:
-                raise Exception(f'Étudiant de nom `{name_or_email}` présent plusieurs fois')
-            if len(sturow) == 0:
-                raise Exception(f'Étudiant de nom `{name_or_email}` non présent dans le fichier central')
-            stuidx = sturow.index[0]
+        new_column = swap_column(df, self.filename, self.colname)
+        df = replace_column_aux(
+            df,
+            colname=self.colname,
+            new_colname=self.new_colname,
+            new_column=new_column,
+            backup=False,
+        )
 
-        df.loc[stuidx, colname] = value
-
-        df = df.drop('fullname_slug', axis=1)
+        df = df.drop("fullname_slug", axis=1)
         return df
 
-    apply_cell_func.__desc__ = f"Modification de la colonne `{colname}` pour l'identifiant `{name_or_email}`"
 
-    return apply_cell_func
+def replace_column_aux(
+    df, new_colname=None, colname=None, new_column=None, backup=False
+):
+    """Helper function for `replace_regex` and `replace_column`."""
 
+    if backup:
+        df = df.assign(**{f"{colname}_orig": df[colname]})
+        target_colname = colname
+    elif new_colname is not None:
+        target_colname = new_colname
+    else:
+        target_colname = colname
+
+    df = df.assign(**{target_colname: new_column})
+
+    return df
+
+
+def aggregate_df(
+    left_df,
+    right_df,
+    left_on,
+    right_on,
+    preprocessing=None,
+    postprocessing=None,
+    subset=None,
+    drop=None,
+    rename=None,
+):
+    """Merge two dataframes"""
+
+    if preprocessing is not None:
+        if not isinstance(preprocessing, list):
+            preprocessing = [preprocessing]
+
+        for op in preprocessing:
+            if isinstance(op, Operation):
+                right_df = op.apply(right_df)
+                logger.info(f"Preprocessing: {op.message()}")
+            elif callable(op):
+                if hasattr(op, "__desc__"):
+                    logger.info(f"Preprocessing: {op.__desc__}")
+                else:
+                    logger.info("Preprocessing")
+                right_df = op(right_df)
+            else:
+                raise Exception("Unsupported preprocessing operation", op)
+
+    # Columns that will be removed after merging
+    drop_cols = []
+
+    # Flag if left_on is a computed column
+    left_on_is_added = False
+
+    # Add column if callable, callable should return of pandas
+    # Series
+    if callable(left_on):
+        left_on = left_on(left_df)
+        left_df = left_df.assign(**{left_on.name: left_on.values})
+        left_on = left_on.name
+        left_on_is_added = True
+
+    # Check if it exists
+    if isinstance(left_on, str):
+        # Check that left_on column exists
+        check_columns(left_df, left_on)
+    else:
+        raise Exception("L'argument 'left_on' doit être un callable ou une chaine de caractères")
+
+    # Add column if callable
+    if callable(right_on):
+        right_on = right_on(right_df)
+        right_df = right_df.assign(**{right_on.name: right_on.values})
+        right_on = right_on.name
+
+    # Check if it exists
+    if isinstance(right_on, str):
+        check_columns(right_df, right_on)
+    else:
+        raise Exception("Unsupported type for right_on")
+
+    # Warn if right_on contains duplicates
+    if any(right_df[right_on].duplicated()):
+        logger.warning("La colonne `right_on` du fichier à agréger contient des clés identiques")
+
+    # Extract subset of columns, right_on included
+    if subset is not None:
+        if isinstance(subset, str):
+            subset = [subset]
+
+        check_columns(right_df, subset)
+        right_df = right_df[[right_on] + subset]
+
+    # Allow to drop columns, right_on not allowed
+    if drop is not None:
+        if isinstance(drop, str):
+            drop = [drop]
+
+        if right_on in drop:
+            raise Exception("Impossible d'enlever la clé")
+
+        check_columns(right_df, drop)
+        right_df = right_df.drop(drop, axis=1)
+
+    # Rename columns in data to be merged
+    if rename is not None:
+        if right_on in rename:
+            raise Exception("Pas de renommage de la clé possible")
+
+        check_columns(right_df, rename.keys())
+        right_df = right_df.rename(columns=rename)
+
+    # Columns to drop after merge: primary key of right dataframe
+    # only if name is different, _merge column added by pandas
+    # during merge, programmatically added column if
+    # left_on_is_added is set
+    drop_cols = ['_merge']
+    if right_on != left_on:
+        if right_on in left_df.columns:
+            drop_cols += [right_on + "_y"]
+        else:
+            drop_cols += [right_on]
+
+    if left_on_is_added:
+        drop_cols += [left_on]
+
+    # Record same column name between right_df and left_df to
+    # merge them eventually
+    duplicated_columns = set(left_df.columns).intersection(set(right_df.columns))
+    duplicated_columns = duplicated_columns.difference(set([left_on, right_on]))
+
+    # Outer merge
+    merged_df = left_df.merge(right_df,
+                              left_on=left_on,
+                              right_on=right_on,
+                              how='outer',
+                              suffixes=('', '_y'),
+                              indicator=True)
+
+    # Select like how='left' as result
+    agg_df = merged_df[merged_df["_merge"].isin(['left_only', 'both'])]
+
+    # Select right only and report
+    merged_df_ro = merged_df[merged_df["_merge"] == 'right_only']
+    key = right_on
+    if (right_on != left_on and right_on in left_df.columns):
+        key = key + "_y"
+
+    for index, row in merged_df_ro.iterrows():
+        logger.warning(f"Identifiant présent dans le document à aggréger mais introuvable dans le fichier central : `{row[key]}`")
+
+    if postprocessing is not None:
+        if not isinstance(postprocessing, (list, tuple)):
+            postprocessing = [postprocessing]
+
+        for op in postprocessing:
+            if isinstance(op, Operation):
+                agg_df = op.apply(agg_df)
+                logger.info(f"Postprocessing: {op.message()}")
+            elif callable(op):
+                if hasattr(op, "__desc__"):
+                    logger.info(f"Postprocessing: {op.__desc__}")
+                else:
+                    logger.info("Postprocessing")
+                agg_df = op(agg_df)
+            else:
+                raise Exception("Unsupported postprocessing operation", op)
+
+    # Try to merge columns
+    for c in duplicated_columns:
+        c_y = c + '_y'
+        logger.warn("Fusion des colonnes `%s`" % c)
+        if any(agg_df[c_y].notna() & agg_df[c].notna()):
+            logger.warn("Fusion impossible")
+            continue
+        else:
+            dtype = agg_df.loc[:, c].dtype
+            agg_df.loc[:, c] = agg_df.loc[:, c].fillna(agg_df.loc[:, c_y])
+            new_dtype = agg_df.loc[:, c].dtype
+            if new_dtype != dtype:
+                logger.warn(f"Le type de la colonne a changé suite à la fusion: {dtype} -> {new_dtype}")
+                try:
+                    logger.warn("Conversion de type")
+                    agg_df.loc[:, c] = agg_df[c].astype(dtype)
+                except ValueError:
+                    logger.warn("Conversion impossible")
+            drop_cols.append(c_y)
+
+    # Drop useless columns
+    agg_df = agg_df.drop(drop_cols, axis=1, errors='ignore')
+
+    return agg_df
 
 def read_pairs(filename):
     """Generate pairs read in `filename`."""
@@ -1042,188 +1266,112 @@ def swap_column(df, filename, colname):
     return new_column
 
 
-def switch(
-    filename: str,
-    *,
-    colname: str,
-    backup: bool = False,
-    new_colname: Optional[str] = None,
-):
-    """Réalise des échanges de valeurs dans une colonne.
-
-    L'argument ``colname`` est la colonne dans laquelle opérer les
-    échanges. Si l'argument ``backup`` est spécifié, la colonne est
-    sauvegardée avant toute modification (avec un suffixe ``_orig``).
-    Si l'argument ``new_colname`` est fourni la colonne est copiée
-    vers une nouvelle colonne de nom ``new_colname`` et les
-    modifications sont faites sur cette nouvelle colonnne.
-
-    Parameters
-    ----------
-
-    filename : :obj:`str`
-        Le chemin du fichier à agréger.
-    colname : :obj:`str`
-        Nom de la colonne où opérer les changements
-    backup : :obj:`bool`
-        Sauvegarder la colonne avant tout changement
-    new_colname : :obj:`str`
-        Le nom de la nouvelle colonne
-
-    Examples
-    --------
-
-    .. code:: python
-
-       DOCS.switch("fichier_échange_TP", colname="TP")
-
-    """
-
-    if backup is True and new_colname is not None:
-        raise ImproperlyConfigured(
-            "Les arguments `backup` et `new_colname` sont incompatibles."
+class AggregateMoodleGrades(FileOperation):
+    def apply(self, df):
+        op = Aggregate(
+            self.filename,
+            left_on="Courriel",
+            right_on="Adresse de courriel",
+            drop=[
+                "Prénom",
+                "Nom",
+                "Numéro d'identification",
+                "Institution",
+                "Département",
+                "Adresse de courriel",
+                "Total du cours (Brut)",
+                "Dernier téléchargement depuis ce cours",
+            ]
         )
+        return op.apply(df)
 
-    def switch_func(df):
-        """Apply switches in DataFrame `df`"""
 
-        # Check that filename and column exist
-        check_filename(filename)
-        check_columns(df, columns=colname)
-
-        # Add slugname column
-        tf_df = slugrot("Nom", "Prénom")
-        df["fullname_slug"] = tf_df(df)
-
-        new_column = swap_column(df, filename, colname)
-        df = replace_column_aux(
-            df,
-            colname=colname,
-            new_colname=new_colname,
-            new_column=new_column,
-            backup=False,
-            msg=None,
+class AggregateJury(FileOperation):
+    def apply(self, df):
+        op = Aggregate(
+            self.filename,
+            on="Courriel",
+            subset=["Note_ECTS"]
         )
-
-        df = df.drop("fullname_slug", axis=1)
-        return df
-
-    switch_func.__desc__ = f"Agrégation du fichier `{filename}`"
-
-    return switch_func
+        return op.apply(df)
 
 
 class Documents:
-    def __init__(self):
+    def __init__(self, base_dir=None):
+        self._base_dir = base_dir
         self._actions = []
-        self._deps = []
+
+    @property
+    def base_dir(self):
+        return self._base_dir
+
+    @base_dir.setter
+    def base_dir(self, value):
+        self._base_dir = value
+        for a in self.actions:
+            a.base_dir = value
+
+    def add_action(self, action):
+        action.base_dir = self.base_dir
+        self._actions.append(action)
+
+    @property
+    def actions(self):
+        return self._actions
 
     @property
     def deps(self):
-        return self._deps
+        return [d for a in self.actions for d in a.deps]
 
-    def _add_dep(self, dep):
-        self._deps.append(dep)
-
-    def _add_action(self, func):
-        self._actions.append(func)
-
-    def add_documents(self, doc):
-        for a in doc._actions:
-            self._add_action(a)
-        for d in doc._deps:
-            self._add_dep(d)
-
-    def apply_actions(self, df):
-        for action in self._actions:
-            logger.info(action.__desc__)
-            df = action(df)
+    def apply_actions(self, df, ref_dir=""):
+        for action in self.actions:
+            logger.info(action.message(ref_dir=ref_dir))
+            df = action.apply(df)
         return df
 
-    def add(self, filename, func):
-        """Déclare une agrégation d'un fichier à l'aide d'une fonction.
 
-        Fonction générale pour déclarer l'agrégation d'un fichier de
-        chemin ``filename`` à l'aide d'une fonction ``func`` prenant
-        en argument le DataFrame déjà existant, le chemin vers le
-        fichier et renvoie le DataFrame mis à jour.
-
-        Voir fonctions spécialisées pour l'incorporation de documents
-        classiques :
-
-        - :func:`~guv.helpers.Documents.aggregate` : Document csv/Excel
-        - :func:`~guv.helpers.Documents.aggregate_org` : Document Org
-
-        Parameters
-        ----------
-
-        filename : :obj:`str`
-            Le chemin du fichier à agréger.
-
-        func : :obj:`callable`
-            Une fonction de signature `DataFrame`, filename: str ->
-            `DataFrame` qui réalise l'agrégation.
-
-        Examples
-        --------
-
-        .. code:: python
-
-           def fonction_qui_incorpore(df, file_path):
-               # On incorpore le fichier dont le chemin est `file_path` au
-               # DataFrame `df` et on renvoie le DataFrame mis à jour.
-
-           DOCS.add("documents/notes.csv", func=fonction_qui_incorpore)
-
-        """
-
-        def func2(df):
-            return func(df, filename)
-
-        func2.__desc__ = f"Agrégation du fichier {filename}"
-        self._add_action(func2)
-        self._add_dep(filename)
-
-
-def add_action_method(cls, func, file=False):
+def add_action_method(cls, klass, method_name):
     """Add `func` as a method in class `cls`"""
 
-    sig = inspect.Signature(
-        (
-            inspect.Parameter(name="self", kind=inspect.Parameter.POSITIONAL_ONLY),
-            *tuple(inspect.signature(func).parameters.values()),
-        )
-    )
-
-    @functools.wraps(func)
+    @functools.wraps(klass.__init__)
     def dummy(self, *args, **kwargs):
-        action = func(*args, **kwargs)
-        if file:
-            self._add_dep(args[0])
-        self._add_action(action)
-        return self
+        action = klass(*args, **kwargs)
+        self.add_action(action)
 
-    dummy.__signature__ = sig
-    setattr(cls, func.__name__, dummy)
+    dummy.__doc__ = klass.__doc__
+
+    setattr(cls, method_name, dummy)
 
 
 actions = [
-    (fillna_column, {}),
-    (replace_regex, {}),
-    (replace_column, {}),
-    (apply_cell, {}),
-    (apply_column, {}),
-    (apply_df, {}),
-    (compute_new_column, {}),
-    (flag, {"file": True}),
-    (aggregate, {"file": True}),
-    (aggregate_org, {"file": True}),
-    (switch, {"file": True}),
+    ("fillna_column", FillnaColumn),
+    ("replace_regex", ReplaceRegex),
+    ("replace_column", ReplaceColumn),
+    ("apply_df", ApplyDf),
+    ("apply_column", ApplyColumn),
+    ("compute_new_column", ComputeNewColumn),
+    ("add", Add),
+    ("aggregate", Aggregate),
+    ("aggregate_moodle_grades", AggregateMoodleGrades),
+    ("aggregate_jury", AggregateJury),
+    ("aggregate_org", AggregateOrg),
+    ("flag", Flag),
+    ("apply_cell", ApplyCell),
+    ("switch", Switch),
 ]
 
-for action, kwargs in actions:
-    add_action_method(Documents, action, **kwargs)
+for method_name, klass in actions:
+    # Add as method
+    add_action_method(Documents, klass, method_name)
 
+    # Add as a standalone fonction
+    def make_func(klass):
+        def dummy(*args, **kwargs):
+            return klass(*args, **kwargs)
+        dummy.__doc__ = klass.__doc__
+        return dummy
+
+    globals()[method_name] = make_func(klass)
 
 def skip_range(d1, d2):
     return [d1 + timedelta(days=x) for x in range((d2 - d1).days + 1)]
