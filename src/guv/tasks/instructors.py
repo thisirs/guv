@@ -244,7 +244,7 @@ class XlsAffectation(UVTask):
 
     def run(self):
         output_obj = self.create_excel_file()
-        if output_obj.result == "write":
+        if output_obj.action != "abort":
             self.add_second_worksheet()
 
     def create_excel_file(self):
@@ -277,7 +277,7 @@ class XlsAffectation(UVTask):
             df_uv_select.to_excel(out.target, sheet_name="Intervenants", index=False)
 
         # Return decision in Output
-        return target
+        return out
 
     def add_second_worksheet(self):
         N = 10
