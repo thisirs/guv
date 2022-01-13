@@ -4,24 +4,19 @@ fonction de groupes de Cours/TD/TP ou de projet.
 """
 
 import asyncio
-import glob
 import hashlib
 import os
 import shutil
-import tempfile
-import zipfile
 
 import aiohttp
 import browser_cookie3
-import latex
 import numpy as np
 import pandas as pd
 
 import guv
 
-from ..utils import (LaTeXEnvironment, argument, check_columns,
-                     generate_groupby, sort_values)
-from ..utils_config import Output, render_from_contexts
+from ..utils import argument, check_columns, generate_groupby, sort_values
+from ..utils_config import render_from_contexts
 from .base import CliArgsMixin, UVTask
 from .students import XlsStudentDataMerge
 

@@ -3,17 +3,11 @@ Ce module rassemble les tâches liées à la création de fiches de
 présence.
 """
 
-import os
-import shutil
-import tempfile
-import zipfile
-
-import latex
 import pandas as pd
 
 from ..utils import (LaTeXEnvironment, argument, check_columns, make_groups,
                      pformat, sort_values)
-from ..utils_config import Output, render_from_contexts
+from ..utils_config import render_from_contexts
 from .base import CliArgsMixin, UVTask
 from .students import XlsStudentDataMerge
 

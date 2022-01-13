@@ -8,7 +8,6 @@ fichier Json pour copier-coller des restrictions d'accès en fonction
 de l'appartenance à un groupe.
 """
 
-import argparse
 import datetime as dt
 import json
 import math

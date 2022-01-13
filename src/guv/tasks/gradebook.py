@@ -27,7 +27,6 @@ from ..openpyxl_utils import (fit_cells_at_col, frame_range, generate_ranges,
 from ..utils import sort_values
 from . import base
 from . import base_gradebook as baseg
-from .students import XlsStudentDataMerge
 
 
 def walk_tree(tree, depth=None):

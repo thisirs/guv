@@ -1,7 +1,6 @@
 import argparse
 import logging
 import os
-import pprint
 import re
 import sys
 from pathlib import Path

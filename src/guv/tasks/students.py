@@ -7,7 +7,6 @@ import math
 import os
 import random
 import re
-import textwrap
 
 import numpy as np
 # Patch openpyxl
@@ -25,7 +24,7 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 
 from ..config import logger
 from ..exceptions import ImproperlyConfigured
-from ..helpers import Documents, slugrot, slugrot_string
+from ..helpers import Documents
 from ..utils import argument, check_columns, rel_to_dir, sort_values
 from ..utils_config import Output
 from .base import CliArgsMixin, UVTask

@@ -3,10 +3,7 @@ Ce module rassemble les tâches liées aux notes : chargement de notes
 numériques ou ECTS sur l'ENT.
 """
 
-import argparse
 import os
-import sys
-
 import numpy as np
 import oyaml as yaml  # Ordered yaml
 import pandas as pd
