@@ -33,7 +33,7 @@ from ..config import logger
 from ..exceptions import InvalidGroups
 from ..scripts.moodle_date import CondDate, CondGroup, CondOr, CondProfil
 from ..utils import (argument, check_columns, lib_list, make_groups, pformat,
-                     sort_values)
+                     sort_values, rel_to_dir)
 from ..utils_config import Output, compute_slots
 from .base import CliArgsMixin, TaskBase, UVTask
 from .instructors import (AddInstructors, XlsAffectation, XlsInstructors,
@@ -1009,6 +1009,21 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         csv_target = os.path.splitext(self.target)[0] + '_secret.csv'
         with Output(csv_target) as out:
             df_groups.to_csv(out.target, index=False)
+
+
+        logger.info(textwrap.dedent("""\
+        Ajouter au fichier `effectifs.xlsx` avec :
+
+        DOCS.aggregate(
+            "%(filename)s",
+            on="Courriel",
+            kw_read={"header": None, "names": ["Courriel", "%(title)s_group"]}
+        )
+        """ % {
+            "filename": rel_to_dir(self.target, self.settings.UV_DIR),
+            "title": self.title
+        }))
+
 
     def make_groups(self, name, df, name_gen):
         """Try to make subgroups in dataframe `df`.
