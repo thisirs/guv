@@ -1211,18 +1211,18 @@ def aggregate_df(
         if any(agg_df[c_y].notna() & agg_df[c].notna()):
             logger.warning("Fusion impossible")
             continue
-        else:
-            dtype = agg_df.loc[:, c].dtype
-            agg_df.loc[:, c] = agg_df.loc[:, c].fillna(agg_df.loc[:, c_y])
-            new_dtype = agg_df.loc[:, c].dtype
-            if new_dtype != dtype:
-                logger.warning("Le type de la colonne a changé suite à la fusion: {%s} -> {%s}", dtype, new_dtype)
-                try:
-                    logger.warning("Conversion de type")
-                    agg_df.loc[:, c] = agg_df[c].astype(dtype)
-                except ValueError:
-                    logger.warning("Conversion impossible")
-            drop_cols.append(c_y)
+
+        dtype = agg_df.loc[:, c].dtype
+        agg_df.loc[:, c] = agg_df.loc[:, c].fillna(agg_df.loc[:, c_y])
+        new_dtype = agg_df.loc[:, c].dtype
+        if new_dtype != dtype:
+            logger.warning("Le type de la colonne a changé suite à la fusion: {%s} -> {%s}", dtype, new_dtype)
+            try:
+                logger.warning("Conversion de type")
+                agg_df.loc[:, c] = agg_df[c].astype(dtype)
+            except ValueError:
+                logger.warning("Conversion impossible")
+        drop_cols.append(c_y)
 
     # Drop useless columns
     agg_df = agg_df.drop(drop_cols, axis=1, errors='ignore')
