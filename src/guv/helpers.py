@@ -1138,8 +1138,7 @@ def aggregate_df(
         if right_on in drop:
             raise Exception("Impossible d'enlever la clé")
 
-        check_columns(right_df, drop)
-        right_df = right_df.drop(drop, axis=1)
+        right_df = right_df.drop(drop, axis=1, errors="ignore")
 
     # Rename columns in data to be merged
     if rename is not None:
