@@ -1136,7 +1136,7 @@ def aggregate_df(
             drop = [drop]
 
         if right_on in drop:
-            raise Exception("Impossible d'enlever la clé")
+            raise Exception(f"La colonne `{right_on}` est une clé et ne peut pas être enlevée")
 
         right_df = right_df.drop(drop, axis=1, errors="ignore")
 
