@@ -1,6 +1,5 @@
 import os
 import functools
-import inspect
 import re
 import textwrap
 from collections.abc import Callable

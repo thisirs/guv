@@ -7,7 +7,6 @@ from pathlib import Path
 from schema import And, Or, Schema, SchemaError, Use
 
 from .exceptions import ImproperlyConfigured
-from .schema_utils import Iterable
 from .utils import pformat
 
 SEMESTER_VARIABLE = "GUV_SEMESTER_PATH"
