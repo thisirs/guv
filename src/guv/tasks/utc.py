@@ -69,7 +69,7 @@ class UtcUvListToCsv(TaskBase):
 
                 # Compute single line/multiline header
                 header = df.iloc[:header_height].fillna('').agg(['sum']).iloc[0]
-                logger.info("Header is: {' '.join(header)}")
+                logger.info(f"Header is: {' '.join(header)}")
 
                 # Extract real data
                 df = df.iloc[header_height:]
