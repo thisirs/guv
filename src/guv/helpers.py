@@ -1327,7 +1327,6 @@ class AggregateMoodleGrades(FileOperation):
                 "Numéro d'identification",
                 "Institution",
                 "Département",
-                "Adresse de courriel",
                 "Total du cours (Brut)",
                 "Dernier téléchargement depuis ce cours",
             ]
