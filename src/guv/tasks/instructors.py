@@ -253,7 +253,10 @@ class XlsAffectation(UVTask):
 
         # Test if UV/UE is in listing from UtcUvListToCsv
         if len(self.df_uv) == 0:
-            logger.warning(f"L'UV/UE {self.uv} n'existe pas dans le fichier pdf, un fichier Excel sans créneau est créé.")
+            creneau_uv = rel_to_dir(self.settings.CRENEAU_UV, self.settings.CWD)
+            logger.warning(
+                f"L'UV/UE `{self.uv}` n'existe pas dans le fichier `{creneau_uv}`, "
+                "un fichier Excel sans créneau est créé.")
             columns = [
                 "Activité",
                 "Jour",
