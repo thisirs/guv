@@ -14,6 +14,8 @@ from .utils import check_columns, check_filename, slugrot, slugrot_string, rel_t
 
 
 class Operation:
+    """Base class for operation to apply to `effectif.xlsx`."""
+
     def message(self, **kwargs):
         return "Pas de message"
 

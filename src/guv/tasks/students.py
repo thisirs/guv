@@ -822,7 +822,7 @@ class ZoomBreakoutRooms(UVTask, CliArgsMixin):
 
 
 class MaggleTeams(UVTask, CliArgsMixin):
-    """Crée un fichier csv prêt à charger sur Zoom pour faire des groupes"""
+    """Crée un fichier csv prêt à charger sur django-maggle pour faire des groupes"""
 
     target_dir = "generated"
     target_name = "maggle_teams_{group}.csv"

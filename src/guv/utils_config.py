@@ -13,7 +13,7 @@ from .utils import rel_to_dir, render_latex_template
 
 
 def selected_uv(all="dummy"):
-    "Génère les UV configurées dans le fichier config.py du semestre"
+    """Génère les UV configurées dans le fichier config.py du semestre."""
 
     if "SEMESTER" not in settings:
         raise NotUVDirectory("La tâche doit être exécutée dans un dossier d'UV/semestre")

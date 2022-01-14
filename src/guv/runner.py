@@ -156,6 +156,7 @@ def create_uv_dirs(base_dir, uvs):
         with open(new_path, "w", encoding="utf-8") as new_file:
             new_file.write(content)
 
+
 def get_parser_shtab():
     import shtab
 
@@ -174,6 +175,7 @@ def get_parser_shtab():
                     action.complete = shtab.FILE
 
     return parser
+
 
 def get_parser(add_hidden=False):
     """Return an `argparse` parser by iterating on available tasks"""
