@@ -93,9 +93,9 @@ class FillnaColumn(Operation):
                     if idx_first == idx_last:
                         g[self.colname] = g.loc[idx_first, self.colname]
                     else:
-                        logger.warning(f"Plusieurs valeurs non-NA dans le groupe `{g}`")
+                        logger.warning("Plusieurs valeurs non-NA dans le groupe `{%s}`", g)
                 else:
-                    logger.warning(f"Aucune valeur non-NA dans le groupe `{g}`")
+                    logger.warning("Aucune valeur non-NA dans le groupe `{%s}`", g)
                 return g
 
             check_columns(df, [self.colname, self.group_column])
@@ -1075,10 +1075,10 @@ def aggregate_df(
         for op in preprocessing:
             if isinstance(op, Operation):
                 right_df = op.apply(right_df)
-                logger.info(f"Preprocessing: {op.message()}")
+                logger.info("Preprocessing: {%s}", op.message())
             elif callable(op):
                 if hasattr(op, "__desc__"):
-                    logger.info(f"Preprocessing: {op.__desc__}")
+                    logger.info("Preprocessing: {%s}", op.__desc__)
                 else:
                     logger.info("Preprocessing")
                 right_df = op(right_df)
@@ -1194,10 +1194,10 @@ def aggregate_df(
         for op in postprocessing:
             if isinstance(op, Operation):
                 agg_df = op.apply(agg_df)
-                logger.info(f"Postprocessing: {op.message()}")
+                logger.info("Postprocessing: {%s}", op.message())
             elif callable(op):
                 if hasattr(op, "__desc__"):
-                    logger.info(f"Postprocessing: {op.__desc__}")
+                    logger.info("Postprocessing: {%s}", op.__desc__)
                 else:
                     logger.info("Postprocessing")
                 agg_df = op(agg_df)
@@ -1207,7 +1207,7 @@ def aggregate_df(
     # Try to merge columns
     for c in duplicated_columns:
         c_y = c + '_y'
-        logger.warning("Fusion des colonnes `%s`" % c)
+        logger.warning("Fusion des colonnes `%s`", c)
         if any(agg_df[c_y].notna() & agg_df[c].notna()):
             logger.warning("Fusion impossible")
             continue
@@ -1216,7 +1216,7 @@ def aggregate_df(
             agg_df.loc[:, c] = agg_df.loc[:, c].fillna(agg_df.loc[:, c_y])
             new_dtype = agg_df.loc[:, c].dtype
             if new_dtype != dtype:
-                logger.warning(f"Le type de la colonne a changé suite à la fusion: {dtype} -> {new_dtype}")
+                logger.warning("Le type de la colonne a changé suite à la fusion: {%s} -> {%s}", dtype, new_dtype)
                 try:
                     logger.warning("Conversion de type")
                     agg_df.loc[:, c] = agg_df[c].astype(dtype)

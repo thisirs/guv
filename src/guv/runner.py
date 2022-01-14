@@ -38,7 +38,7 @@ class ModulesTaskLoader(NamespaceTaskLoader):
                 and issubclass(v, TaskBase)
                 and v not in [TaskBase, UVTask, CliArgsMixin],
             )
-            logger.debug("{} tasks loaded from module {}".format(len(m), module))
+            logger.debug("%s tasks loaded from module %s", len(m), module)
             self.tasks.update(dict(m))
             self.namespace.update(dict(m))
 
@@ -62,11 +62,11 @@ try:
         attendance,
         gradebook,
     )
-    logger.debug("{} tasks loaded".format(len(task_loader.tasks)))
-    logger.debug("{} variables loaded".format(len(task_loader.variables)))
+    logger.debug("%s tasks loaded", len(task_loader.tasks))
+    logger.debug("%s variables loaded", len(task_loader.variables))
 except ImproperlyConfigured as e:
     msg = e.args[0]
-    logger.error(f"{msg} : {e.args[1]}")
+    logger.error("%s : %s", msg, e.args[1])
     sys.exit()
 
 # Load custom tasks
