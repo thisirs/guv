@@ -1,17 +1,30 @@
-image: python:3.7-alpine
+default:
+  tags: [docker]
+
+image: registry.gitlab.utc.fr/syrousse/guv:latest
+
+stages:
+  - test
+  - deploy
+
+cache:
+  paths:
+    - .tox
+
+before_script:
+  - pip install tox
+
+test:
+  stage: test
+  script:
+    - tox -e tests
 
 pages:
   stage: deploy
-  tags:
-    - docker
   script:
-  - pip install -U sphinx
-  - pip install sphinx-rtd-theme
-  - pip install schema
-  - cd docs
-  - sphinx-build -b html . ../public
+    - tox -e docs
   artifacts:
     paths:
-    - public
-  only:
-  - master
+      - public
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

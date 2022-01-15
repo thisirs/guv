@@ -4,3 +4,4 @@ __pycache__/
 todo.org
 public/
 docs/_build/
+.tox
