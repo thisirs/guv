@@ -191,7 +191,7 @@ class SemesterDir:
 
     def run_cli(self, *args):
         cmdargs = ["guv"] + list(args)
-        popen = subprocess.Popen(cmdargs, cwd=self.cwd)
+        popen = subprocess.Popen(cmdargs, cwd=self.cwd, env=dict(os.environ, DEBUG="1"))
         ret = popen.wait()
         return ret
 
