@@ -215,7 +215,7 @@ class Settings:
             self._settings["SEMESTER_DIR"] = self.semester_directory
             self._settings["DOIT_CONFIG"] = {
                 "dep_file": os.path.join(self.semester_directory, ".doit.db"),
-                "check_file_uptodate": "timestamp",
+                # "check_file_uptodate": "timestamp",
                 "verbosity": 2,
                 "default_tasks": ["xls_affectation"],
             }
@@ -232,7 +232,7 @@ class Settings:
             self._settings["SEMESTER_DIR"] = self.semester_directory
             self._settings["DOIT_CONFIG"] = {
                 "dep_file": os.path.join(self.semester_directory, ".doit.db"),
-                "check_file_uptodate": "timestamp",
+                # "check_file_uptodate": "timestamp",
                 "verbosity": 2,
                 "default_tasks": ["utc_uv_list_to_csv", "xls_student_data_merge"],
             }
