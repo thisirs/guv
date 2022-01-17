@@ -629,14 +629,14 @@ class Aggregate(FileOperation):
         pour réaliser la jointure. Au cas où la colonne n'existe pas,
         on peut spécifier une fonction prenant en argument le
         *DataFrame* et renvoyant une *Series* utilisée pour la
-        jointure (voir fonction :func:`guv.utils.slugrot`).
+        jointure (voir fonction :func:`guv.helpers.slugrot`).
 
     right_on : :obj:`str`
         Le nom de colonne présent dans le fichier à incorporer pour
         réaliser la jointure. Au cas où la colonne n'existe pas,
         on peut spécifier une fonction prenant en argument le
         *DataFrame* et renvoyant une *Series* utilisée pour la
-        jointure (voir fonction :func:`guv.utils.slugrot`).
+        jointure (voir fonction :func:`guv.helpers.slugrot`).
 
     on : :obj:`str`
         Raccourci lorsque ``left_on`` et ``right_on`` ont la même
@@ -734,7 +734,7 @@ class Aggregate(FileOperation):
 
       .. code:: python
 
-         from guv.utils import slugrot
+         from guv.helpers import slugrot
          DOCS.aggregate(
              "documents/notes.csv",
              left_on=slugrot("Nom", "Prénom"),
