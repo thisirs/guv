@@ -357,6 +357,11 @@ def compute_slots(csv_inst_list, planning_type, empty_instructor=True, filter_uv
 
 
 def render_from_contexts(template, contexts, save_tex=False, target=None):
+    """Render `template` with different `contexts` and save using `target`.
+
+    Rendered in a temporary directory by `render_latex_template`.
+    """
+
     pdfs = []
     texs = []
     for context in contexts:

@@ -17,8 +17,12 @@ from .base import CliArgsMixin, TaskBase, UVTask
 from .instructors import AddInstructors, XlsAffectation
 
 
-def create_cal_from_dataframe(df, text, target):
-    """Crée un calendrier avec text dans les cases"""
+def create_cal_from_dataframe(df, text, target, save_tex=False):
+    """Crée un calendrier des créneaux dans `df`.
+
+    `text` dans les cases.
+
+    """
 
     # 08:15 should be 8_15
     def convert_time(time):
@@ -85,36 +89,30 @@ def create_cal_from_dataframe(df, text, target):
             half = 'full'
         return rf'\node[2hours, {half}, {ctype}] at ({day}-{bh}) {{{text}}};'
 
-    blocks = []
-    for hour, group in df.groupby(['Jour', 'Heure début', 'Heure fin']):
-        if len(group) > 2:
-            raise Exception("Trop de créneaux en même temps")
-        elif len(group) == 2:
-            group = group.sort_values('Semaine')
-            block1 = build_block(group.iloc[0], text, half='atleft')
-            block2 = build_block(group.iloc[1], text, half='atright')
-            blocks += [block1, block2]
-        elif len(group) == 1:
-            block = build_block(group.iloc[0], text)
-            blocks.append(block)
+    def generate_contexts():
+        blocks = []
+        for hour, group in df.groupby(['Jour', 'Heure début', 'Heure fin']):
+            if len(group) > 2:
+                raise Exception("Trop de créneaux en même temps")
+            elif len(group) == 2:
+                group = group.sort_values('Semaine')
+                block1 = build_block(group.iloc[0], text, half='atleft')
+                block2 = build_block(group.iloc[1], text, half='atright')
+                blocks += [block1, block2]
+            elif len(group) == 1:
+                block = build_block(group.iloc[0], text)
+                blocks.append(block)
 
-    blocks = '\n'.join(blocks)
+        blocks = '\n'.join(blocks)
 
-    latex_env = LaTeXEnvironment()
-    template = latex_env.get_template('calendar_template.tex.jinja2')
-    tex = template.render(blocks=blocks)
+        yield {"blocks": blocks, "filename_no_ext": os.path.basename(target)}
 
-    # base = os.path.splitext(target)[0]
-    # with open(base+'.tex', 'w') as fd:
-    #     fd.write(tex)
-
-    pdf = latex.build_pdf(tex)
-
-    with Output(target) as out:
-        pdf.save_to(out.target)
+    contexts = generate_contexts()
+    template = 'calendar_template.tex.jinja2'
+    render_from_contexts(template, contexts, target=target, save_tex=save_tex)
 
 
-class CalUv(UVTask):
+class CalUv(UVTask, CliArgsMixin):
     """Calendrier PDF de la semaine par UV.
 
     Crée le calendrier hebdomadaire des Cours/TD/TP pour chaque UV
@@ -125,8 +123,17 @@ class CalUv(UVTask):
     """
 
     target_dir = "documents"
-    target_name = "calendrier_hebdomadaire.pdf"
+    target_name = "calendrier_hebdomadaire"
     unique_uv = False
+
+    cli_args = (
+        argument(
+            "--save-tex",
+            action="store_true",
+            default=False,
+            help="Permet de laisser les fichiers .tex générés pour modification éventuelle."
+        ),
+    )
 
     def setup(self):
         super().setup()
@@ -135,6 +142,7 @@ class CalUv(UVTask):
         tmpl_dir = os.path.join(guv.__path__[0], "templates")
         template = os.path.join(tmpl_dir, "calendar_template.tex.jinja2")
         self.file_dep = [self.uv_list, template]
+        self.parse_args()
 
     def run(self):
         df = pd.read_excel(self.uv_list, engine="openpyxl")
@@ -143,7 +151,7 @@ class CalUv(UVTask):
         df_uv_real["Code enseig."] = self.uv
 
         text = r"{name} \\ {room} \\ {author}"
-        return create_cal_from_dataframe(df_uv_real, text, self.target)
+        create_cal_from_dataframe(df_uv_real, text, self.target, save_tex=self.save_tex)
 
 
 class CalInst(CliArgsMixin, TaskBase):
@@ -161,7 +169,7 @@ class CalInst(CliArgsMixin, TaskBase):
     """
 
     target_dir = "generated"
-    target_name = "{name}_calendrier.pdf"
+    target_name = "{name}_calendrier"
 
     cli_args = (
         argument(
@@ -176,6 +184,12 @@ class CalInst(CliArgsMixin, TaskBase):
             nargs="*",
             help="Spécifie la liste des intervenants pour qui créer le calendrier. Par défaut, la liste se limite à ``DEFAULT_INSTRUCTOR``.",
         ),
+        argument(
+            "--save-tex",
+            action="store_true",
+            default=False,
+            help="Permet de laisser les fichiers .tex générés pour modification éventuelle."
+        )
     )
 
     def setup(self):
@@ -211,4 +225,4 @@ class CalInst(CliArgsMixin, TaskBase):
                 :,
             ]
             text = r"{uv} \\ {name} \\ {room}"
-            create_cal_from_dataframe(df_inst, text, target)
+            create_cal_from_dataframe(df_inst, text, target, save_tex=self.save_tex)
