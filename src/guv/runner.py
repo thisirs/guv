@@ -38,7 +38,7 @@ class ModulesTaskLoader(NamespaceTaskLoader):
                 and issubclass(v, TaskBase)
                 and v not in [TaskBase, UVTask, CliArgsMixin],
             )
-            logger.debug("%s tasks loaded from module %s", len(m), module)
+            logger.debug("%s tasks loaded from module `%s`", len(m), module)
             self.tasks.update(dict(m))
             self.namespace.update(dict(m))
 

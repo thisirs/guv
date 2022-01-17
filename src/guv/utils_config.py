@@ -171,20 +171,14 @@ class Output:
             timestr = time.strftime("_%Y%m%d-%H%M%S")
             target0 = parts[0] + timestr + parts[1]
             os.rename(self._target, target0)
-            logger.info(
-                f"Sauvegarde vers `{rel_to_dir(target0, settings.CWD)}`"
-            )
+            logger.info("Sauvegarde vers `%s`", rel_to_dir(target0, settings.CWD))
         elif self.action == "overwrite":
-            logger.info(
-                f"Écrasement du fichier `{rel_to_dir(self._target, settings.CWD)}`"
-            )
+            logger.info("Écrasement du fichier `%s`", rel_to_dir(self._target, settings.CWD))
         elif self.action == "write":
             dirname = os.path.dirname(self._target)
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
-            logger.info(
-                f"Écriture du fichier `{rel_to_dir(self._target, settings.CWD)}`"
-            )
+            logger.info("Écriture du fichier `%s`", rel_to_dir(self._target, settings.CWD))
 
     @property
     def target(self):

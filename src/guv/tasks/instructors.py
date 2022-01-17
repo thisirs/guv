@@ -88,9 +88,8 @@ class XlsInstructors(TaskBase):
     def run(self):
         if not os.path.exists(self.target):
             logger.info(
-                "Le fichier '{}' n'existe pas, création d'un fichier vide".format(
-                    rel_to_dir(self.target, self.settings.SEMESTER_DIR)
-                )
+                "Le fichier `%s` n'existe pas, création d'un fichier vide",
+                rel_to_dir(self.target, self.settings.SEMESTER_DIR),
             )
             columns = ["Intervenants", "Statut", "Email", "Website"]
             with Output(self.target) as out:
@@ -176,7 +175,7 @@ class XlsInstDetails(UVTask):
         df_missing = df_outer[df_outer["_merge"].isin(["left_only"])]
         inst_missing = df_missing["Intervenants"].unique()
         for inst in inst_missing:
-            logger.warning(f"Pas d'informations détaillées sur l'intervenant: {inst}")
+            logger.warning("Pas d'informations détaillées sur l'intervenant: %s", inst)
 
         with Output(self.target) as out:
             df_left.to_excel(out.target, index=False)
@@ -255,8 +254,11 @@ class XlsAffectation(UVTask):
         if len(self.df_uv) == 0:
             creneau_uv = rel_to_dir(self.settings.CRENEAU_UV, self.settings.CWD)
             logger.warning(
-                f"L'UV/UE `{self.uv}` n'existe pas dans le fichier `{creneau_uv}`, "
-                "un fichier Excel sans créneau est créé.")
+                "L'UV/UE `%s` n'existe pas dans le fichier `%s`, "
+                "un fichier Excel sans créneau est créé.",
+                self.uv,
+                creneau_uv
+            )
             columns = [
                 "Activité",
                 "Jour",

@@ -115,7 +115,8 @@ class CsvInscrits(UVTask):
                             }
                         )
                     elif line.strip():
-                        logger.warning(f"La ligne ci-après n'est pas reconnue :\n{line}")
+                        logger.warning("La ligne ci-après n'est pas reconnue :")
+                        logger.warning(line)
 
         df = pd.DataFrame(rows)
         df = pd.pivot_table(
@@ -279,19 +280,19 @@ class XlsStudentData(UVTask):
             key = row["fullname_slug"]
             branch = row["Branche"]
             semester = row["Semestre"]
-            logger.warning(f"(`{key}`, `{branch}`, `{semester}`) not in UTC data")
+            logger.warning("(`%s`, `%s`, `%s`) not in UTC data", key, branch, semester)
 
         ro = dfr.loc[dfr["_merge"] == "right_only"]
         for index, row in ro.iterrows():
             key = row["Name"]
             branch = row["Branche"]
             semester = row["Semestre"]
-            logger.warning(f"(`{key}`, `{branch}`, `{semester}`) only in UTC data")
+            logger.warning("(`%s`, `%s`, `%s`) only in UTC data", key, branch, semester)
 
         # Trying to merge manually lo and ro
         for index, row in lo.iterrows():
             fullname = row["Nom"] + " " + row["Prénom"]
-            logger.info(f"Trying to find a match for {fullname}")
+            logger.info("Trying to find a match for `%s`", fullname)
             for i, (index_ro, row_ro) in enumerate(ro.iterrows()):
                 fullname_ro = row_ro["Name"]
                 print(f"({i}) {fullname_ro}")
@@ -359,12 +360,12 @@ class XlsStudentData(UVTask):
             lo = dfr.loc[dfr["_merge"] == "left_only"]
             for index, row in lo.iterrows():
                 fullname = row["Nom"] + " " + row["Prénom"]
-                logger.warning(f"add_moodle_data: {fullname} not in Moodle data")
+                logger.warning("add_moodle_data: `%s` not in Moodle data", fullname)
 
             ro = dfr.loc[dfr["_merge"] == "right_only"]
             for index, row in ro.iterrows():
                 fullname = row["Nom_moodle"] + " " + row["Prénom_moodle"]
-                logger.warning(f"add_moodle_data: {fullname} only in Moodle data")
+                logger.warning("add_moodle_data: `%s` only in Moodle data", fullname)
 
             dfr = dfr.drop("_merge", axis=1)
             dfr = dfr.loc[~pd.isnull(dfr.Nom)]
@@ -390,12 +391,12 @@ class XlsStudentData(UVTask):
             lo = dfr.loc[dfr["_merge"] == "left_only"]
             for index, row in lo.iterrows():
                 fullname = row["Name"]
-                logger.warning(f"add_moodle_data: {fullname} not in Moodle data")
+                logger.warning("add_moodle_data: `%s` not in Moodle data", fullname)
 
             ro = dfr.loc[dfr["_merge"] == "right_only"]
             for index, row in ro.iterrows():
                 fullname = row["Nom"] + " " + row["Prénom"]
-                logger.warning(f"add_moodle_data: {fullname} only in Moodle data")
+                logger.warning("add_moodle_data: `%s` only in Moodle data", fullname)
 
         else:
             raise Exception("Pas de colonne Courriel ou Nom, Prénom")
@@ -403,7 +404,7 @@ class XlsStudentData(UVTask):
         # On demande à l'utilisateur de réaliser les correspondances
         for index, row in lo.iterrows():
             fullname = row["Nom"] + " " + row["Prénom"]
-            logger.info(f"Trying to find a match for {fullname}")
+            logger.info("Trying to find a match for `%s`", fullname)
             for i, (index_ro, row_ro) in enumerate(ro.iterrows()):
                 fullname_ro = row_ro["Nom_moodle"] + " " + row_ro["Prénom_moodle"]
                 print(f"({i}) {fullname_ro}")

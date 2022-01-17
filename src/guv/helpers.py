@@ -111,9 +111,9 @@ class FillnaColumn(Operation):
                     if idx_first == idx_last:
                         g[self.colname] = g.loc[idx_first, self.colname]
                     else:
-                        logger.warning("Plusieurs valeurs non-NA dans le groupe `{%s}`", g)
+                        logger.warning("Plusieurs valeurs non-NA dans le groupe `%s`", g)
                 else:
-                    logger.warning("Aucune valeur non-NA dans le groupe `{%s}`", g)
+                    logger.warning("Aucune valeur non-NA dans le groupe `%s`", g)
                 return g
 
             check_columns(df, [self.colname, self.group_column])
@@ -1093,10 +1093,10 @@ def aggregate_df(
         for op in preprocessing:
             if isinstance(op, Operation):
                 right_df = op.apply(right_df)
-                logger.info("Preprocessing: {%s}", op.message())
+                logger.info("Preprocessing: %s", op.message())
             elif callable(op):
                 if hasattr(op, "__desc__"):
-                    logger.info("Preprocessing: {%s}", op.__desc__)
+                    logger.info("Preprocessing: %s", op.__desc__)
                 else:
                     logger.info("Preprocessing")
                 right_df = op(right_df)
@@ -1203,7 +1203,11 @@ def aggregate_df(
         key = key + "_y"
 
     for index, row in merged_df_ro.iterrows():
-        logger.warning(f"Identifiant présent dans le document à aggréger mais introuvable dans le fichier central : `{row[key]}`")
+        logger.warning(
+            "Identifiant présent dans le document à aggréger "
+            "mais introuvable dans le fichier central : `%s`",
+            row[key],
+        )
 
     if postprocessing is not None:
         if not isinstance(postprocessing, (list, tuple)):
@@ -1212,10 +1216,10 @@ def aggregate_df(
         for op in postprocessing:
             if isinstance(op, Operation):
                 agg_df = op.apply(agg_df)
-                logger.info("Postprocessing: {%s}", op.message())
+                logger.info("Postprocessing: %s", op.message())
             elif callable(op):
                 if hasattr(op, "__desc__"):
-                    logger.info("Postprocessing: {%s}", op.__desc__)
+                    logger.info("Postprocessing: %s", op.__desc__)
                 else:
                     logger.info("Postprocessing")
                 agg_df = op(agg_df)
@@ -1234,7 +1238,7 @@ def aggregate_df(
         agg_df.loc[:, c] = agg_df.loc[:, c].fillna(agg_df.loc[:, c_y])
         new_dtype = agg_df.loc[:, c].dtype
         if new_dtype != dtype:
-            logger.warning("Le type de la colonne a changé suite à la fusion: {%s} -> {%s}", dtype, new_dtype)
+            logger.warning("Le type de la colonne a changé suite à la fusion: %s -> %s", dtype, new_dtype)
             try:
                 logger.warning("Conversion de type")
                 agg_df.loc[:, c] = agg_df[c].astype(dtype)
@@ -1318,14 +1322,14 @@ def swap_column(df, filename, colname):
         if type == "swap":
             nom1 = " ".join(df.loc[idx1, ["Nom", "Prénom"]])
             nom2 = " ".join(df.loc[idx2, ["Nom", "Prénom"]])
-            logger.info(f"Échange de '{nom1}' et '{nom2}' dans la colonne '{colname}'")
+            logger.info("Échange de `%s` et `%s` dans la colonne `%s`", nom1, nom2, colname)
 
             tmp = new_column[idx1]
             new_column[idx1] = new_column[idx2]
             new_column[idx2] = tmp
         elif type == "move":
             nom = " ".join(df.loc[idx1, ["Nom", "Prénom"]])
-            logger.info(f"Étudiant(e) '{nom}' affecté(e) au groupe '{idx2}'")
+            logger.info("Étudiant(e) `%s` affecté(e) au groupe `%s`", nom, idx2)
 
             new_column[idx1] = idx2
 

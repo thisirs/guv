@@ -1051,7 +1051,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             raise Exception(f"Aucune des {i+1} configurations testées n'est valide")
 
         if i > 0:
-            logger.warning(f"{i+1} configuration(s) testée(s)")
+            logger.warning("%d configuration(s) testée(s)", i+1)
 
         series_list = self.add_names_to_grouping(groups, name, name_gen)
 
@@ -1126,14 +1126,14 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         ):
             nom1 = etu1["Nom"] + " " + etu1["Prénom"]
             nom2 = etu2["Nom"] + " " + etu2["Prénom"]
-            logger.warning(f"Binôme {nom1} et {nom2} invalide : étrangers")
+            logger.warning("Binôme `%s` et `%s` invalide : étrangers", nom1, nom2)
             return False
 
         # 2 GB == catastrophe
         if etu1["Branche"] == "GB" and etu2["Branche"] == "GB":
             nom1 = etu1["Nom"] + " " + etu1["Prénom"]
             nom2 = etu2["Nom"] + " " + etu2["Prénom"]
-            logger.warning(f"Binôme {nom1} et {nom2} invalide : GB")
+            logger.warning("Binôme `%s` et `%s` invalide : GB", nom1, nom2)
             return False
 
         # Binomes précédents
@@ -1142,7 +1142,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                 if etu1[gp] == etu2[gp]:
                     nom1 = etu1["Nom"] + " " + etu1["Prénom"]
                     nom2 = etu2["Nom"] + " " + etu2["Prénom"]
-                    logger.warning(f"Binôme {nom1} et {nom2} déjà formé")
+                    logger.warning("Binôme `%s` et `%s` déjà formé", nom1, nom2)
                     return False
 
         return True

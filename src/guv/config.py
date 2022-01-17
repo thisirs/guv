@@ -158,7 +158,7 @@ class Settings:
         return list(self.PLANNINGS.keys())
 
     def __getattr__(self, name):
-        logger.debug(f"Accessing setting '{name}'")
+        logger.debug("Accessing setting `%s`", name)
 
         if name.startswith("__"):  # for copy to succeed ignore __getattr__
             raise AttributeError(name)
@@ -244,7 +244,7 @@ class Settings:
             logger.debug("Not in UV or semester directory")
 
     def load_file(self, config_file):
-        logger.debug("Loading configuration file: {}".format(config_file))
+        logger.debug("Loading configuration file: `%s`", config_file)
 
         try:
             module_name = os.path.splitext(os.path.basename(config_file))[0]
@@ -252,7 +252,7 @@ class Settings:
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
         except ImportError as e:
-            logger.warning(f"Problème de chargement du fichier {config_file}, ignoré")
+            logger.warning("Problème de chargement du fichier `%s`, ignoré", config_file)
         except Exception as e:
             raise ImproperlyConfigured(f"Problème de chargement du fichier {config_file}", e) from e
 

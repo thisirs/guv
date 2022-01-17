@@ -53,7 +53,7 @@ class UtcUvListToCsv(TaskBase):
         tables = []
         pdo = {"header": None}
         for i in range(npages):
-            logger.info(f'Processing page ({i+1}/{npages})')
+            logger.info("Processing page (%d/%d)", i+1, npages)
             page = i + 1
             tabula_args = {'pages': page}
             # Use pdo.copy(): pdo is changed by read_pdf
@@ -65,11 +65,11 @@ class UtcUvListToCsv(TaskBase):
                                  (re.match('[A-Z]{,3}[0-9]+', str(df.iloc[1, 0])) is None))
                 if header_height == 0:
                     raise Exception("No header detected")
-                logger.info(f'Detected header has {header_height} lines')
+                logger.info("Detected header has %d lines", header_height)
 
                 # Compute single line/multiline header
                 header = df.iloc[:header_height].fillna('').agg(['sum']).iloc[0]
-                logger.info(f"Header is: {' '.join(header)}")
+                logger.info("Header is: %s", ' '.join(header))
 
                 # Extract real data
                 df = df.iloc[header_height:]
@@ -106,10 +106,10 @@ class UtcUvListToCsv(TaskBase):
                 else:
                     week_idx = cols.index('Heure fin') + 1
 
-                logger.info("%d columns found" % len(df.columns))
+                logger.info("%d columns found", len(df.columns))
                 logger.info(" ".join(df.columns))
             else:
-                logger.info("%d columns found" % len(df.columns))
+                logger.info("%d columns found", len(df.columns))
 
                 # Semaine column might be empty and not detected
                 if len(df.columns) == len(cols):
@@ -123,7 +123,7 @@ class UtcUvListToCsv(TaskBase):
                 # Detect possible multiline header
                 header_height = ((re.match('[A-Z]{,3}[0-9]+', str(df.iloc[0, 0])) is None) +
                                  (re.match('[A-Z]{,3}[0-9]+', str(df.iloc[1, 0])) is None))
-                logger.info(f"Header has {header_height} lines")
+                logger.info("Header has %d lines", header_height)
                 df = df.iloc[header_height:]
 
             tables.append(df)
