@@ -267,12 +267,12 @@ settings = Settings()
 class LogFormatter(logging.Formatter):
 
     formats = {
-        logging.DEBUG: "DEBUG: %(msg)s",
-        logging.INFO: "%(msg)s",
-        logging.WARN: "\033[33mWARNING\033[0m: %(msg)s",
-        logging.ERROR: "\033[31mERROR\033[0m: %(msg)s",
+        logging.DEBUG: "DEBUG: %(message)s",
+        logging.INFO: "%(message)s",
+        logging.WARN: "\033[33mWARNING\033[0m: %(message)s",
+        logging.ERROR: "\033[31mERROR\033[0m: %(message)s",
     }
-    def format(self, record):
+    def formatMessage(self, record):
         return LogFormatter.formats.get(
             record.levelno, self._fmt) % record.__dict__
 
