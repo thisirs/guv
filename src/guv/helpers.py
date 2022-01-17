@@ -205,10 +205,10 @@ class ReplaceRegex(Operation):
     def message(self, **kwargs):
         if self.msg is not None:
             return self.msg
-        elif self.new_colname is None:
+        if self.new_colname is None:
             return f"Remplacement regex dans colonne `{self.colname}`"
-        else:
-            return f"Remplacement regex dans colonne `{self.colname} vers colonne `{self.new_colname}`"
+
+        return f"Remplacement regex dans colonne `{self.colname}` vers colonne `{self.new_colname}`"
 
 
 class ReplaceColumn(Operation):
@@ -305,8 +305,8 @@ class ReplaceColumn(Operation):
 class ApplyDf(Operation):
     """Modifie le fichier central avec une fonction.
 
-    ``func`` est une fonction prenant en argument un DataFrame
-    représentant le fichier central et retournant le DataFrame
+    ``func`` est une fonction prenant en argument un *DataFrame*
+    représentant le fichier central et retournant le *DataFrame*
     modifié.
 
     Un message ``msg`` peut être spécifié pour décrire ce que fait la
@@ -317,8 +317,8 @@ class ApplyDf(Operation):
     ----------
 
     func : :obj:`callable`
-        Fonction prenant en argument un DataFrame et renvoyant un
-        DataFrame modifié
+        Fonction prenant en argument un *DataFrame* et renvoyant un
+        *DataFrame* modifié
     msg : :obj:`str`
         Un message descriptif utilisé
 
@@ -557,8 +557,8 @@ class Add(FileOperation):
 
     Fonction générale pour déclarer l'agrégation d'un fichier de
     chemin ``filename`` à l'aide d'une fonction ``func`` prenant
-    en argument le DataFrame déjà existant, le chemin vers le
-    fichier et renvoie le DataFrame mis à jour.
+    en argument le *DataFrame* déjà existant, le chemin vers le
+    fichier et renvoie le *DataFrame* mis à jour.
 
     Voir fonctions spécialisées pour l'incorporation de documents
     classiques :
@@ -573,8 +573,8 @@ class Add(FileOperation):
         Le chemin du fichier à agréger.
 
     func : :obj:`callable`
-        Une fonction de signature `DataFrame`, filename: str ->
-        `DataFrame` qui réalise l'agrégation.
+        Une fonction de signature *DataFrame*, filename: str ->
+        *DataFrame* qui réalise l'agrégation.
 
     Examples
     --------
@@ -601,10 +601,10 @@ class Aggregate(FileOperation):
     """Agrégation d'un tableau provenant d'un fichier Excel/csv.
 
     Les arguments ``left_on`` et ``right_on`` sont les clés pour
-    réaliser une jointure : ``left_on`` est la clé du DataFrame
-    existant et ``right_on`` est la clé du DataFrame à agréger présent
+    réaliser une jointure : ``left_on`` est la clé du *DataFrame*
+    existant et ``right_on`` est la clé du *DataFrame* à agréger présent
     dans le fichier. ``left_on`` et ``right_on`` peuvent aussi être
-    des callable prenant en argument le DataFrame correspondant et
+    des callable prenant en argument le *DataFrame* correspondant et
     renvoyant une nouvelle colonne avec laquelle faire la jointure.
     Dans le cas où ``left_on`` et ``right_on`` ont la même valeur, on
     peut seulement spécifier ``on``.
@@ -670,10 +670,10 @@ class Aggregate(FileOperation):
            kw_read={"na_values": "-"}
 
     preprocessing : :obj:`callable`, optional
-        Pré-traitement à appliquer au `DataFrame` avant de l'intégrer.
+        Pré-traitement à appliquer au *DataFrame* avant de l'intégrer.
 
     postprocessing : :obj:`callable`, optional
-        Post-traitement à appliquer au `DataFrame` après intégration du fichier.
+        Post-traitement à appliquer au *DataFrame* après intégration du fichier.
 
     Examples
     --------
@@ -827,7 +827,7 @@ class AggregateOrg(FileOperation):
         doivent contenir les nom et prénom des étudiants.
 
     postprocessing : :obj:`callable`, optional
-        Post-traitement à appliquer au `DataFrame` après intégration
+        Post-traitement à appliquer au *DataFrame* après intégration
         du fichier Org.
 
     Examples
