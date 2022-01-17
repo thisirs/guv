@@ -328,6 +328,11 @@ class XlsStudentData(UVTask):
         elif fn.endswith(".xlsx") or fn.endswith(".xls"):
             dfm = pd.read_excel(fn, engine="openpyxl")
 
+        nans = df["Nom"].isna() | df["Prénom"].isna()
+        if len(nans) != 0:
+            logger.warning("%d enregistrement(s) ont été ignorés", len(nans))
+            dfm = dfm.drop(df[nans].index)
+
         # On laisse tomber les colonnes inintéressantes
         dfm = dfm.drop(
             ["Institution", "Département", "Dernier téléchargement depuis ce cours"],
