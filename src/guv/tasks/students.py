@@ -25,8 +25,8 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 from ..config import logger
 from ..exceptions import ImproperlyConfigured
 from ..helpers import Documents
-from ..utils import argument, check_columns, rel_to_dir, sort_values
-from ..utils_config import Output
+from ..utils import argument, sort_values
+from ..utils_config import Output, rel_to_dir, check_columns
 from .base import CliArgsMixin, UVTask
 
 

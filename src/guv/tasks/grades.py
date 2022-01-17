@@ -8,8 +8,8 @@ import numpy as np
 import oyaml as yaml  # Ordered yaml
 import pandas as pd
 
-from ..utils import argument, check_columns, sort_values
-from ..utils_config import Output
+from ..utils import argument, sort_values
+from ..utils_config import Output, check_columns
 from .base import CliArgsMixin, UVTask
 from .instructors import XlsAffectation
 from .students import XlsStudentDataMerge

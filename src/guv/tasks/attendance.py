@@ -5,9 +5,9 @@ présence.
 
 import pandas as pd
 
-from ..utils import (LaTeXEnvironment, argument, check_columns, make_groups,
+from ..utils import (LaTeXEnvironment, argument, make_groups,
                      pformat, sort_values)
-from ..utils_config import render_from_contexts
+from ..utils_config import render_from_contexts, check_columns
 from .base import CliArgsMixin, UVTask
 from .students import XlsStudentDataMerge
 

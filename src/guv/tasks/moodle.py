@@ -31,9 +31,8 @@ import guv
 from ..config import logger
 from ..exceptions import InvalidGroups
 from ..scripts.moodle_date import CondDate, CondGroup, CondOr, CondProfil
-from ..utils import (argument, check_columns, lib_list, make_groups, pformat,
-                     sort_values, rel_to_dir)
-from ..utils_config import Output, compute_slots
+from ..utils import argument, lib_list, make_groups, pformat, sort_values
+from ..utils_config import Output, compute_slots, rel_to_dir, check_columns
 from .base import CliArgsMixin, TaskBase, UVTask
 from .instructors import (AddInstructors, XlsAffectation, XlsInstructors,
                           create_insts_list, read_xls_details)

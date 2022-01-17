@@ -11,8 +11,8 @@ import pandas as pd
 
 import guv
 
-from ..utils import LaTeXEnvironment, argument
-from ..utils_config import Output
+from ..utils import argument
+from ..utils_config import render_from_contexts
 from .base import CliArgsMixin, TaskBase, UVTask
 from .instructors import AddInstructors, XlsAffectation
 

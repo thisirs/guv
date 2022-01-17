@@ -10,7 +10,25 @@ import pandas as pd
 
 from .config import logger
 from .exceptions import ImproperlyConfigured
-from .utils import check_columns, check_filename, slugrot, slugrot_string, rel_to_dir
+from .utils import check_filename, slugrot_string
+from .utils_config import rel_to_dir, check_columns
+
+
+def slugrot(*columns):
+    "Rotation-invariant hash function on a dataframe"
+
+    def func(df):
+        check_columns(df, columns)
+        s = df[list(columns)].apply(
+            lambda x: "".join(x.astype(str)),
+            axis=1
+        )
+
+        s = s.apply(slugrot_string)
+        s.name = "_".join(columns)
+        return s
+
+    return func
 
 
 class Operation:

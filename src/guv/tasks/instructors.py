@@ -14,8 +14,8 @@ from pandas.api.types import CategoricalDtype
 from ..config import logger
 from ..openpyxl_patched import fixit
 from ..scripts.excel_hours import create_excel_file
-from ..utils import lib_list, rel_to_dir
-from ..utils_config import Output, selected_uv
+from ..utils import lib_list
+from ..utils_config import Output, selected_uv, rel_to_dir
 from .base import TaskBase, UVTask
 from .utc import UtcUvListToCsv
 

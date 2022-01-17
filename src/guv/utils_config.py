@@ -9,7 +9,60 @@ import pandas as pd
 
 from .config import logger, settings
 from .exceptions import AbortWithBody, ImproperlyConfigured, NotUVDirectory
-from .utils import rel_to_dir, render_latex_template
+from .utils import render_latex_template
+
+
+def rel_to_dir(path, root):
+    if not os.path.isabs(path):
+        return path
+
+    if os.path.commonpath([settings.SEMESTER_DIR]) == os.path.commonpath(
+        [settings.SEMESTER_DIR, path]
+    ):
+        return os.path.relpath(path, root)
+
+    return path
+
+
+def check_columns(dataframe, columns, **kwargs):
+    """Vérifie que la ou les colonnes `columns` sont dans `dataframe`"""
+
+    if "error_when" in kwargs:
+        error_when = kwargs["error_when"]
+    else:
+        error_when = "not_found"
+
+    if error_when not in ["exists", "not_found"]:
+        raise Exception
+
+    if isinstance(columns, str):
+        columns = [columns]
+
+    if error_when == "not_found":
+        missing_cols = [c for c in columns if c not in dataframe.columns]
+
+        if missing_cols:
+            s = "s" if len(missing_cols) > 1 else ""
+            missing_cols = ", ".join(f"`{e}`" for e in missing_cols)
+            avail_cols = ", ".join(f"`{e}`" for e in dataframe.columns)
+            if "file" in kwargs and "base_dir" in kwargs:
+                fn = rel_to_dir(kwargs["file"], kwargs["base_dir"])
+                msg = f"Colonne{s} manquante{s}: {missing_cols} dans le dataframe issu du fichier `{fn}`. Colonnes disponibles: {avail_cols}"
+            else:
+                msg = f"Colonne{s} manquante{s}: {missing_cols}. Colonnes disponibles: {avail_cols}"
+            raise Exception(msg)
+    else:
+        common_cols = [c for c in columns if c in dataframe.columns]
+
+        if common_cols:
+            common_cols = ", ".join(f"`{e}`" for e in common_cols)
+            s = "s" if len(common_cols) > 1 else ""
+            if "file" in kwargs and "base_dir" in kwargs:
+                msg = f"Colonne{s} déjà existante{s}: {common_cols} dans le dataframe issu du fichier `{fn}`."
+            else:
+                msg = f"Colonne{s} déjà existante{s}: {common_cols}"
+
+            raise Exception(msg)
 
 
 def selected_uv(all="dummy"):

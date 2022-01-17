@@ -15,8 +15,8 @@ import pandas as pd
 
 import guv
 
-from ..utils import argument, check_columns, generate_groupby, sort_values
-from ..utils_config import render_from_contexts
+from ..utils import argument, generate_groupby, sort_values
+from ..utils_config import render_from_contexts, check_columns
 from .base import CliArgsMixin, UVTask
 from .students import XlsStudentDataMerge
 
