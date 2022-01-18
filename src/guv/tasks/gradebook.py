@@ -661,7 +661,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
 
       .. code:: bash
 
-         guv xls_jury --name SY02_jury --config documents/config_jury.yml
+         guv xls_grade_book_jury --name SY02_jury --config documents/config_jury.yml
 
       avec le fichier YAML contenant par exemple :
 
