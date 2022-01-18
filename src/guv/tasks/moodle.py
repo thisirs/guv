@@ -754,9 +754,11 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
     l'intérieur duquel on construit des groupes (utile seulement si on
     a spécifié ``--grouping``).
 
-    Les groupes créés sont aléatoires par défaut. Pour créer des
-    groupes par ordre alphabétique, il faut spécifier le drapeau
-    ``--ordered``.
+    Par défaut, la liste des étudiants est triée aléatoirement avant
+    de créer des groupes de manière contiguë. Si on veut créer des
+    groupes par ordre alphabétique, on peut utiliser ``--ordered``. On
+    peut également fournir une liste de colonnes selon lesquelles
+    trier.
 
     Pour les binomes et trinomes, on peut imposer qu'ils soient
     différents par rapport à un autre ou plusieurs groupements
@@ -864,7 +866,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             "--ordered",
             nargs="*",
             required=False,
-            help="Ordonner la liste des étudiants par ordre alphabétique",
+            help="Ordonner la liste des étudiants par ordre alphabétique ou par colonnes",
         ),
         argument(
             "-g",
