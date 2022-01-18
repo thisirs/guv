@@ -1044,6 +1044,8 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                 # Check validity (group sizes of 2 and 3 only)
                 self.check_valid_groups(df, groups)
             except InvalidGroups:
+                if self.ordered:
+                    raise Exception("Les groupes obtenus avec ``ordered`` sont incompatibles avec les contraintes de binomes/trinomes ou ``other-groups`` fournies.")
                 df = df.sample(frac=1)
                 continue
             else:
