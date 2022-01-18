@@ -13,7 +13,7 @@ from tabula import read_pdf
 
 from ..config import logger
 from ..utils import argument
-from ..utils_config import Output, compute_slots, selected_uv, rel_to_dir
+from ..utils_config import Output, compute_slots, selected_uv, rel_to_dir, ask_choice
 from .base import CliArgsMixin, TaskBase
 
 
@@ -164,17 +164,11 @@ class UtcUvListToCsv(TaskBase):
                 if 0 < len(nans.index) or len(nans.index) < len(group.index):
                     if group.name[0] in uvs:
                         for index, row in nans.iterrows():
-                            while True:
-                                try:
-                                    choice = input(f'Semaine pour le créneau {row["Lib. créneau"]} de TP de {group.name[0]} (A ou B) ? ')
-                                    if choice.upper() in ['A', 'B']:
-                                        group.loc[index, 'Semaine'] = choice.upper()
-                                    else:
-                                        raise ValueError
-                                except ValueError:
-                                    continue
-                                else:
-                                    break
+                            choice = ask_choice(
+                                f'Semaine pour le créneau {row["Lib. créneau"]} de TP de {group.name[0]} (A ou B) ? ',
+                                choices={"A": "A", "a": "A", "B": "B", "b": "B"},
+                            )
+                            group.loc[index, "Semaine"] = choice
                     else:
                         group.loc[nans.index, 'Semaine'] = 'A'
                 return group
