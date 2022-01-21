@@ -109,7 +109,7 @@ class TaskBase:
                 if hasattr(self, "target"):
                     doit_task["targets"] = [self.target]
 
-            logger.debug("Task `{}` failed: {}", self.task_name(), type(e))
+            logger.debug("Task `%s` failed: %s", self.task_name(), type(e))
             return doit_task
 
         doit_task.update(
