@@ -4,6 +4,7 @@ import subprocess
 import shutil
 from distutils.dir_util import copy_tree
 from pathlib import Path
+import textwrap
 import pytest
 import dbm
 
@@ -221,17 +222,20 @@ class SemesterDir:
         dest = self.cwd / dest
         shutil.copy(source, dest)
 
-    def change_config(self, **kwargs):
+    def change_config(self, *args, **kwargs):
         """Change config.py file in current working directory."""
 
         config = self.cwd / "config.py"
         with open(config, "a") as f:
             f.write("\n\n")
+            for arg in args:
+                f.write(textwrap.dedent(arg))
+                f.write("\n\n")
             for k, v in kwargs.items():
                 if isinstance(v, str):
-                    f.write(f"{k}='{v}'")
+                    f.write(f"{k}='{v}'\n\n")
                 else:
-                    f.write(f"{k}={v}")
+                    f.write(f"{k}={v}\n\n")
 
     def assert_err_search(self, *regexes):
         err = self.capfd.readouterr().err
