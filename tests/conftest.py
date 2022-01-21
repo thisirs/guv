@@ -5,9 +5,9 @@ import shutil
 from distutils.dir_util import copy_tree
 from pathlib import Path
 import textwrap
-import pytest
 import dbm
-
+import pytest
+import openpyxl
 
 BASE_DIR = Path(__file__).parent
 
@@ -221,6 +221,13 @@ class SemesterDir:
         source = BASE_DIR / "data" / source
         dest = self.cwd / dest
         shutil.copy(source, dest)
+
+    def write_excel(self, filename, cell, value):
+        filepath = self.cwd / filename
+        wb = openpyxl.load_workbook(str(filepath))
+        ws = wb.worksheets[0]
+        ws[cell] = value
+        wb.save(str(filepath))
 
     def change_config(self, *args, **kwargs):
         """Change config.py file in current working directory."""
