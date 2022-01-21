@@ -177,7 +177,7 @@ class Settings:
             value = DEFAULT_SETTINGS[name]
         else:
             raise ImproperlyConfigured(
-                f"L'option `{name}` n'a pas pu être trouvée"
+                f"La variable `{name}` n'a pas pu être trouvée"
             )
 
         if name in SETTINGS:
