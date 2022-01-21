@@ -58,7 +58,7 @@ def test_ical_inst(semester_dir):
                     date(2020, 12, 23): "Samedi",
                 },
                 "SKIP_DAYS_C": ferie + vacances + median + final,
-        "SKIP_DAYS_D": ferie + vacances + debut + median + final,
+                "SKIP_DAYS_D": ferie + vacances + debut + median + final,
                 "SKIP_DAYS_T": ferie + vacances + debut + final
             }
         }
@@ -73,7 +73,7 @@ def test_ical_inst(semester_dir):
     ret = semester_dir.run_cli(
         "ical_inst"
     )
-    assert ret != 0
+    assert ret == 0
     semester_dir.assert_out_search(
         "Écriture du fichier `generated/Foo_A2020.ics`"
     )
@@ -82,8 +82,7 @@ def test_ical_inst(semester_dir):
     ret = semester_dir.run_cli(
         "ical_inst"
     )
-    assert ret != 0
+    assert ret == 0
     semester_dir.assert_out_search(
-        "Écriture du fichier `generated/Foo_A2020.ics`"
+        "Écrasement du fichier `generated/Foo_A2020.ics`"
     )
-    
