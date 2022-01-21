@@ -251,9 +251,9 @@ def main():
         tmpl_dir = os.path.join(guv.__path__[0], "templates")
         jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(tmpl_dir))
         try:
-            tmpl = jinja_env.get_template(f"semester_config_{args.semester}.py")
+            tmpl = jinja_env.get_template(f"semester_config_{args.semester}.py.jinja2")
         except jinja2.exceptions.TemplateNotFound:
-            tmpl = jinja_env.get_template("semester_config.py")
+            tmpl = jinja_env.get_template("semester_config.py.jinja2")
 
         context = {
             "UVS": ", ".join(f'"{e}"' for e in args.uv),
