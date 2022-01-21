@@ -415,11 +415,7 @@ def render_from_contexts(template, contexts, save_tex=False, target=None):
     pdfs = []
     texs = []
     for context in contexts:
-        try:
-            filepath, tex_filepath = render_latex_template(template, context)
-        except latex.exc.LatexBuildError as e:
-            logger.warning("LaTeX build failed", exc_info=1)
-            continue
+        filepath, tex_filepath = render_latex_template(template, context)
         pdfs.append(filepath)
         texs.append(tex_filepath)
 
