@@ -7,7 +7,7 @@ def test_utc_uv_list_to_csv(semester_dir):
     ret = semester_dir.run_cli("utc_uv_list_to_csv")
     assert ret != 0
     semester_dir.assert_out_search(
-        "TaskFailed", "La variable `CRENEAU_UV` doit être définie"
+        "La variable `CRENEAU_UV` doit être définie"
     )
 
 
