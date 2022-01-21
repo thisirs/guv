@@ -255,13 +255,69 @@ def create_plannings(planning_type):
     Chaque ligne est un créneau dans le planning associé.
     """
 
+    plannings = settings.PLANNINGS
+
+    if planning_type not in plannings:
+        raise Exception(
+            f"Le planning `{planning_type}` n'est pas renseigné dans "
+            "la variable `PLANNINGS` dans le fichier `config.py` du semestre."
+        )
+
     props = settings.PLANNINGS[planning_type]
-    beg = props["PL_BEG"]
-    end = props["PL_END"]
-    skip_days_c = props["SKIP_DAYS_C"]
-    skip_days_d = props["SKIP_DAYS_D"]
-    skip_days_t = props["SKIP_DAYS_T"]
-    turn = props["TURN"]
+
+    if "PL_BEG" not in props:
+        logger.warning(
+            f"La clé `PL_BEG` est absente du planning `{planning_type}` dans la "
+            "variable `PLANNINGS`, utilisation de la variable globale `PL_BEG`."
+        )
+        beg = settings.PL_BEG
+    else:
+        beg = props["PL_BEG"]
+
+    if "PL_END" not in props:
+        logger.warning(
+            f"La clé `PL_END` est absente du planning `{planning_type}` dans la "
+            "variable `PLANNINGS`, utilisation de la variable globale `PL_END`."
+        )
+        end = settings.PL_END
+    else:
+        end = props["PL_END"]
+
+    if "TURN" not in props:
+        logger.warning(
+            f"La clé `TURN` est absente du planning `{planning_type}` dans la "
+            "variable `PLANNINGS`, utilisation de la variable globale `TURN`."
+        )
+        turn = settings.TURN
+    else:
+        turn = props["TURN"]
+
+    if "SKIP_DAYS_C" not in props:
+        logger.warning(
+            f"La clé `SKIP_DAYS_C` est absente du planning `{planning_type}` dans la "
+            "variable `PLANNINGS`, utilisation de la variable globale `SKIP_DAYS_C`."
+        )
+        skip_days_c = settings.SKIP_DAYS_C
+    else:
+        skip_days_c = props["SKIP_DAYS_C"]
+
+    if "SKIP_DAYS_D" not in props:
+        logger.warning(
+            f"La clé `SKIP_DAYS_D` est absente du planning `{planning_type}` dans la "
+            "variable `PLANNINGS`, utilisation de la variable globale `SKIP_DAYS_D`."
+        )
+        skip_days_d = settings.SKIP_DAYS_D
+    else:
+        skip_days_d = props["SKIP_DAYS_D"]
+
+    if "SKIP_DAYS_T" not in props:
+        logger.warning(
+            f"La clé `SKIP_DAYS_T` est absente du planning `{planning_type}` dans la "
+            "variable `PLANNINGS`, utilisation de la variable globale `SKIP_DAYS_T`."
+        )
+        skip_days_t = settings.SKIP_DAYS_T
+    else:
+        skip_days_t = props["SKIP_DAYS_T"]
 
     planning_C = pd.DataFrame(
         generate_days(
