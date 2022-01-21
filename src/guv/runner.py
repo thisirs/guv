@@ -94,7 +94,7 @@ def run_doit(args):
             raise e from e
         else:
             logger.error(e)
-            sys.exit()
+            sys.exit(1)
 
 
 def generate_tasks():
