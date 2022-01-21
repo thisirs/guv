@@ -2,7 +2,7 @@ import os
 import re
 import subprocess
 import shutil
-from distutils.dir_util import copy_tree
+from shutil import copytree
 from pathlib import Path
 import textwrap
 import dbm
@@ -261,7 +261,7 @@ class SemesterDir:
 
         """
 
-        copy_tree(old, new)
+        copytree(old, new, dirs_exist_ok=True)
         self.fix_db(Path(new) / "A2020" / ".doit.db", old, new)
 
     def fix_db(self, db_name, old, new):
