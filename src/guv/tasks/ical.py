@@ -162,4 +162,6 @@ class IcalInst(CliArgsMixin, TaskBase):
 
         else:
             unknown = set(self.insts).difference(all_insts)
-            raise Exception(f"Intervenant(s) inconnu(s): {', '.join(unknown)}, intervenant(s) enregistré(s): {', '.join(all_insts)}")
+            plural = "s" if len(unknown) > 1 else ""
+            all_insts = "Aucun" if not all_insts else ', '.join(all_insts)
+            raise Exception(f"Intervenant{plural} inconnu{plural}: {', '.join(unknown)}, intervenant(s) enregistré(s): {all_insts}")
