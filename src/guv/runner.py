@@ -126,7 +126,7 @@ def run_doit(task_loader, args):
     sys.exit(DoitMain(task_loader).run(args))
 
 
-def run_task(task_loader, command):
+def run_task(task_loader, task_name):
     """Load config.py files and run tasks."""
 
     try:
@@ -140,18 +140,18 @@ def run_task(task_loader, command):
             logger.error(e)
             return 1
 
-    if command is None:
+    if task_name is None:
         logger.debug("Run doit with default tasks")
         return run_doit(task_loader, [])
 
-    if command == "doit":
-        logger.debug("Really run doit")
+    if task_name == "doit":
+        logger.debug("Bypass call to doit")
         return run_doit(task_loader, sys.argv[2:])
 
     # Run doit without command-line arguments to avoid errors.
     # Doit tasks can handle sys.argv themselves
     logger.debug("Run doit with task only")
-    return run_doit(task_loader, sys.argv[1:2])
+    return run_doit(task_loader, [task_name])
 
 
 def main(argv=sys.argv):
@@ -170,15 +170,16 @@ def main(argv=sys.argv):
     logger.debug("%s tasks loaded", len(task_loader.tasks))
 
     parser = get_parser(task_loader.tasks, add_hidden=True)
-    args = parser.parse_args(argv[1:])
+    args = parser.parse_args()
+    task_name = args.command
 
-    if args.command == "createsemester":
+    if task_name == "createsemester":
         logger.debug("Run createsemester task")
         return run_creastesemester(args)
 
-    if args.command == "createuv":
+    if task_name == "createuv":
         logger.debug("Run createuv task")
         return run_createuv(args)
 
-    return run_task(task_loader, args.command)
+    return run_task(task_loader, task_name)
 
