@@ -175,13 +175,15 @@ class CalInst(CliArgsMixin, TaskBase):
         argument(
             "-p",
             "--plannings",
-            nargs="+",
+            nargs="*",
+            default=None,
             help="Spécifie les UV/UE concernées via les plannings. Par défaut, toutes les UV/UE des plannings ``SELECTED_PLANNINGS`` sont concernées.",
         ),
         argument(
             "-i",
             "--insts",
             nargs="*",
+            default=None,
             help="Spécifie la liste des intervenants pour qui créer le calendrier. Par défaut, la liste se limite à ``DEFAULT_INSTRUCTOR``.",
         ),
         argument(

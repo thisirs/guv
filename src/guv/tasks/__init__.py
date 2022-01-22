@@ -22,4 +22,4 @@ from .moodle import (CsvCreateGroups, CsvGroups, CsvGroupsGroupings,
 from .students import (CsvExamGroups, CsvInscrits, CsvMoodleGroups,
                        XlsStudentData, XlsStudentDataMerge, ZoomBreakoutRooms)
 from .trombinoscope import PdfTrombinoscope
-from .utc import CsvAllCourses, UtcUvListToCsv
+from .utc import CsvAllCourses, UtcUvListToCsv, UTP

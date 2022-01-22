@@ -12,7 +12,8 @@ def test_pdf_attendance(semester_dir):
         "-t",
         "foo",
         "-g",
-        "TD"
+        "TD",
+        "--save-tex"
     )
     assert ret == 0
     semester_dir.assert_out_search(
@@ -32,7 +33,8 @@ def test_pdf_attendance_full(semester_dir):
         "-g",
         "TD",
         "-n",
-        "14"
+        "14",
+        "--save-tex"
     )
     assert ret == 0
     semester_dir.assert_out_search(

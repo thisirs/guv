@@ -144,13 +144,41 @@ def generate_ranges(ref_cell, by="col", length=None, nranges=None):
         raise Exception("Wrong 'by' argument")
 
 
-def get_value(cell, elt):
-    if callable(elt):
-        return elt(cell)
-    return elt
-
-
 def fill_row(refcell, *elements):
+    """Fill row starting at `refcell` with `elements`.
+
+    `elements` can be raw values but also callables that will be
+    called with the current cell.
+    """
+
+    def get_value(cell, elt):
+        if callable(elt):
+            return elt(cell)
+        return elt
+
     for i, elt in enumerate(elements):
         cell = refcell.right(i)
         cell.value = get_value(cell, elt)
+
+    return refcell.right(len(elements))
+
+
+def get_cell_in_row(ref_cell, *keywords):
+    """Return a function that will return a cell.
+
+    The returned function takes a cell and a keyword. The cell's row
+    and the column corresponding to the keyword in the sequence
+    `keywords` from `ref_cell` are used to identify the returned cell.
+
+    """
+
+    def func(cell, keyword):
+        if keyword in keywords:
+            return cell.parent.cell(
+                row=cell.row,
+                column=ref_cell.col_idx + keywords.index(keyword)
+            )
+        else:
+            raise Exception("Unknown keyword", keyword)
+
+    return func

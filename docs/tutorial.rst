@@ -94,7 +94,7 @@ Fichier ``config.py`` de configuration de semestre
 Le fichier de configuration du semestre contient des informations
 spécifiques à un semestre :
 
-- liste des UV gérées via la variable ``UVS``,
+- liste des UV/UE gérées via la variable ``UVS``,
 - chemin vers le fichier des créneaux fourni par l'administration, via
   la variable ``CRENEAU_UV``,
 - liste des plannings via la variables ``PLANNINGS``,

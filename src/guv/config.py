@@ -4,8 +4,10 @@ import logging
 import os
 from datetime import date
 from pathlib import Path
+import traceback
 
 from schema import And, Or, Schema, SchemaError, Use
+from doit.reporter import ZeroReporter
 
 from .logger import logger
 from .exceptions import ImproperlyConfigured
@@ -124,6 +126,11 @@ _SETTING_LIST = [
     Setting(
         "DOCS",
     ),
+    Setting(
+        "MOODLE_ID",
+        schema=Schema(int),
+        help="Identifiant de l'UV/UE sur Moodle"
+    ),
 ]
 
 SETTINGS = {
@@ -160,6 +167,9 @@ class Settings:
 
     def __getattr__(self, name):
         logger.debug("Accessing setting `%s`", name)
+
+        # if name == "create_doit_tasks":
+        #     raise AttributeError("create_doit_tasks")
 
         if name.startswith("__"):  # for copy to succeed ignore __getattr__
             raise AttributeError(name)
@@ -215,6 +225,7 @@ class Settings:
             self._settings["SEMESTER"] = os.path.basename(self.semester_directory)
             self._settings["SEMESTER_DIR"] = self.semester_directory
             self._settings["DOIT_CONFIG"] = {
+                # "reporter": ZeroReporter,
                 "dep_file": os.path.join(self.semester_directory, ".guv.db"),
                 # "check_file_uptodate": "timestamp",
                 "verbosity": 2,
@@ -232,6 +243,7 @@ class Settings:
             self._settings["SEMESTER"] = os.path.basename(self.semester_directory)
             self._settings["SEMESTER_DIR"] = self.semester_directory
             self._settings["DOIT_CONFIG"] = {
+                # "reporter": ZeroReporter,
                 "dep_file": os.path.join(self.semester_directory, ".guv.db"),
                 # "check_file_uptodate": "timestamp",
                 "verbosity": 2,
@@ -255,7 +267,7 @@ class Settings:
         except ImportError as e:
             logger.warning("Problème de chargement du fichier `%s`, ignoré", config_file)
         except Exception as e:
-            raise ImproperlyConfigured(f"Problème de chargement du fichier {config_file}", e) from e
+            raise ImproperlyConfigured(f"Problème de chargement du fichier `{config_file}`", e, traceback.format_exc()) from e
 
         settings = [s for s in dir(module) if s.isupper()]
         for setting in settings:

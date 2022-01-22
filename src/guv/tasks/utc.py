@@ -10,6 +10,16 @@ import numpy as np
 import pandas as pd
 from PyPDF2 import PdfFileReader
 from tabula import read_pdf
+import openpyxl
+
+from ..openpyxl_patched import fixit
+
+fixit(openpyxl)
+
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
+from openpyxl.utils.dataframe import dataframe_to_rows
+from ..openpyxl_utils import fill_row, get_cell_in_row
 
 from ..logger import logger
 from ..utils import argument
@@ -219,3 +229,86 @@ class CsvAllCourses(CliArgsMixin, TaskBase):
         dfm = pd.concat(tables)
         with Output(self.target) as out:
             dfm.to_csv(out.target, index=False)
+
+
+class UTP(TaskBase):
+    target_dir = "."
+    target_name = "UTP.xlsx"
+
+    def setup(self):
+        super().setup()
+        self.target = self.build_target()
+
+    def write_UV_block(self, ref_cell):
+        keywords = [
+            "UV",
+            "Cours",
+            "Nombre de créneaux de 2h par semaine",
+            "Heures",
+            "UTP"
+        ]
+
+        # Write header
+        end_cell = fill_row(ref_cell, *keywords)
+
+        # Define references to header
+        cell_in_row = get_cell_in_row(ref_cell, *keywords)
+
+        def get_mult(cell):
+            return 'IF({0}="CM",2.25,IF({0}="TD",1.5,IF({0}="TP",1.5,0))'.format(cell.coordinate)
+
+        UTP_cells = []
+        for i in range(16):
+            cell = ref_cell.below(i + 1)
+            elts = [
+                None,
+                None,
+                None,
+                lambda cell: "=2*16*{}".format(cell_in_row(cell, "Nombre de créneaux de 2h par semaine").coordinate),
+                lambda cell: "={}*{}".format(cell_in_row(cell, "Heures").coordinate, get_mult(cell_in_row(cell, "Cours")))
+            ]
+            UTP_cell = fill_row(cell, *elts)
+            UTP_cells.append(UTP_cell)
+
+    def run(self):
+        wb = Workbook()
+        ws = wb.active
+
+        ref_cell = ws.cell(2, 2)
+        self.write_UV_block(ref_cell)
+
+        ref_cell = ws.cell(2, 8)
+        self.write_hour_block(ref_cell)
+
+        with Output(self.target, protected=True) as out:
+            wb.save(out.target)
+
+    def write_hour_block(self, ref_cell):
+        keywords = [
+            "UV",
+            "Cours",
+            "Nombre d'heures",
+            "UTP"
+        ]
+
+        # Write header
+        end_cell = fill_row(ref_cell, *keywords)
+
+        # Define references to header
+        cell_in_row = get_cell_in_row(ref_cell, *keywords)
+
+        def get_mult(cell):
+            return 'IF({0}="CM",2.25,IF({0}="TD",1.5,IF({0}="TP",1.5,0))'.format(cell.coordinate)
+
+        UTP_cells = []
+        for i in range(16):
+            cell = ref_cell.below(i + 1)
+            elts = [
+                None,
+                None,
+                None,
+                lambda cell: "={}*{}".format(cell_in_row(cell, "Nombre d'heures").coordinate, get_mult(cell_in_row(cell, "Cours")))
+            ]
+            UTP_cell = fill_row(cell, *elts)
+            UTP_cells.append(UTP_cell)
+

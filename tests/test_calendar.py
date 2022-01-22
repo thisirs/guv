@@ -17,7 +17,8 @@ def test_cal_uv(semester_dir):
     )
 
     ret = semester_dir.run_cli(
-        "cal_uv"
+        "cal_uv",
+        "--save-tex"
     )
     assert ret == 0
     semester_dir.assert_out_search(
@@ -46,6 +47,7 @@ def test_cal_inst(semester_dir):
     semester_dir.assert_out_search(
         "Écriture du fichier `generated/Foo_A2020_calendrier.pdf`"
     )
+    assert Path(semester_dir.cwd, "generated", "Foo_A2020_calendrier.pdf").is_file()
 
     ret = semester_dir.run_cli(
         "cal_inst"
@@ -54,3 +56,4 @@ def test_cal_inst(semester_dir):
     semester_dir.assert_out_search(
         "Écrasement du fichier `generated/Foo_A2020_calendrier.pdf`"
     )
+    assert Path(semester_dir.cwd, "generated", "Foo_A2020_calendrier.pdf").is_file()

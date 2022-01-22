@@ -124,6 +124,16 @@ class CsvGroupsGroupings(UVTask, CliArgsMixin):
 
     {options}
 
+    Examples
+    --------
+
+    .. code:: bash
+
+       guv csv_groups_grouping -G 3 -F Groupement_P1 -g 14 -f D##_P1_@
+       guv csv_groups_grouping -G 2 -F Groupement_D1 -g 14 -f D1_P##_@
+       guv csv_groups_grouping -G 2 -F Groupement_D2 -g 14 -f D2_P##_@
+       guv csv_groups_grouping -G 2 -F Groupement_D3 -g 14 -f D3_P##_@
+
     """
 
     target_dir = "generated"
@@ -1014,7 +1024,6 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         with Output(csv_target) as out:
             df_groups.to_csv(out.target, index=False)
 
-
         logger.info(textwrap.dedent("""\
         Ajouter au fichier `effectifs.xlsx` avec :
 
@@ -1028,6 +1037,10 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             "title": self.title
         }))
 
+        if "MOODLE_ID" in self.settings:
+            id = str(self.settings.MOODLE_ID)
+            url = f"https://moodle.utc.fr/local/userenrols/import.php?id={id}"
+            print(f"Aller vers {url}")
 
     def make_groups(self, name, df, name_gen):
         """Try to make subgroups in dataframe `df`.
@@ -1124,7 +1137,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         e = [
             "DIPLOME ETAB ETRANGER SECONDAIRE",
             "DIPLOME ETAB ETRANGER SUPERIEUR",
-            "AUTRE DIPLOME UNIVERSITAIRE DE 1ER CYCLE HORS DUT",
+            # "AUTRE DIPLOME UNIVERSITAIRE DE 1ER CYCLE HORS DUT",
         ]
 
         # 2 étrangers == catastrophe
@@ -1171,7 +1184,20 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                 if len(set([etu1[gp], etu2[gp], etu3[gp]])) != 3:
                     return False
 
-        return a or b or c
+        # Au moins un sous-binome valide
+        result = a or b or c
+
+        # Tous les sous-binome sont valides
+        result = a and b and c
+
+        if not result:
+            etu1, etu2, etu3 = df.loc[idx1], df.loc[idx2], df.loc[idx3]
+            nom1 = etu1["Nom"] + " " + etu1["Prénom"]
+            nom2 = etu2["Nom"] + " " + etu2["Prénom"]
+            nom3 = etu3["Nom"] + " " + etu3["Prénom"]
+            logger.warning(f"Trinôme {nom1}, {nom2} et {nom3} invalide")
+
+        return result
 
     def add_names_to_grouping(self, groups, name, name_gen):
         """Give names to `groups`"""
