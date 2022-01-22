@@ -651,7 +651,7 @@ class JsonRestriction(UVTask, CliArgsMixin):
 
 
 class JsonGroup(UVTask, CliArgsMixin):
-    """Fichier json des restrictions d'accès aux ressources sur Moodle par addresse email
+    """Fichier json des restrictions d'accès aux ressources sur Moodle par adresse courriel
 
     Le fichier Json contient des restrictions d'accès à copier dans
     Moodle. L'argument ``group`` permet de construire des restrictions
@@ -728,7 +728,11 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
     Le nombre de groupes créés (au total ou par sous-groupes suivant
     ``--grouping``) est controlé par une des options mutuellement
     exclusives ``--proportions``, ``--group-size`` et
-    ``--num-groups``.
+    ``--num-groups``. L'option ``--proportions`` permet de spécifier
+    un nombre de groups via une liste de proprotions. L'option
+    ``--group-size`` permet de spécifier la taille maximale de chaque
+    groupe. L'option ``--num-groups`` permet de spécifier le nombre de
+    sous-groupes désirés.
 
     Le nom des groupes est controlé par l'option ``--template``. Les
     remplacements suivants sont disponibles à l'intérieur de
@@ -852,7 +856,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             "-t",
             "--template",
             required=False,
-            help="Modèle pour donner des noms aux groupes",
+            help="Modèle pour donner des noms aux groupes avec `{title}`, `{grouping_name}` ou `{group_name}`",
         ),
         argument(
             "-l",

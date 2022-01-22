@@ -21,7 +21,7 @@ from .instructors import AddInstructors
 
 
 def ical_events(dataframe, **settings):
-    """Retourne les évènements iCal de tous les cours trouvés dans DATAFRAME"""
+    """Retourne les évènements iCal de tous les cours trouvés dans `dataframe`."""
 
     def timestamp(row):
         d = row["date"]
