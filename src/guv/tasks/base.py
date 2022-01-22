@@ -8,7 +8,8 @@ from pathlib import Path
 import yaml
 from doit.exceptions import TaskFailed
 
-from ..config import Settings, logger, settings
+from ..config import Settings, settings
+from ..logger import logger
 from ..exceptions import (DependentTaskParserError, ImproperlyConfigured,
                           NotUVDirectory)
 from ..utils import pformat

@@ -7,6 +7,7 @@ from pathlib import Path
 
 from schema import And, Or, Schema, SchemaError, Use
 
+from .logger import logger
 from .exceptions import ImproperlyConfigured
 from .utils import pformat
 
@@ -241,7 +242,7 @@ class Settings:
             self.load_file(Path(self.conf_dir) / "config.py")
 
         else:
-            logger.debug("Not in UV or semester directory")
+            raise Exception("Pas dans un dossier d'UV/semestre")
 
     def load_file(self, config_file):
         logger.debug("Loading configuration file: `%s`", config_file)
@@ -263,21 +264,3 @@ class Settings:
 
 
 settings = Settings()
-
-class LogFormatter(logging.Formatter):
-
-    formats = {
-        logging.DEBUG: "DEBUG: %(message)s",
-        logging.INFO: "%(message)s",
-        logging.WARN: "\033[33mWARNING\033[0m: %(message)s",
-        logging.ERROR: "\033[31mERROR\033[0m: %(message)s",
-    }
-    def formatMessage(self, record):
-        return LogFormatter.formats.get(
-            record.levelno, self._fmt) % record.__dict__
-
-logger = logging.getLogger("guv")
-handler = logging.StreamHandler(sys.stdout)
-handler.setFormatter(LogFormatter())
-logger.setLevel(settings.DEBUG)
-logger.addHandler(handler)

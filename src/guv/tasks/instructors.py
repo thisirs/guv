@@ -11,7 +11,7 @@ import openpyxl
 import pandas as pd
 from pandas.api.types import CategoricalDtype
 
-from ..config import logger
+from ..logger import logger
 from ..openpyxl_patched import fixit
 from ..scripts.excel_hours import create_excel_file
 from ..utils import lib_list

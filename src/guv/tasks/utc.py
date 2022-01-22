@@ -11,7 +11,7 @@ import pandas as pd
 from PyPDF2 import PdfFileReader
 from tabula import read_pdf
 
-from ..config import logger
+from ..logger import logger
 from ..utils import argument
 from ..utils_config import Output, compute_slots, selected_uv, rel_to_dir, ask_choice
 from .base import CliArgsMixin, TaskBase

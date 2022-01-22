@@ -7,7 +7,8 @@ from datetime import timedelta
 import latex
 import pandas as pd
 
-from .config import logger, settings
+from .logger import logger
+from .config import settings
 from .exceptions import AbortWithBody, ImproperlyConfigured, NotUVDirectory
 from .utils import render_latex_template
 

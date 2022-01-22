@@ -22,7 +22,7 @@ from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.utils.dataframe import dataframe_to_rows
 
-from ..config import logger
+from ..logger import logger
 from ..exceptions import ImproperlyConfigured
 from ..helpers import Documents
 from ..utils import argument, sort_values

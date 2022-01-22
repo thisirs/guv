@@ -28,7 +28,7 @@ from bs4 import BeautifulSoup
 
 import guv
 
-from ..config import logger
+from ..logger import logger
 from ..exceptions import InvalidGroups
 from ..scripts.moodle_date import CondDate, CondGroup, CondOr, CondProfil
 from ..utils import argument, lib_list, make_groups, pformat, sort_values

@@ -8,7 +8,7 @@ from typing import List, Optional, Union
 
 import pandas as pd
 
-from .config import logger
+from .logger import logger
 from .exceptions import ImproperlyConfigured
 from .utils import check_filename, slugrot_string
 from .utils_config import rel_to_dir, check_columns

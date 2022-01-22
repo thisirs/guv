@@ -198,9 +198,9 @@ class SemesterDir:
 
     def run_func(self, *args):
         os.chdir(str(self.cwd))
-        from guv.runner import run_doit
+        from guv.runner import main
 
-        run_doit(args)
+        main(args)
 
     def change_relative_cwd(self, *parts):
         self.relative_cwd = Path(*parts)
