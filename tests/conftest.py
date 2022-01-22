@@ -262,7 +262,7 @@ class SemesterDir:
         """
 
         copytree(old, new, dirs_exist_ok=True)
-        self.fix_db(Path(new) / "A2020" / ".doit.db", old, new)
+        self.fix_db(Path(new) / "A2020" / ".guv.db", old, new)
 
     def fix_db(self, db_name, old, new):
         "Update values in database."
