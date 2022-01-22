@@ -34,7 +34,7 @@ def slugrot(*columns):
 class Operation:
     """Base class for operation to apply to `effectif.xlsx`."""
 
-    def message(self, **kwargs):
+    def message(self):
         return "Pas de message"
 
     @property
