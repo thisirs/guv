@@ -124,8 +124,8 @@ class FillnaColumn(Operation):
     def message(self, **kwargs):
         if self.na_value is not None:
             return f"Remplace les NA dans la colonne `{self.colname}` par la valeur `{self.na_value}`"
-        else:
-            return f"Remplace les NA dans la colonne `{self.colname}` en groupant par `{self.group_column}`"
+
+        return f"Remplace les NA dans la colonne `{self.colname}` en groupant par `{self.group_column}`"
 
 
 class ReplaceRegex(Operation):
@@ -296,10 +296,10 @@ class ReplaceColumn(Operation):
     def message(self, **kwargs):
         if self.msg is not None:
             return self.msg
-        elif self.new_colname is None:
+        if self.new_colname is None:
             return f"Remplacement dans colonne `{self.colname}`"
-        else:
-            return f"Replacement dans colonne `{self.colname}` vers colonne `{self.new_colname}`"
+
+        return f"Replacement dans colonne `{self.colname}` vers colonne `{self.new_colname}`"
 
 
 class ApplyDf(Operation):
@@ -345,8 +345,8 @@ class ApplyDf(Operation):
     def message(self, **kwargs):
         if self.msg is not None:
             return self.msg
-        else:
-            return "Appliquer une fonction au Dataframe"
+
+        return "Appliquer une fonction au Dataframe"
 
 
 class ApplyColumn(Operation):
@@ -394,8 +394,8 @@ class ApplyColumn(Operation):
     def message(self, **kwargs):
         if self.msg is not None:
             return self.msg
-        else:
-            return f"Appliquer une fonction à la colonne `{self.colname}`"
+
+        return f"Appliquer une fonction à la colonne `{self.colname}`"
 
 
 class ComputeNewColumn(Operation):
@@ -462,8 +462,8 @@ class ComputeNewColumn(Operation):
     def message(self, **kwargs):
         if self.msg is not None:
             return self.msg
-        else:
-            return f"Calcul de la colonne `{self.colname}`"
+
+        return f"Calcul de la colonne `{self.colname}`"
 
 
 class ApplyCell(Operation):
@@ -541,8 +541,8 @@ class FileOperation(Operation):
     def filename(self):
         if self.base_dir:
             return os.path.join(self.base_dir, self._filename)
-        else:
-            return self._filename
+
+        return self._filename
 
     @property
     def deps(self):
@@ -976,7 +976,7 @@ class Flag(FileOperation):
                 res = df.loc[df.fullname_slug == slugname]
                 if len(res) == 0:
                     raise Exception('Pas de correspondance pour `{:s}`'.format(line))
-                elif len(res) > 1:
+                if len(res) > 1:
                     raise Exception('Plusieurs correspondances pour `{:s}`'.format(line))
                 df.loc[res.index[0], self.colname] = self.flags[0]
 
