@@ -191,6 +191,9 @@ class TaskBase:
                     for instance in instances
                 ]
 
+                if not tasks:
+                    raise ImproperlyConfigured("Aucune UV/UE renseignée dans la variables `UVS`")
+
                 return (t for t in tasks)
 
         # Raised by get_unique_uv or selected_uv if not in UV/semester directory
