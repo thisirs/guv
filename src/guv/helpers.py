@@ -872,11 +872,12 @@ class AggregateOrg(FileOperation):
 
     """
 
-    def __init__(self,
+    def __init__(
+        self,
         filename: str,
         colname: str,
         on: Optional[str] = None,
-        postprocessing: Union[None, Callable, Operation] = None
+        postprocessing: Union[None, Callable, Operation] = None,
     ):
         super().__init__(filename)
         self._filename = filename
