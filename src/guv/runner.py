@@ -55,8 +55,14 @@ def create_uv_dirs(base_dir, uvs):
         uv_dir = os.path.join(base_dir, uv)
         doc_dir = os.path.join(uv_dir, "documents")
         gen_dir = os.path.join(uv_dir, "generated")
+
+        logger.info("Création du dossier %s", os.path.relpath(uv_dir, os.getcwd()))
         os.makedirs(uv_dir, exist_ok=True)
+
+        logger.info("Création du dossier %s", os.path.relpath(doc_dir, os.getcwd()))
         os.makedirs(doc_dir, exist_ok=True)
+
+        logger.info("Création du dossier %s", os.path.relpath(gen_dir, os.getcwd()))
         os.makedirs(gen_dir, exist_ok=True)
 
         tmpl_dir = os.path.join(guv.__path__[0], "templates")
@@ -66,7 +72,10 @@ def create_uv_dirs(base_dir, uvs):
         context = {}
         content = tmpl.render(context)
         new_path = os.path.join(uv_dir, "config.py")
+
+        logger.info("Création du ficher %s", os.path.relpath(new_path, os.getcwd()))
         if os.path.exists(new_path):
+            logger.error("Le fichier `%s` existe déjà", os.path.relpath(new_path, os.getcwd()))
             raise Exception("File config.py already exists")
         with open(new_path, "w", encoding="utf-8") as new_file:
             new_file.write(content)
@@ -76,8 +85,14 @@ def run_creastesemester(args):
     base_dir = os.path.join(os.getcwd(), args.semester)
     doc_dir = os.path.join(base_dir, "documents")
     gen_dir = os.path.join(base_dir, "generated")
+
+    logger.info("Création du dossier %s", os.path.relpath(base_dir, os.getcwd()))
     os.makedirs(base_dir, exist_ok=True)
+
+    logger.info("Création du dossier %s", os.path.relpath(doc_dir, os.getcwd()))
     os.makedirs(doc_dir, exist_ok=True)
+
+    logger.info("Création du dossier %s", os.path.relpath(gen_dir, os.getcwd()))
     os.makedirs(gen_dir, exist_ok=True)
 
     tmpl_dir = os.path.join(guv.__path__[0], "templates")
@@ -93,7 +108,10 @@ def run_creastesemester(args):
     }
     content = tmpl.render(context)
     new_path = os.path.join(base_dir, "config.py")
+
+    logger.info("Création du ficher %s", os.path.relpath(new_path, os.getcwd()))
     if os.path.exists(new_path):
+        logger.error("Le fichier `%s` existe déjà", os.path.relpath(new_path, os.getcwd()))
         raise Exception("File config.py already exists")
     with open(new_path, "w", encoding="utf-8") as new_file:
         new_file.write(content)
