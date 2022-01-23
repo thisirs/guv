@@ -3,6 +3,7 @@ import inspect
 import logging
 import os
 import sys
+import argparse
 
 import jinja2
 from doit.cmd_base import NamespaceTaskLoader
@@ -123,22 +124,36 @@ def load_custom_tasks(filenames):
 
 
 def run_doit(task_loader, args):
-    sys.exit(DoitMain(task_loader).run(args))
+    return DoitMain(task_loader).run(args)
 
 
-def run_task(task_loader, task_name):
+def get_task_loader():
+    task_loader = ModuleTaskLoader.from_modules(
+        instructors,
+        utc,
+        grades,
+        students,
+        trombinoscope,
+        moodle,
+        ical,
+        calendar,
+        attendance,
+        gradebook,
+    )
+    logger.debug("%s tasks loaded", len(task_loader.tasks))
+
+    return task_loader
+
+
+def run_task(task_name):
     """Load config.py files and run tasks."""
 
-    try:
-        task_loader.load_variables(settings.settings)
-        modules = load_custom_tasks(settings.TASKS)
-        task_loader.load_modules(*modules)
-    except Exception as e:
-        if logger.level < logging.INFO:
-            raise e from e
-        else:
-            logger.error(e)
-            return 1
+    task_loader = get_task_loader()
+
+    # Add custom task and variables from config.py files
+    task_loader.load_variables(settings.settings)
+    modules = load_custom_tasks(settings.TASKS)
+    task_loader.load_modules(*modules)
 
     if task_name is None:
         logger.debug("Run doit with default tasks")
@@ -155,31 +170,44 @@ def run_task(task_loader, task_name):
 
 
 def main(argv=sys.argv):
-    task_loader = ModuleTaskLoader.from_modules(
-        instructors,
-        utc,
-        grades,
-        students,
-        trombinoscope,
-        moodle,
-        ical,
-        calendar,
-        attendance,
-        gradebook,
-    )
-    logger.debug("%s tasks loaded", len(task_loader.tasks))
+    parser = argparse.ArgumentParser(prog="guv", description="", add_help=False)
+    parser.add_argument("command", nargs="?")
+    args, other = parser.parse_known_args()
 
-    parser = get_parser(task_loader.tasks, add_hidden=True)
-    args = parser.parse_args()
-    task_name = args.command
+    try:
+        if "-h" in other:
+            task_loader = get_task_loader()
+            parser = get_parser(task_loader.tasks)
+            parser.parse_args()
 
-    if task_name == "createsemester":
-        logger.debug("Run createsemester task")
-        return run_creastesemester(args)
+        if args.command == "createsemester":
+            logger.debug("Run createsemester task")
+            createsemester_parser = argparse.ArgumentParser(
+                prog="guv createsemester",
+                description="Crée un dossier de semestre",
+            )
+            createsemester_parser.add_argument("semester")
+            createsemester_parser.add_argument("--uv", nargs="*", default=[])
+            args = createsemester_parser.parse_args(other)
 
-    if task_name == "createuv":
-        logger.debug("Run createuv task")
-        return run_createuv(args)
+            return run_creastesemester(args)
 
-    return run_task(task_loader, task_name)
+        if args.command == "createuv":
+            logger.debug("Run createuv task")
+            createuv_parser = argparse.ArgumentParser(
+                prog="guv createuv",
+                description="Crée des dossiers d'UV"
+            )
+            createuv_parser.add_argument("uv", nargs="+")
+            args = createuv_parser.parse_args(other)
+            return run_createuv(args)
+
+        return run_task(args.command)
+
+    except Exception as e:
+        if logger.level < logging.INFO:
+            raise e from e
+        else:
+            logger.error(e)
+            sys.exit(1)
 
