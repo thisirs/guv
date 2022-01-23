@@ -632,12 +632,12 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
     .. code:: yaml
 
        marks:
-         - grade1:
-             passing mark: 8
-         - grade2
-         - grade3
-         - info:
-             type: raw
+         grade1:
+           passing mark: 8
+         grade2
+         grade3
+         info:
+           type: raw
 
     La note ECTS et la note agrégée peuvent ensuite être facilement
     incorporées au fichier central en renseignant la variable
@@ -668,11 +668,11 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
       .. code:: yaml
 
          marks:
-           - median:
-           - final
-               passing mark: 6
-           - TD:
-               type: raw
+           median:
+           final
+             passing mark: 6
+           TD:
+             type: raw
 
     """
 
@@ -707,12 +707,12 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
         """Validation du fichier de configuration
 
         marks:
-          - grade1:
-              passing mark: 8
-          - grade2
-          - grade3
-          - info:
-              type: raw
+          grade1:
+            passing mark: 8
+          grade2
+          grade3
+          info:
+            type: raw
         """
 
         def validate_grade2(data):
