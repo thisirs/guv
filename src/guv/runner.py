@@ -187,16 +187,16 @@ def run_task(task_name):
     return run_doit(task_loader, [task_name])
 
 
-def main(argv=sys.argv):
+def main(argv=sys.argv[1:]):
     parser = argparse.ArgumentParser(prog="guv", description="", add_help=False)
     parser.add_argument("command", nargs="?")
-    args, other = parser.parse_known_args()
+    args, other = parser.parse_known_args(argv)
 
     try:
         if "-h" in other:
             task_loader = get_task_loader()
             parser = get_parser(task_loader.tasks)
-            parser.parse_args()
+            parser.parse_args(argv)
 
         if args.command == "createsemester":
             logger.debug("Run createsemester task")
