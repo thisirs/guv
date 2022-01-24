@@ -101,7 +101,7 @@ class SemesterDir:
         # If base directory is present in cache and does exist, copy
         # it into new directory to avoid it being cleaned up, update
         # the path in the cache and skip the test.
-        if self.cached_base_dir() and Path(self.cached_base_dir).exists():
+        if self.cached_base_dir() and Path(self.cached_base_dir()).exists():
             new_base_dir = self.mktemp()
             self.copy_tree(self.cached_base_dir(), str(new_base_dir))
             self.base_dir = new_base_dir
