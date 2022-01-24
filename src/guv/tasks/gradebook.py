@@ -835,6 +835,13 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
         # Write option blocks for grade columns
         self.grades_options = {}
         for name, props in self.grade_columns:
+            # Add some stats on marks
+            for stat, q in (("Min", 0), ("Q1", 1), ("Médiane", 2), ("Q3", 3), ("Max", 4)):
+                props[stat] = '=IF(ISERROR(QUARTILE({0}, 0)), NA(), QUARTILE({0}, {1}))'.format(
+                    self.get_column_range(name),
+                    q
+                )
+
             # Write key-value table
             lower_right, keytocell = self.write_key_value_props(
                 current_cell, name, props
