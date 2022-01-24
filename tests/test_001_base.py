@@ -19,9 +19,8 @@ def test_utc_uv_list_to_csv2(semester_dir, monkeypatch):
     monkeypatch.setattr("builtins.input", lambda _: "A")
     semester_dir.copy_file("Creneaux-UV_P20.pdf", "documents")
     semester_dir.change_config(CRENEAU_UV="documents/Creneaux-UV_P20.pdf")
-    with pytest.raises(SystemExit) as exc:
-        semester_dir.run_func("utc_uv_list_to_csv")
-    assert exc.value.code == 0
+    ret = semester_dir.run_func("utc_uv_list_to_csv")
+    assert ret == 0
     assert Path(semester_dir.cwd, "documents", "UTC_UV_list.csv").is_file()
     semester_dir.assert_out_search(". utc_uv_list_to_csv")
 

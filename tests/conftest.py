@@ -200,7 +200,7 @@ class SemesterDir:
         os.chdir(str(self.cwd))
         from guv.runner import main
 
-        main(args)
+        return main(args)
 
     def change_relative_cwd(self, *parts):
         self.relative_cwd = Path(*parts)
