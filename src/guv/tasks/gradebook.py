@@ -903,7 +903,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
             self.get_column_range("Admis")
         )
         props["Effectif total"] = "=COUNTA({})".format(self.get_column_range("Admis"))
-        props["Ratio"] = '=AVERAGEIF({}, "<>#N/A")'.format(
+        props["Ratio"] = '=IF(ISERROR(AVERAGEIF({0}, "<>#N/A")), NA(), AVERAGEIF({0}, "<>#N/A"))'.format(
             self.get_column_range("Admis")
         )
         lower_right, statistiques = self.write_key_value_props(
