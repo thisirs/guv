@@ -22,7 +22,7 @@ test:
 pages:
   stage: deploy
   script:
-    - tox -e docs
+    - tox -e docs -- -W
   artifacts:
     paths:
       - public
