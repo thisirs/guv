@@ -819,11 +819,14 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
 
         keytocell = {}
         ref_cell.text(title).merge(ref_cell.right()).style = "Pandas"
+        current_cell = ref_cell
         for key, value in props.items():
-            ref_cell = ref_cell.below()
-            ref_cell.value = key
-            ref_cell.right().value = value
-            keytocell[key] = ref_cell.right()
+            current_cell = current_cell.below()
+            current_cell.value = key
+            current_cell.right().value = value
+            keytocell[key] = current_cell.right()
+
+        frame_range(ref_cell, current_cell.right())
         return ref_cell.right(), keytocell
 
     def create_second_worksheet(self):
@@ -847,9 +850,10 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
                 current_cell, name, props
             )
             self.grades_options[name] = keytocell
-            current_cell = lower_right.below(2).left(1)
+            current_cell = current_cell.right(3)
 
         # Add default global options block
+        current_cell = self.gradesheet.cell(row=10, column=1)
         options = self.config.get("options", {})
         for ects, grade in zip("ABCD", [0.9, 0.65, 0.35, 0.1]):
             if ("Percentile note " + ects) not in options:
@@ -858,7 +862,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
         lower_right, self.global_options = self.write_key_value_props(
             current_cell, "Options globales", options
         )
-        current_cell = lower_right.below(2).left(1)
+        current_cell = current_cell.right(3)
 
         # On écrit les seuils des notes correspondants aux percentiles choisis
         props = {}
@@ -874,7 +878,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
         lower_right, percentiles_theo = self.write_key_value_props(
             current_cell, "Percentiles théoriques", props
         )
-        current_cell = lower_right.below(2).left(1)
+        current_cell = current_cell.right(3)
 
         # Percentiles effectifs
         props = {}
@@ -886,11 +890,10 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
         lower_right, self.percentiles_used = self.write_key_value_props(
             current_cell, "Percentiles utilisés", props
         )
-        current_cell = lower_right.below(2).left(1)
+        current_cell = current_cell.right(3)
 
         # On écrit les proportions de notes ECTS en fonction de la
         # colonne `Admis`
-        ref_cell = self.gradesheet.cell(row=1, column=4)
         props = {}
         for ects in "ABCDEF":
             props["Nombre de " + ects] = ('=COUNTIF({}, "{}")').format(
@@ -904,7 +907,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
             self.get_column_range("Admis")
         )
         lower_right, statistiques = self.write_key_value_props(
-            ref_cell, "Statistiques", props
+            current_cell, "Statistiques", props
         )
 
     def update_first_worksheet(self):
