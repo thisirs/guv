@@ -815,7 +815,12 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
                 yield name, props2
 
     def write_key_value_props(self, ref_cell, title, props):
-        "Helper function to write key-value table"
+        """Helper function to write key-value table.
+
+        Written at `ref_cell` with header `title` and key-value in
+        `props`.
+
+        """
 
         keytocell = {}
         ref_cell.text(title).merge(ref_cell.right()).style = "Pandas"
