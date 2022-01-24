@@ -74,8 +74,7 @@ def create_uv_dirs(base_dir, uvs):
 
         logger.info("Création du ficher %s", os.path.relpath(new_path, os.getcwd()))
         if os.path.exists(new_path):
-            logger.error("Le fichier `%s` existe déjà", os.path.relpath(new_path, os.getcwd()))
-            raise Exception("File config.py already exists")
+            raise Exception("Le fichier `%s` existe déjà" % os.path.relpath(new_path, os.getcwd()))
         with open(new_path, "w", encoding="utf-8") as new_file:
             new_file.write(content)
 
@@ -110,8 +109,7 @@ def run_creastesemester(args):
 
     logger.info("Création du ficher %s", os.path.relpath(new_path, os.getcwd()))
     if os.path.exists(new_path):
-        logger.error("Le fichier `%s` existe déjà", os.path.relpath(new_path, os.getcwd()))
-        raise Exception("File config.py already exists")
+        raise Exception("Le fichier `%s` existe déjà" % os.path.relpath(new_path, os.getcwd()))
     with open(new_path, "w", encoding="utf-8") as new_file:
         new_file.write(content)
 
