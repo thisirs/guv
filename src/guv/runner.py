@@ -15,8 +15,7 @@ import guv
 from .logger import logger
 from .config import settings
 from .exceptions import ImproperlyConfigured
-from .tasks import (attendance, calendar, gradebook, grades, ical, instructors,
-                    moodle, students, trombinoscope, utc)
+from . import tasks
 from .tasks.base import TaskBase, UVTask, CliArgsMixin
 from .parser import get_parser, get_parser_shtab
 
@@ -146,20 +145,7 @@ def run_doit(task_loader, args):
 
 
 def get_task_loader():
-    task_loader = ModuleTaskLoader.from_modules(
-        instructors,
-        utc,
-        grades,
-        students,
-        trombinoscope,
-        moodle,
-        ical,
-        calendar,
-        attendance,
-        gradebook,
-    )
-    logger.debug("%s tasks loaded", len(task_loader.tasks))
-
+    task_loader = ModuleTaskLoader.from_modules(tasks)
     return task_loader
 
 
