@@ -234,7 +234,6 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
         argument(
             "-g",
             "--group",
-            required=True,
             help="Permet de spécifier une colonne de groupes pour faire des feuilles de présence par groupes.",
         ),
         argument(
@@ -289,14 +288,16 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
             "ctype": self.group,
         }
 
-        for gn, group in df.groupby(self.group):
+        key = (lambda x: "all") if self.group is None else self.group
+
+        for gn, group in df.groupby(key):
             group = sort_values(group, ["Nom", "Prénom"])
             students = [
                 {"name": f'{row["Nom"]} {row["Prénom"]}'} for _, row in group.iterrows()
             ]
             group_context = {
-                "group": gn,
-                "filename_no_ext": f"{gn}",
+                "group": None if gn == "all" else gn,
+                "filename_no_ext": gn,
                 "students": students,
             }
             yield {**base_context, **group_context}
