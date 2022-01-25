@@ -108,8 +108,8 @@ class IcalInst(CliArgsMixin, TaskBase):
 
     def setup(self):
         super().setup()
-        self.csv_slot_inst = WeekSlotsAll.target_from()
-        self.file_dep = [self.csv_slot_inst]
+        self.week_slots_all = WeekSlotsAll.target_from()
+        self.file_dep = [self.week_slots_all]
 
         self.parse_args()
         if self.plannings is None:
@@ -120,7 +120,7 @@ class IcalInst(CliArgsMixin, TaskBase):
 
     def run(self):
         tables = [
-            compute_slots(self.csv_slot_inst, ptype, empty_instructor=False)
+            compute_slots(self.week_slots_all, ptype, empty_instructor=False)
             for ptype in self.plannings
         ]
         dfm = pd.concat(tables)

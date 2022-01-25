@@ -327,8 +327,8 @@ class HtmlTable(UVTask, CliArgsMixin):
 
     def setup(self):
         super().setup()
-        self.csv_inst_list = WeekSlotsAll.target_from()
-        self.file_dep = [self.csv_inst_list]
+        self.week_slots_all = WeekSlotsAll.target_from()
+        self.file_dep = [self.week_slots_all]
 
         self.parse_args()
         AB = "_TP_AB" if self.num_AB else ""
@@ -396,7 +396,7 @@ class HtmlTable(UVTask, CliArgsMixin):
         """Get a Pandas DataFrame from all COURSES"""
 
         # Select wanted slots
-        slots = compute_slots(self.csv_inst_list, self.planning, filter_uvs=[self.uv])
+        slots = compute_slots(self.week_slots_all, self.planning, filter_uvs=[self.uv])
         slots = slots[slots["Activité"].isin(courses)]
 
         if len(slots) == 0:

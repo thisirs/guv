@@ -196,10 +196,10 @@ class CalInst(CliArgsMixin, TaskBase):
 
     def setup(self):
         super().setup()
-        self.uv_list = WeekSlotsAll.target_from()
+        self.week_slots_all = WeekSlotsAll.target_from()
         tmpl_dir = os.path.join(guv.__path__[0], "templates")
         template = os.path.join(tmpl_dir, "calendar_template.tex.jinja2")
-        self.file_dep = [self.uv_list, template]
+        self.file_dep = [self.week_slots_all, template]
 
         self.parse_args()
         if self.plannings is None:
@@ -217,7 +217,7 @@ class CalInst(CliArgsMixin, TaskBase):
 
     def run(self):
         for inst, target in zip(self.insts, self.targets):
-            df = pd.read_csv(self.uv_list)
+            df = pd.read_csv(self.week_slots_all)
             if "Intervenants" not in df.columns:
                 raise Exception("Pas d'enregistrement des intervenants")
 

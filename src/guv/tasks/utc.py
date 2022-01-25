@@ -210,8 +210,8 @@ class CsvAllCourses(CliArgsMixin, TaskBase):
     def setup(self):
         super().setup()
         from .instructors import WeekSlotsAll
-        self.csv = WeekSlotsAll.target_from()
-        self.file_dep = [self.csv]
+        self.week_slots_all = WeekSlotsAll.target_from()
+        self.file_dep = [self.week_slots_all]
 
         self.parse_args()
         self.target = self.build_target()
@@ -223,7 +223,7 @@ class CsvAllCourses(CliArgsMixin, TaskBase):
         for planning_type in self.plannings:
             uvs = (self.settings.PLANNINGS[planning_type].get('UVS') or
                    self.settings.PLANNINGS[planning_type].get('UES'))
-            df = compute_slots(self.csv, planning_type, filter_uvs=uvs)
+            df = compute_slots(self.week_slots_all, planning_type, filter_uvs=uvs)
             tables.append(df)
 
         dfm = pd.concat(tables)
