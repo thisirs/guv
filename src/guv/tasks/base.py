@@ -267,7 +267,7 @@ class UVTask(TaskBase):
         return self._settings
 
 
-class CliArgsMixin(TaskBase):
+class CliArgsMixin:
     def __init__(self):
         self._parser = None
 
