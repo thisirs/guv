@@ -97,7 +97,7 @@ spécifiques à un semestre :
 - liste des UV/UE gérées via la variable ``UVS``,
 - chemin vers le fichier des créneaux fourni par l'administration, via
   la variable ``CRENEAU_UV``,
-- liste des plannings via la variables ``PLANNINGS``,
+- liste des plannings via la variable ``PLANNINGS``,
 - information de calendrier avec les variables ``TURN``,
   ``SKIP_DAYS_C``, ``SKIP_DAYS_D``, ``SKIP_DAYS_T``
 
