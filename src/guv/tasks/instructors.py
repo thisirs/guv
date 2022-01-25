@@ -116,7 +116,7 @@ class WeekSlotsAll(TaskBase):
 
     hidden = True
     target_dir = "generated"
-    target_name = "UTC_UV_list_instructors.csv"
+    target_name = "planning_hebdomadaire.xlsx"
 
     def setup(self):
         super().setup()
@@ -139,7 +139,7 @@ class WeekSlotsAll(TaskBase):
         df_aff.Semaine = df_aff.Semaine.astype(object)
 
         with Output(self.target) as out:
-            df_aff.to_csv(out.target, index=False)
+            df_aff.to_excel(out.target, index=False)
 
 
 def read_xls_details(fn):

@@ -348,7 +348,7 @@ def create_plannings(planning_type):
     return planning_C, planning_D, planning_T
 
 
-def compute_slots(csv_inst_list, planning_type, empty_instructor=True, filter_uvs=None):
+def compute_slots(week_slots_all, planning_type, empty_instructor=True, filter_uvs=None):
     """Renvoie un dataframe de tous les créneaux horaires pour un planning défini.
 
     Le dataframe contient les colonnes :
@@ -375,7 +375,7 @@ def compute_slots(csv_inst_list, planning_type, empty_instructor=True, filter_uv
     """
 
     # Filter by planning
-    df = pd.read_csv(csv_inst_list)
+    df = pd.read_excel(week_slots_all)
     df = df.loc[df["Planning"] == planning_type]
 
     # Filter out when empty instructor

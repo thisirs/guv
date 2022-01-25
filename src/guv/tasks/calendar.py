@@ -217,7 +217,7 @@ class CalInst(CliArgsMixin, TaskBase):
 
     def run(self):
         for inst, target in zip(self.insts, self.targets):
-            df = pd.read_csv(self.week_slots_all)
+            df = pd.read_excel(self.week_slots_all)
             if "Intervenants" not in df.columns:
                 raise Exception("Pas d'enregistrement des intervenants")
 
