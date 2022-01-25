@@ -1,18 +1,16 @@
 Liste des variables reconnues dans les fichiers ``config.py`` de semestre
 -------------------------------------------------------------------------
 
-- ``UVS`` : Liste des UV ou UE gérées par **guv**. Cette variable est
-  utilisée lorsqu'une tâche doit avoir accès à toutes les UV/UE gérées
-  pour appliquer une même tâche à chaque.
+- ``UVS`` : Liste des UV ou UE gérées par **guv**. Si une UV/UE n'est
+  pas renseignée dans cette liste, elle ne sera pas reconnue par
+  **guv**.
 
 - ``PLANNINGS`` : Dictionnaire des plannings avec leurs propriétés
-  correspondantes.
+  correspondantes. Il faut que chaque UV/UE gérées aient un et un seul
+  planning correspondant.
 
 - ``CRENEAU_UV`` : Chemin relatif vers le fichier pdf des créneaux des
   UVS ingénieur.
-
-- ``CRENEAU_UE`` : Chemin relatif vers le fichier Excel des créneaux des
-  UES de master.
 
 - ``SELECTED_PLANNINGS`` : Liste des plannings à considérer. Par
   défaut, tous les plannings définis dans la variables ``PLANNINGS``
@@ -25,16 +23,20 @@ Liste des variables reconnues dans les fichiers ``config.py`` de semestre
   :class:`~guv.tasks.ical.IcalInst`.
 
 - ``TURN`` : Dictionnaire des jours qui sont changés en d'autres jours
-  de la semaine.
+  de la semaine. Il s'agit d'une valeur par défaut qui peut être
+  supplantée par planning dans ``PLANNINGS``.
 
 - ``SKIP_DAYS_C`` : Liste des jours (hors samedi/dimanche) où il n'y a
-  pas cours.
+  pas cours. Il s'agit d'une valeur par défaut qui peut être
+  supplantée par planning dans ``PLANNINGS``.
 
 - ``SKIP_DAYS_D`` : Liste des jours (hors samedi/dimanche) où il n'y a
-  pas TD.
+  pas TD. Il s'agit d'une valeur par défaut qui peut être supplantée
+  par planning dans ``PLANNINGS``.
 
 - ``SKIP_DAYS_T`` : Liste des jours (hors samedi/dimanche) où il n'y a
-  pas TP.
+  pas TP. Il s'agit d'une valeur par défaut qui peut être supplantée
+  par planning dans ``PLANNINGS``.
 
 - ``DEBUG`` : Un entier qui règle le niveau de log, par défaut 30.
   Plus l'entier est petit, plus le niveau de log est important.

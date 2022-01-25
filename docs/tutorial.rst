@@ -84,7 +84,7 @@ dossier de semestre:
 
 Pour que l'UV soit effectivement prise en compte par **guv**, il faut
 ensuite la déclarer dans le fichier ``config.py`` du semestre avec
-la variable ``UVS``.
+la variable ``UVS`` et lui associer un planning dans ``PLANNINGS``.
 
 .. _conf-semester:
 
