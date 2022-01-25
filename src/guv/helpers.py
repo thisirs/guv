@@ -1338,6 +1338,21 @@ def swap_column(df, filename, colname):
 
 
 class AggregateMoodleGrades(FileOperation):
+    """Agrège toutes les notes issues de Moodle.
+
+    Les notes peuvent être téléchargées avec un certain nombre de
+    colonnes inutiles. Cette tâche permet d'agréger uniquement les
+    notes présentes dans le fichier Excel ou csv.
+
+    Examples
+    --------
+
+    .. code:: python
+
+       DOCS.aggregate_jury("documents/SY02 Notes.xlsx")
+
+    """
+
     def apply(self, df):
         op = Aggregate(
             self.filename,
@@ -1357,6 +1372,17 @@ class AggregateMoodleGrades(FileOperation):
 
 
 class AggregateJury(FileOperation):
+    """Agrège le résultat d'un jury provenant de la tâche xls_grade_book_jury.
+
+    Examples
+    --------
+
+    .. code:: python
+
+       DOCS.aggregate_jury("generated/Jury_gradebook.xlsx")
+
+    """
+
     def apply(self, df):
         op = Aggregate(
             self.filename,
