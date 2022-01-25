@@ -97,7 +97,22 @@ class XlsInstructors(TaskBase):
 
 
 class AddInstructors(TaskBase):
-    """Rassemble les fichiers ``planning_hebdomadaire.xlsx`` de chaque UV/UE."""
+    """Rassemble les fichiers ``planning_hebdomadaire.xlsx`` de chaque UV/UE.
+
+    Les colonnes sont :
+
+    - Planning
+    - Code enseig.
+    - Jour
+    - Heure début
+    - Heure fin
+    - Locaux
+    - Semaine
+    - Lib. créneau
+    - Intervenants
+    - Responsable
+
+    """
 
     hidden = True
     target_dir = "generated"

@@ -196,9 +196,13 @@ class Output:
 
 
 def generate_days(beg, end, skip, turn, course_type):
-    """Génére des tuples
+    """Génére les jours sucessifs d'un planning.
 
-    date, dayname, num, weekAB, numAB, nweek
+    Les jours vont de `beg` à `end`.
+
+    (date, dayname, num, weekAB, numAB, nweek)
+
+
 
     """
 
@@ -349,24 +353,24 @@ def compute_slots(csv_inst_list, planning_type, empty_instructor=True, filter_uv
 
     Le dataframe contient les colonnes :
 
-    - Code enseig.
-    - Activité
-    - Jour
-    - Heure début
-    - Heure fin
-    - Semaine
-    - Locaux
-    - Lib. créneau
-    - Planning
-    - Responsable enseig.
-    - Intervenants
-    - Responsable
-    - date
-    - dayname
-    - num
-    - weekAB
-    - numAB
-    - nweek
+    - Code enseig.: SY02
+    - Activité: TP
+    - Jour: Lundi
+    - Heure début: 14:15
+    - Heure fin: 16:15
+    - Semaine: B
+    - Locaux: BF B 113
+    - Lib. créneau: T1
+    - Planning: P2021
+    - Responsable:
+    - Intervenants: Fisher
+    - Responsable: 
+    - date: 2021-03-08
+    - dayname: Lundi
+    - num: B
+    - weekAB: 2
+    - numAB: 1
+    - nweek: 4
 
     """
 
