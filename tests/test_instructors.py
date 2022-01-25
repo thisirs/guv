@@ -8,7 +8,7 @@ def test_xls_instructors(semester_dir):
 
 
 @pytest.mark.use_tree.with_args("test_xls_student_data")
-def test_add_instructors(semester_dir):
+def test_week_slots_all(semester_dir):
     pass
 
 

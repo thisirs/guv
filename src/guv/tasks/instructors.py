@@ -96,7 +96,7 @@ class XlsInstructors(TaskBase):
                 pd.DataFrame(columns=columns).to_excel(out.target, index=False)
 
 
-class AddInstructors(TaskBase):
+class WeekSlotsAll(TaskBase):
     """Rassemble les fichiers ``planning_hebdomadaire.xlsx`` de chaque UV/UE.
 
     Les colonnes sont :

@@ -17,7 +17,7 @@ from icalendar import Calendar, Event
 from ..utils import argument
 from ..utils_config import Output, compute_slots
 from .base import CliArgsMixin, TaskBase
-from .instructors import AddInstructors
+from .instructors import WeekSlotsAll
 
 
 def ical_events(dataframe, **settings):
@@ -108,7 +108,7 @@ class IcalInst(CliArgsMixin, TaskBase):
 
     def setup(self):
         super().setup()
-        self.csv_slot_inst = AddInstructors.target_from()
+        self.csv_slot_inst = WeekSlotsAll.target_from()
         self.file_dep = [self.csv_slot_inst]
 
         self.parse_args()

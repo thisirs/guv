@@ -209,8 +209,8 @@ class CsvAllCourses(CliArgsMixin, TaskBase):
 
     def setup(self):
         super().setup()
-        from .instructors import AddInstructors
-        self.csv = AddInstructors.target_from()
+        from .instructors import WeekSlotsAll
+        self.csv = WeekSlotsAll.target_from()
         self.file_dep = [self.csv]
 
         self.parse_args()

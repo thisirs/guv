@@ -34,7 +34,7 @@ from ..scripts.moodle_date import CondDate, CondGroup, CondOr, CondProfil
 from ..utils import argument, lib_list, make_groups, pformat, sort_values
 from ..utils_config import Output, compute_slots, rel_to_dir, check_columns
 from .base import CliArgsMixin, TaskBase, UVTask
-from .instructors import (AddInstructors, WeekSlots, XlsInstructors,
+from .instructors import (WeekSlotsAll, WeekSlots, XlsInstructors,
                           create_insts_list, read_xls_details)
 from .students import XlsStudentDataMerge
 from .utc import CsvAllCourses
@@ -327,7 +327,7 @@ class HtmlTable(UVTask, CliArgsMixin):
 
     def setup(self):
         super().setup()
-        self.csv_inst_list = AddInstructors.target_from()
+        self.csv_inst_list = WeekSlotsAll.target_from()
         self.file_dep = [self.csv_inst_list]
 
         self.parse_args()
