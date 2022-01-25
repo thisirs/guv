@@ -413,6 +413,18 @@ utilise ``aggregate``. On a alors
 
 .. automethod:: guv.helpers.Documents.aggregate
 
+Lorsque les fichiers sont encore plus spécifiques, on peut utiliser
+les fonctions suivantes :
+
+- Pour un fichier de notes issu de Moodle :
+
+  .. automethod:: guv.helpers.Documents.aggregate_moodle_grades
+
+- Pour un fichier de jury issu de la tâche
+  :class:`~guv.tasks.gradebook.XlsGradeBookJury`
+
+  .. automethod:: guv.helpers.Documents.aggregate_jury
+
 Pour incorporer des fichiers au format Org, on utilise
 ``aggregate_org`` :
 
