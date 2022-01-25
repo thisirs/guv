@@ -34,7 +34,7 @@ from ..scripts.moodle_date import CondDate, CondGroup, CondOr, CondProfil
 from ..utils import argument, lib_list, make_groups, pformat, sort_values
 from ..utils_config import Output, compute_slots, rel_to_dir, check_columns
 from .base import CliArgsMixin, TaskBase, UVTask
-from .instructors import (AddInstructors, XlsAffectation, XlsInstructors,
+from .instructors import (AddInstructors, WeekSlots, XlsInstructors,
                           create_insts_list, read_xls_details)
 from .students import XlsStudentDataMerge
 from .utc import CsvAllCourses
@@ -220,7 +220,7 @@ class HtmlInst(UVTask):
     def setup(self):
         super().setup()
         self.insts_details = XlsInstructors.target_from()
-        self.insts_uv = XlsAffectation.target_from(**self.info)
+        self.insts_uv = WeekSlots.target_from(**self.info)
         self.target = self.build_target()
         self.file_dep = [self.insts_details, self.insts_uv]
 

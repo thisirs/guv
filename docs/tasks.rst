@@ -61,7 +61,7 @@ Calendrier hebdomadaire
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.instructors.XlsAffectation`
+   - :class:`guv.tasks.instructors.WeekSlots`
 
 .. autoclass:: guv.tasks.calendar.CalInst
    :exclude-members:
@@ -146,7 +146,7 @@ Notes
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.instructors.XlsAffectation`
+   - :class:`guv.tasks.instructors.WeekSlots`
    - :class:`guv.tasks.students.XlsStudentDataMerge`
 
 Intervenants
@@ -160,7 +160,7 @@ Intervenants
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.instructors.XlsAffectation`
+   - :class:`guv.tasks.instructors.WeekSlots`
    - :class:`guv.tasks.instructors.XlsInstructors`
 
 Moodle
@@ -184,7 +184,7 @@ Moodle
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.instructors.XlsAffectation`
+   - :class:`guv.tasks.instructors.WeekSlots`
    - :class:`guv.tasks.instructors.XlsInstructors`
 
 .. autoclass:: guv.tasks.moodle.HtmlTable
@@ -230,7 +230,7 @@ besoin d'exécuter car elles sont des dépendances des tâches usuelles.
    Cette tâche est une dépendance pour les tâches suivantes :
 
    - :class:`guv.tasks.instructors.AddInstructors`
-   - :class:`guv.tasks.instructors.XlsAffectation`
+   - :class:`guv.tasks.instructors.WeekSlots`
 
 .. autoclass:: guv.tasks.utc.CsvAllCourses
    :exclude-members:
@@ -300,7 +300,7 @@ besoin d'exécuter car elles sont des dépendances des tâches usuelles.
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.instructors.XlsAffectation`
+   - :class:`guv.tasks.instructors.WeekSlots`
    - :class:`guv.tasks.utc.UtcUvListToCsv`
 
    Cette tâche est une dépendance pour les tâches suivantes :
@@ -315,10 +315,10 @@ besoin d'exécuter car elles sont des dépendances des tâches usuelles.
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.instructors.XlsAffectation`
+   - :class:`guv.tasks.instructors.WeekSlots`
    - :class:`guv.tasks.instructors.XlsInstructors`
 
-.. autoclass:: guv.tasks.instructors.XlsAffectation
+.. autoclass:: guv.tasks.instructors.WeekSlots
    :exclude-members:
 
    Cette tâche dépend de :

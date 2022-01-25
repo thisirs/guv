@@ -29,7 +29,7 @@ _shtab_guv_commands_() {
     "pdf_attendance:Fichier pdf de feuilles de présence."
     "pdf_attendance_full:Fichier zip de feuilles de présence nominatives par groupe et par semestre."
     "pdf_trombinoscope:Fichier PDF des trombinoscopes par groupes et\/ou sous-groupes."
-    "xls_affectation:Fichier Excel des créneaux de toutes les UV configurées."
+    "week_slots:Fichier Excel des créneaux de toutes les UV configurées."
     "xls_assignment_grade:Création d\'un fichier Excel pour remplissage des notes par les intervenants"
     "xls_grade_book_group:Fichier Excel de notes par groupe."
     "xls_grade_book_jury:Fichier Excel pour la gestion d\'un jury d\'UV"
@@ -186,7 +186,7 @@ _shtab_guv_pdf_trombinoscope=(
   "--save-tex[Permet de laisser les fichiers .tex générés pour modification éventuelle.]"
 )
 
-_shtab_guv_xls_affectation=(
+_shtab_guv_week_slots=(
   "(- :)"{-h,--help}"[show this help message and exit]"
 )
 
@@ -267,7 +267,7 @@ case $words[1] in
   pdf_attendance) _arguments $_shtab_guv_pdf_attendance ;;
   pdf_attendance_full) _arguments $_shtab_guv_pdf_attendance_full ;;
   pdf_trombinoscope) _arguments $_shtab_guv_pdf_trombinoscope ;;
-  xls_affectation) _arguments $_shtab_guv_xls_affectation ;;
+  week_slots) _arguments $_shtab_guv_week_slots ;;
   xls_assignment_grade) _arguments $_shtab_guv_xls_assignment_grade ;;
   xls_grade_book_group) _arguments $_shtab_guv_xls_grade_book_group ;;
   xls_grade_book_jury) _arguments $_shtab_guv_xls_grade_book_jury ;;

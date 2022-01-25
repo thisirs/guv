@@ -14,7 +14,7 @@ import guv
 from ..utils import argument
 from ..utils_config import render_from_contexts
 from .base import CliArgsMixin, TaskBase, UVTask
-from .instructors import AddInstructors, XlsAffectation
+from .instructors import AddInstructors, WeekSlots
 
 
 def create_cal_from_dataframe(df, text, target, save_tex=False):
@@ -137,7 +137,7 @@ class CalUv(UVTask, CliArgsMixin):
 
     def setup(self):
         super().setup()
-        self.uv_list = XlsAffectation.target_from(**self.info)
+        self.uv_list = WeekSlots.target_from(**self.info)
         self.target = self.build_target()
         tmpl_dir = os.path.join(guv.__path__[0], "templates")
         template = os.path.join(tmpl_dir, "calendar_template.tex.jinja2")

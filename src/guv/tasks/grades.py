@@ -11,7 +11,7 @@ import pandas as pd
 from ..utils import argument, sort_values
 from ..utils_config import Output, check_columns
 from .base import CliArgsMixin, UVTask
-from .instructors import XlsAffectation
+from .instructors import WeekSlots
 from .students import XlsStudentDataMerge
 
 
@@ -226,7 +226,7 @@ class XlsAssignmentGrade(UVTask, CliArgsMixin):
     def setup(self):
         super().setup()
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
-        self.inst_uv = XlsAffectation.target_from(**self.info)
+        self.inst_uv = WeekSlots.target_from(**self.info)
         self.file_dep = [self.inst_uv, self.xls_merge]
 
         self.parse_args()

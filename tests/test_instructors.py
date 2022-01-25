@@ -23,7 +23,7 @@ def test_xls_utp(semester_dir):
 
 
 @pytest.mark.use_tree.with_args("test_xls_student_data")
-def test_xls_affectation(semester_dir):
+def test_week_slots(semester_dir):
     pass
 
 

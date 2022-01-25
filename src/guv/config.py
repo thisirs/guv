@@ -229,7 +229,7 @@ class Settings:
                 "dep_file": os.path.join(self.semester_directory, ".guv.db"),
                 # "check_file_uptodate": "timestamp",
                 "verbosity": 2,
-                "default_tasks": ["xls_affectation"],
+                "default_tasks": ["week_slots"],
             }
             self.load_file(Path(self.conf_dir) / "config.py")
 

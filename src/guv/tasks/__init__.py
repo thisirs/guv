@@ -14,7 +14,7 @@ from .gradebook import XlsGradeBookGroup, XlsGradeBookJury, XlsGradeBookNoGroup
 from .grades import (CsvForUpload, XlsAssignmentGrade, XlsMergeFinalGrade,
                      YamlQCM)
 from .ical import IcalInst
-from .instructors import (AddInstructors, XlsAffectation, XlsInstDetails,
+from .instructors import (AddInstructors, WeekSlots, XlsInstDetails,
                           XlsInstructors, XlsUTP)
 from .moodle import (CsvCreateGroups, CsvGroups, CsvGroupsGroupings,
                      FetchGroupId, HtmlInst, HtmlTable, JsonGroup,

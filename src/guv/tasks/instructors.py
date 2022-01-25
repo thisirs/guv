@@ -122,7 +122,7 @@ class AddInstructors(TaskBase):
         super().setup()
         self.target = self.build_target()
         self.affectations = [
-            (planning, uv, XlsAffectation.target_from(**info))
+            (planning, uv, WeekSlots.target_from(**info))
             for planning, uv, info in selected_uv()
         ]
         self.file_dep = [f for _, _, f in self.affectations]
@@ -167,7 +167,7 @@ class XlsInstDetails(UVTask):
     def setup(self):
         super().setup()
         self.insts = XlsInstructors.target_from()
-        self.inst_uv = XlsAffectation.target_from(**self.info)
+        self.inst_uv = WeekSlots.target_from(**self.info)
         self.target = self.build_target()
         self.file_dep = [self.inst_uv, self.insts]
 
@@ -204,7 +204,7 @@ class XlsUTP(UVTask):
 
     def setup(self):
         super().setup()
-        self.xls = XlsAffectation.target_from(**self.info)
+        self.xls = WeekSlots.target_from(**self.info)
         self.insts = XlsInstructors.target_from()
         self.target = self.build_target()
         self.file_dep = [self.xls, self.insts]
@@ -236,7 +236,7 @@ class XlsUTP(UVTask):
             create_excel_file(out.target, dfs)
 
 
-class XlsAffectation(UVTask):
+class WeekSlots(UVTask):
     """Fichier Excel des créneaux de toutes les UV configurées.
 
     Crée un fichier "planning_hebdomadaire.xlsx" dans chaque dossier

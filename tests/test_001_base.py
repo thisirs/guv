@@ -70,14 +70,14 @@ def test_xls_student_data(semester_dir):
     assert ret == 0
     assert Path(semester_dir.cwd, "effectif.xlsx").is_file()
 
-    ret = semester_dir.run_cli("xls_affectation")
+    ret = semester_dir.run_cli("week_slots")
 
 
 
 # @pytest.mark.use_tree.with_args(test_utc_uv_list_to_csv2)
-# def test_xls_affectation(semester_dir):
+# def test_week_slots(semester_dir):
 #     semester_dir.change_relative_cwd("A2020", "SY02")
-#     ret = semester_dir.run_cli("xls_affectation")
+#     ret = semester_dir.run_cli("week_slots")
 #     assert ret == 0
 #     for uv in ["SY02", "SY09"]:
 #         assert Path(
