@@ -42,7 +42,8 @@ semestre.
 
 On renseigne ensuite dans le fichier `config.py` du semestre, le
 chemin relatif du fichier pdf de la liste officielle des créneaux du
-semestre :
+semestre disponible `ici
+<https://webapplis.utc.fr/ent/services/services.jsf?sid=578>`__ :
 
 ``` python
 CRENEAU_UV = "documents/Creneaux-UV-hybride-prov-V02.pdf"
