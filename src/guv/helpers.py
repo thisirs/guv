@@ -1387,7 +1387,7 @@ class AggregateJury(FileOperation):
         op = Aggregate(
             self.filename,
             on="Courriel",
-            subset=["Note_ECTS"]
+            subset=["Note agrégée", "Note_ECTS"]
         )
         return op.apply(df)
 
