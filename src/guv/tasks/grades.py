@@ -30,11 +30,11 @@ class CsvForUpload(UVTask, CliArgsMixin):
     Examples
     --------
 
-    - Fichier de notes ECTS d'après la colonne ``Note_ECTS`` :
+    - Fichier de notes ECTS d'après la colonne ``Note ECTS`` :
 
       .. code:: bash
 
-         guv csv_for_upload --grade-colname Note_ECTS --ects
+         guv csv_for_upload --grade-colname "Note ECTS" --ects
 
     - Fichier de notes avec commentaire associé d'après la colonne
       ``Correcteur`` :
