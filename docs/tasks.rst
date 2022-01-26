@@ -35,7 +35,7 @@ Fichier iCal
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.instructors.WeekSlotsAll`
+   - :class:`guv.tasks.utc.PlanningSlotsAll`
 
 Fichier trombinoscope
 ---------------------
@@ -61,14 +61,14 @@ Calendrier hebdomadaire
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.instructors.WeekSlots`
+   - :class:`guv.tasks.utc.WeekSlots`
 
 .. autoclass:: guv.tasks.calendar.CalInst
    :exclude-members:
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.instructors.WeekSlotsAll`
+   - :class:`guv.tasks.utc.WeekSlotsAll`
 
 Étudiants
 ---------
@@ -146,7 +146,7 @@ Notes
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.instructors.WeekSlots`
+   - :class:`guv.tasks.utc.WeekSlots`
    - :class:`guv.tasks.students.XlsStudentDataMerge`
 
 Intervenants
@@ -160,7 +160,7 @@ Intervenants
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.instructors.WeekSlots`
+   - :class:`guv.tasks.utc.WeekSlots`
    - :class:`guv.tasks.instructors.XlsInstructors`
 
 Moodle
@@ -184,7 +184,7 @@ Moodle
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.instructors.WeekSlots`
+   - :class:`guv.tasks.utc.WeekSlots`
    - :class:`guv.tasks.instructors.XlsInstructors`
 
 .. autoclass:: guv.tasks.moodle.HtmlTable
@@ -192,14 +192,14 @@ Moodle
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.instructors.WeekSlotsAll`
+   - :class:`guv.tasks.utc.PlanningSlots`
 
 .. autoclass:: guv.tasks.moodle.JsonRestriction
    :exclude-members:
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.utc.CsvAllCourses`
+   - :class:`guv.tasks.utc.PlanningSlots`
 
 .. autoclass:: guv.tasks.moodle.JsonGroup
    :exclude-members:
@@ -229,19 +229,18 @@ besoin d'exécuter car elles sont des dépendances des tâches usuelles.
 
    Cette tâche est une dépendance pour les tâches suivantes :
 
-   - :class:`guv.tasks.instructors.WeekSlotsAll`
-   - :class:`guv.tasks.instructors.WeekSlots`
+   - :class:`guv.tasks.utc.WeekSlots`
 
-.. autoclass:: guv.tasks.utc.CsvAllCourses
+.. autoclass:: guv.tasks.utc.PlanningSlotsAll
    :exclude-members:
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.instructors.WeekSlotsAll`
+   - :class:`guv.tasks.utc.PlanningSlots`
 
    Cette tâche est une dépendance pour les tâches suivantes :
 
-   - :class:`guv.tasks.moodle.JsonRestriction`
+   - :class:`guv.tasks.ical.IcalInst`
 
 .. autoclass:: guv.tasks.students.CsvInscrits
    :exclude-members:
@@ -295,30 +294,26 @@ besoin d'exécuter car elles sont des dépendances des tâches usuelles.
    - :class:`guv.tasks.instructors.XlsUTP`
    - :class:`guv.tasks.moodle.HtmlInst`
 
-.. autoclass:: guv.tasks.instructors.WeekSlotsAll
+.. autoclass:: guv.tasks.utc.WeekSlotsAll
    :exclude-members:
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.instructors.WeekSlots`
-   - :class:`guv.tasks.utc.UtcUvListToCsv`
+   - :class:`guv.tasks.utc.WeekSlots`
 
    Cette tâche est une dépendance pour les tâches suivantes :
 
    - :class:`guv.tasks.ical.IcalInst`
-   - :class:`guv.tasks.moodle.HtmlTable`
-   - :class:`guv.tasks.utc.CsvAllCourses`
-   - :class:`guv.tasks.calendar.CalInst`
 
 .. autoclass:: guv.tasks.instructors.XlsInstDetails
    :exclude-members:
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.instructors.WeekSlots`
+   - :class:`guv.tasks.utc.WeekSlots`
    - :class:`guv.tasks.instructors.XlsInstructors`
 
-.. autoclass:: guv.tasks.instructors.WeekSlots
+.. autoclass:: guv.tasks.utc.WeekSlots
    :exclude-members:
 
    Cette tâche dépend de :
@@ -327,9 +322,11 @@ besoin d'exécuter car elles sont des dépendances des tâches usuelles.
 
    Cette tâche est une dépendance pour les tâches suivantes :
 
-   - :class:`guv.tasks.grades.XlsAssignmentGrade`
+   - :class:`guv.tasks.moodle.HtmlTable`
+   - :class:`guv.tasks.utc.PlanningSlots`
+   - :class:`guv.tasks.utc.WeekSlotsAll`
+   - :class:`guv.tasks.calendar.CalUv`
    - :class:`guv.tasks.moodle.HtmlInst`
-   - :class:`guv.tasks.instructors.WeekSlotsAll`
    - :class:`guv.tasks.instructors.XlsInstDetails`
    - :class:`guv.tasks.instructors.XlsUTP`
-   - :class:`guv.tasks.calendar.CalUv`
+   - :class:`guv.tasks.grades.XlsAssignmentGrade`

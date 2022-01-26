@@ -14,7 +14,6 @@ import guv
 # Load settings from configuration files
 from .logger import logger
 from .config import settings
-from .exceptions import ImproperlyConfigured
 from . import tasks
 from .tasks.base import TaskBase, UVTask, CliArgsMixin
 from .parser import get_parser

@@ -15,9 +15,9 @@ import pytz
 from icalendar import Calendar, Event
 
 from ..utils import argument
-from ..utils_config import Output, compute_slots
-from .base import CliArgsMixin, TaskBase
-from .instructors import WeekSlotsAll
+from ..utils_config import Output
+from .base import CliArgsMixin, TaskBase, UVTask
+from .utc import PlanningSlots, PlanningSlotsAll
 
 
 def ical_events(dataframe, **settings):
@@ -70,7 +70,37 @@ def ical_events(dataframe, **settings):
     return cal.to_ical(sorted=True)
 
 
-class IcalInst(CliArgsMixin, TaskBase):
+class IcalUv(UVTask):
+    """iCal files"""
+
+    target_dir = "documents"
+    target_name = "ics.zip"
+    unique_uv = False
+
+    def setup(self):
+        super().setup()
+        self.planning_slots = PlanningSlots.target_from(**self.info)
+        self.file_dep = [self.planning_slots]
+        self.target = self.build_target()
+
+    def run(self):
+        df = pd.read_excel(self.planning_slots)
+        settings = {"SEMESTER": self.settings.SEMESTER}
+
+        temp_dir = tempfile.mkdtemp()
+        for name, group in df.groupby(["Lib. créneau", "Semaine"]):
+            events = ical_events(group, **settings)
+            output = f'{name}.ics'
+            with open(os.path.join(temp_dir, output), "wb") as fd:
+                fd.write(events)
+
+        with Output(self.target) as out:
+            with zipfile.ZipFile(out.target, "w") as z:
+                for filepath in glob.glob(os.path.join(temp_dir, "*.ics")):
+                    z.write(filepath, os.path.basename(filepath))
+
+
+class IcalInst(TaskBase, CliArgsMixin):
     """Fichier iCal de tous les créneaux par intervenant.
 
     Crée un fichier iCal de tous les créneaux de Cours/TP/TD du ou des
@@ -83,7 +113,7 @@ class IcalInst(CliArgsMixin, TaskBase):
 
     .. code:: bash
 
-       guv ical_inst --plannings P2048 Master2Sem1 --insts "Bob Arctor" "Winston Smith"
+       guv ical_inst --insts "Bob Arctor" "Winston Smith"
 
     """
 
@@ -92,12 +122,6 @@ class IcalInst(CliArgsMixin, TaskBase):
     always_make = True
 
     cli_args = (
-        argument(
-            "-p",
-            "--plannings",
-            nargs="+",
-            help="Liste des plannings à inclure dans les fichiers iCal. Par défaut, ``SELECTED_PLANNINGS`` est utilisé.",
-        ),
         argument(
             "-i",
             "--insts",
@@ -108,60 +132,54 @@ class IcalInst(CliArgsMixin, TaskBase):
 
     def setup(self):
         super().setup()
-        self.week_slots_all = WeekSlotsAll.target_from()
-        self.file_dep = [self.week_slots_all]
+        self.planning_slots_all = PlanningSlotsAll.target_from()
+        self.file_dep = [self.planning_slots_all]
 
         self.parse_args()
-        if self.plannings is None:
-            self.plannings = self.settings.SELECTED_PLANNINGS
-        self.target = self.build_target(name=f"{'_'.join(self.plannings)}")
         if self.insts is None:
             self.insts = [self.settings.DEFAULT_INSTRUCTOR]
+        name = "_".join(i.replace(" ", "_") for i in self.insts)
+        self.target = self.build_target(name=name)
 
     def run(self):
-        tables = [
-            compute_slots(self.week_slots_all, ptype, empty_instructor=False)
-            for ptype in self.plannings
-        ]
-        dfm = pd.concat(tables)
+        df = pd.read_excel(self.planning_slots_all)
 
-        all_insts = dfm["Intervenants"].unique()
+        all_insts = df["Intervenants"].unique()
         if len(self.insts) == 1 and self.insts[0] == "all":
             self.insts = all_insts
 
-        if set(self.insts).issubset(set(all_insts)):
-            settings = {
-                "SEMESTER": self.settings.SEMESTER
-            }
-            if len(self.insts) == 1:
-                inst = self.insts[0]
-                dfm_inst = dfm.loc[dfm["Intervenants"].astype(str) == inst, :]
-                target = self.build_target(
-                    name=f'{inst.replace(" ", "_")}',
-                    plannings=f"{'_'.join(self.plannings)}",
-                    target_name="{name}_{plannings}.ics"
-                )
-                events = ical_events(dfm_inst, **settings)
-                with Output(target) as out:
-                    with open(out.target, "wb") as fd:
-                        fd.write(events)
-            else:
-                temp_dir = tempfile.mkdtemp()
-                for inst in self.insts:
-                    dfm_inst = dfm.loc[dfm["Intervenants"].astype(str) == inst, :]
-                    events = ical_events(dfm_inst, **settings)
-
-                    output = f'{inst.replace(" ", "_")}.ics'
-                    with open(os.path.join(temp_dir, output), "wb") as fd:
-                        fd.write(events)
-
-                with Output(self.target) as out:
-                    with zipfile.ZipFile(out.target, "w") as z:
-                        for filepath in glob.glob(os.path.join(temp_dir, "*.ics")):
-                            z.write(filepath, os.path.basename(filepath))
-
-        else:
+        if not set(self.insts).issubset(set(all_insts)):
             unknown = set(self.insts).difference(all_insts)
             plural = "s" if len(unknown) > 1 else ""
             all_insts = "Aucun" if not all_insts else ', '.join(all_insts)
             raise Exception(f"Intervenant{plural} inconnu{plural}: {', '.join(unknown)}, intervenant(s) enregistré(s): {all_insts}")
+
+        settings = {
+            "SEMESTER": self.settings.SEMESTER
+        }
+
+        if len(self.insts) == 1:
+            inst = self.insts[0]
+            df_inst = df.loc[df["Intervenants"].astype(str) == inst, :]
+            target = self.build_target(
+                name=inst.replace(" ", "_"),
+                target_name="{name}.ics"
+            )
+            events = ical_events(df_inst, **settings)
+            with Output(target) as out:
+                with open(out.target, "wb") as fd:
+                    fd.write(events)
+        else:
+            temp_dir = tempfile.mkdtemp()
+            for inst in self.insts:
+                df_inst = df.loc[df["Intervenants"].astype(str) == inst, :]
+                events = ical_events(df_inst, **settings)
+
+                output = f'{inst.replace(" ", "_")}.ics'
+                with open(os.path.join(temp_dir, output), "wb") as fd:
+                    fd.write(events)
+
+            with Output(self.target) as out:
+                with zipfile.ZipFile(out.target, "w") as z:
+                    for filepath in glob.glob(os.path.join(temp_dir, "*.ics")):
+                        z.write(filepath, os.path.basename(filepath))

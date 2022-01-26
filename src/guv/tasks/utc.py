@@ -19,12 +19,12 @@ fixit(openpyxl)
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.utils.dataframe import dataframe_to_rows
-from ..openpyxl_utils import fill_row, get_cell_in_row
+from ..openpyxl_utils import fill_row, get_cell_in_row, get_range_from_cells
 
 from ..logger import logger
 from ..utils import argument
-from ..utils_config import Output, compute_slots, selected_uv, rel_to_dir, ask_choice
-from .base import CliArgsMixin, TaskBase
+from ..utils_config import Output, selected_uv, rel_to_dir, ask_choice, generate_row
+from .base import CliArgsMixin, TaskBase, UVTask
 
 
 class UtcUvListToCsv(TaskBase):
@@ -191,44 +191,374 @@ class UtcUvListToCsv(TaskBase):
             df.to_csv(out.target, index=False)
 
 
-class CsvAllCourses(CliArgsMixin, TaskBase):
-    "Fichier csv de tous les créneaux du semestre"
+class WeekSlotsAll(TaskBase):
+    """Rassemble les fichiers ``planning_hebdomadaire.xlsx`` de chaque UV/UE.
+
+    Les colonnes sont :
+
+    - Planning
+    - Code enseig.
+    - Jour
+    - Heure début
+    - Heure fin
+    - Locaux
+    - Semaine
+    - Lib. créneau
+    - Intervenants
+    - Responsable
+
+    """
+
+    hidden = True
+    target_dir = "generated"
+    target_name = "planning_hebdomadaire.xlsx"
+
+    def setup(self):
+        super().setup()
+        self.target = self.build_target()
+        self.affectations = [
+            (planning, uv, WeekSlots.target_from(**info))
+            for planning, uv, info in selected_uv()
+        ]
+        self.file_dep = [f for _, _, f in self.affectations]
+
+    def run(self):
+        def func(planning, uv, xls_aff):
+            df = pd.read_excel(xls_aff, engine="openpyxl")
+            df.insert(0, "Code enseig.", uv)
+            df.insert(0, "Planning", planning)
+            return df
+
+        df_affs = [func(planning, uv, xls_aff) for planning, uv, xls_aff in self.affectations]
+        df_aff = pd.concat(df_affs, ignore_index=True)
+        df_aff.Semaine = df_aff.Semaine.astype(object)
+
+        with Output(self.target) as out:
+            df_aff.to_excel(out.target, index=False)
+
+
+class PlanningSlotsAll(TaskBase):
+    """Rassemble les fichiers `plannings.xlsx` de chaque UE/UV."""
 
     hidden = True
     unique_uv = False
     target_dir = "generated"
-    target_name = "UTC_UV_list_créneau.csv"
-    cli_args = (
-        argument(
-            "-p",
-            "--plannings",
-            nargs="+",
-            help="Liste des plannings à considérer",
-        ),
-    )
+    target_name = "planning_all.xlsx"
 
     def setup(self):
         super().setup()
-        from .instructors import WeekSlotsAll
-        self.week_slots_all = WeekSlotsAll.target_from()
-        self.file_dep = [self.week_slots_all]
-
-        self.parse_args()
+        self.planning_slots_files = [
+            (planning, uv, PlanningSlots.target_from(**info))
+            for planning, uv, info in selected_uv()
+        ]
+        self.file_dep = [f for _, _, f in self.planning_slots_files]
         self.target = self.build_target()
-        if self.plannings is None:
-            self.plannings = self.settings.SELECTED_PLANNINGS
 
     def run(self):
-        tables = []
-        for planning_type in self.plannings:
-            uvs = (self.settings.PLANNINGS[planning_type].get('UVS') or
-                   self.settings.PLANNINGS[planning_type].get('UES'))
-            df = compute_slots(self.week_slots_all, planning_type, filter_uvs=uvs)
-            tables.append(df)
+        def func(planning, uv, xls_aff):
+            df = pd.read_excel(xls_aff, engine="openpyxl")
+            return df
 
-        dfm = pd.concat(tables)
+        dfs = [
+            pd.read_excel(f, engine="openpyxl")
+            for _, _, f in self.planning_slots_files
+        ]
+
+        df = pd.concat(dfs, ignore_index=True)
+        df.Semaine = df.Semaine.astype(object)
+
         with Output(self.target) as out:
-            dfm.to_csv(out.target, index=False)
+            df.to_excel(out.target, index=False)
+
+
+class PlanningSlots(UVTask):
+    """Fichier Excel des créneaux sur le planning entier.
+
+    Les colonnes du fichier sont :
+
+    - Code enseig.: SY02
+    - Activité: TP
+    - Jour: Lundi
+    - Heure début: 14:15
+    - Heure fin: 16:15
+    - Semaine: B
+    - Locaux: BF B 113
+    - Lib. créneau: T1
+    - Planning: P2021
+    - Responsable:
+    - Intervenants: Fisher
+    - Responsable: 
+    - date: 2021-03-08
+    - dayname: Lundi
+    - num: B
+    - weekAB: 2
+    - numAB: 1
+    - nweek: 4
+
+"""
+
+    hidden = True
+    unique_uv = False
+    target_name = "planning.xlsx"
+    target_dir = "generated"
+
+    def setup(self):
+        super().setup()
+        self.week_slots = WeekSlots.target_from(**self.info)
+        self.target = self.build_target()
+        self.file_dep = [self.week_slots]
+
+    def run(self):
+        df = pd.read_excel(self.week_slots)
+
+        # DataFrame of days in planning
+        planning_C, planning_D, planning_T = self.create_planning()
+
+        # DataFrames of slots for a week
+        df_C = df.loc[df["Lib. créneau"].str.startswith("C"), :]
+        df_D = df.loc[df["Lib. créneau"].str.startswith("D"), :]
+        df_T = df.loc[df["Lib. créneau"].str.startswith("T"), :]
+
+        df_Cp = pd.merge(df_C, planning_C, how="left", left_on="Jour", right_on="dayname")
+
+        df_Dp = pd.merge(df_D, planning_D, how="left", left_on="Jour", right_on="dayname")
+
+        if df_T["Semaine"].hasnans:
+            df_Tp = pd.merge(df_T, planning_T, how="left", left_on="Jour", right_on="dayname")
+        else:
+            df_Tp = pd.merge(
+                df_T,
+                planning_T,
+                how="left",
+                left_on=["Jour", "Semaine"],
+                right_on=["dayname", "weekAB"],
+            )
+
+        dfp = pd.concat([df_Cp, df_Dp, df_Tp], ignore_index=True)
+
+        with Output(self.target) as out:
+            dfp.to_excel(out.target, index=False)
+
+    def create_planning(self):
+        """Return DataFrame of all days in planning."""
+
+        props = self.settings.PLANNINGS[self.planning]
+
+        if "PL_BEG" not in props:
+            logger.warning(
+                f"La clé `PL_BEG` est absente du planning `{self.planning}` dans la "
+                "variable `PLANNINGS`, utilisation de la variable globale `PL_BEG`."
+            )
+            beg = self.settings.PL_BEG
+        else:
+            beg = props["PL_BEG"]
+
+        if "PL_END" not in props:
+            logger.warning(
+                f"La clé `PL_END` est absente du planning `{self.planning}` dans la "
+                "variable `PLANNINGS`, utilisation de la variable globale `PL_END`."
+            )
+            end = self.settings.PL_END
+        else:
+            end = props["PL_END"]
+
+        if "TURN" not in props:
+            logger.warning(
+                f"La clé `TURN` est absente du planning `{self.planning}` dans la "
+                "variable `PLANNINGS`, utilisation de la variable globale `TURN`."
+            )
+            turn = self.settings.TURN
+        else:
+            turn = props["TURN"]
+
+        skip_days_c = self.get_skip(props, "SKIP_DAYS_C")
+        skip_days_d = self.get_skip(props, "SKIP_DAYS_D")
+        skip_days_t = self.get_skip(props, "SKIP_DAYS_T")
+
+        return (
+            pd.DataFrame(
+                generate_row(beg, end, skip_days_c, turn),
+                columns=["date", "dayname", "num", "weekAB", "numAB", "nweek"],
+            ),
+            pd.DataFrame(
+                generate_row(beg, end, skip_days_d, turn),
+                columns=["date", "dayname", "num", "weekAB", "numAB", "nweek"],
+            ),
+            pd.DataFrame(
+                generate_row(beg, end, skip_days_t, turn),
+                columns=["date", "dayname", "num", "weekAB", "numAB", "nweek"],
+            )
+        )
+
+    def get_skip(self, props, name):
+        if name not in props:
+            logger.warning(
+                f"La clé `{name}` est absente du planning `{self.planning}` dans la "
+                "variable `PLANNINGS`, utilisation de la variable globale `{name}`."
+            )
+            return self.settings[name]
+
+        return props[name]
+
+
+class WeekSlots(UVTask):
+    """Fichier Excel des créneaux hebdomadaires d'une UV.
+
+    Crée un fichier "planning_hebdomadaire.xlsx" dans chaque dossier
+    d'UV/UE. Le fichier est prérempli d'après le fichier pdf des
+    créneaux de toutes les UVs. Si l'UV/UE n'est pas trouvée, un
+    fichier avec en-tête mais sans créneau est créé.
+
+    """
+
+    hidden = True
+    unique_uv = False
+    target_name = "planning_hebdomadaire.xlsx"
+    target_dir = "documents"
+
+    def setup(self):
+        super().setup()
+        self.uvlist_csv = UtcUvListToCsv.target_from()
+        self.target = self.build_target()
+        self.file_dep = [self.uvlist_csv]
+
+    def run(self):
+        output_obj = self.create_excel_file()
+        if output_obj.action != "abort":
+            self.add_second_worksheet()
+
+    def create_excel_file(self):
+        df = pd.read_csv(self.uvlist_csv)
+        self.df_uv = df.loc[df["Code enseig."] == self.uv, :]
+
+        # Test if UV/UE is in listing from UtcUvListToCsv
+        if len(self.df_uv) == 0:
+            creneau_uv = rel_to_dir(self.settings.CRENEAU_UV, self.settings.CWD)
+            logger.warning(
+                "L'UV/UE `%s` n'existe pas dans le fichier `%s`, "
+                "un fichier Excel sans créneau est créé.",
+                self.uv,
+                creneau_uv
+            )
+            columns = [
+                "Activité",
+                "Jour",
+                "Heure début",
+                "Heure fin",
+                "Locaux",
+                "Semaine",
+                "Lib. créneau",
+                "Intervenants",
+                "Responsable",
+            ]
+            df_uv_select = pd.DataFrame(columns=columns)
+        else:
+            df_uv_select = self.df_uv.sort_values(["Lib. créneau", "Semaine"])
+            df_uv_select = df_uv_select.drop(["Code enseig."], axis=1)
+            df_uv_select["Intervenants"] = ""
+            df_uv_select["Responsable"] = ""
+
+        # Write to disk
+        with Output(self.target, protected=True) as out:
+            df_uv_select.to_excel(out.target, sheet_name="Intervenants", index=False)
+
+        # Return decision in Output
+        return out
+
+    def add_second_worksheet(self):
+        N = 10
+        workbook = openpyxl.load_workbook(self.target)
+        worksheet = workbook.create_sheet("Décompte des heures")
+
+        ref_cell = worksheet.cell(2, 2)
+
+        keywords = [
+            "Intervenants",
+            "Statut",
+            "Cours",
+            "TD",
+            "TP",
+            "Heures Cours prév",
+            "Heures TD prév",
+            "Heures TP prév",
+            "UTP",
+            "Heure équivalent TD",
+            "Heure brute"
+        ]
+
+        fill_row(ref_cell, *keywords)
+
+        def get_cell_in_row(ref_cell, *keywords):
+            def func(cell, keyword):
+                if keyword in keywords:
+                    return cell.parent.cell(
+                        row=cell.row,
+                        column=ref_cell.col_idx + keywords.index(keyword)
+                    )
+                else:
+                    raise Exception
+
+            return func
+
+        cell_in_row = get_cell_in_row(ref_cell, *keywords)
+
+        for i in range(N):
+            cell = ref_cell.below(i + 1)
+            elts = [
+                None,
+                None,
+                None,
+                None,
+                None,
+                lambda cell: "=2*16*{}".format(cell_in_row(cell, "Cours").coordinate),
+                lambda cell: "=2*16*{}".format(cell_in_row(cell, "TD").coordinate),
+                lambda cell: "=2*16*{}".format(cell_in_row(cell, "TP").coordinate),
+                lambda cell: "=2*16*2.25*{}+2*16*1.5*{}+2*16*{}*{}".format(
+                    cell_in_row(cell, "Cours").coordinate,
+                    cell_in_row(cell, "TD").coordinate,
+                    cell_in_row(cell, "TP").coordinate,
+                    cell_in_row(cell, "Statut").coordinate,
+                ),
+                lambda cell: "=2/3*{}".format(
+                    cell_in_row(cell, "UTP").coordinate,
+                ),
+                lambda cell: "=2*16*{}+2*16*{}+2*16*{}".format(
+                    cell_in_row(cell, "Cours").coordinate,
+                    cell_in_row(cell, "TD").coordinate,
+                    cell_in_row(cell, "TP").coordinate,
+                )
+            ]
+            fill_row(cell, *elts)
+
+        total_cell = ref_cell.below(N+1)
+        expected_cell = ref_cell.below(N+2)
+
+        n_cours = len(self.df_uv.loc[self.df_uv["Activité"] == "Cours"])
+        n_TD = len(self.df_uv.loc[self.df_uv["Activité"] == "TD"])
+        n_TP = len(self.df_uv.loc[self.df_uv["Activité"] == "TP"])
+
+        first_cours = ref_cell.below().right(2)
+        first_TD = ref_cell.below().right(3)
+        first_TP = ref_cell.below().right(4)
+
+        last_cours = ref_cell.below(N).right(2)
+        last_TD = ref_cell.below(N).right(3)
+        last_TP = ref_cell.below(N).right(4)
+
+        range_ = get_range_from_cells(first_cours, last_cours)
+        total_cell.right(2).text(f"=SUM({range_})")
+
+        range_ = get_range_from_cells(first_TD, last_TD)
+        total_cell.right(3).text(f"=SUM({range_})")
+
+        range_ = get_range_from_cells(first_TP, last_TP)
+        total_cell.right(4).text(f"=SUM({range_})")
+
+        expected_cell.right().text(n_cours)
+        expected_cell.right(2).text(n_TD)
+        expected_cell.right(3).text(n_TP)
+
+        workbook.save(self.target)
 
 
 class UTP(TaskBase):

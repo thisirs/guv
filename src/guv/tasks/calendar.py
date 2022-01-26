@@ -14,7 +14,7 @@ import guv
 from ..utils import argument
 from ..utils_config import render_from_contexts
 from .base import CliArgsMixin, TaskBase, UVTask
-from .instructors import WeekSlotsAll, WeekSlots
+from .utc import WeekSlotsAll, WeekSlots
 
 
 def create_cal_from_dataframe(df, text, target, save_tex=False):

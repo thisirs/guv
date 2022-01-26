@@ -32,12 +32,11 @@ from ..logger import logger
 from ..exceptions import InvalidGroups
 from ..scripts.moodle_date import CondDate, CondGroup, CondOr, CondProfil
 from ..utils import argument, lib_list, make_groups, pformat, sort_values
-from ..utils_config import Output, compute_slots, rel_to_dir, check_columns
+from ..utils_config import Output, rel_to_dir, check_columns
 from .base import CliArgsMixin, TaskBase, UVTask
-from .instructors import (WeekSlotsAll, WeekSlots, XlsInstructors,
-                          create_insts_list, read_xls_details)
+from .instructors import XlsInstructors, create_insts_list, read_xls_details
+from .utc import WeekSlotsAll, WeekSlots, PlanningSlots
 from .students import XlsStudentDataMerge
-from .utc import CsvAllCourses
 
 DATE_FORMAT = "%Y-%m-%d"
 TIME_FORMAT = "%H:%M"
@@ -327,8 +326,8 @@ class HtmlTable(UVTask, CliArgsMixin):
 
     def setup(self):
         super().setup()
-        self.week_slots_all = WeekSlotsAll.target_from()
-        self.file_dep = [self.week_slots_all]
+        self.planning_slots = PlanningSlots.target_from(**self.info)
+        self.file_dep = [self.planning_slots]
 
         self.parse_args()
         AB = "_TP_AB" if self.num_AB else ""
@@ -396,7 +395,7 @@ class HtmlTable(UVTask, CliArgsMixin):
         """Get a Pandas DataFrame from all COURSES"""
 
         # Select wanted slots
-        slots = compute_slots(self.week_slots_all, self.planning, filter_uvs=[self.uv])
+        slots = pd.read_excel(self.planning_slots)
         slots = slots[slots["Activité"].isin(courses)]
 
         if len(slots) == 0:
@@ -530,16 +529,15 @@ class JsonRestriction(UVTask, CliArgsMixin):
 
     def setup(self):
         super().setup()
-        self.all_courses = CsvAllCourses.target_from()
-        self.file_dep = [self.all_courses]
+        self.planning_slots = PlanningSlots.target_from(**self.info)
+        self.file_dep = [self.planning_slots]
 
         self.parse_args()
         AB = "_AB" if self.num_AB else ""
         self.target = self.build_target(AB=AB)
 
     def run(self):
-        df = pd.read_csv(self.all_courses)
-        df = df.loc[df["Code enseig."] == self.uv]
+        df = pd.read_excel(self.planning_slots)
         df = df.loc[df["Activité"] == self.course]
 
         key = "numAB" if self.num_AB else "num"
