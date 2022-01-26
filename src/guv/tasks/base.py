@@ -340,8 +340,8 @@ class ConfigOpt(CliArgsInheritMixin):
     """Add a config option"""
 
     config_argname = "--config"
-    config_help="Fichier de configuration"
-    config_required=True
+    config_help = "Fichier de configuration"
+    config_required = True
 
     def add_arguments(self):
         super().add_arguments()
