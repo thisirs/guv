@@ -72,13 +72,17 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
         self.file_dep = [self.xls_merge]
         self.parse_args()
-        self.target = self.build_target()
+
+        # No targets to avoid circular deps in doit as we probably
+        # want to aggregate target in effectifs.xlsx
+        self.targets = []
 
     def run(self):
         self.data_df = pd.read_excel(self.xls_merge, engine="openpyxl")
         self.create_first_worksheet()
         self.create_other_worksheets()
-        with Output(self.target, protected=True) as out:
+        target = self.build_target()
+        with Output(target, protected=True) as out:
             self.workbook.save(out.target)
 
     def get_sorted_columns(self):
