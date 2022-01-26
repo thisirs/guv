@@ -7,7 +7,6 @@ heures remplacées.
 import os
 import re
 
-import openpyxl
 import pandas as pd
 from pandas.api.types import CategoricalDtype
 

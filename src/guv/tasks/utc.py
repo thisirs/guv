@@ -7,24 +7,22 @@ import os
 import re
 
 import numpy as np
+import openpyxl
 import pandas as pd
 from PyPDF2 import PdfFileReader
 from tabula import read_pdf
-import openpyxl
 
 from ..openpyxl_patched import fixit
 
 fixit(openpyxl)
 
 from openpyxl import Workbook
-from openpyxl.utils import get_column_letter
-from openpyxl.utils.dataframe import dataframe_to_rows
-from ..openpyxl_utils import fill_row, get_cell_in_row, get_range_from_cells
 
 from ..logger import logger
-from ..utils import argument
-from ..utils_config import Output, selected_uv, rel_to_dir, ask_choice, generate_row
-from .base import CliArgsMixin, TaskBase, UVTask
+from ..openpyxl_utils import fill_row, get_cell_in_row, get_range_from_cells
+from ..utils_config import (Output, ask_choice, generate_row, rel_to_dir,
+                            selected_uv)
+from .base import TaskBase, UVTask
 
 
 class UtcUvListToCsv(TaskBase):

@@ -6,7 +6,6 @@ semaine d'une UV ou d'un intervenant.
 import os
 import re
 
-import latex
 import pandas as pd
 
 import guv
@@ -14,7 +13,7 @@ import guv
 from ..utils import argument
 from ..utils_config import render_from_contexts
 from .base import CliArgsMixin, TaskBase, UVTask
-from .utc import WeekSlotsAll, WeekSlots
+from .utc import WeekSlots, WeekSlotsAll
 
 
 def create_cal_from_dataframe(df, text, target, save_tex=False):

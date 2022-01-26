@@ -28,15 +28,15 @@ from bs4 import BeautifulSoup
 
 import guv
 
-from ..logger import logger
 from ..exceptions import InvalidGroups
+from ..logger import logger
 from ..scripts.moodle_date import CondDate, CondGroup, CondOr, CondProfil
 from ..utils import argument, lib_list, make_groups, pformat, sort_values
-from ..utils_config import Output, rel_to_dir, check_columns
+from ..utils_config import Output, check_columns, rel_to_dir
 from .base import CliArgsMixin, TaskBase, UVTask
 from .instructors import XlsInstructors, create_insts_list, read_xls_details
-from .utc import WeekSlotsAll, WeekSlots, PlanningSlots
 from .students import XlsStudentDataMerge
+from .utc import PlanningSlots, WeekSlots
 
 DATE_FORMAT = "%Y-%m-%d"
 TIME_FORMAT = "%H:%M"

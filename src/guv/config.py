@@ -1,16 +1,16 @@
-import sys
 import importlib
 import logging
 import os
+import sys
+import traceback
 from datetime import date
 from pathlib import Path
-import traceback
 
-from schema import And, Or, Schema, SchemaError, Use
 from doit.reporter import ZeroReporter
+from schema import And, Or, Schema, SchemaError, Use
 
-from .logger import logger
 from .exceptions import ImproperlyConfigured
+from .logger import logger
 from .utils import pformat
 
 SEMESTER_VARIABLE = "GUV_SEMESTER_PATH"

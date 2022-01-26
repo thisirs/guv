@@ -1,8 +1,8 @@
+import logging
 import os
 import sys
-import logging
 
-from schema import Schema, Or, And, Use
+from schema import And, Or, Schema, Use
 
 LEVELS = {
     "critical": logging.CRITICAL,

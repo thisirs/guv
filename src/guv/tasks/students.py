@@ -9,7 +9,6 @@ import random
 import re
 
 import numpy as np
-# Patch openpyxl
 import openpyxl
 import pandas as pd
 from unidecode import unidecode
@@ -22,11 +21,11 @@ from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.utils.dataframe import dataframe_to_rows
 
-from ..logger import logger
 from ..exceptions import ImproperlyConfigured
 from ..helpers import Documents
+from ..logger import logger
 from ..utils import argument, sort_values
-from ..utils_config import Output, rel_to_dir, check_columns
+from ..utils_config import Output, check_columns, rel_to_dir
 from .base import CliArgsMixin, UVTask
 
 

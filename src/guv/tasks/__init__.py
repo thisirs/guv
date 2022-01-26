@@ -11,33 +11,15 @@ la classe. Par exemple
 from .attendance import PdfAttendance, PdfAttendanceFull
 from .calendar import CalInst, CalUv
 from .gradebook import XlsGradeBookGroup, XlsGradeBookJury, XlsGradeBookNoGroup
-from .grades import CsvForUpload, XlsAssignmentGrade, XlsMergeFinalGrade, YamlQCM
+from .grades import (CsvForUpload, XlsAssignmentGrade, XlsMergeFinalGrade,
+                     YamlQCM)
 from .ical import IcalInst
 from .instructors import XlsInstDetails, XlsInstructors, XlsUTP
-from .moodle import (
-    CsvCreateGroups,
-    CsvGroups,
-    CsvGroupsGroupings,
-    FetchGroupId,
-    HtmlInst,
-    HtmlTable,
-    JsonGroup,
-    JsonRestriction,
-)
-from .students import (
-    CsvExamGroups,
-    CsvInscrits,
-    CsvMoodleGroups,
-    XlsStudentData,
-    XlsStudentDataMerge,
-    ZoomBreakoutRooms,
-)
+from .moodle import (CsvCreateGroups, CsvGroups, CsvGroupsGroupings,
+                     FetchGroupId, HtmlInst, HtmlTable, JsonGroup,
+                     JsonRestriction)
+from .students import (CsvExamGroups, CsvInscrits, CsvMoodleGroups,
+                       XlsStudentData, XlsStudentDataMerge, ZoomBreakoutRooms)
 from .trombinoscope import PdfTrombinoscope
-from .utc import (
-    UtcUvListToCsv,
-    PlanningSlots,
-    PlanningSlotsAll,
-    WeekSlotsAll,
-    WeekSlots,
-    UTP,
-)
+from .utc import (UTP, PlanningSlots, PlanningSlotsAll, UtcUvListToCsv,
+                  WeekSlots, WeekSlotsAll)

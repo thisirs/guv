@@ -9,9 +9,9 @@ import yaml
 from doit.exceptions import TaskFailed
 
 from ..config import Settings, settings
-from ..logger import logger
 from ..exceptions import (DependentTaskParserError, ImproperlyConfigured,
                           NotUVDirectory)
+from ..logger import logger
 from ..utils import pformat
 from ..utils_config import get_unique_uv, selected_uv
 

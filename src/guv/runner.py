@@ -1,9 +1,9 @@
+import argparse
 import importlib
 import inspect
 import logging
 import os
 import sys
-import argparse
 
 import jinja2
 from doit.cmd_base import NamespaceTaskLoader
@@ -11,12 +11,12 @@ from doit.doit_cmd import DoitMain
 
 import guv
 
+from . import tasks
+from .config import settings
 # Load settings from configuration files
 from .logger import logger
-from .config import settings
-from . import tasks
-from .tasks.base import TaskBase, UVTask, CliArgsMixin
 from .parser import get_parser
+from .tasks.base import CliArgsMixin, TaskBase, UVTask
 
 
 class ModuleTaskLoader(NamespaceTaskLoader):

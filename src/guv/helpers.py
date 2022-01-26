@@ -1,5 +1,5 @@
-import os
 import functools
+import os
 import re
 import textwrap
 from collections.abc import Callable
@@ -8,10 +8,10 @@ from typing import List, Optional, Union
 
 import pandas as pd
 
-from .logger import logger
 from .exceptions import ImproperlyConfigured
+from .logger import logger
 from .utils import check_filename, slugrot_string
-from .utils_config import rel_to_dir, check_columns
+from .utils_config import check_columns, rel_to_dir
 
 
 def slugrot(*columns):

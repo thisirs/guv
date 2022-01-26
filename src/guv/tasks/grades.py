@@ -4,6 +4,7 @@ numériques ou ECTS sur l'ENT.
 """
 
 import os
+
 import numpy as np
 import oyaml as yaml  # Ordered yaml
 import pandas as pd
