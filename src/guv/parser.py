@@ -45,26 +45,6 @@ def generate_tasks(tasks):
             yield ref, task_name, doc, full_doc, []
 
 
-def get_parser_shtab(tasks):
-    import shtab
-
-    file_complete = {
-        "xls_grade_book_no_group": ['--marking-scheme'],
-        "xls_grade_book_group": ['--marking-scheme'],
-        "xls_grade_book_jury": ['--config']
-    }
-
-    parser = get_parser(tasks)
-    subparsers = parser._actions[1]
-    for task, subparser in subparsers._name_parser_map.items():
-        if task in file_complete:
-            for action in subparser._actions:
-                if set(action.option_strings).intersection(set(file_complete[task])):
-                    action.complete = shtab.FILE
-
-    return parser
-
-
 def get_parser(tasks, add_hidden=False):
     """Return an `argparse` parser by iterating on available tasks"""
 

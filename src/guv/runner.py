@@ -17,7 +17,7 @@ from .config import settings
 from .exceptions import ImproperlyConfigured
 from . import tasks
 from .tasks.base import TaskBase, UVTask, CliArgsMixin
-from .parser import get_parser, get_parser_shtab
+from .parser import get_parser
 
 
 class ModuleTaskLoader(NamespaceTaskLoader):
@@ -169,6 +169,28 @@ def run_task(task_name):
     # Doit tasks can handle sys.argv themselves
     logger.debug("Run doit with task only")
     return run_doit(task_loader, [task_name])
+
+
+def get_parser_shtab():
+    import shtab
+
+    task_loader = get_task_loader()
+
+    file_complete = {
+        "xls_grade_book_no_group": ['--marking-scheme'],
+        "xls_grade_book_group": ['--marking-scheme'],
+        "xls_grade_book_jury": ['--config']
+    }
+
+    parser = get_parser(task_loader.tasks)
+    subparsers = parser._actions[1]
+    for task, subparser in subparsers._name_parser_map.items():
+        if task in file_complete:
+            for action in subparser._actions:
+                if set(action.option_strings).intersection(set(file_complete[task])):
+                    action.complete = shtab.FILE
+
+    return parser
 
 
 def main(argv=sys.argv[1:]):
