@@ -1358,6 +1358,7 @@ class AggregateMoodleGrades(FileOperation):
             self.filename,
             left_on="Courriel",
             right_on="Adresse de courriel",
+            kw_read={"na_values": "-"},
             drop=[
                 "Prénom",
                 "Nom",
