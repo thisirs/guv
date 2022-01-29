@@ -60,7 +60,7 @@ _SETTING_LIST = [
     ),
     Setting(
         "ENT_LISTING",
-        schema=Schema(str),
+        schema=Schema(Or(None, str)),
         help="La variable 'ENT_LISTING' est incorrecte : un chemin relatif vers l'effectif de l'UV disponible sur l'ENT est attendu",
     ),
     Setting(
