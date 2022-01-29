@@ -553,9 +553,10 @@ class JsonRestriction(UVTask, CliArgsMixin):
                 else:
                     group = row["Lib. créneau"]
 
-                date = row["date"]
+                date = row["date"].strftime('%Y-%m-%d')
                 hd = row["Heure début"]
                 hf = row["Heure fin"]
+
                 dtd = dt.datetime.strptime(
                     date + "_" + hd, DATE_FORMAT + "_" + TIME_FORMAT
                 )
