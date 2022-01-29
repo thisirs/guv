@@ -255,11 +255,13 @@ class PlanningSlotsAll(TaskBase):
     def run(self):
         def func(planning, uv, xls_aff):
             df = pd.read_excel(xls_aff, engine="openpyxl")
+            df.insert(0, "Code enseig.", uv)
+            df.insert(0, "Planning", planning)
             return df
 
         dfs = [
-            pd.read_excel(f, engine="openpyxl")
-            for _, _, f in self.planning_slots_files
+            func(planning, uv, xls_aff)
+            for planning, uv, xls_aff in self.planning_slots_files
         ]
 
         df = pd.concat(dfs, ignore_index=True)
