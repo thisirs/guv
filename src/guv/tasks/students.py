@@ -187,10 +187,13 @@ class XlsStudentData(UVTask):
         self.file_dep = []
         self.target = self.build_target()
 
-        self.extraction_ENT = os.path.join(
-            self.settings.SEMESTER_DIR, self.uv, self.settings.ENT_LISTING
-        )
-        self.file_dep.append(self.extraction_ENT)
+        if "ENT_LISTING" in self.settings and self.settings.ENT_LISTING:
+            self.extraction_ENT = os.path.join(
+                self.settings.SEMESTER_DIR, self.uv, self.settings.ENT_LISTING
+            )
+            self.file_dep.append(self.extraction_ENT)
+        else:
+            self.extraction_ENT = None
 
         if self.settings.AFFECTATION_LISTING is not None:
             self.csv_UTC = CsvInscrits.target_from(**self.info)
@@ -202,20 +205,27 @@ class XlsStudentData(UVTask):
             self.csv_moodle = os.path.join(
                 self.settings.SEMESTER_DIR, self.uv, self.settings.MOODLE_LISTING
             )
-            self.file_dep += [self.csv_moodle]
+            self.file_dep.append(self.csv_moodle)
         else:
             self.csv_moodle = None
 
     def run(self):
-        if not os.path.exists(self.extraction_ENT):
-            raise Exception("Le fichier '{}' n'existe pas".format(self.extraction_ENT))
+        if self.extraction_ENT is not None:
+            if not os.path.exists(self.extraction_ENT):
+                raise Exception("Le fichier '{}' n'existe pas".format(self.extraction_ENT))
 
-        logger.info("Chargement de données issues de l'ENT")
-        df = self.load_ENT_data()
+            logger.info("Chargement de données issues de l'ENT")
+            df = self.load_ENT_data()
 
-        if self.csv_moodle is not None:
-            logger.info("Ajout des données issues de Moodle")
-            df = self.add_moodle_data(df, self.csv_moodle)
+            if self.csv_moodle is not None:
+                logger.info("Ajout des données issues de Moodle")
+                df_moodle = self.load_moodle_data()
+                df = self.add_moodle_data(df, df_moodle)
+        else:
+            if self.csv_moodle is None:
+                raise Exception("Pas de fichier `ENT_LISTING` ni `MOODLE_LISTING`")
+            logger.info("Chargement des données issues de Moodle")
+            df = self.load_moodle_data()
 
         if self.csv_UTC is not None:
             logger.info("Ajout des affectations aux Cours/TD/TP")
@@ -243,6 +253,87 @@ class XlsStudentData(UVTask):
         df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
 
         return df
+
+    def load_moodle_data(self):
+        fn = self.csv_moodle
+
+        if fn.endswith(".csv"):
+            df = pd.read_csv(fn)
+        elif fn.endswith(".xlsx") or fn.endswith(".xls"):
+            df = pd.read_excel(fn, engine="openpyxl")
+
+        nans = df["Nom"].isna() | df["Prénom"].isna()
+        if sum(nans) != 0:
+            logger.warning(
+                "%d enregistrement(s) ont été ignorés dans le fichier `%s`",
+                sum(nans),
+                rel_to_dir(self.csv_moodle, self.settings.cwd)
+            )
+            df = df.drop(df[nans].index)
+
+        # On laisse tomber les colonnes inintéressantes
+        df = df.drop(
+            ["Institution", "Département", "Dernier téléchargement depuis ce cours"],
+            axis=1,
+        )
+
+        return df
+
+    def add_moodle_data(self, df, df_moodle):
+        """Incorpore les données du fichier extrait de Moodle"""
+
+        # On réalise la jointure à l'aide de l'adresse email s'il
+        # elle est présente
+        if "Courriel" not in df.columns:
+            raise Exception("La colonne `Courriel` n'est pas présente")
+
+        dfm = pd.merge(
+            df,
+            df_moodle,
+            suffixes=("", "_moodle"),
+            how="outer",
+            left_on="Courriel",
+            right_on="Adresse de courriel",
+            indicator=True,
+        )
+
+        dfm_both = dfm.loc[dfm["_merge"] == "both"]
+
+        # On affiche la différence symétrique
+        lo = dfm.loc[dfm["_merge"] == "left_only"]
+        for index, row in lo.iterrows():
+            fullname = row["Nom"] + " " + row["Prénom"]
+            logger.warning("add_moodle_data: `%s` not in Moodle data", fullname)
+
+        ro = dfm.loc[dfm["_merge"] == "right_only"]
+        for index, row in ro.iterrows():
+            fullname = row["Nom_moodle"] + " " + row["Prénom_moodle"]
+            logger.warning("add_moodle_data: `%s` only in Moodle data", fullname)
+
+        dfm = dfm.drop("_merge", axis=1)
+        dfm = dfm.loc[~pd.isnull(dfm.Nom)]
+
+        # On demande à l'utilisateur de réaliser les correspondances
+        for index, row in lo.iterrows():
+            fullname = row["Nom"] + " " + row["Prénom"]
+            logger.info("Recherche de correspondance pour `%s` :", fullname)
+            for i, (index_ro, row_ro) in enumerate(ro.iterrows()):
+                fullname_ro = row_ro["Nom_moodle"] + " " + row_ro["Prénom_moodle"]
+                print(f"  ({i}) {fullname_ro}")
+
+            choice = ask_choice(
+                "Choix ? (entrée si pas de correspondance)",
+                {**{str(i): i for i in range(len(ro.index))}, "": None}
+            )
+
+            if choice:
+                row_merge = lo.loc[index, :].combine_first(ro.iloc[choice, :])
+                ro = ro.drop(index=ro.iloc[[choice]].index)
+                row_merge["_merge"] = "both"
+                dfm_both = dfm_both.append(row_merge)
+
+        dfm_both = dfm_both.drop("_merge", axis=1)
+        return dfm_both
 
     def add_UTC_data(self, df, fn):
         "Incorpore les données Cours/TD/TP des inscrits UTC"
@@ -291,24 +382,19 @@ class XlsStudentData(UVTask):
         # Trying to merge manually lo and ro
         for index, row in lo.iterrows():
             fullname = row["Nom"] + " " + row["Prénom"]
-            logger.info("Trying to find a match for `%s`", fullname)
+            logger.info("Recherche de correspondance pour `%s` :", fullname)
             for i, (index_ro, row_ro) in enumerate(ro.iterrows()):
                 fullname_ro = row_ro["Name"]
-                print(f"({i}) {fullname_ro}")
-            while True:
-                try:
-                    choice = input("Your choice? (enter if no match) ")
-                    if choice and int(choice) not in range(len(ro.index)):
-                        raise ValueError
-                except ValueError:
-                    print("Value error")
-                    continue
-                else:
-                    break
+                print(f"  ({i}) {fullname_ro}")
+
+            choice = ask_choice(
+                "Choix ? (entrée si pas de correspondance)",
+                {**{str(i): i for i in range(len(ro.index))}, "": None}
+            )
 
             if choice:
-                row_merge = lo.loc[index, :].combine_first(ro.iloc[int(choice), :])
-                ro = ro.drop(index=ro.iloc[[int(choice)]].index)
+                row_merge = lo.loc[index, :].combine_first(ro.iloc[choice, :])
+                ro = ro.drop(index=ro.iloc[[choice]].index)
                 row_merge["_merge"] = "both"
                 dfr_clean = dfr_clean.append(row_merge)
             else:
@@ -317,113 +403,6 @@ class XlsStudentData(UVTask):
                 dfr_clean = dfr_clean.append(row_merge)
 
         dfr_clean = dfr_clean.drop(["_merge", "fullname_slug", "Name"], axis=1)
-
-        return dfr_clean
-
-    def add_moodle_data(self, df, fn):
-        """Incorpore les données du fichier extrait de Moodle"""
-
-        if fn.endswith(".csv"):
-            dfm = pd.read_csv(fn)
-        elif fn.endswith(".xlsx") or fn.endswith(".xls"):
-            dfm = pd.read_excel(fn, engine="openpyxl")
-
-        nans = df["Nom"].isna() | df["Prénom"].isna()
-        if len(nans) != 0:
-            logger.warning("%d enregistrement(s) ont été ignorés", len(nans))
-            dfm = dfm.drop(df[nans].index)
-
-        # On laisse tomber les colonnes inintéressantes
-        dfm = dfm.drop(
-            ["Institution", "Département", "Dernier téléchargement depuis ce cours"],
-            axis=1,
-        )
-
-        # On réalise la jointure à l'aide de l'adresse email s'il
-        # elle est présente
-
-        if "Courriel" in df.columns:
-            dfr = pd.merge(
-                df,
-                dfm,
-                suffixes=("", "_moodle"),
-                how="outer",
-                left_on="Courriel",
-                right_on="Adresse de courriel",
-                indicator=True,
-            )
-
-            dfr_clean = dfr.loc[dfr["_merge"] == "both"]
-
-            # On affiche la différence symétrique
-            lo = dfr.loc[dfr["_merge"] == "left_only"]
-            for index, row in lo.iterrows():
-                fullname = row["Nom"] + " " + row["Prénom"]
-                logger.warning("add_moodle_data: `%s` not in Moodle data", fullname)
-
-            ro = dfr.loc[dfr["_merge"] == "right_only"]
-            for index, row in ro.iterrows():
-                fullname = row["Nom_moodle"] + " " + row["Prénom_moodle"]
-                logger.warning("add_moodle_data: `%s` only in Moodle data", fullname)
-
-            dfr = dfr.drop("_merge", axis=1)
-            dfr = dfr.loc[~pd.isnull(dfr.Nom)]
-
-        elif "Name" in df.columns:
-            fullnames = dfm["Nom"] + " " + dfm["Prénom"]
-
-            def slug(e):
-                return unidecode(e.upper()[:23].strip())
-
-            fullnames = fullnames.apply(slug)
-            dfm["fullname_slug"] = fullnames
-
-            dfr = pd.merge(
-                df,
-                dfm,
-                how="outer",
-                left_on="Name",
-                right_on="fullname_slug",
-                indicator=True,
-            )
-
-            lo = dfr.loc[dfr["_merge"] == "left_only"]
-            for index, row in lo.iterrows():
-                fullname = row["Name"]
-                logger.warning("add_moodle_data: `%s` not in Moodle data", fullname)
-
-            ro = dfr.loc[dfr["_merge"] == "right_only"]
-            for index, row in ro.iterrows():
-                fullname = row["Nom"] + " " + row["Prénom"]
-                logger.warning("add_moodle_data: `%s` only in Moodle data", fullname)
-
-        else:
-            raise Exception("Pas de colonne Courriel ou Nom, Prénom")
-
-        # On demande à l'utilisateur de réaliser les correspondances
-        for index, row in lo.iterrows():
-            fullname = row["Nom"] + " " + row["Prénom"]
-            logger.info("Trying to find a match for `%s`", fullname)
-            for i, (index_ro, row_ro) in enumerate(ro.iterrows()):
-                fullname_ro = row_ro["Nom_moodle"] + " " + row_ro["Prénom_moodle"]
-                print(f"({i}) {fullname_ro}")
-            while True:
-                try:
-                    choice = input("Your choice? (enter if no match) ")
-                    if choice and int(choice) not in range(len(ro.index)):
-                        raise ValueError
-                except ValueError:
-                    print("Value error")
-                    continue
-                else:
-                    break
-
-            if choice:
-                row_merge = lo.loc[index, :].combine_first(ro.iloc[int(choice), :])
-                row_merge["_merge"] = "both"
-                dfr_clean = dfr_clean.append(row_merge)
-
-        dfr_clean = dfr_clean.drop("_merge", axis=1)
 
         return dfr_clean
 
