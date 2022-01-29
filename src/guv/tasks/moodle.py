@@ -520,10 +520,13 @@ class JsonRestriction(UVTask, CliArgsMixin):
             "--course",
             default="TP",
             choices=["Cours", "TD", "TP"],
-            help="Type de séances considérées. Par défaut, ``Cours``, ``TD``, ``TP`` sont utilisées.",
+            help="Type de séances considérées parmi ``Cours``, ``TD`` ou ``TP``, par défaut ``TP``.",
         ),
         argument(
-            "-a", "--num-AB", action="store_true", help="Permet de prendre en compte les semaines A/B. Ainsi, la fin d'une séance est à la fin de la semaine B."
+            "-a",
+            "--num-AB",
+            action="store_true",
+            help="Permet de prendre en compte les semaines A/B. Ainsi, la fin d'une séance est à la fin de la semaine B.",
         ),
     )
 
