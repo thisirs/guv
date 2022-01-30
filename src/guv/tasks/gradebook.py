@@ -512,6 +512,9 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
         # Write each block with write_group_block
         ref = ref.right(ms.width).above(2)
 
+        # Freeze the structure
+        gradesheet.freeze_panes = ref.top()
+
         for subname, subgroup in group.groupby(self.subgroup_by):
             if self.order_by is not None:
                 group = group.sort_values(self.order_by)
