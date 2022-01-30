@@ -1,31 +1,20 @@
-from pathlib import Path
 import pytest
+from conftest import path_dependency
 
 
-@pytest.mark.use_tree.with_args("test_xls_student_data")
-def test_ical_inst(semester_dir):
-    semester_dir.change_relative_cwd("A2020")
-
-    ret = semester_dir.run_cli(
-        "ical_inst"
-    )
-    assert ret != 0
-    semester_dir.assert_out_search(
-        "La variable 'DEFAULT_INSTRUCTOR' est incorrecte",
-    )
-
-    semester_dir.change_config(DEFAULT_INSTRUCTOR="Foo")
-    ret = semester_dir.run_cli(
-        "ical_inst"
-    )
-    assert ret != 0
-    semester_dir.assert_out_search(
+@path_dependency("test_week_slots")
+def test_planning_slots0(guv, guvcapfd):
+    guv.cd("A2020")
+    guv("planning_slots").failed()
+    guvcapfd.stdout_search(
         "La variable `PL_BEG` n'a pas pu être trouvée"
     )
 
 
-    semester_dir.change_config(DEFAULT_INSTRUCTOR="Foo")
-    semester_dir.change_config(
+@path_dependency("test_week_slots")
+def test_planning_slots(guv, xlsx):
+    guv.cd("A2020")
+    guv.change_config(
         """
         from datetime import date
         from guv.helpers import skip_week, skip_range
@@ -64,25 +53,27 @@ def test_ical_inst(semester_dir):
         }
         """
     )
-    ret = semester_dir.run_cli(
-        "ical_inst"
-    )
-    assert ret != 0
 
-    semester_dir.write_excel("SY02/documents/planning_hebdomadaire.xlsx", "I2", "Foo")
-    ret = semester_dir.run_cli(
-        "ical_inst"
-    )
-    assert ret == 0
-    semester_dir.assert_out_search(
-        "Écriture du fichier `generated/Foo_A2020.ics`"
-    )
+    guv("planning_slots").succeed()
+    assert (guv.cwd / "SY02" / "generated" / "planning.xlsx").is_file()
+    assert (guv.cwd / "SY09" / "generated" / "planning.xlsx").is_file()
 
-    semester_dir.write_excel("SY09/documents/planning_hebdomadaire.xlsx", "I2", "Foo")
-    ret = semester_dir.run_cli(
-        "ical_inst"
-    )
-    assert ret == 0
-    semester_dir.assert_out_search(
-        "Écrasement du fichier `generated/Foo_A2020.ics`"
+    doc = xlsx(guv.cwd / "SY02" / "generated" / "planning.xlsx")
+    doc.columns(
+        "Activité",
+        "Jour",
+        "Heure début",
+        "Heure fin",
+        "Semaine",
+        "Locaux",
+        "Type créneau",
+        "Lib. créneau",
+        "Intervenants",
+        "Responsable",
+        "date",
+        "dayname",
+        "num",
+        "weekAB",
+        "numAB",
+        "nweek",
     )

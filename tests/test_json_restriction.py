@@ -1,0 +1,10 @@
+import pytest
+from conftest import path_dependency
+
+
+@path_dependency("test_planning_slots")
+def test_json_restriction(guv):
+    guv.cd("A2020", "SY02")
+    guv("json_restriction").succeed()
+
+    assert (guv.cwd / "generated" / "moodle_restrictions_TP.json").is_file()
