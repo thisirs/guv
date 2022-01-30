@@ -160,43 +160,23 @@ class TaskBase:
         return cls.__doc__
 
     @classmethod
+    def create_doit_tasks_aux(cls):
+        # La tâche n'est pas liée à une UV. On vérifie qu'on
+        # est dans un dossier d'UV ou de semestre.
+        if "SEMESTER_DIR" not in settings:
+            raise NotUVDirectory("Pas dans un dossier d'UV/semestre")
+        instance = cls()
+        return instance.to_doit_task()
+
+    @classmethod
     def create_doit_tasks(cls):
         """Called by doit to retrieve a task or a generator"""
 
-        if cls in [TaskBase, UVTask, CliArgsMixin]:
-            return  # avoid create tasks from base class 'Task'
+        if cls in [TaskBase, UVTask]:
+            return  # avoid create tasks from base classes
 
         try:
-            if UVTask not in cls.__mro__:
-                # La tâche n'est pas liée à une UV. On vérifie qu'on
-                # est dans un dossier d'UV ou de semestre.
-                if "SEMESTER_DIR" not in settings:
-                    raise NotUVDirectory("Pas dans un dossier d'UV/semestre")
-                instance = cls()
-                return instance.to_doit_task()
-            elif cls.unique_uv:
-                # La tâche ne s'applique qu'à une seule UV
-                planning, uv, info = get_unique_uv()
-                instance = cls(planning, uv, info)
-                return instance.to_doit_task()
-            else:
-                # La tâche s'applique à un ensemble d'UV
-                # Return a generator but make sure all build_task
-                # functions are executed first.
-                instances = [
-                    cls(planning, uv, info) for planning, uv, info in selected_uv()
-                ]
-                tasks = [
-                    instance.to_doit_task(name=f"{instance.planning}_{instance.uv}")
-                    for instance in instances
-                ]
-
-                if not tasks:
-                    raise ImproperlyConfigured("Aucune UV/UE renseignée dans la variables `UVS`")
-
-                return (t for t in tasks)
-
-        # Raised by get_unique_uv or selected_uv if not in UV/semester directory
+            return cls.create_doit_tasks_aux()
         except (NotUVDirectory, ImproperlyConfigured) as e:
             logger.debug("Task `%s` failed: %s", cls.task_name(), type(e))
             tf = TaskFailed(e.args[0])
@@ -265,6 +245,30 @@ class UVTask(TaskBase):
         if self._settings is None:
             self._settings = Settings(str(Path(settings.SEMESTER_DIR) / self.uv))
         return self._settings
+
+    @classmethod
+    def create_doit_tasks_aux(cls):
+        if cls.unique_uv:
+            # La tâche ne s'applique qu'à une seule UV
+            planning, uv, info = get_unique_uv()
+            instance = cls(planning, uv, info)
+            return instance.to_doit_task()
+        else:
+            # La tâche s'applique à un ensemble d'UV
+            # Return a generator but make sure all build_task
+            # functions are executed first.
+            instances = [
+                cls(planning, uv, info) for planning, uv, info in selected_uv()
+            ]
+            tasks = [
+                instance.to_doit_task(name=f"{instance.planning}_{instance.uv}")
+                for instance in instances
+            ]
+
+            if not tasks:
+                raise ImproperlyConfigured("Aucune UV/UE renseignée dans la variables `UVS`")
+
+            return (t for t in tasks)
 
 
 class CliArgsMixin:
