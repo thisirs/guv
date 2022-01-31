@@ -51,7 +51,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
 
     uptodate = True
     target_dir = "generated"
-    target_name = "attendance_{group}"
+    target_name = "{title}_{group}"
     template_file = "attendance.tex.jinja2"
 
     cli_args = (
@@ -113,7 +113,10 @@ class PdfAttendance(UVTask, CliArgsMixin):
         self.file_dep = [self.xls_merge]
 
         self.parse_args()
-        self.target = self.build_target(group=(self.group or "all"))
+        self.target = self.build_target(
+            group=(self.group or "all"),
+            title=self.title.replace(" ", "_")
+        )
         latex_env = LaTeXEnvironment()
         self.template = latex_env.get_template(self.template_file)
 
