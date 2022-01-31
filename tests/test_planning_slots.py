@@ -71,9 +71,7 @@ def test_planning_slots(guv, xlsx):
         "Intervenants",
         "Responsable",
         "date",
-        "dayname",
         "num",
-        "weekAB",
         "numAB",
         "nweek",
     )
