@@ -89,7 +89,8 @@ class TaskBase:
         """Build a doit task from current instance"""
 
         doit_task = {"doc": self.doc(), "basename": self.task_name(), "verbosity": 2}
-        doit_task.update(kwargs)
+        if "name" in kwargs:
+            doit_task["name"] = kwargs["name"]
 
         try:
             self.setup()
@@ -125,15 +126,13 @@ class TaskBase:
             if isinstance(uptodate, bool):
                 doit_task["uptodate"] = [uptodate]
             elif isinstance(uptodate, list):
-                doit_task["uptodate"] = [
-                    config_changed(
-                        {
-                            var: getattr(self, var.lower())
-                            for var in uptodate
-                            if hasattr(self, var)
-                        }
-                    )
-                ]
+                prefix = f"{uv}_" if "uv" in kwargs else ""
+                props = {
+                    f"{prefix}{var.lower()}": getattr(self, var.lower())
+                    for var in uptodate
+                    if hasattr(self, var)
+                }
+                doit_task["uptodate"] = [config_changed(props)]
             else:
                 raise RuntimeError("Unsupported value for uptodate", uptodate)
 
@@ -262,7 +261,10 @@ class UVTask(TaskBase):
                 cls(planning, uv, info) for planning, uv, info in selected_uv()
             ]
             tasks = [
-                instance.to_doit_task(name=f"{instance.planning}_{instance.uv}")
+                instance.to_doit_task(
+                    name=f"{instance.planning}_{instance.uv}",
+                    uv=instance.uv
+                )
                 for instance in instances
             ]
 
