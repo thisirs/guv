@@ -289,9 +289,7 @@ class PlanningSlots(UVTask):
     - Intervenants: Fisher
     - Responsable: 
     - date: 2021-03-08
-    - dayname: Lundi
-    - num: B
-    - weekAB: 2
+    - num: 1
     - numAB: 1
     - nweek: 4
 
@@ -307,98 +305,66 @@ class PlanningSlots(UVTask):
         self.week_slots = WeekSlots.target_from(**self.info)
         self.target = self.build_target()
         self.file_dep = [self.week_slots]
+        self.set_vars()
+
+    def set_vars(self):
+        props = self.settings.PLANNINGS[self.planning]
+
+        for name in self.uptodate:
+            if name not in props:
+                logger.warning(
+                    f"La clé `{name}` est absente du planning `{self.planning}` dans la "
+                    f"variable `PLANNINGS`, utilisation de la variable globale `{name}`."
+                )
+                value = self.settings[name]
+            else:
+                value = props[name]
+
+            setattr(self, name.lower(), value)
 
     def run(self):
         df = pd.read_excel(self.week_slots)
-
-        # DataFrame of days in planning
-        planning_C, planning_D, planning_T = self.create_planning()
 
         # DataFrames of slots for a week
         df_C = df.loc[df["Lib. créneau"].str.startswith("C"), :]
         df_D = df.loc[df["Lib. créneau"].str.startswith("D"), :]
         df_T = df.loc[df["Lib. créneau"].str.startswith("T"), :]
 
-        df_Cp = pd.merge(df_C, planning_C, how="left", left_on="Jour", right_on="dayname")
+        # DataFrame of days in planning
+        planning_C = pd.DataFrame(
+            generate_row(self.pl_beg, self.pl_end, self.skip_days_c, self.turn),
+            columns=["date", "Jour", "num", "Semaine", "numAB", "nweek"],
+        )
+        planning_D = pd.DataFrame(
+            generate_row(self.pl_beg, self.pl_end, self.skip_days_d, self.turn),
+            columns=["date", "Jour", "num", "Semaine", "numAB", "nweek"],
+        )
+        planning_T = pd.DataFrame(
+            generate_row(self.pl_beg, self.pl_end, self.skip_days_t, self.turn),
+            columns=["date", "Jour", "num", "Semaine", "numAB", "nweek"],
+        )
 
-        df_Dp = pd.merge(df_D, planning_D, how="left", left_on="Jour", right_on="dayname")
+        planning_C = planning_C.drop("Semaine", axis=1)
+        df_Cp = pd.merge(df_C, planning_C, how="left", on="Jour")
+
+        planning_D = planning_D.drop("Semaine", axis=1)
+        df_Dp = pd.merge(df_D, planning_D, how="left", on="Jour")
 
         if df_T["Semaine"].hasnans:
-            df_Tp = pd.merge(df_T, planning_T, how="left", left_on="Jour", right_on="dayname")
+            planning_T = planning_T.drop("Semaine", axis=1)
+            df_Tp = pd.merge(df_T, planning_T, how="left", on="Jour")
         else:
             df_Tp = pd.merge(
                 df_T,
                 planning_T,
                 how="left",
-                left_on=["Jour", "Semaine"],
-                right_on=["dayname", "weekAB"],
+                on=["Jour", "Semaine"],
             )
 
         dfp = pd.concat([df_Cp, df_Dp, df_Tp], ignore_index=True)
 
         with Output(self.target) as out:
             dfp.to_excel(out.target, index=False)
-
-    def create_planning(self):
-        """Return DataFrame of all days in planning."""
-
-        props = self.settings.PLANNINGS[self.planning]
-
-        if "PL_BEG" not in props:
-            logger.warning(
-                f"La clé `PL_BEG` est absente du planning `{self.planning}` dans la "
-                "variable `PLANNINGS`, utilisation de la variable globale `PL_BEG`."
-            )
-            beg = self.settings.PL_BEG
-        else:
-            beg = props["PL_BEG"]
-
-        if "PL_END" not in props:
-            logger.warning(
-                f"La clé `PL_END` est absente du planning `{self.planning}` dans la "
-                "variable `PLANNINGS`, utilisation de la variable globale `PL_END`."
-            )
-            end = self.settings.PL_END
-        else:
-            end = props["PL_END"]
-
-        if "TURN" not in props:
-            logger.warning(
-                f"La clé `TURN` est absente du planning `{self.planning}` dans la "
-                "variable `PLANNINGS`, utilisation de la variable globale `TURN`."
-            )
-            turn = self.settings.TURN
-        else:
-            turn = props["TURN"]
-
-        skip_days_c = self.get_skip(props, "SKIP_DAYS_C")
-        skip_days_d = self.get_skip(props, "SKIP_DAYS_D")
-        skip_days_t = self.get_skip(props, "SKIP_DAYS_T")
-
-        return (
-            pd.DataFrame(
-                generate_row(beg, end, skip_days_c, turn),
-                columns=["date", "dayname", "num", "weekAB", "numAB", "nweek"],
-            ),
-            pd.DataFrame(
-                generate_row(beg, end, skip_days_d, turn),
-                columns=["date", "dayname", "num", "weekAB", "numAB", "nweek"],
-            ),
-            pd.DataFrame(
-                generate_row(beg, end, skip_days_t, turn),
-                columns=["date", "dayname", "num", "weekAB", "numAB", "nweek"],
-            )
-        )
-
-    def get_skip(self, props, name):
-        if name not in props:
-            logger.warning(
-                f"La clé `{name}` est absente du planning `{self.planning}` dans la "
-                "variable `PLANNINGS`, utilisation de la variable globale `{name}`."
-            )
-            return self.settings[name]
-
-        return props[name]
 
 
 class WeekSlots(UVTask):
