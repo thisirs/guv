@@ -7,6 +7,7 @@ from pathlib import Path
 
 import yaml
 from doit.exceptions import TaskFailed
+from doit.tools import config_changed
 
 from ..config import Settings, settings
 from ..exceptions import (DependentTaskParserError, ImproperlyConfigured,
@@ -96,34 +97,45 @@ class TaskBase:
             # Set actions as failed if failed to set up
             tf = TaskFailed(str(e))
             doit_task["actions"] = [lambda: tf]
-
-            # Add attrs even if failed to still have dependencies and
-            # targets
-            doit_task.update(
-                dict(
-                    (a, getattr(self, a))
-                    for a in ["targets", "file_dep", "uptodate", "verbosity"]
-                    if a in dir(self)
-                )
-            )
-            if "targets" not in doit_task:
-                if hasattr(self, "target"):
-                    doit_task["targets"] = [self.target]
-
             logger.debug("Task `%s` failed: %s", self.task_name(), type(e))
-            return doit_task
+        else:
+            # Catch any exception an action might trigger
+            def action():
+                try:
+                    return self.run()
+                except Exception as e:
+                    if settings.DEBUG <= logging.DEBUG:
+                        raise e from e
+                    msg = " ".join(str(o) for o in e.args)
+                    return TaskFailed(msg)
+
+            doit_task["actions"] = [action]
 
         doit_task.update(
             dict(
                 (a, getattr(self, a))
-                for a in ["targets", "file_dep", "uptodate", "verbosity"]
+                for a in ["targets", "file_dep", "verbosity"]
                 if a in dir(self)
             )
         )
 
-        # Allow always_make attr
-        if hasattr(self, "always_make"):
-            doit_task["uptodate"] = [False]
+        # Allow uptodate attr
+        if hasattr(self, "uptodate"):
+            uptodate = self.uptodate
+            if isinstance(uptodate, bool):
+                doit_task["uptodate"] = [uptodate]
+            elif isinstance(uptodate, list):
+                doit_task["uptodate"] = [
+                    config_changed(
+                        {
+                            var: getattr(self, var.lower())
+                            for var in uptodate
+                            if hasattr(self, var)
+                        }
+                    )
+                ]
+            else:
+                raise RuntimeError("Unsupported value for uptodate", uptodate)
 
         # Allow targets attr specified as single
         # target in target attr
@@ -131,20 +143,9 @@ class TaskBase:
             if hasattr(self, "target"):
                 doit_task["targets"] = [self.target]
 
-        # Catch any exception an action might trigger
-        def action():
-            try:
-                return self.run()
-            except Exception as e:
-                if settings.DEBUG <= logging.DEBUG:
-                    raise e from e
-                msg = " ".join(str(o) for o in e.args)
-                return TaskFailed(msg)
-
-        doit_task["actions"] = [action]
-
         def format_task(doit_task):
-            return "\n".join(f"{key}: {value}" for key, value in doit_task.items())
+            return "\n".join(f"{key}: {value}" for key, value in doit_task.items()
+                             if key not in ["doc"])
 
         logger.debug("Task properties are:")
         logger.debug(format_task(doit_task))

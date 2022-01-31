@@ -46,7 +46,7 @@ class CsvForUpload(UVTask, CliArgsMixin):
 
     """
 
-    always_make = True
+    uptodate = True
     target_dir = "generated"
     target_name = "{grade_colname}_ENT.csv"
     cli_args = (
@@ -222,7 +222,7 @@ class XlsAssignmentGrade(UVTask, CliArgsMixin):
     target_dir = "generated"
     target_name = "{exam}.xlsx"
     cli_args = (argument("-e", "--exam", required=True, help="Nom de l'examen"),)
-    always_make = True
+    uptodate = True
 
     def setup(self):
         super().setup()

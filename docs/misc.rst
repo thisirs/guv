@@ -65,7 +65,7 @@ classe ``TaskBase``. Les attributs de classe utiles sont :
 
 -  ``target_name``: le nom de la cible créée
 
--  ``always_make``: la ou les cibles doivent doit être reconstruites
+-  ``uptodate``: la ou les cibles doivent doit être reconstruites
    même si les dépendances n'ont pas changé
 
    .. code:: python
@@ -95,7 +95,7 @@ hériter de la classe ``UVTask``. Les attributs de classe utiles sont :
 
 -  ``target_name``: le nom du fichier créé
 
--  ``always_make``: la ou les cibles doivent doit être reconstruites
+-  ``uptodate``: la ou les cibles doivent doit être reconstruites
    même si les dépendances n'ont pas changé
 
    Comme il s'agit d'une tâche spécifique à une UV, les attributs ``uv``

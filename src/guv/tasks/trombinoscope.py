@@ -46,7 +46,7 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
 
     """
 
-    always_make = True
+    uptodate = True
     target_dir = "generated"
     template_file = "trombinoscope_template_2.tex.jinja2"
     cli_args = (

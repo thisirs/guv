@@ -299,6 +299,7 @@ class PlanningSlots(UVTask):
     unique_uv = False
     target_name = "planning.xlsx"
     target_dir = "generated"
+    uptodate = ["PL_BEG", "PL_END", "TURN", "SKIP_DAYS_C", "SKIP_DAYS_D", "SKIP_DAYS_T"]
 
     def setup(self):
         super().setup()

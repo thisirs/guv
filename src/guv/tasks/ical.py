@@ -119,7 +119,7 @@ class IcalInst(TaskBase, CliArgsMixin):
 
     target_dir = "generated"
     target_name = "{name}_ics.zip"
-    always_make = True
+    uptodate = True
 
     cli_args = (
         argument(

@@ -49,7 +49,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
 
     """
 
-    always_make = True
+    uptodate = True
     target_dir = "generated"
     target_name = "attendance_{group}"
     template_file = "attendance.tex.jinja2"
@@ -229,7 +229,7 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
     target_dir = "generated"
     target_name = "attendance_{group}_full"
     template_file = "attendance_name_full.tex.jinja2"
-    always_make = True
+    uptodate = True
     cli_args = (
         argument(
             "-g",

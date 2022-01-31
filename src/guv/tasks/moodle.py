@@ -512,7 +512,7 @@ class JsonRestriction(UVTask, CliArgsMixin):
 
     target_dir = "generated"
     target_name = "moodle_restrictions_{course}{AB}.json"
-    always_make = True
+    uptodate = True
 
     cli_args = (
         argument(
@@ -831,7 +831,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
 
     """
 
-    always_make = True
+    uptodate = True
     target_dir = "generated"
     target_name = "{title}_groups.csv"
     cli_args = (
