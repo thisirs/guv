@@ -162,6 +162,9 @@ class Settings:
     def __contains__(self, name):
         return name in self.settings and self.settings[name] is not None
 
+    def __getitem__(self, name):
+        return getattr(self, name)
+
     def SELECTED_PLANNINGS_default(self):
         return list(self.PLANNINGS.keys())
 
