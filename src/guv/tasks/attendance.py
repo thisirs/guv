@@ -230,10 +230,15 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
     """
 
     target_dir = "generated"
-    target_name = "attendance_{group}_full"
+    target_name = "{title}_{group}_full"
     template_file = "attendance_name_full.tex.jinja2"
     uptodate = True
     cli_args = (
+        argument(
+            "--title",
+            default="Feuille de présence",
+            help="Spécifie un titre qui sera utilisé dans les feuilles de présence."
+        ),
         argument(
             "-g",
             "--group",
@@ -249,8 +254,7 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
         argument(
             "-t",
             "--template",
-            default="{group_name}{number}",
-            help="Modèle permettant de fixer le nom des séances successives dans la feuille de présence. Par défaut on a ``{group_name}{number}``. Les seuls mots-clés supportés sont ``group_name`` et ``number``.",
+            help="Modèle permettant de fixer le nom des séances successives dans la feuille de présence. Par défaut on a ``S{number}``. Le seul mot-clé supporté est ``number``.",
         ),
         argument(
             "--save-tex",
@@ -265,14 +269,20 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
         self.file_dep = [self.xls_merge]
         self.parse_args()
-        self.target = self.build_target()
-        self.kwargs = {**self.info, "nslot": self.slots, "ctype": self.group}
+        self.target = self.build_target(title=self.title.replace(" ", "_"), group=self.group or "all")
 
     def run(self):
         df = pd.read_excel(self.xls_merge, engine="openpyxl")
-        check_columns(
-            df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
-        )
+        if self.group is not None:
+            check_columns(
+                df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
+            )
+
+        if self.template is None:
+            self.template = "S{number}"
+
+        if self.group is None and "{group_name}" in self.template:
+            raise Exception("Pas de groupe mais `{group_name}` présent dans le modèle")
 
         contexts = self.generate_contexts(df)
 
@@ -283,12 +293,12 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
     def generate_contexts(self, df):
         base_context = {
             "slots_name": [
-                pformat(self.template, group_name=self.group, number=i+1)
+                pformat(self.template, number=i+1)
                 for i in range(self.slots)
             ],
             **self.info,
             "nslot": self.slots,
-            "ctype": self.group,
+            "title": self.title
         }
 
         key = (lambda x: "all") if self.group is None else self.group
