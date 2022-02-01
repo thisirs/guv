@@ -3,11 +3,12 @@ from conftest import path_dependency
 
 
 @path_dependency("test_planning_slots")
-def test_planning_slots_all(guv, xlsx):
+def test_planning_slots_all(guv, xlsx, guvcapfd):
     guv.cd("A2020")
     assert not (guv.cwd / "generated" / "planning_all.xlsx").exists()
     guv("planning_slots_all").succeed()
     assert (guv.cwd / "generated" / "planning_all.xlsx").is_file()
+    guvcapfd.stdout_search(".  planning_slots_all")
 
     doc = xlsx(guv.cwd / "generated" / "planning_all.xlsx")
     doc.columns(
