@@ -10,20 +10,6 @@ UVS = [{{ UVS }}]
 
 from datetime import date
 
-PLANNINGS = {
-    "{{ SEMESTER }}": {
-        "UVS": [{{ UVS }}],
-        "PL_BEG": date(2022, 2, 21),
-        "PL_END": date(2022, 6, 25)
-    }
-}
-
-# Liste des plannings activés
-SELECTED_PLANNINGS = ["{{ SEMESTER }}"]
-
-# Personne par défaut pour les fichiers iCal et les calendriers
-DEFAULT_INSTRUCTOR = None
-
 # Journées changées en d'autres jours
 TURN = {
     date(2022, 5, 24): "Jeudi",
@@ -46,3 +32,25 @@ final = skip_range(date(2022, 6, 16), date(2022, 6, 25))
 SKIP_DAYS_C = ferie + vacances_printemps + median + final
 SKIP_DAYS_D = ferie + vacances_printemps + debut + median + final
 SKIP_DAYS_T = ferie + vacances_printemps + debut + final
+
+PLANNINGS = {
+    "{{ SEMESTER }}": {
+        "UVS": [{{ UVS }}],
+        "PL_BEG": date(2022, 2, 21),
+        "PL_END": date(2022, 6, 25),
+        "SKIP_DAYS_C": ferie + vacances_printemps + median + final,
+        "SKIP_DAYS_D": ferie + vacances_printemps + debut + median + final,
+        "SKIP_DAYS_T": ferie + vacances_printemps + debut + final,
+        "TURN": {
+            date(2022, 5, 24): "Jeudi",
+            date(2022, 6, 8): "Lundi"
+        }
+    }
+}
+
+# Liste des plannings activés
+SELECTED_PLANNINGS = ["{{ SEMESTER }}"]
+
+# Personne par défaut pour les fichiers iCal et les calendriers
+DEFAULT_INSTRUCTOR = None
+
