@@ -10,6 +10,7 @@ def test_utc_uv_list_to_csv0(guv, guvcapfd):
         "La variable `CRENEAU_UV` doit être définie"
     )
 
+
 @path_dependency("test_createsemester", cache=True)
 def test_utc_uv_list_to_csv(guv, guvcapfd):
     "Test de traitement du fichier pdf des créneaux"
