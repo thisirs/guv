@@ -33,14 +33,16 @@ On commence par créer l'arborescence requise (voir
 Les variables ont été renseignées dans le fichier ``config.py`` du
 semestre.
 
-On renseigne ensuite dans le fichier ``config.py`` du dossier
-``A2021``, le chemin relatif du fichier pdf de la liste officielle des
-créneaux du semestre. Si on le place dans le sous-dossier
-``documents``, on écrit alors :
+On renseigne ensuite dans le fichier `config.py` du semestre, le
+chemin relatif du fichier pdf de la liste officielle des créneaux du
+semestre disponible `ici
+<https://webapplis.utc.fr/ent/services/services.jsf?sid=578>`__. Si on
+le place dans le sous-dossier ``documents``, on écrit :
 
 .. code:: python
 
    CRENEAU_UV = "documents/Creneaux-UV-hybride-prov-V02.pdf"
 
 On peut maintenant exécuter ``guv cal_uv`` dans le dossier ``A2021``
-pour générer les calendriers hebdomadaires des UV.
+pour générer les calendriers hebdomadaires des UV ou bien ``guv
+ical_uv`` pour générer des fichiers iCal de tous les créneaux.
