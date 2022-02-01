@@ -75,8 +75,6 @@ class _TestPath:
 
         cache = marker.kwargs.get("cache", False)
 
-        print(f"Name of test is {self.name}")
-
         old_path = self.retrieve_path(self.name)
         if cache and old_path and Path(old_path).exists():
             self.copy_tree(old_path, str(path))
@@ -85,7 +83,6 @@ class _TestPath:
 
         if dep is not None:
             dep_path = self.retrieve_path(dep)
-            print(dep_path, dep)
             if not dep_path or not Path(dep_path).exists():
                 pytest.skip(f"Unable to copy dependent path named {dep} from {dep_path} to {str(path)}")
             self.copy_tree(dep_path, str(path))
@@ -94,7 +91,6 @@ class _TestPath:
         return path
 
     def save_path(self, path):
-        print(f"Saving {str(path)} at key {self.name}")
         cache = self.request.config.cache
         cache.set(self.name, str(path))
 
