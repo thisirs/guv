@@ -40,9 +40,9 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
     - Trombinoscope par groupe de TP avec des groupes de projet dans
       chaque feuille :
 
-    .. code:: bash
+      .. code:: bash
 
-       guv pdf_trombinoscope --group TP --subgroup Projet
+         guv pdf_trombinoscope --group TP --subgroup Projet
 
     """
 
