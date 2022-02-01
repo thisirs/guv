@@ -49,7 +49,7 @@ def ical_events(dataframe, **settings):
         activity = row["Activité"]
         numAB = row["numAB"]
 
-        if week is not np.nan:
+        if isinstance(week, str):
             summary = f"{uv} {activity}{numAB} {week}"
         else:
             summary = f"{uv} {activity}{num}"
@@ -71,7 +71,7 @@ def ical_events(dataframe, **settings):
 
 
 class IcalUv(UVTask):
-    """iCal files"""
+    """Fichiers iCal de tous les créneaux sur le semestre."""
 
     target_dir = "documents"
     target_name = "ics.zip"
@@ -85,10 +85,14 @@ class IcalUv(UVTask):
 
     def run(self):
         df = pd.read_excel(self.planning_slots)
+        df.insert(0, "Code enseig.", self.uv)
+        df.insert(0, "Planning", self.planning)
+
         settings = {"SEMESTER": self.settings.SEMESTER}
 
         temp_dir = tempfile.mkdtemp()
-        for name, group in df.groupby(["Lib. créneau", "Semaine"]):
+        key = df["Lib. créneau"] + df["Semaine"].fillna("")
+        for name, group in df.groupby(key):
             events = ical_events(group, **settings)
             output = f'{name}.ics'
             with open(os.path.join(temp_dir, output), "wb") as fd:
