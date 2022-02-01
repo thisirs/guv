@@ -18,6 +18,7 @@ fixit(openpyxl)
 
 from openpyxl import Workbook
 
+from ..exceptions import ImproperlyConfigured
 from ..logger import logger
 from ..openpyxl_utils import fill_row, get_cell_in_row, get_range_from_cells
 from ..utils_config import (Output, ask_choice, generate_row, rel_to_dir,
@@ -299,19 +300,35 @@ class PlanningSlots(UVTask):
     unique_uv = False
     target_name = "planning.xlsx"
     target_dir = "generated"
-    uptodate = ["PL_BEG", "PL_END", "TURN", "SKIP_DAYS_C", "SKIP_DAYS_D", "SKIP_DAYS_T"]
 
     def setup(self):
         super().setup()
         self.week_slots = WeekSlots.target_from(**self.info)
         self.target = self.build_target()
         self.file_dep = [self.week_slots]
-        self.set_vars()
+
+        # Set uptodate value without raising Exception of displaying
+        # warnings
+        self.uptodate = {}
+        try:
+            props = self.settings.PLANNINGS[self.planning]
+        except ImproperlyConfigured:
+            props = {}
+
+        for name in ["PL_BEG", "PL_END", "TURN", "SKIP_DAYS_C", "SKIP_DAYS_D", "SKIP_DAYS_T"]:
+            try:
+                if name in props:
+                    value = props[name]
+                else:
+                    value = self.settings[name]
+                self.uptodate[self.uv + "_" + name.lower()] = value
+            except ImproperlyConfigured:
+                self.uptodate[self.uv + "_" + name.lower()] = None
 
     def set_vars(self):
         props = self.settings.PLANNINGS[self.planning]
 
-        for name in self.uptodate:
+        for name in ["PL_BEG", "PL_END", "TURN", "SKIP_DAYS_C", "SKIP_DAYS_D", "SKIP_DAYS_T"]:
             if name not in props:
                 logger.warning(
                     f"La clé `{name}` est absente du planning `{self.planning}` dans la "
@@ -324,6 +341,7 @@ class PlanningSlots(UVTask):
             setattr(self, name.lower(), value)
 
     def run(self):
+        self.set_vars()
         df = pd.read_excel(self.week_slots)
 
         # DataFrames of slots for a week

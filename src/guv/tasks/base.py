@@ -4,6 +4,7 @@ import os
 import re
 import sys
 from pathlib import Path
+import datetime
 
 import yaml
 from doit.exceptions import TaskFailed
@@ -125,13 +126,16 @@ class TaskBase:
             uptodate = self.uptodate
             if isinstance(uptodate, bool):
                 doit_task["uptodate"] = [uptodate]
-            elif isinstance(uptodate, list):
-                prefix = f"{uv}_" if "uv" in kwargs else ""
-                props = {
-                    f"{prefix}{var.lower()}": getattr(self, var.lower())
-                    for var in uptodate
-                    if hasattr(self, var)
-                }
+            elif isinstance(uptodate, dict):
+                def serialize(obj):
+                    if isinstance(obj, datetime.date):
+                        return obj.isoformat()
+                    if isinstance(obj, dict):
+                        return {serialize(k): serialize(v) for k, v in obj.items()}
+                    if isinstance(obj, list):
+                        return [serialize(e) for e in obj]
+                    return obj
+                props = {k: serialize(v) for k, v in uptodate.items()}
                 doit_task["uptodate"] = [config_changed(props)]
             else:
                 raise RuntimeError("Unsupported value for uptodate", uptodate)
