@@ -165,7 +165,7 @@ class UtcUvListToCsv(TaskBase):
         df['Semaine'].replace("^semaine ([AB])$", "\\1", regex=True, inplace=True)
 
         # Semaine ni A ni B pour les TP: demander
-        uvs = [uv for _, uv, _ in selected_uv(all=True)]
+        uvs = self.settings.UVS
 
         def fix_semaineAB(group):
             if group.name[1] == 'TP' and len(group.index) > 1:
