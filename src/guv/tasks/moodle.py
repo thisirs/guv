@@ -541,10 +541,14 @@ class JsonRestriction(UVTask, CliArgsMixin):
 
     def run(self):
         df = pd.read_excel(self.planning_slots)
-        df = df.loc[df["Activité"] == self.course]
+        df_c = df.loc[df["Activité"] == self.course]
+
+        if len(df_c) == 0:
+            courses = ", ".join("`%s`" % e for e in df["Activité"].unique())
+            raise Exception("Aucun créneau de type `%s`. Choisir parmi %s" % (self.course, courses))
 
         key = "numAB" if self.num_AB else "num"
-        gb = df.groupby(key)
+        gb = df_c.groupby(key)
 
         def get_beg_end_date_each(num, df):
             def group_beg_end(row):
