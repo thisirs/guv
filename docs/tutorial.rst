@@ -22,6 +22,7 @@ sont accessibles :
 - :class:`guv.tasks.gradebook.XlsGradeBookGroup`
 - :class:`guv.tasks.gradebook.XlsGradeBookNoGroup`
 - :class:`guv.tasks.grades.YamlQCM`
+- :class:`guv.tasks.ical.IcalUv`
 - :class:`guv.tasks.moodle.CsvCreateGroups`
 - :class:`guv.tasks.moodle.CsvGroups`
 - :class:`guv.tasks.moodle.JsonGroup`

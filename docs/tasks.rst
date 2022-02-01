@@ -37,6 +37,13 @@ Fichier iCal
 
    - :class:`guv.tasks.utc.PlanningSlotsAll`
 
+.. autoclass:: guv.tasks.ical.IcalUv
+   :exclude-members:
+
+   Cette tâche dépend de :
+
+   - :class:`guv.tasks.utc.PlanningSlots`
+
 Fichier trombinoscope
 ---------------------
 
@@ -231,6 +238,20 @@ besoin d'exécuter car elles sont des dépendances des tâches usuelles.
 
    - :class:`guv.tasks.utc.WeekSlots`
 
+.. autoclass:: guv.tasks.utc.PlanningSlots
+   :exclude-members:
+
+   Cette tâche dépend de :
+
+   - :class:`guv.tasks.utc.WeekSlots`
+
+   Cette tâche est une dépendance pour les tâches suivantes :
+
+   - :class:`guv.tasks.utc.PlanningSlotsAll`
+   - :class:`guv.tasks.moodle.HtmlTable`
+   - :class:`guv.tasks.moodle.JsonRestriction`
+   - :class:`guv.tasks.ical.IcalUv`
+
 .. autoclass:: guv.tasks.utc.PlanningSlotsAll
    :exclude-members:
 
@@ -303,7 +324,7 @@ besoin d'exécuter car elles sont des dépendances des tâches usuelles.
 
    Cette tâche est une dépendance pour les tâches suivantes :
 
-   - :class:`guv.tasks.ical.IcalInst`
+   - :class:`guv.tasks.ical.CalInst`
 
 .. autoclass:: guv.tasks.instructors.XlsInstDetails
    :exclude-members:
@@ -322,7 +343,6 @@ besoin d'exécuter car elles sont des dépendances des tâches usuelles.
 
    Cette tâche est une dépendance pour les tâches suivantes :
 
-   - :class:`guv.tasks.moodle.HtmlTable`
    - :class:`guv.tasks.utc.PlanningSlots`
    - :class:`guv.tasks.utc.WeekSlotsAll`
    - :class:`guv.tasks.calendar.CalUv`
