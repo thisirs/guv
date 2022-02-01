@@ -550,6 +550,12 @@ class JsonRestriction(UVTask, CliArgsMixin):
         key = "numAB" if self.num_AB else "num"
         gb = df_c.groupby(key)
 
+        if "MOODLE_GROUPS" not in self.settings or not self.settings.MOODLE_GROUPS:
+            logger.warning(
+                "La variable `MOODLE_GROUPS` n'est pas spécifiée (voir tâche `FetchGroupId`). "
+                "Elle est nécessaire pour avoir des contraintes liées aux groupes Moodle"
+            )
+
         def get_beg_end_date_each(num, df):
             def group_beg_end(row):
                 if self.num_AB:
@@ -622,9 +628,7 @@ class JsonRestriction(UVTask, CliArgsMixin):
                         func(g, b, e, p, q) for g, b, e in gbe
                     ]
 
-                if "MOODLE_GROUPS" not in self.settings or not self.settings.MOODLE_GROUPS:
-                    logger.warning("Plusieurs groupes de Cours/TD/TP et MOODLE_GROUPS non spécifié")
-                else:
+                if "MOODLE_GROUPS" in self.settings and self.settings.MOODLE_GROUPS:
                     info = dict(groups=self.settings.MOODLE_GROUPS)
                     no_group.update({
                         "visible si: t <= B par groupe": CondOr(before_beg_group).to_PHP(**info),
