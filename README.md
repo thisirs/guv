@@ -49,8 +49,9 @@ semestre disponible `ici
 CRENEAU_UV = "documents/Creneaux-UV-hybride-prov-V02.pdf"
 ```
 
-On peut maintenant exécuter `guv cal_uv` dans le dossier du semestre
-pour générer les calendriers hebdomadaires des UV.
+On peut maintenant exécuter ``guv cal_uv`` dans le dossier ``A2021``
+pour générer les calendriers hebdomadaires des UV ou bien ``guv
+ical_uv`` pour générer des fichiers iCal de tous les créneaux.
 
 Voir la documentation [ici](https://syrousse.gitlab.utc.fr/guv/) pour
 plus de détails.
