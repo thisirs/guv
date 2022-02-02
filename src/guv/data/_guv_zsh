@@ -23,13 +23,13 @@ _shtab_guv_commands_() {
     "html_inst:Génère la description des intervenants pour Moodle."
     "html_table:Table HTML des Cours\/TD\/TP à charger sur Moodle"
     "ical_inst:Fichier iCal de tous les créneaux par intervenant."
-    "json_group:Fichier json des restrictions d\'accès aux ressources sur Moodle par addresse email"
+    "ical_uv:Fichiers iCal de tous les créneaux sur le semestre."
+    "json_group:Fichier json des restrictions d\'accès aux ressources sur Moodle par adresse courriel"
     "json_restriction:Fichier json de restrictions d\'accès aux ressources Moodle basées sur le début\/fin des séances"
-    "maggle_teams:Crée un fichier csv prêt à charger sur django-maggle pour faire des groupes"
     "pdf_attendance:Fichier pdf de feuilles de présence."
     "pdf_attendance_full:Fichier zip de feuilles de présence nominatives par groupe et par semestre."
     "pdf_trombinoscope:Fichier PDF des trombinoscopes par groupes et\/ou sous-groupes."
-    "week_slots:Fichier Excel des créneaux de toutes les UV configurées."
+    "utp:"
     "xls_assignment_grade:Création d\'un fichier Excel pour remplissage des notes par les intervenants"
     "xls_grade_book_group:Fichier Excel de notes par groupe."
     "xls_grade_book_jury:Fichier Excel pour la gestion d\'un jury d\'UV"
@@ -47,10 +47,12 @@ _shtab_guv_cal_inst=(
   "(- :)"{-h,--help}"[show this help message and exit]"
   {-p,--plannings}"[Spécifie les UV\/UE concernées via les plannings. Par défaut, toutes les UV\/UE des plannings \`\`SELECTED_PLANNINGS\`\` sont concernées.]:plannings:"
   {-i,--insts}"[Spécifie la liste des intervenants pour qui créer le calendrier. Par défaut, la liste se limite à \`\`DEFAULT_INSTRUCTOR\`\`.]:insts:"
+  "--save-tex[Permet de laisser les fichiers .tex générés pour modification éventuelle.]"
 )
 
 _shtab_guv_cal_uv=(
   "(- :)"{-h,--help}"[show this help message and exit]"
+  "--save-tex[Permet de laisser les fichiers .tex générés pour modification éventuelle.]"
 )
 
 _shtab_guv_createsemester=(
@@ -70,9 +72,9 @@ _shtab_guv_csv_create_groups=(
   {-n,--num-groups}"[Nombre de groupes à créer (par sous-groupes si spécifié)]:num_groups:"
   {-s,--group-size}"[Taille des groupes \: binomes, trinomes ou plus]:group_size:"
   {-p,--proportions}"[Liste de proportions pour créer les groupes]:proportions:"
-  {-t,--template}"[Modèle pour donner des noms aux groupes]:template:"
+  {-t,--template}"[Modèle pour donner des noms aux groupes avec \`\{title\}\`, \`\{grouping_name\}\` ou \`\{group_name\}\`]:template:"
   {-l,--names}"[Liste de mots clés pour construire les noms des groupes]:names:"
-  {-o,--ordered}"[Ordonner la liste des étudiants par ordre alphabétique]"
+  {-o,--ordered}"[Ordonner la liste des étudiants par ordre alphabétique ou par colonnes]:ordered:"
   {-g,--global}"[Ne pas remettre à zéro la suite des noms de groupes entre chaque groupement]"
   {-r,--random}"[Permuter aléatoirement les noms de groupes]"
   "--other-groups[Liste de colonnes de groupes déjà formés qui ne doivent plus être reformés. Valable uniquement pour les binomes et trinomes.]:other_groups:"
@@ -139,8 +141,11 @@ _shtab_guv_html_table=(
 
 _shtab_guv_ical_inst=(
   "(- :)"{-h,--help}"[show this help message and exit]"
-  {-p,--plannings}"[Liste des plannings à inclure dans les fichiers iCal. Par défaut, \`\`SELECTED_PLANNINGS\`\` est utilisé.]:plannings:"
   {-i,--insts}"[Liste des intervenants à inclure dans les fichiers iCal. Par défaut, \`\`DEFAULT_INSTRUCTOR\`\` est utilisé. Mettre \`\`all\`\` pour tous les intervenants.]:insts:"
+)
+
+_shtab_guv_ical_uv=(
+  "(- :)"{-h,--help}"[show this help message and exit]"
 )
 
 _shtab_guv_json_group=(
@@ -150,13 +155,8 @@ _shtab_guv_json_group=(
 
 _shtab_guv_json_restriction=(
   "(- :)"{-h,--help}"[show this help message and exit]"
-  {-c,--course}"[Type de séances considérées. Par défaut, \`\`Cours\`\`, \`\`TD\`\`, \`\`TP\`\` sont utilisées.]:course:(Cours TD TP)"
+  {-c,--course}"[Type de séances considérées parmi \`\`Cours\`\`, \`\`TD\`\` ou \`\`TP\`\`, par défaut \`\`TP\`\`.]:course:(Cours TD TP)"
   {-a,--num-AB}"[Permet de prendre en compte les semaines A\/B. Ainsi, la fin d\'une séance est à la fin de la semaine B.]"
-)
-
-_shtab_guv_maggle_teams=(
-  "(- :)"{-h,--help}"[show this help message and exit]"
-  ":Le nom de la colonne des groupes:"
 )
 
 _shtab_guv_pdf_attendance=(
@@ -173,9 +173,10 @@ _shtab_guv_pdf_attendance=(
 
 _shtab_guv_pdf_attendance_full=(
   "(- :)"{-h,--help}"[show this help message and exit]"
+  "--title[Spécifie un titre qui sera utilisé dans les feuilles de présence.]:title:"
   {-g,--group}"[Permet de spécifier une colonne de groupes pour faire des feuilles de présence par groupes.]:group:"
   {-n,--slots}"[Permet de spécifier le nombre de séances pour le semestre c\'est à dire le nombre de colonne dans la feuille de présence.]:slots:"
-  {-t,--template}"[Modèle permettant de fixer le nom des séances successives dans la feuille de présence. Par défaut on a \`\`\{group_name\}\{number\}\`\`. Les seuls mots-clés supportés sont \`\`group_name\`\` et \`\`number\`\`.]:template:"
+  {-t,--template}"[Modèle permettant de fixer le nom des séances successives dans la feuille de présence. Par défaut on a \`\`S\{number\}\`\`. Le seul mot-clé supporté est \`\`number\`\`.]:template:"
   "--save-tex[Permet de laisser les fichiers .tex générés pour modification éventuelle.]"
 )
 
@@ -186,7 +187,7 @@ _shtab_guv_pdf_trombinoscope=(
   "--save-tex[Permet de laisser les fichiers .tex générés pour modification éventuelle.]"
 )
 
-_shtab_guv_week_slots=(
+_shtab_guv_utp=(
   "(- :)"{-h,--help}"[show this help message and exit]"
 )
 
@@ -261,13 +262,13 @@ case $words[1] in
   html_inst) _arguments $_shtab_guv_html_inst ;;
   html_table) _arguments $_shtab_guv_html_table ;;
   ical_inst) _arguments $_shtab_guv_ical_inst ;;
+  ical_uv) _arguments $_shtab_guv_ical_uv ;;
   json_group) _arguments $_shtab_guv_json_group ;;
   json_restriction) _arguments $_shtab_guv_json_restriction ;;
-  maggle_teams) _arguments $_shtab_guv_maggle_teams ;;
   pdf_attendance) _arguments $_shtab_guv_pdf_attendance ;;
   pdf_attendance_full) _arguments $_shtab_guv_pdf_attendance_full ;;
   pdf_trombinoscope) _arguments $_shtab_guv_pdf_trombinoscope ;;
-  week_slots) _arguments $_shtab_guv_week_slots ;;
+  utp) _arguments $_shtab_guv_utp ;;
   xls_assignment_grade) _arguments $_shtab_guv_xls_assignment_grade ;;
   xls_grade_book_group) _arguments $_shtab_guv_xls_grade_book_group ;;
   xls_grade_book_jury) _arguments $_shtab_guv_xls_grade_book_jury ;;
