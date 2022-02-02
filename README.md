@@ -24,13 +24,9 @@ cd guv
 pip install .
 ```
 
-Un fichier de complétion de commandes est également disponible (voir
-[ici](#fichier-de-complétion)).
-
 ## Exemple rapide
 
-On commence par créer l'arborescence requise (voir
-[ici](#création-de-larborescence) pour plus de détails) :
+On commence par créer l'arborescence requise :
 
 ``` shell
 guv createsemester P2021 --uv SY02 SY09
@@ -42,8 +38,8 @@ semestre.
 
 On renseigne ensuite dans le fichier `config.py` du semestre, le
 chemin relatif du fichier pdf de la liste officielle des créneaux du
-semestre disponible `ici
-<https://webapplis.utc.fr/ent/services/services.jsf?sid=578>`__ :
+semestre disponible
+[ici](https://webapplis.utc.fr/ent/services/services.jsf?sid=578) :
 
 ``` python
 CRENEAU_UV = "documents/Creneaux-UV-hybride-prov-V02.pdf"
