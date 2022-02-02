@@ -16,6 +16,7 @@ sont accessibles :
 
 - :class:`guv.tasks.attendance.PdfAttendanceFull`
 - :class:`guv.tasks.attendance.PdfAttendance`
+- :class:`guv.tasks.calendar.CalUv`
 - :class:`guv.tasks.grades.CsvForUpload`
 - :class:`guv.tasks.grades.XlsAssignmentGrade`
 - :class:`guv.tasks.gradebook.XlsGradeBookJury`
@@ -23,6 +24,7 @@ sont accessibles :
 - :class:`guv.tasks.gradebook.XlsGradeBookNoGroup`
 - :class:`guv.tasks.grades.YamlQCM`
 - :class:`guv.tasks.ical.IcalUv`
+- :class:`guv.tasks.moodle.HtmlTable`
 - :class:`guv.tasks.moodle.CsvCreateGroups`
 - :class:`guv.tasks.moodle.CsvGroups`
 - :class:`guv.tasks.moodle.JsonGroup`
@@ -462,7 +464,5 @@ Dès lors, on peut utiliser les tâches suivantes :
 - :class:`guv.tasks.instructors.XlsUTP`
 - :class:`guv.tasks.calendar.CalInst`
 - :class:`guv.tasks.ical.IcalInst`
-- :class:`guv.tasks.calendar.CalUv`
 - :class:`guv.tasks.moodle.HtmlInst`
-- :class:`guv.tasks.moodle.HtmlTable`
 
