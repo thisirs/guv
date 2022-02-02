@@ -99,104 +99,6 @@ spécifiques à un semestre :
 - chemin vers le fichier des créneaux fourni par l'administration, via
   la variable ``CRENEAU_UV``,
 - liste des plannings via la variable ``PLANNINGS``,
-- information de calendrier avec les variables ``TURN``,
-  ``SKIP_DAYS_C``, ``SKIP_DAYS_D``, ``SKIP_DAYS_T``
-
-Si l'arborescence a été créée avec la tâche ``createsemester`` et un
-nom de semestre reconnu par **guv** (de type A2021, P2022,...) les
-variables ``PLANNINGS``, ``TURN``, ``SKIP_DAYS_C``, ``SKIP_DAYS_D``,
-``SKIP_DAYS_T`` sont automatiquement renseignées. Si en plus les
-dossiers d'UV ont été créés avec l'option ``--uv``, la variable
-``UVS`` est aussi renseignée et on peut sauter les deux sections
-suivantes.
-
-Configuration des plannings avec ``PLANNINGS``
-++++++++++++++++++++++++++++++++++++++++++++++
-
-Les plannings sont des périodes de temps sur un même semestre. Par
-défaut, le planning ingénieur, qui porte le même nom que le semestre
-est utilisé. Il est possible de configurer d'autres périodes de temps
-pour un même semestre (pour gérer les trimestres des masters par
-exemple).
-
-La déclaration des plannings est contrôlée par la variable
-``PLANNINGS`` qui est un dictionnaire dont les clés sont le nom des
-plannings à paramétrer et les valeurs un dictionnaire de
-caractéristiques.
-
-Les caractéristiques nécessaires sont la liste des UV gérées par ce
-planning, la date de début et la date de fin du planning.
-
-Si l'arboresence a été créée avec la tâche ``createsemester`` et que
-le nom du semestre est reconnu, la variable ``PLANNINGS`` est
-automatiquement remplie.
-
-Par exemple, on peut avoir la définition suivante :
-
-.. code:: python
-
-   from datetime import date
-   PLANNINGS = {
-       "P2020": {
-           "UVS": ["SY09", "SY02"],
-           "PL_BEG": date(2020, 2, 24),
-           "PL_END": date(2020, 6, 27)
-       }
-   }
-
-Configuration du planning ingénieur
-+++++++++++++++++++++++++++++++++++
-
-Afin de créer les créneaux de cours, il faut renseigner quelques
-paramètres pour créer le planning ingénieur. Les dates de début et de
-fin de période sont déjà renseignées dans la variable ``PLANNINGS``.
-Si l'arboresence a été créée avec la tâche ``createsemester`` et que
-le nom du semestre est reconnu, les autres variables du planning
-ingénieur sont automatiquement remplies.
-
-Sinon, il faut préciser les jours qui sont transformés en d'autres
-jours pour tenir compte des jours fériés ou journées spéciales. Ils
-sont listés dans la variable ``TURN``. Par exemple, on peut spécifier
-
-.. code:: python
-
-   from datetime import date
-   TURN = {
-       date(2020, 5, 4): 'Vendredi',
-       date(2020, 5, 12): 'Vendredi',
-       date(2020, 5, 20): 'Jeudi',
-       date(2020, 6, 4): 'Lundi'
-   }
-
-Le 4 mai et le 12 mai sont donc un vendredi, le 20 mai est un jeudi et
-le 4 juin est un lundi.
-
-Il faut également renseigner les variables ``SKIP_DAYS_C``,
-``SKIP_DAYS_D`` et ``SKIP_DAYS_T`` qui contiennent respectivement la
-liste des jours où il n'y a pas de cours, TD, TP (première semaine,
-vacances, median, final...). Des fonctions d'aide telles que
-``skip_week``, ``skip_range`` sont mises à disposition.
-
-.. code:: python
-
-   from guv.helpers import skip_week, skip_range
-
-   # Première semaine sans TD/TP
-   debut = skip_week(PLANNINGS["P2020"]['PL_BEG'])
-
-   # Semaine des médians
-   median = skip_range(date(2020, 4, 27), date(2020, 5, 4))
-
-   # Vacances
-   vacances_printemps = skip_range(date(2020, 4, 13), date(2020, 4, 18))
-
-   # Semaine des finals
-   final = skip_range(date(2020, 6, 19), date(2020, 6, 27))
-
-   # Jours sautés pour Cours/TD/TP
-   SKIP_DAYS_C = ferie + vacances_printemps + median + final
-   SKIP_DAYS_D = ferie + vacances_printemps + debut + median + final
-   SKIP_DAYS_T = ferie + vacances_printemps + debut + final
 
 .. _conf_creneau:
 
@@ -209,6 +111,71 @@ l'administration et disponible `ici
 <https://webapplis.utc.fr/ent/services/services.jsf?sid=578>`__. Il
 faut le télécharger et renseigner son chemin relatif dans la variable
 ``CRENEAU_UV`` afin que **guv** ait connaissance des créneaux des UV.
+
+Configuration des plannings avec ``PLANNINGS``
+++++++++++++++++++++++++++++++++++++++++++++++
+
+Si l'arborescence a été créée avec la tâche ``createsemester`` et un
+nom de semestre reconnu par **guv** (de type A2021, P2022,...) les
+variables ``PLANNINGS`` est automatiquement renseignées. Si en plus
+les dossiers d'UV ont été créés avec l'option ``--uv``, la variable
+``UVS`` est aussi renseignée et on peut sauter cette section.
+
+Les plannings sont des périodes de temps sur un même semestre. Par
+défaut, le planning ingénieur, qui porte le même nom que le semestre
+est utilisé. Il est possible de configurer d'autres périodes de temps
+pour un même semestre (pour gérer les trimestres des masters par
+exemple).
+
+La déclaration des plannings est contrôlée par la variable
+``PLANNINGS`` qui est un dictionnaire dont les clés sont le nom des
+plannings à paramétrer et les valeurs un dictionnaire de
+caractéristiques.
+
+Les caractéristiques nécessaires pour définir un planning sont :
+
+- ``UVS`` : la liste des UV gérées par ce planning,
+- ``PL_BEG`` : la date de début de planning
+- ``PL_END`` : la date de fin de planning
+- ``SKIP_DAYS_C`` : la liste des jours où il n'y a pas de cours
+- ``SKIP_DAYS_D`` : la liste des jours où il n'y a pas de TD
+- ``SKIP_DAYS_T`` : la liste des jours où il n'y a pas de TP
+- ``TURN`` : un dictionnaire des jours transformés en d'autres jours
+  (jours fériés ou journées spéciales).
+
+En utilisant les fonctions d'aide ``skip_range`` et ``skip_week``, on
+peut définir par exemple :
+
+.. code:: python
+
+   from guv.helpers import skip_range
+   from datetime import date
+
+   ferie = [
+       date(2022, 5, 26),
+       date(2022, 6, 6),
+       date(2022, 4, 18)
+   ]
+   debut = skip_range(date(2022, 2, 21), date(2022, 2, 26))
+   vacances_printemps = skip_range(date(2022, 4, 11), date(2022, 4, 16))
+   median = skip_range(date(2022, 4, 19), date(2022, 4, 25))
+   final = skip_range(date(2022, 6, 16), date(2022, 6, 25))
+
+   PLANNINGS = {
+       "P2022": {
+           "UVS": ["SY02", "SY09"],
+           "PL_BEG": date(2022, 2, 21),
+           "PL_END": date(2022, 6, 25),
+           "SKIP_DAYS_C": ferie + vacances_printemps + median + final,
+           "SKIP_DAYS_D": ferie + vacances_printemps + debut + median + final,
+           "SKIP_DAYS_T": ferie + vacances_printemps + debut + final,
+           "TURN": {
+               date(2022, 5, 24): "Jeudi",
+               date(2022, 6, 8): "Lundi"
+           }
+       }
+   }
+
 
 .. _conf-UV:
 
