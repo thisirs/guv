@@ -48,9 +48,9 @@ préremplis on peut exécuter la commande suivante :
 
 .. code:: bash
 
-   guv createsemester A2021 --uv SY02 SY09
+   guv createsemester P2022 --uv SY02 SY09
 
-qui va créer un dossier de semestre nommé ``A2021`` contenant un
+qui va créer un dossier de semestre nommé ``P2022`` contenant un
 fichier de configuration prérempli ``config.py`` (voir
 :ref:`conf-semester` pour sa configuration) ainsi que des
 sous-dossiers ``generated`` et ``documents`` et deux autres dossiers
@@ -61,7 +61,7 @@ configuration prérempli également nommé ``config.py`` (voir
 
 .. code:: shell
 
-   A2021
+   P2022
    ├── config.py
    ├── documents
    ├── generated
@@ -80,7 +80,7 @@ dossier de semestre:
 
 .. code:: bash
 
-   cd A2021
+   cd P2022
    guv createuv SY19 AOS1
 
 Pour que l'UV soit effectivement prise en compte par **guv**, il faut
@@ -103,7 +103,7 @@ spécifiques à un semestre :
   ``SKIP_DAYS_C``, ``SKIP_DAYS_D``, ``SKIP_DAYS_T``
 
 Si l'arborescence a été créée avec la tâche ``createsemester`` et un
-nom de semestre reconnu par **guv** (de type A2021, P2021,...) les
+nom de semestre reconnu par **guv** (de type A2021, P2022,...) les
 variables ``PLANNINGS``, ``TURN``, ``SKIP_DAYS_C``, ``SKIP_DAYS_D``,
 ``SKIP_DAYS_T`` sont automatiquement renseignées. Si en plus les
 dossiers d'UV ont été créés avec l'option ``--uv``, la variable

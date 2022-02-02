@@ -27,8 +27,8 @@ On commence par créer l'arborescence requise (voir
 
 .. code:: bash
 
-   guv createsemester A2021 --uv SY02 SY09
-   cd A2021
+   guv createsemester P2022 --uv SY02 SY09
+   cd P2022
 
 Les variables ont été renseignées dans le fichier ``config.py`` du
 semestre.
@@ -43,6 +43,6 @@ le place dans le sous-dossier ``documents``, on écrit :
 
    CRENEAU_UV = "documents/Creneaux-UV-hybride-prov-V02.pdf"
 
-On peut maintenant exécuter ``guv cal_uv`` dans le dossier ``A2021``
+On peut maintenant exécuter ``guv cal_uv`` dans le dossier ``P2022``
 pour générer les calendriers hebdomadaires des UV ou bien ``guv
 ical_uv`` pour générer des fichiers iCal de tous les créneaux.

@@ -49,7 +49,7 @@ semestre disponible `ici
 CRENEAU_UV = "documents/Creneaux-UV-hybride-prov-V02.pdf"
 ```
 
-On peut maintenant exécuter ``guv cal_uv`` dans le dossier ``A2021``
+On peut maintenant exécuter ``guv cal_uv`` dans le dossier ``P2022``
 pour générer les calendriers hebdomadaires des UV ou bien ``guv
 ical_uv`` pour générer des fichiers iCal de tous les créneaux.
 
