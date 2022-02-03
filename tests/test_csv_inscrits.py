@@ -6,7 +6,7 @@ from conftest import path_dependency
 def test_csv_inscrits(guv, guvcapfd):
     "Test de traitement du fichier AFFECTATION_LISTING"
 
-    guv.cd("A2020", "SY02")
+    guv.cd(guv.semester, "SY02")
     guv.copy_file("inscrits.raw", "documents")
     guv.change_config(AFFECTATION_LISTING="documents/inscrits.raw")
     guv("csv_inscrits").succeed()

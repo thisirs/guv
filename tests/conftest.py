@@ -125,6 +125,10 @@ class Guv:
         self.cwd = base_dir
         self.request = request
 
+    @property
+    def semester(self):
+        return self.request.param["semester"]
+
     def __call__(self, cli_args="", input=None):
         cmdargs = ["guv"] + cli_args.split()
         p = subprocess.run(cmdargs, cwd=self.cwd, input=input, encoding="utf-8")
@@ -175,7 +179,7 @@ class Guv:
 
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="class", params=[{"semester": "A2020"}])
 def guv(test_path, request):
     return Guv(test_path, request)
 

@@ -6,7 +6,7 @@ from conftest import path_dependency
 class TestWeekSlots:
     @pytest.mark.parametrize("uv", ["SY02", "SY09"])
     def test_week_slots(self, guv, xlsx, uv):
-        guv.cd("A2020")
+        guv.cd(guv.semester)
         guv().succeed()
         assert (guv.cwd / uv / "documents" / "planning_hebdomadaire.xlsx").is_file()
 

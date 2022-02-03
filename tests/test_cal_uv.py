@@ -4,7 +4,7 @@ from conftest import path_dependency
 
 @path_dependency("test_week_slots")
 def test_cal_uv(guv, guvcapfd):
-    guv.cd("A2020", "SY02")
+    guv.cd(guv.semester, "SY02")
     guv("cal_uv").succeed()
     assert (guv.cwd / "documents" / "calendrier_hebdomadaire.pdf").is_file()
     guvcapfd.stdout_search(".  cal_uv")
@@ -12,7 +12,7 @@ def test_cal_uv(guv, guvcapfd):
 
 @path_dependency("test_week_slots")
 def test_cal_uv0(guv, guvcapfd):
-    guv.cd("A2020")
+    guv.cd(guv.semester)
     guv("cal_uv").succeed()
     assert (guv.cwd / "SY02" / "documents" / "calendrier_hebdomadaire.pdf").is_file()
     assert (guv.cwd / "SY09" / "documents" / "calendrier_hebdomadaire.pdf").is_file()

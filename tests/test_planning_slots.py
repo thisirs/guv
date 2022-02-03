@@ -4,7 +4,7 @@ from conftest import path_dependency
 
 @path_dependency("test_week_slots")
 def test_planning_slots0(guv, guvcapfd):
-    guv.cd("A2020")
+    guv.cd(guv.semester)
     guv("planning_slots").failed()
     guvcapfd.stdout_search(
         "La variable `PL_BEG` n'a pas pu être trouvée"
@@ -14,7 +14,7 @@ def test_planning_slots0(guv, guvcapfd):
 @path_dependency("test_week_slots", name="test_planning_slots")
 class TestPlanningSlots:
     def test_planning_slots0(self, guv, xlsx, guvcapfd):
-        guv.cd("A2020")
+        guv.cd(guv.semester)
         guv.change_config(
             """
             from datetime import date
@@ -38,7 +38,7 @@ class TestPlanningSlots:
             final = skip_range(date(2021, 1, 9), date(2021, 1, 16))
 
             PLANNINGS={
-                "A2020": {
+                "%s": {
                     "UVS": ["SY09", "SY02"],
                     "PL_BEG": date(2020, 9, 7),
                     "PL_END": date(2021, 1, 16),
@@ -52,7 +52,7 @@ class TestPlanningSlots:
                     "SKIP_DAYS_T": ferie + vacances + debut + final
                 }
             }
-            """
+            """ % guv.semester
         )
 
         guv("planning_slots").succeed()
@@ -87,7 +87,7 @@ class TestPlanningSlots:
         )
 
         guv.change_config(
-            """PLANNINGS["A2020"]["PL_BEG"] = date(2020, 9, 14)"""
+            f"""PLANNINGS["{guv.semester}"]["PL_BEG"] = date(2020, 9, 14)"""
         )
         guv("planning_slots").succeed()
         guvcapfd.stdout_search(

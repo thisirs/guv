@@ -7,7 +7,7 @@ class TestXlsStudentData:
     def test_xls_student_data0(self, guv, guvcapfd):
         "Test du traitement des 3 fichiers de données étudiants"
 
-        guv.cd("A2020", "SY02")
+        guv.cd(guv.semester, "SY02")
         guv.copy_file("inscrits.raw", "documents")
         guv.copy_file("extraction_enseig_note.XLS", "documents")
         guv.copy_file("SY02 Notes.xlsx", "documents")

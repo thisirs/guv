@@ -4,7 +4,7 @@ from conftest import path_dependency
 
 @path_dependency("test_planning_slots")
 def test_planning_slots_all(guv, xlsx, guvcapfd):
-    guv.cd("A2020")
+    guv.cd(guv.semester)
     assert not (guv.cwd / "generated" / "planning_all.xlsx").exists()
     guv("planning_slots_all").succeed()
     assert (guv.cwd / "generated" / "planning_all.xlsx").is_file()
