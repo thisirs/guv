@@ -29,6 +29,8 @@ def pytest_configure(config):
 
 
 def path_dependency(dep=None, /, cache=False, name=None):
+    """Decorator that add two pytest marks."""
+
     def make_decorator(dep, cache):
         def decorator(func):
             depends = None if dep is None else [dep]
@@ -62,6 +64,8 @@ class _TestPath:
 
     @property
     def path(self):
+        """Return a temporary path that is a copy of the one of another test."""
+
         path = self.tmp_path_factory.mktemp(self.request.node.name, numbered=False)
 
         # If not marked with path_dependency decorator, just return a
