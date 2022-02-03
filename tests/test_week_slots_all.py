@@ -9,8 +9,8 @@ def test_week_slots_all(guv, guvcapfd, xlsx):
     assert (guv.cwd / "generated" / "planning_hebdomadaire.xlsx").is_file()
     guvcapfd.stdout_search(".  week_slots_all")
 
-    doc = xlsx(guv.cwd / "generated" / "planning_hebdomadaire.xlsx")
-    doc.columns(
+    doc = xlsx.tabular(guv.cwd / "generated" / "planning_hebdomadaire.xlsx")
+    doc.check_columns(
         "Code enseig.",
         "Planning",
         "Activité",

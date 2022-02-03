@@ -9,7 +9,7 @@ def test_csv_for_upload(guv, csv, guvcapfd):
     assert (guv.cwd / "generated" / "grade1_ENT.csv").is_file()
 
     doc = csv(guv.cwd / "generated" / "grade1_ENT.csv", sep=";")
-    doc.columns(
+    doc.check_columns(
         "Nom",
         "Prénom",
         "Login",
@@ -26,7 +26,7 @@ def test_csv_for_upload2(guv, csv, guvcapfd):
     assert (guv.cwd / "generated" / "ects_ENT.csv").is_file()
 
     doc = csv(guv.cwd / "generated" / "ects_ENT.csv", sep=";")
-    doc.columns(
+    doc.check_columns(
         "Nom",
         "Prénom",
         "Login",

@@ -10,8 +10,11 @@ class TestWeekSlots:
         guv().succeed()
         assert (guv.cwd / uv / "documents" / "planning_hebdomadaire.xlsx").is_file()
 
-        doc = xlsx(guv.cwd / uv / "documents" / "planning_hebdomadaire.xlsx")
-        doc.columns(
+        doc = xlsx.tabular(
+            guv.cwd / uv / "documents" / "planning_hebdomadaire.xlsx",
+            sheet_name="Intervenants",
+        )
+        doc.check_columns(
             "Activité",
             "Jour",
             "Heure début",
@@ -21,7 +24,7 @@ class TestWeekSlots:
             "Type créneau",
             "Lib. créneau",
             "Intervenants",
-            "Responsable"
+            "Responsable",
         )
 
-        guv.store(**{f"num_slots_{uv}": doc.nrow})
+

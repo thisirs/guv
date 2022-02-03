@@ -62,8 +62,8 @@ class TestPlanningSlots:
         assert (guv.cwd / "SY02" / "generated" / "planning.xlsx").is_file()
         assert (guv.cwd / "SY09" / "generated" / "planning.xlsx").is_file()
 
-        doc = xlsx(guv.cwd / "SY02" / "generated" / "planning.xlsx")
-        doc.columns(
+        doc = xlsx.tabular(guv.cwd / "SY02" / "generated" / "planning.xlsx")
+        doc.check_columns(
             "Activité",
             "Jour",
             "Heure début",

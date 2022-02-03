@@ -225,12 +225,24 @@ def pytest_runtest_makereport(item, call):
         rep.outcome = "passed"
 
 
-class Xlsx:
-    def __init__(self, fpath):
-        self.file_path = fpath
-        self.df = pd.read_excel(str(self.file_path))
+class Tabular:
+    def __init__(self, file_path, sheet_name=0):
+        self.file_path = file_path
+        self.sheet_name = sheet_name
+        self._df = None
 
-    def columns(self, *cols):
+    @property
+    def df(self):
+        if self._df is None:
+            self._df = pd.read_excel(
+                str(self.file_path), sheet_name=self.sheet_name, engine="openpyxl"
+            )
+        return self._df
+
+    def __enter__(self):
+        return self
+
+    def check_columns(self, *cols):
         assert not set(self.df.columns.values).symmetric_difference(set(cols))
 
     @property
@@ -239,19 +251,55 @@ class Xlsx:
 
     @property
     def ncol(self):
-        return len(self.columns)
+        return len(self.df.columns)
+
+    def __exit__(self, type, value, traceback):
+        if type is None:
+            book = openpyxl.load_workbook(str(self.file_path))
+            writer = pd.ExcelWriter(
+                str(self.file_path),
+                engine="openpyxl",
+                mode="a",
+                if_sheet_exists="replace",
+            )
+            writer.book = book
+            writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
+            self.df.to_excel(writer, sheet_name=self.sheet_name, index=False)
+            writer.save()
+
+
+class Workbook:
+    def __init__(self, file_path):
+        self.file_path = file_path
+
+    def __enter__(self):
+        self.wb = openpyxl.load_workbook(self.file_path)
+        return self
+
+    def __exit__(self, type, value, traceback):
+        if type is None:
+            self.wb.save(str(self.file_path))
 
 
 @pytest.fixture()
 def xlsx():
+    class Xlsx:
+        @staticmethod
+        def tabular(file_path, sheet_name=0):
+            return Tabular(file_path, sheet_name=sheet_name)
+
+        @staticmethod
+        def workbook(file_path):
+            return Workbook(file_path)
     return Xlsx
+
 
 class Csv:
     def __init__(self, fpath, sep=","):
         self.file_path = fpath
         self.df = pd.read_csv(str(self.file_path), sep=sep)
 
-    def columns(self, *cols):
+    def check_columns(self, *cols):
         assert not set(self.df.columns.values).symmetric_difference(set(cols))
 
     @property

@@ -10,8 +10,8 @@ def test_planning_slots_all(guv, xlsx, guvcapfd):
     assert (guv.cwd / "generated" / "planning_all.xlsx").is_file()
     guvcapfd.stdout_search(".  planning_slots_all")
 
-    doc = xlsx(guv.cwd / "generated" / "planning_all.xlsx")
-    doc.columns(
+    doc = xlsx.tabular(guv.cwd / "generated" / "planning_all.xlsx")
+    doc.check_columns(
         "Code enseig.",
         "Planning",
         "Activité",
@@ -29,3 +29,4 @@ def test_planning_slots_all(guv, xlsx, guvcapfd):
         "numAB",
         "nweek",
     )
+
