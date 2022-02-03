@@ -148,7 +148,7 @@ class IcalInst(TaskBase, CliArgsMixin):
     def run(self):
         df = pd.read_excel(self.planning_slots_all)
 
-        all_insts = df["Intervenants"].unique()
+        all_insts = df["Intervenants"].fillna("").unique()
         if len(self.insts) == 1 and self.insts[0] == "all":
             self.insts = all_insts
 
