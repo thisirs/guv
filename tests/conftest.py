@@ -100,18 +100,6 @@ class _TestPath:
 
     def copy_tree(self, old, new):
         copytree(old, new, dirs_exist_ok=True)
-        self.fix_db(Path(new) / "A2020" / ".guv.db", old, new)
-
-    def fix_db(self, db_name, old, new):
-        "Update values in database."
-
-        db_path = Path(new, "A2020", db_name)
-        if db_path.exists():
-            with dbm.open(str(db_path), "w") as db:
-                for k in db.keys():
-                    old_value = db[k]
-                    new_value = old_value.decode().replace(old, new).encode()
-                    db[k] = new_value
 
 
 @pytest.fixture(scope="class")
@@ -162,6 +150,18 @@ class Guv:
     def cd(self, *path):
         self.cwd = self.base_dir / Path(*path)
 
+    def update_db(self):
+        """Update absolute paths in guv db when directory if copied by tmp_path."""
+
+        file_path_db = self.base_dir / self.semester / ".guv.db"
+        new_part = re.search(r"pytest-\d+/[^/]+", str(file_path_db))[0]
+        if file_path_db.exists():
+            with dbm.open(str(file_path_db), "w") as db:
+                for k in db.keys():
+                    old_value = db[k]
+                    new_value = re.sub(r"pytest-\d+/[^/]+", new_part, old_value.decode()).encode()
+                    db[k] = new_value
+
     def change_config(self, *args, **kwargs):
         """Change config.py file in current working directory."""
 
@@ -181,7 +181,9 @@ class Guv:
 
 @pytest.fixture(scope="class", params=[{"semester": "A2020"}])
 def guv(test_path, request):
-    return Guv(test_path, request)
+    g = Guv(test_path, request)
+    g.update_db()
+    return g
 
 
 class Guvcapfd():
