@@ -117,9 +117,10 @@ class Guv:
         self.cwd = base_dir
         self.request = request
 
-    @property
-    def semester(self):
-        return self.request.param["semester"]
+    def __getattr__(self, name):
+        if name.startswith("__"):  # for copy to succeed ignore __getattr__
+            raise AttributeError(name)
+        return self.request.param[name]
 
     def __call__(self, cli_args="", input=None):
         cmdargs = ["guv"] + cli_args.split()
