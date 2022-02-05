@@ -1,5 +1,5 @@
 import pytest
-from conftest import path_dependency
+from tests.plugins.test_path import path_dependency
 
 
 @path_dependency("test_week_slots")
