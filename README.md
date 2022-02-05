@@ -29,8 +29,8 @@ pip install .
 On commence par créer l'arborescence requise :
 
 ``` shell
-guv createsemester P2021 --uv SY02 SY09
-cd P2021
+guv createsemester P2022 --uv SY02 SY09
+cd P2022
 ```
 
 Les variables ont été renseignées dans le fichier `config.py` du
