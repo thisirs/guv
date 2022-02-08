@@ -4,6 +4,7 @@ from tests.plugins.test_path import path_dependency
 
 @path_dependency("test_csv_inscrits", name="test_xls_student_data")
 class TestXlsStudentData:
+
     def test_xls_student_data0(self, guv, guvcapfd):
         "Test du traitement des 3 fichiers de données étudiants"
 

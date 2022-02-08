@@ -2,15 +2,6 @@ import pytest
 from tests.plugins.test_path import path_dependency
 
 
-@path_dependency("test_week_slots")
-def test_planning_slots0(guv, guvcapfd):
-    guv.cd(guv.semester)
-    guv("planning_slots").failed()
-    guvcapfd.stdout_search(
-        "La variable `PL_BEG` n'a pas pu être trouvée"
-    )
-
-
 @path_dependency("test_week_slots", name="test_planning_slots")
 class TestPlanningSlots:
     def test_planning_slots0(self, guv, xlsx, guvcapfd):

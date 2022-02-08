@@ -15,15 +15,16 @@ BASE_DIR = Path(__file__).parent
 
 
 class Guv:
-    def __init__(self, base_dir, request):
+    def __init__(self, base_dir, request, data):
         self.base_dir = base_dir
         self.cwd = base_dir
         self.request = request
+        self.data = data
 
     def __getattr__(self, name):
         if name.startswith("__"):  # for copy to succeed ignore __getattr__
             raise AttributeError(name)
-        return self.request.param[name]
+        return self.data[name]
 
     def __call__(self, cli_args="", input=None):
         cmdargs = ["guv"] + cli_args.split()
@@ -86,9 +87,37 @@ class Guv:
                     f.write(f"{k}={v}\n\n")
 
 
-@pytest.fixture(scope="class", params=[{"semester": "P2022", "uvs": ["SY02", "SY09"]}])
-def guv(test_path, request):
-    g = Guv(test_path, request)
+
+@pytest.fixture(
+    params=[
+        {
+            "semester": "P2022",
+            "uvs": ["SY09", "SY02"],
+            "creneaux_uv": "Creneaux-UV-P22_V02.pdf",
+        },
+        {
+            "semester": "A2021",
+            "uvs": ["SY09", "SY02"],
+            "creneaux_uv": "Creneaux-UV-def-A21.pdf",
+        },
+    ],
+    scope="session",
+)
+def guv_data(request):
+    return request.param
+
+
+from tests.plugins.test_path import _TestPath
+
+@pytest.fixture(scope="class")
+def my_test_path(request, tmp_path_factory, guv_data):
+    return _TestPath(request, tmp_path_factory).path, guv_data
+
+
+@pytest.fixture(scope="class")
+def guv(my_test_path, request):
+    foo_test_path, data = my_test_path
+    g = Guv(foo_test_path, request, data)
     g.update_db()
     return g
 

@@ -1,3 +1,4 @@
+import re
 import pytest
 from pathlib import Path
 from shutil import copytree
@@ -43,23 +44,33 @@ class _TestPath:
         self.tmp_path_factory = tmp_path_factory
 
     @property
+    def suffix(self):
+        name = self.request._getscopeitem("function").name
+        return re.search(r"(\[[^]]+\])?$", name)[0]
+
+    @property
     def name(self):
         """Return identifier of current node.
 
         Use `name` defined in `path_dependency`
         """
 
+        name = self.request._getscopeitem("function").name
         marker = self.request.node.get_closest_marker("path_dependency")
         if marker is None:
-            return None
+            return name
 
-        return marker.kwargs.get("name", None)
+        name2 = marker.kwargs.get("name", None)
+        if name2 is None:
+            return name
+        else:
+            return name2 + self.suffix
 
     @property
     def path(self):
         """Return a temporary path that is a copy of the one of another test."""
 
-        path = self.tmp_path_factory.mktemp(self.request.node.name, numbered=False)
+        path = self.tmp_path_factory.mktemp(self.request._getscopeitem("function").name, numbered=False)
 
         # If not marked with path_dependency decorator, just return a
         # path.
@@ -67,8 +78,12 @@ class _TestPath:
         if marker is None:
             return path
 
-        # Get name of dependency if any
-        dep = marker.args[0] if marker.args else None
+        # Get name of dependency if any from `path_dependency` marker.
+        # Add corresponding suffix if test is parametrized
+        if marker.args and marker.args[0]:
+            dep = marker.args[0] + self.suffix
+        else:
+            dep = None
 
         cache = marker.kwargs.get("cache", False)
 

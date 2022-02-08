@@ -4,8 +4,9 @@ from tests.plugins.test_path import path_dependency
 
 @path_dependency("test_utc_uv_list_to_csv", name="test_week_slots")
 class TestWeekSlots:
-    @pytest.mark.parametrize("uv", ["SY02", "SY09"])
-    def test_week_slots(self, guv, xlsx, uv):
+
+    def test_week_slots(self, guv, xlsx):
+        uv = "SY02"
         guv.cd(guv.semester)
         guv().succeed()
         assert (guv.cwd / uv / "documents" / "planning_hebdomadaire.xlsx").is_file()
