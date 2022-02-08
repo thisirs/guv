@@ -19,7 +19,6 @@ def test_week_slots_all(guv, guvcapfd, xlsx):
         "Heure fin",
         "Semaine",
         "Locaux",
-        "Type créneau",
         "Lib. créneau",
         "Intervenants",
         "Responsable"

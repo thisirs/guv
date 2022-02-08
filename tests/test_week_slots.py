@@ -21,7 +21,6 @@ class TestWeekSlots:
             "Heure fin",
             "Semaine",
             "Locaux",
-            "Type créneau",
             "Lib. créneau",
             "Intervenants",
             "Responsable",

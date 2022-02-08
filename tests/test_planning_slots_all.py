@@ -20,7 +20,6 @@ def test_planning_slots_all(guv, xlsx, guvcapfd):
         "Heure fin",
         "Semaine",
         "Locaux",
-        "Type créneau",
         "Lib. créneau",
         "Intervenants",
         "Responsable",

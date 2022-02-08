@@ -70,7 +70,6 @@ class TestPlanningSlots:
             "Heure fin",
             "Semaine",
             "Locaux",
-            "Type créneau",
             "Lib. créneau",
             "Intervenants",
             "Responsable",

@@ -137,7 +137,20 @@ class UtcUvListToCsv(TaskBase):
 
             tables.append(df)
 
-        return pd.concat(tables)
+        df = pd.concat(tables)
+        useful_cols = [
+            "Code enseig.",
+            "Activité",
+            "Jour",
+            "Heure début",
+            "Heure fin",
+            "Semaine",
+            "Locaux",
+            "Lib. créneau",
+        ]
+        df = df[useful_cols]
+
+        return df
 
     def run(self):
         if self.uv_list_filename is None:
