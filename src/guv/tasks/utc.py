@@ -143,17 +143,12 @@ class UtcUvListToCsv(TaskBase):
         if self.uv_list_filename is None:
             raise Exception("La variable `CRENEAU_UV` doit être définie")
 
-        tables = []
-
         # Lire tous les créneaux par semaine de toutes les UVs
-        if self.uv_list_filename is not None:
-            if os.path.exists(self.uv_list_filename):
-                tables.append(self.read_pdf())
-            else:
-                uv_fn = rel_to_dir(self.uv_list_filename, self.settings.SEMESTER_DIR)
-                raise Exception(f"Le fichier n'existe pas: {uv_fn}")
+        if not os.path.exists(self.uv_list_filename):
+            uv_fn = rel_to_dir(self.uv_list_filename, self.settings.SEMESTER_DIR)
+            raise Exception(f"Le fichier n'existe pas: {uv_fn}")
 
-        df = pd.concat(tables)
+        df = self.read_pdf()
 
         # Remove duplicate indexes from concat
         df.reset_index(drop=True, inplace=True)
