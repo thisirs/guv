@@ -208,6 +208,8 @@ class Output:
 
 
 def generate_row(beg, end, skip, turn):
+    """Generate tuples that represent days."""
+
     daynames = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"]
     delta = end - beg
     day_counter = {day: 0 for day in daynames}
@@ -247,6 +249,9 @@ def render_from_contexts(template, contexts, save_tex=False, target=None):
     """Render `template` with different `contexts` and save using `target`.
 
     Rendered in a temporary directory by `render_latex_template`.
+    `target` should be a name without extension. A zip of pdf
+    extension will be added.
+
     """
 
     pdfs = []
