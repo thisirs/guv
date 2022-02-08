@@ -63,12 +63,15 @@ class Guv:
         """Update absolute paths in guv db when directory if copied by tmp_path."""
 
         file_path_db = self.base_dir / self.semester / ".guv.db"
-        new_part = re.search(r"pytest-\d+/[^/]+", str(file_path_db))[0]
+
+        new_dirname = self.base_dir.name
+        basename = str(self.base_dir.parent)
+
         if file_path_db.exists():
             with dbm.open(str(file_path_db), "w") as db:
                 for k in db.keys():
                     old_value = db[k]
-                    new_value = re.sub(r"pytest-\d+/[^/]+", new_part, old_value.decode()).encode()
+                    new_value = re.sub(rf"{basename}/[^/]+", basename + "/" + new_dirname, old_value.decode()).encode()
                     db[k] = new_value
 
     def change_config(self, *args, **kwargs):
