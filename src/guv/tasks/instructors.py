@@ -127,8 +127,7 @@ class XlsInstDetails(UVTask):
         df_outer = inst_uv.merge(
             insts,
             how="outer",
-            left_on="Intervenants",
-            right_on="Intervenants",
+            on="Intervenants",
             indicator=True,
         )
 
