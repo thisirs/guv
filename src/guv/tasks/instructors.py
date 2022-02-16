@@ -143,6 +143,20 @@ class XlsInstDetails(UVTask):
             df_left.to_excel(out.target, index=False)
 
 
+    @classmethod
+    def read_target(cls, **kwargs):
+        target = cls.target_from(**kwargs)
+        sts = ["MCF", "PR", "PRAG", "PRCE", "PAST", "ECC", "Doct", "ATER", "Vacataire"]
+        status_type = CategoricalDtype(categories=sts, ordered=True)
+
+        df = pd.read_excel(target, engine="openpyxl")
+
+        df["Statut"] = df["Statut"].astype(status_type)
+        df["Email"] = df["Email"].fillna("").astype("string")
+
+        return df
+
+
 class XlsUTP(UVTask):
     """Crée un document Excel pour calcul des heures et remplacements."""
 
