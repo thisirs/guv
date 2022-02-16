@@ -66,6 +66,24 @@ def lib_list(lib):
     return crs, no, sem
 
 
+def score_codenames(libs):
+    "Renvoie un tuple comptant les types de cours Cours/TD/TP"
+
+    sc = [0, 0, 0]
+    mapping = {'C': 0, 'D': 1, 'T': 2}
+    for lib in libs:
+        m = re.search('([CDT])[0-9]*([AB]?)', lib)
+        if m:
+            ix = mapping[m.group(1)]
+            if m.group(2):
+                sc[ix] += .5
+            else:
+                sc[ix] += 1
+        else:
+            raise Exception(f"L'identifiant {lib} n'est pas matché")
+    return tuple(sc)
+
+
 class FormatDict(dict):
     def __missing__(self, key):
         return "{" + key + "}"
