@@ -25,7 +25,7 @@ from ..exceptions import ImproperlyConfigured
 from ..helpers import Documents
 from ..logger import logger
 from ..utils import argument, sort_values
-from ..utils_config import Output, check_columns, rel_to_dir
+from ..utils_config import Output, check_columns, rel_to_dir, ask_choice
 from .base import CliArgsMixin, UVTask
 
 
