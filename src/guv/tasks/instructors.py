@@ -12,7 +12,7 @@ from pandas.api.types import CategoricalDtype
 
 from ..logger import logger
 from ..scripts.excel_hours import create_excel_file
-from ..utils import lib_list
+from ..utils import score_codenames
 from ..utils_config import Output, rel_to_dir
 from .base import TaskBase, UVTask
 from .utc import WeekSlots
@@ -23,7 +23,7 @@ def create_insts_list(df):
 
     def course_list(e):
         "Return course list like C1, D2, T1A"
-        return ', '.join(sorted(e, key=lib_list))
+        return ', '.join(sorted(e, key=score_codenames))
 
     def score(libs):
         "Renvoie un tuple comptant les types de cours Cours/TD/TP"

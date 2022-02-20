@@ -31,10 +31,10 @@ import guv
 from ..exceptions import InvalidGroups
 from ..logger import logger
 from ..scripts.moodle_date import CondDate, CondGroup, CondOr, CondProfil
-from ..utils import argument, lib_list, make_groups, pformat, sort_values
+from ..utils import argument, score_codenames, split_codename, make_groups, pformat, sort_values
 from ..utils_config import Output, check_columns, rel_to_dir
 from .base import CliArgsMixin, TaskBase, UVTask
-from .instructors import XlsInstructors, create_insts_list, read_xls_details
+from .instructors import XlsInstructors, XlsInstDetails, create_insts_list
 from .students import XlsStudentDataMerge
 from .utc import PlanningSlots, WeekSlots
 
@@ -218,50 +218,83 @@ class HtmlInst(UVTask):
 
     def setup(self):
         super().setup()
-        self.insts_details = XlsInstructors.target_from()
-        self.insts_uv = WeekSlots.target_from(**self.info)
+        self.week_slots_details = XlsInstDetails.target_from(**self.info)
         self.target = self.build_target()
-        self.file_dep = [self.insts_details, self.insts_uv]
+        self.file_dep = [self.week_slots_details]
 
     def run(self):
-        df_uv = pd.read_excel(self.insts_uv, engine="openpyxl")
-        df_uv = create_insts_list(df_uv)
-        df_details = read_xls_details(self.insts_details)
+        df = XlsInstDetails.read_target(**self.info)
+        df["Name"] = df["Lib. créneau"] + df["Semaine"].fillna("")
 
-        # Add details from df_details
-        df = df_uv.merge(
-            df_details, how="left", left_on="Intervenants", right_on="Intervenants"
-        )
+        def format_slot_list(slots):
+            return ", ".join(sorted(slots, key=split_codename))
 
-        dfs = df.sort_values(
-            ["Responsable", "SortCourseList", "Statut"], ascending=False
-        )
-        dfs = dfs.reset_index()
-
-        insts = [
-            {
-                "inst": row["Intervenants"],
-                "libss": row["CourseList"],
-                "resp": row["Responsable"],
-                "website": row["Website"],
-                "email": row["Email"],
-            }
-            for _, row in dfs.iterrows()
-        ]
-
-        def contact(info):
-            if not pd.isnull(info["website"]):
-                return f'[{info["inst"]}]({info["website"]})'
-            elif not pd.isnull(info["email"]):
-                return f'[{info["inst"]}](mailto:{info["email"]})'
+        def format_start(day, start, week):
+            "8:00 -> 8h"
+            start = start.replace(":00", "h").replace(":", "h").lstrip("0")
+            if not pd.isnull(week):
+                return f"{day[:3]}. {week} {start}"
             else:
-                return info["inst"]
+                return f"{day[:3]}. {start}"
+
+        def format_room(room):
+            return (
+                room.replace("BF A ", "FA")
+                .replace("CR B", "Bessel")
+                .replace("BF B ", "FB")
+            )
+
+        def sort_groups(groups):
+            def sorter(elt):
+                name, group = elt
+                is_manager = int(any(group["Responsable"]))
+                return (is_manager, score_codenames(group["Name"]))
+            return sorted(groups, key=sorter)[::-1]
+
+        context = {
+            "slots": [
+                {
+                    "name": row["Name"],
+                    "instructor": {
+                        "name": row["Intervenants"],
+                        "email": row["Email"],
+                    },
+                    "is_manager": row["Responsable"],
+                    "room": format_room(row["Locaux"]),
+                    "start": format_start(*row[["Jour", "Heure début", "Semaine"]]),
+                }
+                for _, row in df.iterrows()
+            ],
+            "instructors": [
+                {
+                    "name": name,
+                    "email": group.iloc[0]["Email"],
+                    "slot_list": format_slot_list(group["Name"]),
+                    "is_manager": not all(pd.isnull(group["Responsable"])),
+                    "slots": [
+                        {
+                            "name": row["Name"],
+                            "room": format_room(row["Locaux"]),
+                            "start": format_start(*row[["Jour", "Heure début", "Semaine"]]),
+                        }
+                        for _, row in group.iterrows()
+                    ]
+                }
+                for name, group in sort_groups(df.groupby("Intervenants"))
+            ]
+        }
 
         tmpl_dir = os.path.join(guv.__path__[0], "templates")
         env = jinja2.Environment(loader=jinja2.FileSystemLoader(tmpl_dir))
-        # env.globals.update(contact=contact)
-        template = env.get_template("instructors.html.jinja2")
-        md = template.render(insts=insts, contact=contact)
+        def display_name(instructor):
+            if instructor.get("email", None):
+                return f'[{instructor["name"]}](mailto:{instructor["email"]})'
+            else:
+                return instructor["name"]
+
+        env.filters["display_name"] = display_name
+        template = env.get_template("instructors2.html.jinja2")
+        md = template.render(**context)
         html = markdown.markdown(md)
 
         with Output(self.target) as out:
@@ -447,7 +480,7 @@ class HtmlTable(UVTask, CliArgsMixin):
 
         # Reorder columns
         if len(df.columns) > 1:
-            cols = sorted(df.columns.tolist(), key=lib_list)
+            cols = sorted(df.columns.tolist(), key=score_codenames)
             df = df[cols]
 
         # Give name to indexes

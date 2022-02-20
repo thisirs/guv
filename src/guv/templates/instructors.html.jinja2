@@ -1,5 +1,5 @@
-Enseignants :
+Enseignants :
 
-{% for inst in insts %}
-- {{ contact(inst) }} {% if inst['resp'] %}(responsable) {% endif %}: {{ inst['libss'] }}
+{% for instructor in instructors -%}
+- {{ instructor | display_name }}{% if instructor.is_manager %} (responsable){% endif %}: {{ instructor.slot_list }}
 {% endfor %}

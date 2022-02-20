@@ -57,7 +57,7 @@ def slugrot_string(e):
     return hash_rot_md5(e0)
 
 
-def lib_list(lib):
+def split_codename(lib):
     """Return a numeric tuple to sort course codenames"""
     m = re.match('([CDT])([0-9]*)([AB]*)', lib)
     crs = {'C': 0, 'D': 1, 'T': 2}[m.group(1)]
