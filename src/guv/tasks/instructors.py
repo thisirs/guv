@@ -90,17 +90,6 @@ class XlsInstructors(TaskBase):
                 pd.DataFrame(columns=columns).to_excel(out.target, index=False)
 
 
-def read_xls_details(fn):
-    """Lit un fichier Excel avec un ordre sur la colonne 'Statut'."""
-
-    sts = ["MCF", "PR", "PRAG", "PRCE", "PAST", "ECC", "Doct", "ATER", "Vacataire"]
-    status_type = CategoricalDtype(categories=sts, ordered=True)
-
-    return pd.read_excel(fn, engine="openpyxl", dtype={
-        'Statut': status_type
-    })
-
-
 class XlsInstDetails(UVTask):
     """Fichier Excel des intervenants par UV avec détails
 
