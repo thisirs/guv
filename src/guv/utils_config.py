@@ -70,7 +70,9 @@ def check_columns(dataframe, columns, **kwargs):
 def configured_uv(uvs):
     uv2plannings = defaultdict(list)
     for plng, props in settings.PLANNINGS.items():
-        for uv in props["UVS"]:
+        if "UVS" not in props and "UES" not in props:
+            raise ImproperlyConfigured(f"Le planning `{plng}` n'a pas de clé `UVS` ou `UES`.")
+        for uv in props.get("UVS", []) + props.get("UES", []):
             uv2plannings[uv].append(plng)
 
     selected_uv = {
