@@ -154,31 +154,15 @@ class XlsUTP(UVTask):
 
     def setup(self):
         super().setup()
-        self.xls = WeekSlots.target_from(**self.info)
-        self.insts = XlsInstructors.target_from()
+        self.week_slots_details = XlsInstDetails.target_from(**self.info)
         self.target = self.build_target()
-        self.file_dep = [self.xls, self.insts]
+        self.file_dep = [self.week_slots_details]
 
     def run(self):
-        df = pd.read_excel(self.xls, engine="openpyxl")
-
-        # Add details
-        df_details = read_xls_details(self.insts)
-
-        if df["Intervenants"].isnull().all():
-            raise Exception(
-                "Pas d'intervenants renseignés dans le fichier %s" % self.xls
-            )
-        else:
-            df_insts = create_insts_list(df)
-
-        # Add details from df_details
-        df = df_insts.merge(
-            df_details, how="left", left_on="Intervenants", right_on="Intervenants"
-        )
+        df = XlsInstDetails.read_target(**self.info)
 
         dfs = df.sort_values(
-            ["Responsable", "Statut", "SortCourseList"], ascending=False
+            ["Responsable", "Statut"], ascending=False
         )
         dfs = dfs.reset_index()
 
