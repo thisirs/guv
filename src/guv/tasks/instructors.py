@@ -91,7 +91,7 @@ class XlsInstructors(TaskBase):
 
 
 class XlsInstDetails(UVTask):
-    """Fichier Excel des intervenants par UV avec détails
+    """Fichier Excel des intervenants par UV avec détails.
 
     Les détails sont pris dans le fichier de détails global. Les
     affectations sont prises pour chaque UV.
