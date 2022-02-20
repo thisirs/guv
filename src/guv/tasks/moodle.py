@@ -34,7 +34,7 @@ from ..scripts.moodle_date import CondDate, CondGroup, CondOr, CondProfil
 from ..utils import argument, score_codenames, split_codename, make_groups, pformat, sort_values
 from ..utils_config import Output, check_columns, rel_to_dir
 from .base import CliArgsMixin, TaskBase, UVTask
-from .instructors import XlsInstructors, XlsInstDetails, create_insts_list
+from .instructors import XlsInstructors, WeekSlotsDetails, create_insts_list
 from .students import XlsStudentDataMerge
 from .utc import PlanningSlots, WeekSlots
 
@@ -218,12 +218,12 @@ class HtmlInst(UVTask):
 
     def setup(self):
         super().setup()
-        self.week_slots_details = XlsInstDetails.target_from(**self.info)
+        self.week_slots_details = WeekSlotsDetails.target_from(**self.info)
         self.target = self.build_target()
         self.file_dep = [self.week_slots_details]
 
     def run(self):
-        df = XlsInstDetails.read_target(**self.info)
+        df = WeekSlotsDetails.read_target(**self.info)
         df["Name"] = df["Lib. créneau"] + df["Semaine"].fillna("")
 
         def format_slot_list(slots):

@@ -311,7 +311,7 @@ besoin d'exécuter car elles sont des dépendances des tâches usuelles.
 
    Cette tâche est une dépendance pour les tâches suivantes :
 
-   - :class:`guv.tasks.instructors.XlsInstDetails`
+   - :class:`guv.tasks.instructors.WeekSlotsDetails`
    - :class:`guv.tasks.instructors.XlsUTP`
    - :class:`guv.tasks.moodle.HtmlInst`
 
@@ -326,7 +326,7 @@ besoin d'exécuter car elles sont des dépendances des tâches usuelles.
 
    - :class:`guv.tasks.ical.CalInst`
 
-.. autoclass:: guv.tasks.instructors.XlsInstDetails
+.. autoclass:: guv.tasks.instructors.WeekSlotsDetails
    :exclude-members:
 
    Cette tâche dépend de :
@@ -347,6 +347,6 @@ besoin d'exécuter car elles sont des dépendances des tâches usuelles.
    - :class:`guv.tasks.utc.WeekSlotsAll`
    - :class:`guv.tasks.calendar.CalUv`
    - :class:`guv.tasks.moodle.HtmlInst`
-   - :class:`guv.tasks.instructors.XlsInstDetails`
+   - :class:`guv.tasks.instructors.WeekSlotsDetails`
    - :class:`guv.tasks.instructors.XlsUTP`
    - :class:`guv.tasks.grades.XlsAssignmentGrade`

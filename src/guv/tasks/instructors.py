@@ -90,7 +90,7 @@ class XlsInstructors(TaskBase):
                 pd.DataFrame(columns=columns).to_excel(out.target, index=False)
 
 
-class XlsInstDetails(UVTask):
+class WeekSlotsDetails(UVTask):
     """Fichier Excel des intervenants par UV avec détails.
 
     Les détails sont pris dans le fichier de détails global. Les
@@ -154,12 +154,12 @@ class XlsUTP(UVTask):
 
     def setup(self):
         super().setup()
-        self.week_slots_details = XlsInstDetails.target_from(**self.info)
+        self.week_slots_details = WeekSlotsDetails.target_from(**self.info)
         self.target = self.build_target()
         self.file_dep = [self.week_slots_details]
 
     def run(self):
-        df = XlsInstDetails.read_target(**self.info)
+        df = WeekSlotsDetails.read_target(**self.info)
 
         dfs = df.sort_values(
             ["Responsable", "Statut"], ascending=False
