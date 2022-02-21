@@ -25,9 +25,6 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
     # issue if using issubclass in Sphinx's conf.py.
     doc_flag = True
 
-    def __init__(self, planning, uv, info):
-        super().__init__(planning, uv, info)
-
     def get_columns(self):
         """Renvoie les colonnes utilisées pour créer la feuille de calcul.
 
