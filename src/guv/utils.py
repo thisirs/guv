@@ -35,7 +35,8 @@ def md5(fname):
 
 
 def hash_rot_md5(a):
-    "Return a hash invariant by rotation"
+    """Return a hash invariant by rotation"""
+
     def substring():
         b = a + a
         for i in range(len(a)):
@@ -50,7 +51,7 @@ def hash_rot_md5(a):
 
 
 def slugrot_string(e):
-    "Rotation-invariant hash on a string"
+    """Rotation-invariant hash on a string"""
 
     e0 = unidecode.unidecode(e).lower()
     e0 = ''.join(e0.split())
@@ -67,7 +68,7 @@ def split_codename(lib):
 
 
 def score_codenames(libs):
-    "Renvoie un tuple comptant les types de cours Cours/TD/TP"
+    """Renvoie un tuple comptant les types de cours Cours/TD/TP"""
 
     sc = [0, 0, 0]
     mapping = {'C': 0, 'D': 1, 'T': 2}
@@ -152,7 +153,7 @@ def sort_values(df, columns):
 
 
 def generate_groupby(df, key):
-    "Generate sub-dataframes by grouping by `key` in `df`."
+    """Generate sub-dataframes by grouping by `key` in `df`."""
 
     if key is not None:
         for title, group in df.groupby(key):
