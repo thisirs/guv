@@ -18,49 +18,6 @@ from .base import TaskBase, UVTask
 from .utc import WeekSlots
 
 
-def create_insts_list(df):
-    "Agrège les données d'affectation des Cours/TD/TP"
-
-    def course_list(e):
-        "Return course list like C1, D2, T1A"
-        return ', '.join(sorted(e, key=score_codenames))
-
-    def score(libs):
-        "Renvoie un tuple comptant les types de cours Cours/TD/TP"
-        sc = [0, 0, 0]
-        mapping = {'C': 0, 'D': 1, 'T': 2}
-        for lib in libs:
-            m = re.search('([CDT])[0-9]*([AB]?)', lib)
-            if m:
-                ix = mapping[m.group(1)]
-                if m.group(2):
-                    sc[ix] += .5
-                else:
-                    sc[ix] += 1
-            else:
-                raise Exception(f"L'identifiant {lib} n'est pas matché")
-        return tuple(sc)
-
-    def myapply(df):
-        e = df['Lib. créneau'] + df['Semaine'].fillna('')
-        resp = int(df['Responsable'].sum())
-        s = score(e)
-        return pd.Series({
-            'CourseList': course_list(e),
-            'SortCourseList': s,
-            'Cours': s[0],
-            'TD': s[1],
-            'TP': s[2],
-            'Responsable': resp
-        })
-
-    df = df.groupby('Intervenants')
-    df = df.apply(myapply)
-    df = df.reset_index()
-
-    return(df)
-
-
 class XlsInstructors(TaskBase):
     """Fichier de détails global des intervenants toutes UV confondues.
 
