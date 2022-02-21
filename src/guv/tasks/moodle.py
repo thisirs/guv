@@ -34,9 +34,9 @@ from ..scripts.moodle_date import CondDate, CondGroup, CondOr, CondProfil
 from ..utils import argument, score_codenames, split_codename, make_groups, pformat, sort_values
 from ..utils_config import Output, check_columns, rel_to_dir
 from .base import CliArgsMixin, TaskBase, UVTask
-from .instructors import XlsInstructors, WeekSlotsDetails, create_insts_list
+from .instructors import WeekSlotsDetails
 from .students import XlsStudentDataMerge
-from .utc import PlanningSlots, WeekSlots
+from .utc import PlanningSlots
 
 DATE_FORMAT = "%Y-%m-%d"
 TIME_FORMAT = "%H:%M"

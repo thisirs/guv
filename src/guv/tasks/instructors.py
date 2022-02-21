@@ -5,14 +5,12 @@ heures remplacées.
 """
 
 import os
-import re
 
 import pandas as pd
 from pandas.api.types import CategoricalDtype
 
 from ..logger import logger
 from ..scripts.excel_hours import create_excel_file
-from ..utils import score_codenames
 from ..utils_config import Output, rel_to_dir
 from .base import TaskBase, UVTask
 from .utc import WeekSlots
