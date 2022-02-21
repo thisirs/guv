@@ -191,8 +191,7 @@ Moodle
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.utc.WeekSlots`
-   - :class:`guv.tasks.instructors.XlsInstructors`
+   - :class:`guv.tasks.utc.WeekSlotsDetails`
 
 .. autoclass:: guv.tasks.moodle.HtmlTable
    :exclude-members:
@@ -312,8 +311,6 @@ besoin d'exécuter car elles sont des dépendances des tâches usuelles.
    Cette tâche est une dépendance pour les tâches suivantes :
 
    - :class:`guv.tasks.instructors.WeekSlotsDetails`
-   - :class:`guv.tasks.instructors.XlsUTP`
-   - :class:`guv.tasks.moodle.HtmlInst`
 
 .. autoclass:: guv.tasks.utc.WeekSlotsAll
    :exclude-members:
@@ -324,7 +321,7 @@ besoin d'exécuter car elles sont des dépendances des tâches usuelles.
 
    Cette tâche est une dépendance pour les tâches suivantes :
 
-   - :class:`guv.tasks.ical.CalInst`
+   - :class:`guv.tasks.ical.IcalInst`
 
 .. autoclass:: guv.tasks.instructors.WeekSlotsDetails
    :exclude-members:
