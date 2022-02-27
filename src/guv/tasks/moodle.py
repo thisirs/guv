@@ -1294,6 +1294,10 @@ class FetchGroupId(CliArgsMixin, TaskBase):
         ),
     )
 
+    def setup(self):
+        super().setup()
+        self.parse_args()
+
     def cookies(self):
         cj = browser_cookie3.firefox()
         c = {c.name: c.value for c in cj if "moodle.utc.fr" in c.domain}
