@@ -452,7 +452,7 @@ class HtmlTable(UVTask, CliArgsMixin):
             if activity in ["Cours", "TD"] or (activity == "TP" and not self.num_AB):
                 return ", ".join(df.num.apply(to_names))
             else:
-                return ", ".join(df.semaine + df.numAB.apply(to_names))
+                return ", ".join(df.Semaine + df.numAB.apply(to_names))
 
         # Iterate on each week of semester
         rows = []
@@ -592,7 +592,7 @@ class JsonRestriction(UVTask, CliArgsMixin):
         def get_beg_end_date_each(num, df):
             def group_beg_end(row):
                 if self.num_AB:
-                    group = row["Lib. créneau"] + row["semaine"]
+                    group = row["Lib. créneau"] + row["Semaine"]
                 else:
                     group = row["Lib. créneau"]
 
