@@ -70,6 +70,8 @@ def split_codename(lib):
 def score_codenames(libs):
     """Renvoie un tuple comptant les types de cours Cours/TD/TP"""
 
+    if isinstance(libs, str):
+        libs = [libs]
     sc = [0, 0, 0]
     mapping = {'C': 0, 'D': 1, 'T': 2}
     for lib in libs:
