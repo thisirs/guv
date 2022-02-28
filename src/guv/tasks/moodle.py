@@ -1257,7 +1257,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         return series_list
 
 
-class FetchGroupId(CliArgsMixin, TaskBase):
+class FetchGroupId(TaskBase, CliArgsMixin):
     """Crée un fichier de correspondance entre le nom et l'id des groupes Moodle.
 
     Pour utiliser certaines fonctionnalités de **guv** (notamment
