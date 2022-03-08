@@ -200,7 +200,7 @@ class CsvGroupsGroupings(UVTask, CliArgsMixin):
                 groups.append(group)
                 groupings.append(grouping)
 
-        df_groups = pd.DataFrame({"groupname": groups, 'groupingname': self.groupings})
+        df_groups = pd.DataFrame({"groupname": groups, 'groupingname': groupings})
         with Output(self.target, protected=True) as out:
             df_groups.to_csv(out.target, index=False)
 
