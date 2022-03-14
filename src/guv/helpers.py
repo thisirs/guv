@@ -895,6 +895,7 @@ class AggregateOrg(FileOperation):
                 header, *text = chunk.split("\n", maxsplit=1)
                 text = "\n".join(text).strip("\n")
                 text = textwrap.dedent(text)
+                logger.debug("Header line: %s", header)
                 yield header, text
 
         text = open(self.filename, 'r').read()
