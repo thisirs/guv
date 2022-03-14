@@ -889,7 +889,7 @@ class AggregateOrg(FileOperation):
         check_filename(self.filename)
 
         def parse_org(text):
-            for chunk in re.split("^\\* *", text, flags=re.MULTILINE):
+            for chunk in re.split("^\\* *", text, flags=re.MULTILINE)[1:]:
                 if not chunk:
                     continue
                 header, *text = chunk.split("\n", maxsplit=1)
