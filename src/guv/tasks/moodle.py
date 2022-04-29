@@ -644,17 +644,17 @@ class JsonRestriction(UVTask, CliArgsMixin):
 
             if len(gbe) > 1:
                 after_end_group = [
-                    (CondGroup() == g) & (CondDate() >= e) for g, b, e in gbe
+                    CondOr([CondGroup() == g]) & (CondDate() >= e) for g, b, e in gbe
                 ]
                 before_end_group = [
-                    (CondGroup() == g) & (CondDate() < e) for g, b, e in gbe
+                    CondOr([CondGroup() == g]) & (CondDate() < e) for g, b, e in gbe
                 ]
 
                 def window_group_start(g, b, e, p=0, q=0):
-                    return (CondGroup() == g) & (CondDate() >= b + dt.timedelta(minutes=p)) & (CondDate() < b + dt.timedelta(minutes=q))
+                    return CondOr([(CondGroup() == g)]) & (CondDate() >= b + dt.timedelta(minutes=p)) & (CondDate() < b + dt.timedelta(minutes=q))
 
                 def window_group(g, b, e, p=0, q=0):
-                    return (CondGroup() == g) & (CondDate() >= b + dt.timedelta(minutes=p)) & (CondDate() < e + dt.timedelta(minutes=q))
+                    return CondOr([(CondGroup() == g)]) & (CondDate() >= b + dt.timedelta(minutes=p)) & (CondDate() < e + dt.timedelta(minutes=q))
 
                 def windows(func, gbe, p=0, q=0):
                     return [
