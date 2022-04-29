@@ -17,25 +17,25 @@ class Cond:
         raise NotImplementedError('Abstract method')
 
     def __and__(self, other):
-        if isinstance(self, CondCompound):
-            if isinstance(other, CondCompound):
+        if isinstance(self, CondAnd):
+            if isinstance(other, CondAnd):
                 return CondAnd(sts=self.sts+other.sts)
             else:
                 return CondAnd(sts=self.sts+[other])
         else:
-            if isinstance(other, CondCompound):
+            if isinstance(other, CondAnd):
                 return CondAnd(sts=[self]+other.sts)
             else:
                 return CondAnd(sts=[self]+[other])
 
     def __or__(self, other):
-        if isinstance(self, CondCompound):
-            if isinstance(other, CondCompound):
+        if isinstance(self, CondOr):
+            if isinstance(other, CondOr):
                 return CondOr(sts=self.sts+other.sts)
             else:
                 return CondOr(sts=self.sts+[other])
         else:
-            if isinstance(other, CondCompound):
+            if isinstance(other, CondOr):
                 return CondOr(sts=[self]+other.sts)
             else:
                 return CondOr(sts=[self]+[other])
