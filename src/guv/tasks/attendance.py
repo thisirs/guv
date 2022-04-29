@@ -153,8 +153,8 @@ class PdfAttendance(UVTask, CliArgsMixin):
 
                 if self.tiers_temps:
                     check_columns(df, "Tiers-temps", file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
-                    df_tt = df[df["Tiers-temps"] == 1]
-                    df = df[df["Tiers-temps"] != 1]
+                    df_tt = df[df["Tiers-temps"] == "Oui"]
+                    df = df[df["Tiers-temps"] != "Oui"]
                     context["group"] = "Tiers-temps"
                     context["filename_no_ext"] = "Tiers_temps"
                     students = [{"name": f'{row["Nom"]} {row["Prénom"]}'} for _, row in df_tt.iterrows()]
