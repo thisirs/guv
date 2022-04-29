@@ -671,7 +671,8 @@ class JsonRestriction(UVTask, CliArgsMixin):
                         "visible si: B <= t < E par groupe": CondOr(windows(window_group, gbe)).to_PHP(**info),
                     })
                     for p, q in ((-3, 5),):
-                        no_group[f"visible si: B + {p}min <= t < B + {q}min par groupe"] = CondOr(windows(window_group_start, gbe, p, q)).to_PHP(**info)
+                        rst = CondOr(windows(window_group_start, gbe, p, q))
+                        no_group[f"visible si: B + {p}min <= t < B + {q}min par groupe"] = rst.to_PHP(**info)
 
                     for p, q in ((0, 15),):
                         no_group[f"visible si: B + {p}min <= t < E + {q}min par groupe"] = CondOr(windows(window_group, gbe, p, q)).to_PHP(**info)
