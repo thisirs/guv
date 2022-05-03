@@ -17,7 +17,7 @@ from ..openpyxl_utils import fit_cells_at_col, get_range_from_cells
 class AbstractGradeBook(UVTask, CliArgsInheritMixin):
     """Abstract UVTask that factor out all common gradebook logic"""
 
-    uptodate = True
+    uptodate = False
     target_dir = "generated"
     target_name = "{name}_gradebook.xlsx"
 
