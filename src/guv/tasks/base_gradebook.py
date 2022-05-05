@@ -1,10 +1,12 @@
 import openpyxl
 import pandas as pd
+import textwrap
 
 from ..openpyxl_patched import fixit
-from ..utils_config import Output
+from ..utils_config import Output, rel_to_dir
 from .base import CliArgsInheritMixin, UVTask
 from .students import XlsStudentDataMerge
+from ..logger import logger
 
 fixit(openpyxl)
 
@@ -81,6 +83,22 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
         target = self.build_target()
         with Output(target, protected=True) as out:
             self.workbook.save(out.target)
+
+        logger.info(textwrap.dedent("""\
+
+        Pour agréger les notes au fichier central `effectifs.xlsx`, ajouter :
+
+        DOCS.aggregate(
+            "%(filename)s",
+            on="Courriel",
+            subset="%(name)s"
+        )
+
+        dans le fichier `config.py` de l'UV/UE.
+        """ % {
+            "filename": rel_to_dir(target, self.settings.UV_DIR),
+            "name": self.name
+        }))
 
     def get_sorted_columns(self):
         """Return list of columns sorted by priority."""
