@@ -112,7 +112,7 @@ class CsvForUpload(UVTask, CliArgsMixin):
 
             cols["Note"] = cols["Note"].apply(round_grade)
 
-            # Ajout d'un colonne de commentaire par copie
+            # Ajout d'une colonne de commentaire par copie
             if self.comment_colname is None:
                 col_names.append("Commentaire")
                 cols["Commentaire"] = ""
