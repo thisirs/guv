@@ -26,6 +26,12 @@ def rel_to_dir(path, root):
     return path
 
 
+def check_filename(filename, **kwargs):
+    if not os.path.exists(filename):
+        fn = rel_to_dir(filename, kwargs["base_dir"])
+        raise ImproperlyConfigured(f"Le fichier `{fn}` n'existe pas")
+
+
 def check_columns(dataframe, columns, **kwargs):
     """Vérifie que la ou les colonnes `columns` sont dans `dataframe`"""
 

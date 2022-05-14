@@ -15,11 +15,6 @@ import guv
 from .exceptions import ImproperlyConfigured
 
 
-def check_filename(filename):
-    if not os.path.exists(filename):
-        raise ImproperlyConfigured("Le fichier `{filename}` n'existe pas")
-
-
 def argument(*args, **kwargs):
     return SimpleNamespace(args=args, kwargs=kwargs)
 
