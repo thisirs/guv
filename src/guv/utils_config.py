@@ -44,7 +44,7 @@ def ensure_absent_columns(dataframe, columns, errors="raise", file=None, base_di
     if common_cols:
         s = "s" if len(common_cols) > 1 else ""
         common_cols = ", ".join(f"`{e}`" for e in common_cols)
-        if file in not None and base_dir is not None:
+        if file is not None and base_dir is not None:
             fn = rel_to_dir(file, base_dir)
             msg = f"Colonne{s} déjà existante{s}: {common_cols} dans le dataframe issu du fichier `{fn}`."
         else:
@@ -69,7 +69,7 @@ def ensure_present_columns(dataframe, columns, errors="raise", file=None, base_d
         s = "s" if len(missing_cols) > 1 else ""
         missing_cols = ", ".join(f"`{e}`" for e in missing_cols)
         avail_cols = ", ".join(f"`{e}`" for e in dataframe.columns)
-        if file in not None and base_dir is not None:
+        if file is not None and base_dir is not None:
             fn = rel_to_dir(file, base_dir)
             msg = f"Colonne{s} manquante{s}: {missing_cols} dans le dataframe issu du fichier `{fn}`. Colonnes disponibles: {avail_cols}"
         else:
