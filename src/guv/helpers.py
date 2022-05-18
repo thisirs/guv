@@ -476,6 +476,7 @@ class ComputeNewColumn(Operation):
 
     def apply(self, df):
         ensure_present_columns(df, self.col2id.keys())
+        ensure_absent_columns(df, self.colname, errors="warning")
 
         def compute_value(row):
             # Extract values from row and rename
@@ -534,6 +535,7 @@ class ApplyCell(Operation):
 
         # Add slugname column
         tf_df = slugrot("Nom", "Prénom")
+        ensure_absent_columns(df, "fullname_slug")
         df["fullname_slug"] = tf_df(df)
 
         if '@etu' in self.name_or_email:
@@ -1092,6 +1094,7 @@ def replace_column_aux(
     """Helper function for `replace_regex` and `replace_column`."""
 
     if backup:
+        ensure_absent_columns(df, f"{colname}_orig", errors="warning")
         df = df.assign(**{f"{colname}_orig": df[colname]})
         target_colname = colname
     elif new_colname is not None:
@@ -1099,6 +1102,7 @@ def replace_column_aux(
     else:
         target_colname = colname
 
+    ensure_absent_columns(df, target_colname, errors="warning")
     df = df.assign(**{target_colname: new_column})
 
     return df
