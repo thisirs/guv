@@ -403,6 +403,11 @@ class ComputeNewColumn(Operation):
     """Création d'une colonne à partir d'autres colonnes.
 
     Les colonnes nécessaires au calcul sont renseignées dans ``cols``.
+    Au cas où, on voudrait changer la colonne utilisée pour le calcul
+    sans changer la function ``func``, il est possible de fournir un
+    tuple ``("col" "other_col")`` où ``col`` est le nom utilisé dans
+    ``func`` et ``other_col`` est la vraie colonne utilisée.
+
     La fonction ``func`` qui calcule la nouvelle colonne reçoit une
     *Series* Pandas de toutes les valeurs contenues dans les colonnes
     spécifiées.
@@ -445,18 +450,41 @@ class ComputeNewColumn(Operation):
 
          DOCS.compute_new_column("note1", "note2", "note3", func=moyenne, colname="Note_moyenne")
 
+    - Recalcul avec une note modifiée sans redéfinir la function ``moyenne`` :
+
+      .. code:: python
+
+         from guv.helpers import compute_new_column
+
+         DOCS.compute_new_column(
+             ("note1", "note1_fix"), "note2", "note3", func=moyenne, colname="Note_moyenne (fix)"
+         )
+
     """
 
     def __init__(self, *cols: str, func: Callable, colname: str, msg: Optional[str] = None):
         super().__init__()
-        self.cols = cols
+        self.col2id = {}
+        for col in cols:
+            if isinstance(col, tuple):
+                self.col2id[col[1]] = col[0]
+            else:
+                self.col2id[col] = col
         self.func = func
         self.colname = colname
         self.msg = msg
 
     def apply(self, df):
-        check_columns(df, self.cols)
-        new_col = df.apply(lambda x: self.func(x.loc[list(self.cols)]), axis=1)
+        check_columns(df, self.col2id.keys())
+
+        def compute_value(row):
+            # Extract values from row and rename
+            values = row.loc[list(self.col2id.keys())]
+            values = values.rename(index=self.col2id)
+
+            return self.func(values)
+
+        new_col = df.apply(compute_value, axis=1)
         df = df.assign(**{self.colname: new_col})
         return df
 
