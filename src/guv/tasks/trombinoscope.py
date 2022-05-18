@@ -16,7 +16,7 @@ import pandas as pd
 import guv
 
 from ..utils import argument, generate_groupby, sort_values
-from ..utils_config import check_columns, render_from_contexts
+from ..utils_config import ensure_present_columns, render_from_contexts
 from .base import CliArgsMixin, UVTask
 from .students import XlsStudentDataMerge
 
@@ -97,10 +97,14 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
         # On vérifie que GROUPBY et SUBGROUPBY sont licites
         df = pd.read_excel(self.xls_merge, engine="openpyxl")
         if self.groupby is not None:
-            check_columns(df, self.groupby, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
+            ensure_present_columns(
+                df, self.groupby, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
+            )
 
         if self.subgroupby is not None:
-            check_columns(df, self.subgroupby, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
+            ensure_present_columns(
+                df, self.subgroupby, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
+            )
 
         self.download_images(df)
         contexts = self.generate_contexts(df)

@@ -12,14 +12,14 @@ from .exceptions import ImproperlyConfigured
 from .config import settings
 from .logger import logger
 from .utils import slugrot_string
-from .utils_config import check_columns, rel_to_dir, check_filename
+from .utils_config import rel_to_dir, ensure_present_columns, ensure_absent_columns
 
 
 def slugrot(*columns):
     "Rotation-invariant hash function on a dataframe"
 
     def func(df):
-        check_columns(df, columns)
+        ensure_present_columns(df, columns)
         s = df[list(columns)].apply(
             lambda x: "".join(x.astype(str)),
             axis=1
@@ -102,7 +102,7 @@ class FillnaColumn(Operation):
             raise Exception("Une seule des options `na_value` et `group_column` doit être spécifiée")
 
         if self.na_value is not None:
-            check_columns(df, [self.colname])
+            ensure_present_columns(df, self.colname)
             df[self.colname].fillna(self.na_value, inplace=True)
         else:
             def fill_by_group(g):
@@ -117,7 +117,7 @@ class FillnaColumn(Operation):
                     logger.warning("Aucune valeur non-NA dans le groupe `%s`", g)
                 return g
 
-            check_columns(df, [self.colname, self.group_column])
+            ensure_present_columns(df, [self.colname, self.group_column])
             df = df.groupby(self.group_column).apply(fill_by_group)
 
         return df
@@ -189,7 +189,7 @@ class ReplaceRegex(Operation):
                 "Les arguments `backup` et `new_colname` sont incompatibles."
             )
 
-        check_columns(df, self.colname)
+        ensure_present_columns(df, self.colname)
 
         new_column = df[self.colname].copy()
         for rep in self.reps:
@@ -284,7 +284,7 @@ class ReplaceColumn(Operation):
                 "Les arguments `backup` et `new_colname` sont incompatibles."
             )
 
-        check_columns(df, self.colname)
+        ensure_present_columns(df, self.colname)
         new_column = df[self.colname].replace(self.rep_dict)
         return replace_column_aux(
             df,
@@ -388,7 +388,7 @@ class ApplyColumn(Operation):
         self.msg = msg
 
     def apply(self, df):
-        check_columns(df, self.colname)
+        ensure_present_columns(df, self.colname)
         df.loc[:, self.colname] = df[self.colname].apply(self.func)
         return df
 
@@ -475,7 +475,7 @@ class ComputeNewColumn(Operation):
         self.msg = msg
 
     def apply(self, df):
-        check_columns(df, self.col2id.keys())
+        ensure_present_columns(df, self.col2id.keys())
 
         def compute_value(row):
             # Extract values from row and rename
@@ -530,7 +530,7 @@ class ApplyCell(Operation):
         self.value = value
 
     def apply(self, df):
-        check_columns(df, columns=self.colname, error_when="not_found")
+        ensure_absent_columns(df, self.colname)
 
         # Add slugname column
         tf_df = slugrot("Nom", "Prénom")
@@ -985,7 +985,7 @@ class Flag(FileOperation):
 
     def apply(self, df):
         check_filename(self.filename, base_dir=settings.SEMESTER_DIR)
-        check_columns(df, self.colname, error_when="exists")
+        ensure_absent_columns(df, self.colname)
 
         df[self.colname] = self.flags[1]
 
@@ -1067,7 +1067,7 @@ class Switch(FileOperation):
 
         # Check that filename and column exist
         check_filename(self.filename, base_dir=settings.SEMESTER_DIR)
-        check_columns(df, columns=self.colname)
+        ensure_present_columns(df, self.colname)
 
         # Add slugname column
         tf_df = slugrot("Nom", "Prénom")
@@ -1151,7 +1151,7 @@ def aggregate_df(
     # Check if it exists
     if isinstance(left_on, str):
         # Check that left_on column exists
-        check_columns(left_df, left_on)
+        ensure_present_columns(left_df, left_on)
     else:
         raise Exception("L'argument 'left_on' doit être un callable ou une chaine de caractères")
 
@@ -1163,7 +1163,7 @@ def aggregate_df(
 
     # Check if it exists
     if isinstance(right_on, str):
-        check_columns(right_df, right_on)
+        ensure_present_columns(right_df, right_on)
     else:
         raise Exception("Unsupported type for right_on")
 
@@ -1176,7 +1176,7 @@ def aggregate_df(
         if isinstance(subset, str):
             subset = [subset]
 
-        check_columns(right_df, subset)
+        ensure_present_columns(right_df, subset)
         right_df = right_df[[right_on] + subset]
 
     # Allow to drop columns, right_on not allowed
@@ -1194,7 +1194,7 @@ def aggregate_df(
         if right_on in rename:
             raise Exception("Pas de renommage de la clé possible")
 
-        check_columns(right_df, rename.keys())
+        ensure_present_columns(right_df, rename.keys())
         right_df = right_df.rename(columns=rename)
 
     # Columns to drop after merge: primary key of right dataframe

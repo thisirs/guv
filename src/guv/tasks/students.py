@@ -25,7 +25,7 @@ from ..exceptions import ImproperlyConfigured
 from ..helpers import Documents
 from ..logger import logger
 from ..utils import argument, sort_values
-from ..utils_config import Output, check_columns, rel_to_dir, ask_choice
+from ..utils_config import Output, ensure_present_columns, rel_to_dir, ask_choice
 from .base import CliArgsMixin, UVTask
 
 
@@ -556,7 +556,12 @@ class CsvExamGroups(UVTask, CliArgsMixin):
             dff["TPE"] = pd.concat([sg1, sg2])
             return dff
 
-        check_columns(df, [self.tp, self.tiers_temps], file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
+        ensure_present_columns(
+            df,
+            [self.tp, self.tiers_temps],
+            file=self.xls_merge,
+            base_dir=self.settings.SEMESTER_DIR,
+        )
 
         dff = df.groupby(self.tp, group_keys=False).apply(exam_split)
         if 'Adresse de courriel' in dff.columns:
@@ -617,7 +622,7 @@ class CsvMoodleGroups(UVTask, CliArgsMixin):
 
     def run(self):
         df = pd.read_excel(self.xls_merge, engine="openpyxl")
-        check_columns(
+        ensure_present_columns(
             df, self.course, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
         )
 
@@ -792,7 +797,7 @@ class ZoomBreakoutRooms(UVTask, CliArgsMixin):
 
     def run(self):
         df = pd.read_excel(self.xls_merge, engine="openpyxl")
-        check_columns(
+        ensure_present_columns(
             df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
         )
 
@@ -826,8 +831,15 @@ class MaggleTeams(UVTask, CliArgsMixin):
 
     def run(self):
         df = pd.read_excel(self.xls_merge, engine="openpyxl")
-        check_columns(
-            df, ["Login", "Courriel", self.group, ], file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
+        ensure_present_columns(
+            df,
+            [
+                "Login",
+                "Courriel",
+                self.group,
+            ],
+            file=self.xls_merge,
+            base_dir=self.settings.SEMESTER_DIR,
         )
 
         df_group = df[["Nom", "Prénom", "Courriel", "Login", self.group]]

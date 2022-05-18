@@ -10,7 +10,7 @@ import oyaml as yaml  # Ordered yaml
 import pandas as pd
 
 from ..utils import argument, sort_values
-from ..utils_config import Output, check_columns
+from ..utils_config import Output, ensure_present_columns
 from .base import CliArgsMixin, UVTask
 from .instructors import WeekSlots
 from .students import XlsStudentDataMerge
@@ -91,7 +91,9 @@ class CsvForUpload(UVTask, CliArgsMixin):
 
         df = pd.read_excel(self.xls_merge, engine="openpyxl")
 
-        check_columns(df, self.grade_colname, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
+        ensure_present_columns(
+            df, self.grade_colname, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
+        )
 
         cols = {
             "Nom": df.Nom,
@@ -117,7 +119,9 @@ class CsvForUpload(UVTask, CliArgsMixin):
                 col_names.append("Commentaire")
                 cols["Commentaire"] = ""
             else:
-                check_columns(df, self.comment_colname, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
+                ensure_present_columns(
+                    df, self.comment_colname, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
+                )
                 col_names.append("Commentaire")
 
                 def format_msg(e):

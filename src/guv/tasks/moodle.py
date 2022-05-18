@@ -32,7 +32,7 @@ from ..exceptions import InvalidGroups
 from ..logger import logger
 from ..scripts.moodle_date import CondDate, CondGroup, CondOr, CondProfil
 from ..utils import argument, score_codenames, split_codename, make_groups, pformat, sort_values
-from ..utils_config import Output, check_columns, rel_to_dir
+from ..utils_config import Output, ensure_present_columns, rel_to_dir
 from .base import CliArgsMixin, TaskBase, UVTask
 from .instructors import WeekSlotsDetails
 from .students import XlsStudentDataMerge
@@ -93,7 +93,9 @@ class CsvGroups(UVTask, CliArgsMixin):
                 with Output(target) as out:
                     dff.to_csv(out.target, index=False, header=False)
             else:
-                check_columns(df, ctype, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
+                ensure_present_columns(
+                    df, ctype, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
+                )
                 dff = df[["Courriel", ctype]]
 
                 with Output(target) as out:
@@ -743,7 +745,9 @@ class JsonGroup(UVTask, CliArgsMixin):
     def run(self):
         df = pd.read_excel(self.xls_merge, engine="openpyxl")
 
-        check_columns(df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
+        ensure_present_columns(
+            df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
+        )
         dff = df[["Adresse de courriel", self.group]]
 
         # Dictionnary of group in GROUP and corresponding Cond
@@ -1021,10 +1025,14 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         df = pd.read_excel(self.xls_merge, engine="openpyxl")
 
         if self.grouping is not None:
-            check_columns(df, self.grouping, file=self.xls_merge, base_dir=self.settings.CWD)
+            ensure_present_columns(
+                df, self.grouping, file=self.xls_merge, base_dir=self.settings.CWD
+            )
 
         if self.other_groups is not None:
-            check_columns(df, self.other_groups, file=self.xls_merge, base_dir=self.settings.CWD)
+            ensure_present_columns(
+                df, self.other_groups, file=self.xls_merge, base_dir=self.settings.CWD
+            )
 
         # Shuffled or ordered rows according to `ordered`
         if self.ordered is None:
@@ -1032,7 +1040,9 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         elif len(self.ordered) == 0:
             df = sort_values(df, ["Nom", "Prénom"])
         else:
-            check_columns(df, self.ordered, file=self.xls_merge, base_dir=self.settings.CWD)
+            ensure_present_columns(
+                df, self.ordered, file=self.xls_merge, base_dir=self.settings.CWD
+            )
             df = sort_values(df, self.ordered)
 
         # Add title to template

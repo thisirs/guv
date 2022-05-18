@@ -7,7 +7,7 @@ import pandas as pd
 
 from ..utils import (LaTeXEnvironment, argument, make_groups, pformat,
                      sort_values)
-from ..utils_config import check_columns, render_from_contexts
+from ..utils_config import ensure_present_columns, render_from_contexts
 from .base import CliArgsMixin, UVTask
 from .students import XlsStudentDataMerge
 
@@ -152,7 +152,9 @@ class PdfAttendance(UVTask, CliArgsMixin):
                 context["blank"] = False
 
                 if self.tiers_temps:
-                    check_columns(df, "Tiers-temps", file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
+                    ensure_present_columns(
+                        df, "Tiers-temps", file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
+                    )
                     df_tt = df[df["Tiers-temps"] == "Oui"]
                     df = df[df["Tiers-temps"] != "Oui"]
                     context["group"] = "Tiers-temps"
@@ -180,7 +182,9 @@ class PdfAttendance(UVTask, CliArgsMixin):
             df = sort_values(df, ["Nom", "Prénom"])
 
             if self.tiers_temps:
-                check_columns(df, "Tiers-temps", file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
+                ensure_present_columns(
+                    df, "Tiers-temps", file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
+                )
                 df_tt = df[df["Tiers-temps"] == 1]
                 df = df[df["Tiers-temps"] != 1]
                 context["group"] = "Tiers-temps"
@@ -192,7 +196,9 @@ class PdfAttendance(UVTask, CliArgsMixin):
                 yield context
 
             if self.group is not None:
-                check_columns(df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR)
+                ensure_present_columns(
+                    df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
+                )
 
             for gn, group in df.groupby(self.group or (lambda x: "all")):
                 if gn == "all":
@@ -274,7 +280,7 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
     def run(self):
         df = pd.read_excel(self.xls_merge, engine="openpyxl")
         if self.group is not None:
-            check_columns(
+            ensure_present_columns(
                 df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
             )
 
