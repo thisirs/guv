@@ -9,6 +9,7 @@ from typing import List, Optional, Union
 import pandas as pd
 
 from .exceptions import ImproperlyConfigured
+from .config import settings
 from .logger import logger
 from .utils import slugrot_string
 from .utils_config import check_columns, rel_to_dir, check_filename
@@ -886,7 +887,7 @@ class AggregateOrg(FileOperation):
         self.postprocessing = postprocessing
 
     def apply(self, left_df):
-        check_filename(self.filename, base_dir=self.settings.SEMESTER_DIR)
+        check_filename(self.filename, base_dir=settings.SEMESTER_DIR)
 
         def parse_org(text):
             for chunk in re.split("^\\* *", text, flags=re.MULTILINE)[1:]:
@@ -955,7 +956,7 @@ class Flag(FileOperation):
         self.flags = flags
 
     def apply(self, df):
-        check_filename(self.filename, base_dir=self.settings.SEMESTER_DIR)
+        check_filename(self.filename, base_dir=settings.SEMESTER_DIR)
         check_columns(df, self.colname, error_when="exists")
 
         df[self.colname] = self.flags[1]
@@ -1037,7 +1038,7 @@ class Switch(FileOperation):
             )
 
         # Check that filename and column exist
-        check_filename(self.filename, base_dir=self.settings.SEMESTER_DIR)
+        check_filename(self.filename, base_dir=settings.SEMESTER_DIR)
         check_columns(df, columns=self.colname)
 
         # Add slugname column
