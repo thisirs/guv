@@ -498,15 +498,15 @@ class ComputeNewColumn(Operation):
 class ApplyCell(Operation):
     """Remplace la valeur d'une cellule.
 
-    ``name_or_email`` est le nom de l'édudiant ou son adresse courriel
-    et ``colname`` est le nom de la colonne où faire le changement. La
-    nouvelle valeur est renseignée par ``value``.
+    ``name_or_email`` est le nom-prénom de l'étudiant ou son adresse
+    courriel et ``colname`` est le nom de la colonne où faire le
+    changement. La nouvelle valeur est renseignée par ``value``.
 
     Parameters
     ----------
 
     name_or_email : :obj:`str`
-        Le nom ou l'adresse courriel de l'étudiant.
+        Le nom-prénom ou l'adresse courriel de l'étudiant.
 
     colname : :obj:`str`
         Le nom de la colonne où faire les modifications.
