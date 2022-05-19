@@ -137,7 +137,11 @@ class CsvForUpload(UVTask, CliArgsMixin):
         df0 = sort_values(df0, ["Nom", "Prénom"])
 
         with Output(self.target, protected=True) as out:
-            df0.to_csv(out.target, index=False, sep=";")
+            df0.to_csv(out.target, index=False, sep=";", encoding="latin-1")
+
+        logger.info(textwrap.dedent("""\
+        À charger sur https://webapplis.utc.fr/smeappli/resultats_intermediaires/
+        """))
 
 
 class XlsMergeFinalGrade(UVTask, CliArgsMixin):
