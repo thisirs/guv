@@ -9,6 +9,7 @@ import numpy as np
 import oyaml as yaml  # Ordered yaml
 import pandas as pd
 
+from ..logger import logger
 from ..utils import argument, sort_values
 from ..utils_config import Output, ensure_present_columns
 from .base import CliArgsMixin, UVTask
