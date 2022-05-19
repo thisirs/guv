@@ -8,7 +8,7 @@ def test_csv_for_upload(guv, csv, guvcapfd):
     guv("csv_for_upload -g grade1").succeed()
     assert (guv.cwd / "generated" / "grade1_ENT.csv").is_file()
 
-    doc = csv(guv.cwd / "generated" / "grade1_ENT.csv", sep=";")
+    doc = csv(guv.cwd / "generated" / "grade1_ENT.csv", sep=";", encoding="latin-1")
     doc.check_columns(
         "Nom",
         "Prénom",
@@ -25,7 +25,7 @@ def test_csv_for_upload2(guv, csv, guvcapfd):
     guv("csv_for_upload -g ects --ects").succeed()
     assert (guv.cwd / "generated" / "ects_ENT.csv").is_file()
 
-    doc = csv(guv.cwd / "generated" / "ects_ENT.csv", sep=";")
+    doc = csv(guv.cwd / "generated" / "ects_ENT.csv", sep=";", encoding="latin-1")
     doc.check_columns(
         "Nom",
         "Prénom",

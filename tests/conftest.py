@@ -210,9 +210,9 @@ def xlsx():
 
 
 class Csv:
-    def __init__(self, fpath, sep=","):
+    def __init__(self, fpath, sep=",", encoding=None):
         self.file_path = fpath
-        self.df = pd.read_csv(str(self.file_path), sep=sep)
+        self.df = pd.read_csv(str(self.file_path), sep=sep, encoding=encoding)
 
     def check_columns(self, *cols):
         assert not set(self.df.columns.values).symmetric_difference(set(cols))
