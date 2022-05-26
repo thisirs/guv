@@ -531,7 +531,7 @@ class ApplyCell(Operation):
         self.value = value
 
     def apply(self, df):
-        ensure_absent_columns(df, self.colname)
+        ensure_present_columns(df, self.colname)
 
         # Add slugname column
         tf_df = slugrot("Nom", "Prénom")
