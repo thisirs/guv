@@ -515,6 +515,9 @@ class ApplyCell(Operation):
     value :
         La valeur à affecter.
 
+    msg : :obj:`str`
+        Un message descriptif utilisé
+
     Examples
     --------
 
@@ -524,11 +527,12 @@ class ApplyCell(Operation):
 
     """
 
-    def __init__(self, name_or_email: str, colname: str, value):
+    def __init__(self, name_or_email: str, colname: str, value, msg: Optional[str] = None):
         super().__init__()
         self.name_or_email = name_or_email
         self.colname = colname
         self.value = value
+        self.msg = msg
 
     def apply(self, df):
         ensure_present_columns(df, self.colname)
@@ -559,6 +563,9 @@ class ApplyCell(Operation):
         return df
 
     def message(self, **kwargs):
+        if self.msg is not None:
+            return self.msg
+
         return f"Modification de la colonne `{self.colname}` pour l'identifiant `{self.name_or_email}`"
 
 
