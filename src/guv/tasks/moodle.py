@@ -553,9 +553,9 @@ class JsonRestriction(UVTask, CliArgsMixin):
         argument(
             "-c",
             "--course",
-            default="TP",
             choices=["Cours", "TD", "TP"],
-            help="Type de séances considérées parmi ``Cours``, ``TD`` ou ``TP``, par défaut ``TP``.",
+            required=True,
+            help="Type de séances considérées parmi ``Cours``, ``TD`` ou ``TP``.",
         ),
         argument(
             "-a",
@@ -576,12 +576,15 @@ class JsonRestriction(UVTask, CliArgsMixin):
 
     def run(self):
         df = pd.read_excel(self.planning_slots)
+        available_courses = df["Activité"].unique()
+
+        if self.course not in available_courses:
+            raise Exception(
+                "Aucun créneau de type `%s`. Choisir parmi %s"
+                % (self.course, ", ".join(f"`{c}`" for c in available_courses))
+            )
+
         df_c = df.loc[df["Activité"] == self.course]
-
-        if len(df_c) == 0:
-            courses = ", ".join("`%s`" % e for e in df["Activité"].unique())
-            raise Exception("Aucun créneau de type `%s`. Choisir parmi %s" % (self.course, courses))
-
         key = "numAB" if self.num_AB else "num"
         gb = df_c.groupby(key)
 
