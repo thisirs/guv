@@ -4,7 +4,8 @@ from tests.plugins.test_path import path_dependency
 
 @path_dependency("test_planning_slots")
 def test_ical_uv(guv, guvcapfd):
-    guv.cd(guv.semester, "SY02")
+    uv = guv.uvs[0]
+    guv.cd(guv.semester, uv)
     guv("ical_uv").succeed()
     assert (guv.cwd / "documents" / "ics.zip").is_file()
     guvcapfd.stdout_search(".  ical_uv")
@@ -14,6 +15,6 @@ def test_ical_uv(guv, guvcapfd):
 def test_ical_uv0(guv, guvcapfd):
     guv.cd(guv.semester)
     guv("ical_uv").succeed()
-    assert (guv.cwd / "SY02" / "documents" / "ics.zip").is_file()
-    assert (guv.cwd / "SY09" / "documents" / "ics.zip").is_file()
+    for uv in guv.uvs:
+        assert (guv.cwd / uv / "documents" / "ics.zip").is_file()
     guvcapfd.stdout_search(".  ical_uv")

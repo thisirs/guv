@@ -50,10 +50,11 @@ class TestPlanningSlots:
         guvcapfd.stdout_search(
             ".  planning_slots"
         )
-        assert (guv.cwd / "SY02" / "generated" / "planning.xlsx").is_file()
-        assert (guv.cwd / "SY09" / "generated" / "planning.xlsx").is_file()
+        for uv in guv.uvs:
+            assert (guv.cwd / uv / "generated" / "planning.xlsx").is_file()
 
-        doc = xlsx.tabular(guv.cwd / "SY02" / "generated" / "planning.xlsx")
+        uv = guv.uvs[0]
+        doc = xlsx.tabular(guv.cwd / uv / "generated" / "planning.xlsx")
         doc.check_columns(
             "Activité",
             "Jour",

@@ -15,8 +15,9 @@ class TestIcalInst:
         guvcapfd.stdout_search("Intervenant inconnu")
 
     def test_ical_inst2(self, guv, xlsx, guvcapfd):
+        uv = guv.uvs[0]
         with xlsx.tabular(
-            guv.cwd / "SY02" / "documents" / "planning_hebdomadaire.xlsx",
+            guv.cwd / uv / "documents" / "planning_hebdomadaire.xlsx",
             sheet_name="Intervenants",
         ) as doc:
             doc.df["Intervenants"] = "Bob Marley"

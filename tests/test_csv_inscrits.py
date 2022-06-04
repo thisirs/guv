@@ -6,7 +6,8 @@ from tests.plugins.test_path import path_dependency
 def test_csv_inscrits(guv, guvcapfd):
     "Test de traitement du fichier AFFECTATION_LISTING"
 
-    guv.cd(guv.semester, "SY02")
+    uv = guv.uvs[0]
+    guv.cd(guv.semester, uv)
     guv.copy_file("inscrits.raw", "documents")
     guv.change_config(AFFECTATION_LISTING="documents/inscrits.raw")
     guv("csv_inscrits").succeed()

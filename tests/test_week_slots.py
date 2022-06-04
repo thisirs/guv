@@ -6,7 +6,7 @@ from tests.plugins.test_path import path_dependency
 class TestWeekSlots:
 
     def test_week_slots(self, guv, xlsx):
-        uv = "SY02"
+        uv = guv.uvs[0]
         guv.cd(guv.semester)
         guv().succeed()
         assert (guv.cwd / uv / "documents" / "planning_hebdomadaire.xlsx").is_file()
