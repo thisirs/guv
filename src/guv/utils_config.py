@@ -248,7 +248,12 @@ def generate_row(beg, end, skip, turn):
             continue
 
         # Get real day
-        dayname = turn[date] if date in turn else daynames[date.weekday()]
+        dayname = turn[date].capitalize() if date in turn else daynames[date.weekday()]
+        if dayname not in daynames:
+            daynames_ = ", ".join(f"`{d}`" for d in daynames)
+            raise ImproperlyConfigured(
+                f"Nom de journée inconnu: `{dayname}`. Choisir parmi {daynames_}"
+            )
         day_counter[dayname] += 1
         num = day_counter[dayname]
 
