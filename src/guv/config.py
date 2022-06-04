@@ -270,7 +270,7 @@ class Settings:
         except ImportError as e:
             logger.warning("Problème de chargement du fichier `%s`, ignoré", config_file)
         except Exception as e:
-            raise ImproperlyConfigured(f"Problème de chargement du fichier `{config_file}`", e, traceback.format_exc()) from e
+            raise ImproperlyConfigured(f"Problème de chargement du fichier `{config_file}`: {e}") from e
 
         settings = [s for s in dir(module) if s.isupper()]
         for setting in settings:
