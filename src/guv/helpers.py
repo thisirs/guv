@@ -1394,6 +1394,9 @@ class AggregateMoodleGrades(FileOperation):
 
     """
 
+    def __init__(self, filename: str):
+        super().__init__(filename)
+
     def apply(self, df):
         op = Aggregate(
             self.filename,
@@ -1424,6 +1427,9 @@ class AggregateJury(FileOperation):
        DOCS.aggregate_jury("generated/Jury_gradebook.xlsx")
 
     """
+
+    def __init__(self, filename: str):
+        super().__init__(filename)
 
     def apply(self, df):
         op = Aggregate(
