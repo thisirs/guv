@@ -1390,7 +1390,7 @@ class AggregateMoodleGrades(FileOperation):
 
     .. code:: python
 
-       DOCS.aggregate_jury("documents/SY02 Notes.xlsx")
+       DOCS.aggregate_moodle_grades("documents/SY02 Notes.xlsx")
 
     """
 
