@@ -82,6 +82,7 @@ def ensure_present_columns(dataframe, columns, errors="raise", file=None, base_d
 
 
 def configured_uv(uvs):
+    # Collect uv to plannings in PLANNINGS
     uv2plannings = defaultdict(list)
     for plng, props in settings.PLANNINGS.items():
         if "UVS" not in props and "UES" not in props:
@@ -89,45 +90,31 @@ def configured_uv(uvs):
         for uv in props.get("UVS", []) + props.get("UES", []):
             uv2plannings[uv].append(plng)
 
-    selected_uv = {
-        uv: plannings for uv, plannings in uv2plannings.items()
-        if uv in uvs
-    }
-
-    unselected_uv = {
-        uv: plannings for uv, plannings in uv2plannings.items()
-        if uv not in uvs
-    }
-
-    for uv, plannings in unselected_uv.items():
-        if len(plannings) == 0:
-            logger.warning("L'UV `%s` n'a pas de planning associé dans `PLANNINGS`", uv)
-        if len(plannings) > 1:
-            logger.warning("L'UV `%s` a plusieurs plannings associés dans `PLANNINGS`", uv)
-
-    for uv, plannings in selected_uv.items():
+    for uv in uvs:
+        # Check that all uv are in UVS
         if uv not in settings.UVS:
             raise NotUVDirectory(
-                f"L'UV `{uv}` n'est pas reconnu car elle n'est pas enregistrée dans la variable UVS."
-            )
-        if len(plannings) == 0:
-            raise ImproperlyConfigured(
-                f"L'UV `{uv}` n'a pas de planning associé dans `PLANNINGS`"
-            )
-        if len(plannings) > 1:
-            s = ", ".join(f"`{p}`" for p in plannings)
-            raise ImproperlyConfigured(
-                f"L'UV `{uv}` fait partie de plusieurs plannings : {s}"
+                f"L'UV `{uv}` n'est pas reconnue car elle n'est pas enregistrée dans la variable `UVS`."
             )
 
-    return [
-        [plannings[0], uv, {"uv": uv, "planning": plannings[0]}]
-        for uv, plannings in selected_uv.items()
-    ]
+        # Check that UV directory exists
+        if not os.path.exists(os.path.join(settings.SEMESTER_DIR, uv)):
+            raise ImproperlyConfigured(
+                f"Le dossier pour l'UV {uv} n'existe pas."
+            )
+
+        if uv not in uv2plannings:
+            raise ImproperlyConfigured(f"L'UV `{uv}` n'a pas de planning associé dans `PLANNINGS`")
+
+        plannings = uv2plannings[uv]
+        if len(plannings) > 1:
+            raise ImproperlyConfigured(f"L'UV `{uv}` a plusieurs plannings associés dans `PLANNINGS`")
+
+        yield [plannings[0], uv, {"uv": uv, "planning": plannings[0]}]
 
 
 def selected_uv():
-    """Génère les UV configurées dans le fichier config.py du semestre."""
+    """Génère les UV configurées dans le fichier config.py du semestre suivant le dossier courant."""
 
     if "SEMESTER" not in settings:
         raise NotUVDirectory("La tâche doit être exécutée dans un dossier d'UV/semestre")
@@ -141,13 +128,15 @@ def selected_uv():
 
 
 def get_unique_uv():
+    """Return only one UV if in UV directory."""
+
     if "UV_DIR" not in settings or settings.UV_DIR is None:
         raise NotUVDirectory("La tâche doit être exécutée dans un dossier d'UV")
 
     uv = os.path.basename(settings.UV_DIR)
     conf_uvs = configured_uv([uv])
 
-    return conf_uvs[0]
+    return list(conf_uvs)[0]
 
 
 def ask_choice(prompt, choices={}):
