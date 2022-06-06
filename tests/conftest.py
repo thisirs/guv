@@ -105,7 +105,7 @@ class Guv:
         },
         {
             "semester": "A2021",
-            "uvs": ["SY09", "SY02"],
+            "uvs": ["SY19", "SY02"],
             "creneaux_uv": "Creneaux-UV-def-A21.pdf",
         },
     ],
