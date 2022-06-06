@@ -1,0 +1,46 @@
+"""Fichier de configuration du semestre"""
+
+
+# Chemin relatif vers le fichier pdf de tous les créneaux et de toutes
+# les UVs disponible sur l'ENT
+CRENEAU_UV = None
+
+# Sous-dossiers représentant les UV gérées lors du semestre
+UVS = [{{ UVS }}]
+
+from datetime import date
+
+# Liste des journées où il n'y a pas Cours/TD/TP.
+from guv.helpers import skip_range, skip_week
+
+ferie = [
+    date(2022, 10, 20),
+    date(2022, 11, 11),
+]
+debut = skip_week(date(2022, 9, 5))
+median = skip_range(date(2022, 10, 25), date(2022, 10, 29)) + [date(2022, 11, 7)]
+final = skip_range(date(2023, 1, 12), date(2022, 1, 20))
+vacances_noel = skip_range(date(2022, 12, 17), date(2023, 1, 2))
+vacances_toussaint = skip_range(date(2022, 10, 31), date(2022, 11, 5))
+
+PLANNINGS = {
+    "{{ SEMESTER }}": {
+        "UVS": [{{ UVS }}],
+        "PL_BEG": date(2022, 9, 5),
+        "PL_END": date(2023, 1, 20),
+        "SKIP_DAYS_C": ferie + vacances_toussaint + vacances_noel + median + final,
+        "SKIP_DAYS_D": ferie + vacances_toussaint + vacances_noel + debut + median + final,
+        "SKIP_DAYS_T": ferie + vacances_toussaint + vacances_noel + debut + final,
+        "TURN": {
+            date(2022, 10, 24): "jeudi",
+            date(2022, 11, 15): "vendredi",
+            date(2023, 1, 4): "lundi"
+        }
+    }
+}
+
+# Liste des plannings activés
+SELECTED_PLANNINGS = ["{{ SEMESTER }}"]
+
+# Personne par défaut pour les fichiers iCal et les calendriers
+DEFAULT_INSTRUCTOR = None
