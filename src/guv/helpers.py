@@ -1477,6 +1477,7 @@ def add_action_method(cls, klass, method_name):
         self.add_action(action)
 
     dummy.__doc__ = klass.__doc__
+    dummy.__name__ = method_name
 
     setattr(cls, method_name, dummy)
 
