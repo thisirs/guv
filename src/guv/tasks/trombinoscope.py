@@ -174,7 +174,7 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
                         self.settings.SEMESTER_DIR,
                         "documents",
                         "images",
-                        "{login}.jpg"
+                        f"{login}.jpg"
                     )
                     if not os.path.exists(fp):
                         await download_image(session, login)
