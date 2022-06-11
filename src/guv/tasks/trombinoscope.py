@@ -6,6 +6,7 @@ fonction de groupes de Cours/TD/TP ou de projet.
 import asyncio
 import hashlib
 import os
+import re
 import shutil
 
 import aiohttp
@@ -195,7 +196,7 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
             context = {
                 "name_group": name_group or self.uv,
                 "width": "c" * self.width,
-                "filename_no_ext": name_group or "all"
+                "filename_no_ext": re.sub(r"\W+", "-", name_group) or "all"
             }
 
             # Diviser par groupes de projets à l'intérieur de chaque groupe
