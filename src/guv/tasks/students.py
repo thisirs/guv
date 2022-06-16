@@ -514,6 +514,10 @@ class XlsStudentDataMerge(UVTask):
         # On redimensionne les colonnes d'après la taille de l'en-tête
         for cell in ws[1]:
             header_value = cell.value
+            if header_value == "Nom":
+                header_value = "X" * 16
+            if header_value == "Prénom":
+                header_value = "X" * 16
             if header_value:
                 ws.column_dimensions[cell.column_letter].width = 1.3*len(header_value)
 
