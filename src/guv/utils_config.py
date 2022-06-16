@@ -33,8 +33,11 @@ def check_filename(filename, **kwargs):
 
 
 def ensure_absent_columns(dataframe, columns, errors="raise", file=None, base_dir=None):
-    if errors not in ("raise", "warning"):
+    if errors not in ("raise", "warning", "ignore"):
         raise ValueError("invalid error value specified")
+
+    if errors == "ignore":
+        return
 
     if isinstance(columns, str):
         columns = [columns]
