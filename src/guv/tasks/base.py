@@ -378,7 +378,7 @@ class ConfigOpt(CliArgsInheritMixin):
         config_file = self.config_file
         if config_file is not None:
             if not os.path.exists(config_file):
-                raise Exception(f"Configuration file '{config_file}' not found")
+                raise Exception(f"{self.config_help} `{config_file}` non trouvé")
 
             with open(config_file, "r") as stream:
                 config = list(yaml.load_all(stream, Loader=yaml.SafeLoader))[0]
