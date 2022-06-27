@@ -477,24 +477,8 @@ class XlsStudentDataMerge(UVTask):
 
         dff = sort_values(df, ["Nom", "Prénom"])
 
-        # Save as csv
-        target = os.path.splitext(self.target)[0] + ".csv"
-        with Output(target) as out:
-            dff.to_csv(out.target, index=False)
-
         wb = Workbook()
         ws = wb.active
-
-        if "Numéro d'identification" in dff.columns:
-            URL="https://demeter.utc.fr/portal/pls/portal30/etudiants.CONSULT_DODDIER_ETU_ETU_DYN.show?p_arg_names=p_etudiant_cle&p_arg_values="
-            def to_link(row):
-                return "=HYPERLINK(\"{url}{moodle_id}\", \"{name}\")".format(
-                    url=URL,
-                    moodle_id=int(row["Numéro d'identification"]),
-                    name=row["Nom"]
-                )
-            links = dff.apply(to_link, axis=1)
-            dff["Nom"] = links
 
         for r in dataframe_to_rows(dff, index=False, header=True):
             ws.append(r)
@@ -524,6 +508,9 @@ class XlsStudentDataMerge(UVTask):
         with Output(self.target) as out:
             wb.save(out.target)
 
+        target = os.path.splitext(self.target)[0] + ".csv"
+        with Output(target) as out:
+            dff.to_csv(out.target, index=False)
 
 
 class CsvExamGroups(UVTask, CliArgsMixin):
