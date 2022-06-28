@@ -196,7 +196,7 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
             context = {
                 "name_group": name_group or self.uv,
                 "width": "c" * self.width,
-                "filename_no_ext": re.sub(r"\W+", "-", name_group) or "all"
+                "filename_no_ext": re.sub(r"\W+", "-", name_group) if name_group else "all"
             }
 
             # Diviser par groupes de projets à l'intérieur de chaque groupe
