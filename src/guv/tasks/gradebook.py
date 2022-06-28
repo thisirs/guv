@@ -348,7 +348,7 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
         # Make current worksheet the default one, useful for get_address_of_cell
         self.workbook.active = gradesheet
 
-        ref = gradesheet.cell(3, 1)
+        ref = gradesheet.cell(4, 2)
         ms = MarkingScheme(self.config)
         ms.write(gradesheet, ref)
 
@@ -357,8 +357,9 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
         # Freeze the structure
         gradesheet.freeze_panes = ref.top()
 
-        def insert_record(ref_cell, record):
-            last_name = ref_cell.text(record["Nom"])
+        def insert_record(ref_cell, i, record):
+            index = ref_cell.text(str(i) + ".")
+            last_name = index.below().text(record["Nom"])
             first_name = last_name.below().text(record["Prénom"])
             first_grade = first_name.below()
             last_grade = first_grade.below(ms.height - 1)
@@ -404,8 +405,8 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
             fit_cells_at_col(last_name, first_name)
 
         for j, (index, record) in enumerate(group.iterrows()):
-            ref_cell = ref.right(j).above(2)
-            insert_record(ref_cell, record)
+            ref_cell = ref.right(j).above(3)
+            insert_record(ref_cell, j + 1, record)
 
 
 class XlsGradeBookGroup(XlsGradeBookNoGroup):
