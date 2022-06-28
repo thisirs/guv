@@ -123,7 +123,7 @@ class MarkingScheme:
         tree_height = maxi
         tree_width = maxj
 
-        # Columns of coeffs
+        # Column of coeffs
         ref_coeffs = ref.right(tree_width)
         ref_coeffs.above().text("Coeffs")
 
@@ -132,7 +132,7 @@ class MarkingScheme:
         self.sum_coeffs = sum(self.coeffs)
         self.coeff_cells = [ref_coeffs.below(i) for i in range(len(self.coeffs))]
 
-        # Columns of points
+        # Column of points
         ref_points = ref_coeffs.right()
         ref_points.above().text("Points")
 
@@ -142,17 +142,17 @@ class MarkingScheme:
 
         ref_points_last = ref_points.below(len(self.points) - 1)
 
-        self.global_total = ref_points_last.below().text(
+        self.global_total = ref_points_last.below(2).text(
             "="
             + "+".join(
                 "{0} * {1}".format(cell_coeff.coordinate, cell_point.coordinate)
                 for cell_point, cell_coeff in zip(self.points_cells, self.coeff_cells)
             )
         )
-        ref_points_last.below().left().text("Grade")
+        ref_points_last.below(2).left().text("Grade")
 
-        ref_points_last.below(2).text(20)
-        ref_points_last.below(2).left().text("Grade /20")
+        ref_points_last.below(3).text(20)
+        ref_points_last.below(3).left().text("Grade /20")
 
         self.width = tree_width + 2
         self.height = tree_height
@@ -289,8 +289,8 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
     def get_columns(self):
         columns = super().get_columns()
 
-        # Add order_by columns if specified in command line and don't
-        # include it in worksheet
+        # Add order_by column if specified in command line and don't include it
+        # in worksheet
         if self.order_by is not None:
             columns.append((self.order_by, "hide", 5))
 
@@ -362,7 +362,7 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
             first_name = last_name.below().text(record["Prénom"])
             first_grade = first_name.below()
             last_grade = first_grade.below(ms.height - 1)
-            total = last_grade.below()
+            total = last_grade.below(2)
             total_20 = total.below()
 
             marks_range = get_range_from_cells(first_grade, last_grade)
