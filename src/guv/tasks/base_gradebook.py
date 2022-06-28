@@ -97,7 +97,7 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
         dans le fichier `config.py` de l'UV/UE.
         """ % {
             "filename": rel_to_dir(target, self.settings.UV_DIR),
-            "name": self.name
+            "name": self.agg_colname
         }))
 
     def get_sorted_columns(self):

@@ -299,6 +299,8 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
 
         columns.append((self.name + " brut", "cell", 6))
 
+        self.agg_colname = self.name
+
         return columns
 
     def add_arguments(self):
@@ -700,6 +702,8 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
 
         # La colonne de la note finale : A, B, C, D, E, F
         columns.append(("Note ECTS", "cell", 0))
+
+        self.agg_colname = "Note ECTS"
 
         return columns
 
