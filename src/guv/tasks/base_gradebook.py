@@ -84,6 +84,11 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
         with Output(target, protected=True) as out:
             self.workbook.save(out.target)
 
+        if isinstance(self.agg_colname, list):
+            columns = "[" + ", ".join(f'"{c}"' for c in self.agg_colname) + "]"
+        else:
+            columns = f'"{self.agg_colname}"'
+
         logger.info(textwrap.dedent("""\
 
         Pour agréger les notes au fichier central `effectifs.xlsx`, ajouter :
@@ -91,13 +96,13 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
         DOCS.aggregate(
             "%(filename)s",
             on="Courriel",
-            subset="%(name)s"
+            subset=%(columns)s
         )
 
         dans le fichier `config.py` de l'UV/UE.
         """ % {
             "filename": rel_to_dir(target, self.settings.UV_DIR),
-            "name": self.agg_colname
+            "columns": columns
         }))
 
     def get_sorted_columns(self):

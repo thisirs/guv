@@ -703,7 +703,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
         # La colonne de la note finale : A, B, C, D, E, F
         columns.append(("Note ECTS", "cell", 0))
 
-        self.agg_colname = "Note ECTS"
+        self.agg_colname = ["Note agrégée", "Note ECTS"]
 
         return columns
 
