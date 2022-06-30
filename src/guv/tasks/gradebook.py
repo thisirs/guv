@@ -513,12 +513,12 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
         gradesheet = self.workbook.create_sheet(title=name)
 
         # Write marking scheme
-        ref = gradesheet.cell(3, 1)
+        ref = gradesheet.cell(4, 2)
         ms = MarkingScheme(self.config)
         ms.write(gradesheet, ref)
 
         # Add room for name and total
-        height = ms.height + 4
+        height = ms.height + 5
 
         # Write each block with write_group_block
         ref = ref.right(ms.width).above(2)
@@ -532,8 +532,13 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
             bottom_right = self.write_group_block(
                 gradesheet, ref, subname, subgroup, height, ms
             )
-            frame_range(ref, bottom_right)
-            frame_range(ref.below(2), bottom_right)
+
+            # Around grades
+            frame_range(ref, bottom_right.above(3))
+
+            # Around totals
+            frame_range(ref.below(height - 2), bottom_right)
+
             ref = row_and_col(ref, bottom_right.right())
 
     def write_group_block(self, gradesheet, ref_cell, name, group, height, ms):
@@ -586,7 +591,7 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
                         get_address_of_cell(coeff_cell, absolute=True),
                     )
                     for group_cell, stu_cell, coeff_cell in zip(
-                        group_range[2:-2], stu_range[2:-2], ms.coeff_cells
+                        group_range[2:-3], stu_range[2:-3], ms.coeff_cells
                     )
                 )
             )
