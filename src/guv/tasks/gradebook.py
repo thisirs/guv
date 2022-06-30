@@ -406,9 +406,17 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
 
             fit_cells_at_col(last_name, first_name)
 
+            return total_20
+
         for j, (index, record) in enumerate(group.iterrows()):
             ref_cell = ref.right(j).above(3)
-            insert_record(ref_cell, j + 1, record)
+            last_cell = insert_record(ref_cell, j + 1, record)
+
+        # Around grades
+        frame_range(ref.above(3), last_cell.above(3))
+
+        # Around totals
+        frame_range(ref.below(ms.height + 1), last_cell)
 
 
 class XlsGradeBookGroup(XlsGradeBookNoGroup):
