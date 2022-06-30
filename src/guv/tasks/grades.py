@@ -105,7 +105,18 @@ class CsvForUpload(UVTask, CliArgsMixin):
         }
         col_names = ["Nom", "Prénom", "Login", "Note"]
 
-        if not self.ects:
+        if self.ects:
+            warn = False
+            ects_grades = ["ABSENT", "RESERVE", "EQUIVALENCE", "A", "B", "C", "D", "E", "FX", "F"]
+            for index, row in df.iterrows():
+                if row[self.grade_colname] not in ects_grades:
+                    warn = True
+                    logger.warning(f'Note non reconnue pour l\'étudiant `{row["Nom"]} {row["Prénom"]}` : `{row[self.grade_colname]}`')
+
+            if warn:
+                msg = ", ".join(f"`{e}`" for e in ects_grades)
+                logger.warning(f"Les notes ECTS autorisées sont {msg} ")
+        else:
             # La note doit être arrondie sinon l'ENT grogne (champ
             # trop long)
             def round_grade(e):
