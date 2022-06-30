@@ -48,7 +48,7 @@ class CsvForUpload(UVTask, CliArgsMixin):
 
     """
 
-    uptodate = True
+    uptodate = False
     target_dir = "generated"
     target_name = "{grade_colname}_ENT.csv"
     cli_args = (
