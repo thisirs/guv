@@ -142,7 +142,9 @@ class CsvForUpload(UVTask, CliArgsMixin):
             df0.to_csv(out.target, index=False, sep=";", encoding="latin-1")
 
         logger.info(textwrap.dedent("""\
-        À charger sur https://webapplis.utc.fr/smeappli/resultats_intermediaires/
+        À charger sur :
+        - https://webapplis.utc.fr/smeappli/resultats_intermediaires/
+        - https://webapplis.utc.fr/smeappli/resultats_finaux/
         """))
 
 
