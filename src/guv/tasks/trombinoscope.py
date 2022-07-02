@@ -18,6 +18,7 @@ import guv
 
 from ..utils import argument, generate_groupby, sort_values
 from ..utils_config import ensure_present_columns, render_from_contexts
+from ..logger import logger
 from .base import CliArgsMixin, UVTask
 from .students import XlsStudentDataMerge
 
@@ -147,13 +148,17 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
                     self.settings.SEMESTER_DIR, f"documents/images/{login}.jpg"
                 )
                 if len(content) < 100:
+                    logger.debug("Échec du téléchargement pour `%s`", login)
                     shutil.copyfile(
                         os.path.join(guv.__path__[0], "images", "inconnu.jpg"),
                         fp
                     )
+                    return False
                 else:
+                    logger.debug("Téléchargement pour `%s` réussi", login)
                     with open(fp, "wb") as handler:
                         handler.write(content)
+                    return True
 
         def md5(fname):
             hash_md5 = hashlib.md5()
@@ -164,12 +169,18 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
 
         async def download_session(loop):
             os.makedirs(os.path.join(self.settings.SEMESTER_DIR, "documents", "images"), exist_ok=True)
-            cj = browser_cookie3.firefox()
-            cookies = {c.name: c.value for c in cj if "demeter.utc.fr" in c.domain}
+            cookies = {
+                c.name: c.value
+                for c in browser_cookie3.load() if "demeter.utc.fr" in c.domain
+            }
+            if not cookies:
+                raise Exception("Pas de cookie trouvé pour s'authentifier. Connectez-vous d'abord sur l'ENT avec Firefox/Chrome/Chromium/Edge.")
+
             async with aiohttp.ClientSession(loop=loop, cookies=cookies) as session:
                 md5_inconnu = md5(
                     os.path.join(guv.__path__[0], "images", "inconnu.jpg")
                 )
+                failures = 0
                 for login in df.Login:
                     fp = os.path.join(
                         self.settings.SEMESTER_DIR,
@@ -178,11 +189,20 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
                         f"{login}.jpg"
                     )
                     if not os.path.exists(fp):
-                        await download_image(session, login)
+                        logger.debug("Image pour `%s` inexistante, téléchargement", login)
+                        res = await download_image(session, login)
                     else:
                         md5_curr = md5(fp)
                         if md5_curr == md5_inconnu:
-                            await download_image(session, login)
+                            logger.debug("Échec précédent pour `%s`, réessaie", login)
+                            res = await download_image(session, login)
+                        else:
+                            logger.debug("Image déjà présente pour `%s`, annulation", login)
+                            res = True
+
+                    if not res:
+                        failures += 1
+                logger.info("Échec de téléchargement pour %d étudiants", failures)
 
         # Getting images
         loop = asyncio.get_event_loop()
