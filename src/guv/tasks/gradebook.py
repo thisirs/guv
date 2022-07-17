@@ -518,19 +518,19 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
         ms.write(gradesheet, ref)
 
         # Add room for name and total
-        height = ms.height + 5
+        height = ms.height + 6
 
         # Write each block with write_group_block
-        ref = ref.right(ms.width).above(2)
+        ref = ref.right(ms.width).above(3)
 
         # Freeze the structure
         gradesheet.freeze_panes = ref.top()
 
-        for subname, subgroup in group.groupby(self.subgroup_by):
+        for i, (subname, subgroup) in enumerate(group.groupby(self.subgroup_by)):
             if self.order_by is not None:
                 group = group.sort_values(self.order_by)
             bottom_right = self.write_group_block(
-                gradesheet, ref, subname, subgroup, height, ms
+                gradesheet, ref, i, subname, subgroup, height, ms
             )
 
             # Around grades
@@ -541,15 +541,18 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
 
             ref = row_and_col(ref, bottom_right.right())
 
-    def write_group_block(self, gradesheet, ref_cell, name, group, height, ms):
+    def write_group_block(self, gradesheet, ref_cell, i, name, group, height, ms):
         # Make current worksheet the default one, useful for get_address_of_cell
         self.workbook.active = gradesheet
 
         # First column is group column
         group_range = list(get_segment(ref_cell, ref_cell.below(height - 1)))
 
+        # Number
+        group_range[0].text(str(i+1) + ".")
+
         # Group name
-        group_range[0].text(name).merge(group_range[1]).center()
+        group_range[1].text(name).merge(group_range[2]).center()
 
         # Total of column group
         group_total = group_range[-2]
@@ -560,7 +563,7 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
                     get_address_of_cell(group_cell, absolute=True),
                     get_address_of_cell(coeff_cell, absolute=True),
                 )
-                for group_cell, coeff_cell in zip(group_range[2:-2], ms.coeff_cells)
+                for group_cell, coeff_cell in zip(group_range[3:-2], ms.coeff_cells)
             )
         )
         group_total.value = formula
@@ -578,8 +581,8 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
 
         # Group student dataframe record and corresponding column range
         for stu_range, (index, record) in zip(gen, group.iterrows()):
-            stu_range[0].value = record["Nom"]
-            stu_range[1].value = record["Prénom"]
+            stu_range[1].value = record["Nom"]
+            stu_range[2].value = record["Prénom"]
 
             # Total of student
             stu_total = stu_range[-2]
@@ -591,7 +594,7 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
                         get_address_of_cell(coeff_cell, absolute=True),
                     )
                     for group_cell, stu_cell, coeff_cell in zip(
-                        group_range[2:-3], stu_range[2:-3], ms.coeff_cells
+                        group_range[3:-3], stu_range[3:-3], ms.coeff_cells
                     )
                 )
             )
