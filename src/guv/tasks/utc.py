@@ -254,12 +254,12 @@ class PlanningSlotsAll(TaskBase):
 
     def setup(self):
         super().setup()
+        self.target = self.build_target()
         self.planning_slots_files = [
             (planning, uv, PlanningSlots.target_from(**info))
             for planning, uv, info in selected_uv()
         ]
         self.file_dep = [f for _, _, f in self.planning_slots_files]
-        self.target = self.build_target()
 
     def run(self):
         def func(planning, uv, xls_aff):
