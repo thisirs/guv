@@ -417,7 +417,7 @@ class WeekSlots(UVTask):
 
     def run(self):
         output_obj = self.create_excel_file()
-        if output_obj.action != "abort":
+        if output_obj.action not in ["abort", "keep"]:
             self.add_second_worksheet()
 
     def create_excel_file(self):
