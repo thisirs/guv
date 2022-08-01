@@ -1,12 +1,9 @@
 import importlib
 import logging
 import os
-import sys
-import traceback
 from datetime import date
 from pathlib import Path
 
-from doit.reporter import ZeroReporter
 from schema import And, Or, Schema, SchemaError, Use
 
 from .exceptions import ImproperlyConfigured

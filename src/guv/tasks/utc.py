@@ -20,7 +20,7 @@ from openpyxl import Workbook
 
 from ..exceptions import ImproperlyConfigured
 from ..logger import logger
-from ..openpyxl_utils import fill_row, get_cell_in_row, get_range_from_cells
+from ..openpyxl_utils import fill_row, get_cell_in_row, get_range_from_cells, get_segment, frame_range
 from ..utils_config import (Output, ask_choice, generate_row, rel_to_dir,
                             selected_uv)
 from .base import TaskBase, UVTask

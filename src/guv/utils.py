@@ -12,9 +12,6 @@ import unidecode
 
 import guv
 
-from .exceptions import ImproperlyConfigured
-
-
 def argument(*args, **kwargs):
     return SimpleNamespace(args=args, kwargs=kwargs)
 

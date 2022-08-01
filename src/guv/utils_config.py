@@ -5,9 +5,6 @@ import time
 import zipfile
 from datetime import timedelta
 
-import latex
-import pandas as pd
-
 from .config import settings
 from .exceptions import AbortWithBody, ImproperlyConfigured, NotUVDirectory
 from .logger import logger

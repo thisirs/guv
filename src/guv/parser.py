@@ -2,8 +2,7 @@ import argparse
 import re
 import textwrap
 
-from .tasks.base import (CliArgsInheritMixin, CliArgsMixin, ConfigOpt,
-                         GroupOpt, TaskBase, UVTask)
+from .tasks.base import CliArgsInheritMixin, CliArgsMixin, ConfigOpt, GroupOpt
 from .utils import argument
 
 
