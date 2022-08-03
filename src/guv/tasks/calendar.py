@@ -136,15 +136,15 @@ class CalUv(UVTask, CliArgsMixin):
 
     def setup(self):
         super().setup()
-        self.uv_list = WeekSlots.target_from(**self.info)
+        self.week_slots = WeekSlots.target_from(**self.info)
         self.target = self.build_target()
         tmpl_dir = os.path.join(guv.__path__[0], "templates")
         template = os.path.join(tmpl_dir, "calendar_template.tex.jinja2")
-        self.file_dep = [self.uv_list, template]
+        self.file_dep = [self.week_slots, template]
         self.parse_args()
 
     def run(self):
-        df = pd.read_excel(self.uv_list, engine="openpyxl")
+        df = pd.read_excel(self.week_slots, engine="openpyxl")
         # df_uv_real = df.loc[~pd.isnull(df['Intervenants']), :]
         df_uv_real = df
         df_uv_real["Code enseig."] = self.uv

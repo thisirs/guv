@@ -250,17 +250,17 @@ class XlsAssignmentGrade(UVTask, CliArgsMixin):
     def setup(self):
         super().setup()
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
-        self.inst_uv = WeekSlots.target_from(**self.info)
-        self.file_dep = [self.inst_uv, self.xls_merge]
+        self.week_slots = WeekSlots.target_from(**self.info)
+        self.file_dep = [self.week_slots, self.xls_merge]
 
         self.parse_args()
         self.target = self.build_target()
 
     def run(self):
-        inst_uv = pd.read_excel(self.inst_uv, engine="openpyxl")
-        TD = inst_uv['Lib. créneau'].str.contains('^D')
-        inst_uv_TD = inst_uv.loc[TD]
-        insts = inst_uv_TD['Intervenants'].unique()
+        week_slots = pd.read_excel(self.week_slots, engine="openpyxl")
+        TD = week_slots['Lib. créneau'].str.contains('^D')
+        week_slots_TD = week_slots.loc[TD]
+        insts = week_slots_TD['Intervenants'].unique()
 
         df = pd.read_excel(self.xls_merge, engine="openpyxl")
         df = df[['Nom', 'Prénom', 'Courriel']]

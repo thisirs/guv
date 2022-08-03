@@ -61,15 +61,15 @@ class WeekSlotsDetails(UVTask):
         self.target = self.build_target()
 
         self.insts = XlsInstructors.target_from()
-        self.inst_uv = WeekSlots.target_from(**self.info)
-        self.file_dep = [self.inst_uv, self.insts]
+        self.week_slots = WeekSlots.target_from(**self.info)
+        self.file_dep = [self.week_slots, self.insts]
 
     def run(self):
-        inst_uv = pd.read_excel(self.inst_uv, engine="openpyxl")
+        week_slots = pd.read_excel(self.week_slots, engine="openpyxl")
         insts = pd.read_excel(self.insts, engine="openpyxl")
 
         # Add details from inst_details
-        df_outer = inst_uv.merge(
+        df_outer = week_slots.merge(
             insts,
             how="outer",
             on="Intervenants",
