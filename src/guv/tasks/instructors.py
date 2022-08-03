@@ -58,9 +58,10 @@ class WeekSlotsDetails(UVTask):
 
     def setup(self):
         super().setup()
+        self.target = self.build_target()
+
         self.insts = XlsInstructors.target_from()
         self.inst_uv = WeekSlots.target_from(**self.info)
-        self.target = self.build_target()
         self.file_dep = [self.inst_uv, self.insts]
 
     def run(self):
@@ -109,8 +110,9 @@ class XlsUTP(UVTask):
 
     def setup(self):
         super().setup()
-        self.week_slots_details = WeekSlotsDetails.target_from(**self.info)
         self.target = self.build_target()
+
+        self.week_slots_details = WeekSlotsDetails.target_from(**self.info)
         self.file_dep = [self.week_slots_details]
 
     def run(self):

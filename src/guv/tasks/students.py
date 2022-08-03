@@ -39,6 +39,7 @@ class CsvInscrits(UVTask):
 
     def setup(self):
         super().setup()
+        self.target = self.build_target()
         utc_listing_fn = self.settings.AFFECTATION_LISTING
         if utc_listing_fn is not None:
             self.utc_listing = os.path.join(
@@ -48,7 +49,6 @@ class CsvInscrits(UVTask):
         else:
             self.utc_listing = None
             self.file_dep = []
-        self.target = self.build_target()
 
     def parse_UTC_listing(self):
         """Parse `utc_listing` into DataFrame"""
@@ -537,13 +537,14 @@ class CsvExamGroups(UVTask, CliArgsMixin):
 
     def setup(self):
         super().setup()
+        self.target = self.build_target()
+        target_name = os.path.splitext(self.target_name)[0] + '_moodle.csv'
+        self.target_moodle = self.build_target(target_name=target_name)
+
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
         self.file_dep = [self.xls_merge]
 
         self.parse_args()
-        self.target = self.build_target()
-        target_name = os.path.splitext(self.target_name)[0] + '_moodle.csv'
-        self.target_moodle = self.build_target(target_name=target_name)
 
     def run(self):
         df = pd.read_excel(self.xls_merge, engine="openpyxl")

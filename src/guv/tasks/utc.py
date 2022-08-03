@@ -36,6 +36,8 @@ class UtcUvListToCsv(TaskBase):
     def setup(self):
         super().setup()
 
+        self.target = self.build_target()
+
         if "CRENEAU_UV" in self.settings:
             self.uv_list_filename = os.path.join(
                 self.settings.SEMESTER_DIR,
@@ -43,8 +45,6 @@ class UtcUvListToCsv(TaskBase):
             )
         else:
             self.uv_list_filename = None
-
-        self.target = self.build_target()
 
         if self.uv_list_filename is not None:
             self.file_dep = [self.uv_list_filename]
@@ -311,8 +311,9 @@ class PlanningSlots(UVTask):
 
     def setup(self):
         super().setup()
-        self.week_slots = WeekSlots.target_from(**self.info)
         self.target = self.build_target()
+
+        self.week_slots = WeekSlots.target_from(**self.info)
         self.file_dep = [self.week_slots]
 
         # Set uptodate value without raising Exception of displaying
@@ -411,8 +412,8 @@ class WeekSlots(UVTask):
 
     def setup(self):
         super().setup()
-        self.uvlist_csv = UtcUvListToCsv.target_from()
         self.target = self.build_target()
+        self.uvlist_csv = UtcUvListToCsv.target_from()
         self.file_dep = [self.uvlist_csv]
 
     def run(self):
