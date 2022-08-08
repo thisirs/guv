@@ -9,17 +9,16 @@
 removeSelectBtn = document.getElementById("remove")
 removeAllBtn = removeSelectBtn.cloneNode(true)
 removeAllBtn.setAttribute('id', "removeall");
+removeAllBtn.setAttribute("value", "Supprimer tout ►")
 removeAllBtn.disabled = false
 
 removeAllBtn.onclick = function() {
-    sel = document.getElementById("removeselect")
+    let sel = document.getElementById("removeselect")
     for (var i=0; i<sel.options.length; i++) {
         sel.options[i].selected = true;
     }
 };
 
 
-// Add button after
 lineBreak = document.createElement('br')
-document.getElementsByClassName("arrow_button")[0].appendChild(lineBreak)
-document.getElementsByClassName("arrow_button")[0].appendChild(removeAllBtn)
+removeSelectBtn.after(lineBreak, removeAllBtn)

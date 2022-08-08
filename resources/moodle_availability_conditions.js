@@ -7,10 +7,18 @@
 // @run-at      document-idle
 // ==/UserScript==
 
-elt = document.getElementById('id_availabilityconditionsjson');
-elt.setAttribute("aria-hidden", "false");
+let elt = document.querySelector("#id_availabilityconditionsjson");
+let observer = new MutationObserver(function(mutations, obs) {
+    mutations.forEach(function(mutation) {
+        if (mutation.type === 'attributes' && mutation.attributeName === "aria-hidden") {
+            obs.disconnect();
+            elt.setAttribute("aria-hidden", "false");
+            obs.observe(elt, {attributes: true});
+        }
+    });
+});
 
-var i = setInterval(function() {
-    elt = document.getElementById('id_availabilityconditionsjson');
-    elt.setAttribute("aria-hidden", "false");
-}, 1000);
+observer.observe(elt, {
+    attributes: true
+});
+
