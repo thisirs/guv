@@ -17,7 +17,7 @@ from ..openpyxl_patched import fixit
 
 fixit(openpyxl)
 
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.utils.dataframe import dataframe_to_rows
 
@@ -469,6 +469,21 @@ class XlsStudentDataMerge(UVTask):
         self.documents = documents
         self.file_dep = documents.deps + [self.student_data] + self.settings.config_files
 
+    def get_column_dimensions(self):
+        if not os.path.exists(self.target):
+            return {}
+
+        def column_dimensions(ws):
+            max_column = ws.max_column
+            for i in range(1, max_column+1):
+                colname = ws.cell(row=1, column=i).value
+                width = ws.column_dimensions[get_column_letter(i)].width
+                yield colname, width
+
+        wb = load_workbook(self.target)
+        ws = wb.active
+        return {colname: width for colname, width in column_dimensions(ws)}
+
     def run(self):
         df = pd.read_excel(self.student_data, engine="openpyxl")
 
@@ -476,6 +491,9 @@ class XlsStudentDataMerge(UVTask):
         df = self.documents.apply_actions(df, ref_dir=self.settings.CWD)
 
         dff = sort_values(df, ["Nom", "Prénom"])
+
+        # Get column dimensions of original effectif.xlsx
+        column_dimensions = self.get_column_dimensions()
 
         wb = Workbook()
         ws = wb.active
@@ -495,15 +513,23 @@ class XlsStudentDataMerge(UVTask):
         # On fige la première ligne et les deux premières colonnes
         ws.freeze_panes = "C2"
 
-        # On redimensionne les colonnes d'après la taille de l'en-tête
+        # On redimensionne les colonnes d'après la taille précédente
+        # ou la taille de l'en-tête
         for cell in ws[1]:
+            width = None
             header_value = cell.value
-            if header_value == "Nom":
-                header_value = "X" * 16
-            if header_value == "Prénom":
-                header_value = "X" * 16
-            if header_value:
-                ws.column_dimensions[cell.column_letter].width = 1.3*len(header_value)
+
+            if header_value in column_dimensions:
+                width = column_dimensions[header_value]
+            elif header_value == "Nom":
+                width = 1.3 * 16
+            elif header_value == "Prénom":
+                width = 1.3 * 16
+            elif header_value:
+                width = 1.3 * len(header_value)
+
+            if width is not None:
+                ws.column_dimensions[cell.column_letter].width = width
 
         with Output(self.target) as out:
             wb.save(out.target)
