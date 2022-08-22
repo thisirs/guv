@@ -144,7 +144,7 @@ class CalUv(UVTask, CliArgsMixin):
         self.parse_args()
 
     def run(self):
-        df = pd.read_excel(self.week_slots, engine="openpyxl")
+        df = WeekSlots.read_target(self.week_slots)
         # df_uv_real = df.loc[~pd.isnull(df['Intervenants']), :]
         df_uv_real = df
         df_uv_real["Code enseig."] = self.uv
@@ -216,7 +216,7 @@ class CalInst(CliArgsMixin, TaskBase):
 
     def run(self):
         for inst, target in zip(self.insts, self.targets):
-            df = pd.read_excel(self.week_slots_all)
+            df = WeekSlotsAll.read_target(self.week_slots_all)
             if "Intervenants" not in df.columns:
                 raise Exception("Pas d'enregistrement des intervenants")
 

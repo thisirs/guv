@@ -147,7 +147,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
                     context["filename_no_ext"] = f"{name}"
                     yield context
             else:
-                df = pd.read_excel(self.xls_merge, engine="openpyxl")
+                df = XlsStudentDataMerge.read_target(self.xls_merge)
                 df = sort_values(df, ["Nom", "Prénom"])
                 context["blank"] = False
 
@@ -178,7 +178,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
                     yield context
 
         else:
-            df = pd.read_excel(self.xls_merge, engine="openpyxl")
+            df = XlsStudentDataMerge.read_target(self.xls_merge)
             df = sort_values(df, ["Nom", "Prénom"])
 
             if self.tiers_temps:
@@ -278,7 +278,7 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
         self.target = self.build_target(title=self.title.replace(" ", "_"), group=self.group or "all")
 
     def run(self):
-        df = pd.read_excel(self.xls_merge, engine="openpyxl")
+        df = XlsStudentDataMerge.read_target(self.xls_merge)
         if self.group is not None:
             ensure_present_columns(
                 df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR

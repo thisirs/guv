@@ -18,6 +18,7 @@ fixit(openpyxl)
 
 from openpyxl import Workbook
 
+from ..config import settings
 from ..exceptions import ImproperlyConfigured
 from ..logger import logger
 from ..openpyxl_utils import fill_row, get_cell_in_row, get_range_from_cells, get_segment, frame_range
@@ -231,7 +232,7 @@ class WeekSlotsAll(TaskBase):
 
     def run(self):
         def func(planning, uv, xls_aff):
-            df = pd.read_excel(xls_aff, engine="openpyxl")
+            df = WeekSlots.read_target(xls_aff)
             df.insert(0, "Code enseig.", uv)
             df.insert(0, "Planning", planning)
             return df
@@ -242,6 +243,10 @@ class WeekSlotsAll(TaskBase):
 
         with Output(self.target) as out:
             df_aff.to_excel(out.target, index=False)
+
+    @staticmethod
+    def read_target(week_slots_all):
+        return pd.read_excel(week_slots_all, engine="openpyxl")
 
 
 class PlanningSlotsAll(TaskBase):
@@ -263,7 +268,7 @@ class PlanningSlotsAll(TaskBase):
 
     def run(self):
         def func(planning, uv, xls_aff):
-            df = pd.read_excel(xls_aff, engine="openpyxl")
+            df = WeekSlots.read_target(xls_aff)
             df.insert(0, "Code enseig.", uv)
             df.insert(0, "Planning", planning)
             return df
@@ -278,6 +283,10 @@ class PlanningSlotsAll(TaskBase):
 
         with Output(self.target) as out:
             df.to_excel(out.target, index=False)
+
+    @staticmethod
+    def read_target(planning_slots_all):
+        return pd.read_excel(planning_slots_all, engine="openpyxl")
 
 
 class PlanningSlots(UVTask):
@@ -351,7 +360,8 @@ class PlanningSlots(UVTask):
 
     def run(self):
         self.set_vars()
-        df = pd.read_excel(self.week_slots)
+
+        df = WeekSlots.read_target(self.week_slots)
 
         # DataFrames of slots for a week
         df_C = df.loc[df["Lib. créneau"].str.startswith("C"), :]
@@ -394,6 +404,10 @@ class PlanningSlots(UVTask):
         with Output(self.target) as out:
             dfp.to_excel(out.target, index=False)
 
+    @staticmethod
+    def read_target(planning_slots):
+        return pd.read_excel(planning_slots, engine="openpyxl")
+
 
 class WeekSlots(UVTask):
     """Fichier Excel des créneaux hebdomadaires d'une UV.
@@ -420,6 +434,39 @@ class WeekSlots(UVTask):
         output_obj = self.create_excel_file()
         if output_obj.action not in ["abort", "keep"]:
             self.add_second_worksheet()
+
+    @staticmethod
+    def read_target(week_slots):
+        df = pd.read_excel(week_slots, engine="openpyxl")
+        if len(df.index) == 0:
+            fn = rel_to_dir(week_slots, settings.CWD)
+            logger.warning(f"Le fichier `{fn}` est vide")
+
+        if df["Activité"].isnull().any():
+            fn = rel_to_dir(week_slots, settings.CWD)
+            raise Exception(f"La colonne `Activité` du fichier `{fn}` ne doit pas contenir d'élément vide.")
+
+        rest = set(df["Activité"]) - set(["Cours", "TD", "TP"])
+        if rest:
+            rest_msg = ", ".join(f"`{e}`" for e in rest)
+            fn = rel_to_dir(week_slots, settings.CWD)
+            raise Exception(f"La colonne `Activité` du fichier `{fn}` ne doit contenir que `Cours`, `TD` ou `TP`, elle contient {rest_msg}")
+
+        if df["Jour"].isnull().any():
+            fn = rel_to_dir(week_slots, settings.CWD)
+            raise Exception(f"La colonne `Jour` du fichier `{fn}` ne doit pas contenir d'élément vide.")
+
+        rest = set(df["Jour"]) - set(["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"])
+        if rest:
+            rest_msg = ", ".join(f"`{e}`" for e in rest)
+            fn = rel_to_dir(week_slots, settings.CWD)
+            raise Exception(f"La colonne `Jour` du fichier `{fn}` ne doit contenir que des jours de la semaine, elle contient {rest_msg}")
+
+        if df["Lib. créneau"].isnull().any():
+            fn = rel_to_dir(week_slots, settings.CWD)
+            raise Exception(f"La colonne `Lib. créneau` du fichier `{fn}` ne doit pas contenir d'élément vide.")
+
+        return df
 
     def create_excel_file(self):
         df = pd.read_csv(self.uvlist_csv)

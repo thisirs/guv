@@ -44,6 +44,9 @@ class XlsInstructors(TaskBase):
             with Output(self.target) as out:
                 pd.DataFrame(columns=columns).to_excel(out.target, index=False)
 
+    @staticmethod
+    def read_target(insts):
+        return pd.read_excel(insts, engine="openpyxl")
 
 class WeekSlotsDetails(UVTask):
     """Fichier Excel des intervenants par UV avec détails.
@@ -65,8 +68,8 @@ class WeekSlotsDetails(UVTask):
         self.file_dep = [self.week_slots, self.insts]
 
     def run(self):
-        week_slots = pd.read_excel(self.week_slots, engine="openpyxl")
-        insts = pd.read_excel(self.insts, engine="openpyxl")
+        week_slots = WeekSlots.read_target(self.week_slots)
+        insts = XlsInstructors.read_target(self.insts)
 
         # Add details from inst_details
         df_outer = week_slots.merge(
@@ -87,14 +90,12 @@ class WeekSlotsDetails(UVTask):
         with Output(self.target) as out:
             df_left.to_excel(out.target, index=False)
 
-
-    @classmethod
-    def read_target(cls, **kwargs):
-        target = cls.target_from(**kwargs)
+    @staticmethod
+    def read_target(week_slots_details):
         sts = ["MCF", "PR", "PRAG", "PRCE", "PAST", "ECC", "Doct", "ATER", "Vacataire"]
         status_type = CategoricalDtype(categories=sts, ordered=True)
 
-        df = pd.read_excel(target, engine="openpyxl")
+        df = pd.read_excel(week_slots_details, engine="openpyxl")
 
         df["Statut"] = df["Statut"].astype(status_type)
         df["Email"] = df["Email"].fillna("").astype("string")
@@ -116,7 +117,7 @@ class XlsUTP(UVTask):
         self.file_dep = [self.week_slots_details]
 
     def run(self):
-        df = WeekSlotsDetails.read_target(**self.info)
+        df = WeekSlotsDetails.read_target(self.week_slots_details)
 
         dfs = df.sort_values(
             ["Responsable", "Statut"], ascending=False

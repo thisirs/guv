@@ -84,7 +84,7 @@ class IcalUv(UVTask):
         self.target = self.build_target()
 
     def run(self):
-        df = pd.read_excel(self.planning_slots)
+        df = PlanningSlots.read_target(self.planning_slots)
         df.insert(0, "Code enseig.", self.uv)
         df.insert(0, "Planning", self.planning)
 
@@ -146,7 +146,7 @@ class IcalInst(TaskBase, CliArgsMixin):
         self.target = self.build_target(name=name)
 
     def run(self):
-        df = pd.read_excel(self.planning_slots_all)
+        df = PlanningSlotsAll.read_target(self.planning_slots_all)
 
         all_insts = df["Intervenants"].fillna("").unique()
         if len(self.insts) == 1 and self.insts[0] == "all":
