@@ -64,3 +64,12 @@
    - :class:`guv.tasks.utc.WeekSlots`
    - :class:`guv.tasks.students.XlsStudentDataMerge`
 ```
+
+```{eval-rst}
+.. autoclass:: guv.tasks.grades.CsvAmcList
+   :exclude-members:
+
+   Cette tâche dépend de :
+
+   - :class:`guv.tasks.students.XlsStudentDataMerge`
+```

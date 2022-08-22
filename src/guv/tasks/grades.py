@@ -278,3 +278,25 @@ class XlsAssignmentGrade(UVTask, CliArgsMixin):
             for inst in insts:
                 df.to_excel(writer, sheet_name=inst, index=False)
             writer.save()
+
+
+class CsvAmcList(UVTask):
+    """Crée un fichier csv à réutiliser directement dans AMC"""
+
+    target_dir = "generated"
+    target_name = "AMC_student_list.csv"
+    uptodate = False
+
+    def setup(self):
+        super().setup()
+        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.file_dep = [self.xls_merge]
+        self.target = self.build_target()
+
+    def run(self):
+        df = pd.read_excel(self.xls_merge, engine="openpyxl")
+        dff = df[["Login", "Courriel"]]
+        dff = dff.assign(**{"Name": df["Nom"].astype(str) + " " + df["Prénom"].astype(str)})
+
+        with Output(self.target) as out:
+            dff.to_csv(out.target, index=False)
