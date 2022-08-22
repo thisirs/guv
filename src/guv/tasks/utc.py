@@ -611,75 +611,163 @@ class UTP(TaskBase):
         self.target = self.build_target()
 
     def write_UV_block(self, ref_cell):
-        keywords = [
-            "UV",
-            "Cours",
+        """Write table at `ref_cell`."""
+
+        header = [
+            "Libellé",
+            "Type (CM/TD/TP)",
             "Nombre de créneaux de 2h par semaine",
             "Heures",
-            "UTP"
+            "UTP",
+            "Heures éq. TD",
+            "",
+            "CM",
+            "TD",
+            "TP",
+            "",
+            "Heures éq. TD CM",
+            "Heures éq. TD TD",
+            "Heures éq. TD TP",
         ]
 
+        def get_row_cells(ref_cell, i, *keywords):
+            """Return a dictionary that maps `keywords` to cells at row `i` wrt to `ref_cell`."""
+
+            return {
+                kw: ref_cell.below(i).right(j) for j, kw in enumerate(keywords)
+            }
+
+        def get_range_cells(ref_cell, i, *keywords):
+            return {
+                kw: get_range_from_cells(ref_cell.below().right(j), ref_cell.below(i).right(j))
+                for j, kw in enumerate(keywords)
+            }
+
+        def fill_with_range
+
+        def fill_row(row_cells, **elts):
+            """Fill cells in dictionary `row_cells` with elements from dictionary `elts`."""
+
+            for column_name, value in elts.items():
+                if column_name not in row_cells:
+                    raise ValueError("Keyword in `elts` not present in `row_cells`")
+
+                cell = row_cells[column_name]
+                if callable(value):
+                    value = value(row_cells)
+
+                cell.value = value
+
+        def switch(ifs, default):
+            """Nested if conditionals with a default value."""
+
+            if ifs:
+                cond, then = ifs[0]
+                return "IF({cond}, {then}, {else_})".format(
+                    cond=cond,
+                    then=then,
+                    else_=switch(ifs[1:], default),
+                )
+            else:
+                return default
+
+        formula = switch(
+            (
+                ("{type_cell} <> {type}", '""'),
+                ("NOT(ISBLANK({utp}))", "{utp_result}"),
+                ("NOT(ISBLANK({h_eq_tp}))", "{h_eq_tp_result}"),
+                ("NOT(ISBLANK({heures}))", "{mult} * {heures}"),
+                ("NOT(ISBLANK({slots_2h}))", "2*16*{slots_2h}*{mult}"),
+            ),
+            ""
+        )
+
+        def get_formula(formula, metric, ctype, mult):
+            def inner(row):
+                return "=" + formula.format(
+                    slots_2h=row["Nombre de créneaux de 2h par semaine"].coordinate,
+                    heures=row["Heures"].coordinate,
+                    utp=row["UTP"].coordinate,
+                    h_eq_tp=row["Heures éq. TD"].coordinate,
+                    utp_result=row["UTP"].coordinate if metric == "UTP" else "2/3*{}".format(row["UTP"].coordinate),
+                    h_eq_tp_result=row["Heures éq. TD"].coordinate if metric == "eqTD" else "3/2*{}".format(row["Heures éq. TD"].coordinate),
+                    type=f'"{ctype}"',
+                    type_cell=row["Type (CM/TD/TP)"].coordinate,
+                    mult=mult
+                )
+            return inner
+
+        elts = {
+            colname: get_formula(formula, metric, ctype, mult)
+            for metric, colname, ctype, mult, in (
+                    ("UTP", "CM", "CM", 2.25),
+                    ("UTP", "TD", "TD", 1.5),
+                    ("UTP", "TP", "TP", 1.5),
+                    ("eqTD", "Heures éq. TD CM", "CM", 1.5),
+                    ("eqTD", "Heures éq. TD TD", "TD", 1),
+                    ("eqTD", "Heures éq. TD TP", "TP", 1),
+            )
+        }
+
         # Write header
-        end_cell = fill_row(ref_cell, *keywords)
+        row_cells = get_row_cells(ref_cell, 0, *header)
+        fill_row(row_cells, **{e: e for e in header})
 
-        # Define references to header
-        cell_in_row = get_cell_in_row(ref_cell, *keywords)
+        # Write header above
+        row_cells2 = get_row_cells(ref_cell, -1, *header)
 
-        def get_mult(cell):
-            return 'IF({0}="CM",2.25,IF({0}="TD",1.5,IF({0}="TP",1.5,0))'.format(cell.coordinate)
+        row_cells2["Nombre de créneaux de 2h par semaine"].merge(row_cells2["Heures éq. TD"]).center().value = "Charge effectuée"
+        frame_range(row_cells2["Nombre de créneaux de 2h par semaine"], row_cells["Heures éq. TD"])
 
-        UTP_cells = []
-        for i in range(16):
-            cell = ref_cell.below(i + 1)
-            elts = [
-                None,
-                None,
-                None,
-                lambda cell: "=2*16*{}".format(cell_in_row(cell, "Nombre de créneaux de 2h par semaine").coordinate),
-                lambda cell: "={}*{}".format(cell_in_row(cell, "Heures").coordinate, get_mult(cell_in_row(cell, "Cours")))
-            ]
-            UTP_cell = fill_row(cell, *elts)
-            UTP_cells.append(UTP_cell)
+        row_cells2["CM"].merge(row_cells2["TP"]).center().value = "UTP"
+        frame_range(row_cells2["CM"], row_cells["TP"])
+
+        row_cells2["Heures éq. TD CM"].merge(row_cells2["Heures éq. TD TP"]).center().value = "Heures"
+        frame_range(row_cells2["Heures éq. TD CM"], row_cells["Heures éq. TD TP"])
+
+        # Write formulas in rows
+        n_row = 30
+        for i in range(n_row):
+            row_cells = get_row_cells(ref_cell, i + 1, *header)
+            fill_row(row_cells, **elts)
+
+        # Columns on which to make a total
+        kw_totals = [
+            "CM",
+            "TD",
+            "TP",
+            "Heures éq. TD CM",
+            "Heures éq. TD TD",
+            "Heures éq. TD TP",
+        ]
+        first_row = get_row_cells(ref_cell, 1, *header)
+        last_row = get_row_cells(ref_cell, n_row, *header)
+
+        for kw in kw_totals:
+            total_cell = last_row[kw].below()
+            range_cells = get_range_from_cells(first_row[kw], last_row[kw])
+            total_cell.value = "=SUM({})".format(range_cells)
+
+        # ranges = [
+        #     (last_row[kw].below(), get_range_from_cells(first_row[kw], last_row[kw]))
+        #     for kw in kw_totals
+        # ]
+
+        # for total_cell, range_cells in ranges:
+        #     total_cell.value = "=SUM({})".format(range_cells)
+
+        range_cells = get_range_from_cells(last_row["CM"].below(), last_row["TP"].below())
+        last_row["TP"].below().right().value = "=SUM({})".format(range_cells)
+
+        range_cells = get_range_from_cells(last_row["Heures éq. TD CM"].below(), last_row["Heures éq. TD TP"].below())
+        last_row["Heures éq. TD TP"].below().right().value = "=SUM({})".format(range_cells)
 
     def run(self):
         wb = Workbook()
         ws = wb.active
 
-        ref_cell = ws.cell(2, 2)
+        ref_cell = ws.cell(3, 2)
         self.write_UV_block(ref_cell)
-
-        ref_cell = ws.cell(2, 8)
-        self.write_hour_block(ref_cell)
 
         with Output(self.target, protected=True) as out:
             wb.save(out.target)
-
-    def write_hour_block(self, ref_cell):
-        keywords = [
-            "UV",
-            "Cours",
-            "Nombre d'heures",
-            "UTP"
-        ]
-
-        # Write header
-        end_cell = fill_row(ref_cell, *keywords)
-
-        # Define references to header
-        cell_in_row = get_cell_in_row(ref_cell, *keywords)
-
-        def get_mult(cell):
-            return 'IF({0}="CM",2.25,IF({0}="TD",1.5,IF({0}="TP",1.5,0))'.format(cell.coordinate)
-
-        UTP_cells = []
-        for i in range(16):
-            cell = ref_cell.below(i + 1)
-            elts = [
-                None,
-                None,
-                None,
-                lambda cell: "={}*{}".format(cell_in_row(cell, "Nombre d'heures").coordinate, get_mult(cell_in_row(cell, "Cours")))
-            ]
-            UTP_cell = fill_row(cell, *elts)
-            UTP_cells.append(UTP_cell)
-
