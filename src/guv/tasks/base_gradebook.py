@@ -77,7 +77,7 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
         self.targets = []
 
     def run(self):
-        self.data_df = pd.read_excel(self.xls_merge, engine="openpyxl")
+        self.data_df = XlsStudentDataMerge.read_target(self.xls_merge)
         self.create_first_worksheet()
         self.create_other_worksheets()
         target = self.build_target()

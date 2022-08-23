@@ -406,6 +406,9 @@ class XlsStudentData(UVTask):
 
         return dfr_clean
 
+    @staticmethod
+    def read_target(student_data):
+        return pd.read_excel(student_data, engine="openpyxl")
 
 class XlsStudentDataMerge(UVTask):
     """Ajoute toutes les autres informations étudiants
@@ -485,7 +488,7 @@ class XlsStudentDataMerge(UVTask):
         return {colname: width for colname, width in column_dimensions(ws)}
 
     def run(self):
-        df = pd.read_excel(self.student_data, engine="openpyxl")
+        df = XlsStudentData.read_target(self.student_data)
 
         # Aggregate documents
         df = self.documents.apply_actions(df, ref_dir=self.settings.CWD)
@@ -538,6 +541,10 @@ class XlsStudentDataMerge(UVTask):
         with Output(target) as out:
             dff.to_csv(out.target, index=False)
 
+    @staticmethod
+    def read_target(student_data_merge):
+        return pd.read_excel(student_data_merge, engine="openpyxl")
+
 
 class CsvExamGroups(UVTask, CliArgsMixin):
     """Fichier csv des demi-groupe de TP pour le passage des examens de TP"""
@@ -573,7 +580,7 @@ class CsvExamGroups(UVTask, CliArgsMixin):
         self.parse_args()
 
     def run(self):
-        df = pd.read_excel(self.xls_merge, engine="openpyxl")
+        df = XlsStudentDataMerge.read_target(self.xls_merge)
 
         def exam_split(df):
             if self.tiers_temps in df.columns:
@@ -652,7 +659,7 @@ class CsvMoodleGroups(UVTask, CliArgsMixin):
         self.target = self.target_moodle
 
     def run(self):
-        df = pd.read_excel(self.xls_merge, engine="openpyxl")
+        df = XlsStudentDataMerge.read_target(self.xls_merge)
         ensure_present_columns(
             df, self.course, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
         )
@@ -827,7 +834,7 @@ class ZoomBreakoutRooms(UVTask, CliArgsMixin):
         self.target = self.build_target()
 
     def run(self):
-        df = pd.read_excel(self.xls_merge, engine="openpyxl")
+        df = XlsStudentDataMerge.read_target(self.xls_merge)
         ensure_present_columns(
             df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
         )
@@ -861,7 +868,7 @@ class MaggleTeams(UVTask, CliArgsMixin):
         self.target = self.build_target()
 
     def run(self):
-        df = pd.read_excel(self.xls_merge, engine="openpyxl")
+        df = XlsStudentDataMerge.read_target(self.xls_merge)
         ensure_present_columns(
             df,
             [

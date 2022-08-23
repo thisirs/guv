@@ -84,7 +84,7 @@ class CsvGroups(UVTask, CliArgsMixin):
         ]
 
     def run(self):
-        df = pd.read_excel(self.xls_merge, engine="openpyxl")
+        df = XlsStudentDataMerge.read_target(self.xls_merge)
 
         for ctype, target in zip(self.groups, self.targets):
             if ctype == "singleton":
@@ -225,7 +225,7 @@ class HtmlInst(UVTask):
         self.file_dep = [self.week_slots_details]
 
     def run(self):
-        df = WeekSlotsDetails.read_target(**self.info)
+        df = WeekSlotsDetails.read_target(self.week_slots_details)
         df["Name"] = df["Lib. créneau"] + df["Semaine"].fillna("")
 
         def format_slot_list(slots):
@@ -430,7 +430,7 @@ class HtmlTable(UVTask, CliArgsMixin):
         """Get a Pandas DataFrame from all COURSES"""
 
         # Select wanted slots
-        slots = pd.read_excel(self.planning_slots)
+        slots = PlanningSlots.read_target(self.planning_slots)
         slots = slots[slots["Activité"].isin(courses)]
 
         if len(slots) == 0:
@@ -575,7 +575,7 @@ class JsonRestriction(UVTask, CliArgsMixin):
         self.target = self.build_target(AB=AB)
 
     def run(self):
-        df = pd.read_excel(self.planning_slots)
+        df = PlanningSlots.read_target(self.planning_slots)
         available_courses = df["Activité"].unique()
 
         if self.course not in available_courses:
@@ -746,7 +746,7 @@ class JsonGroup(UVTask, CliArgsMixin):
         self.target = self.build_target()
 
     def run(self):
-        df = pd.read_excel(self.xls_merge, engine="openpyxl")
+        df = XlsStudentDataMerge.read_target(self.xls_merge)
 
         ensure_present_columns(
             df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
@@ -1025,7 +1025,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         if "{grouping_name}" in self.template and self.grouping is None:
             raise Exception("La template contient '{grouping_name}' mais aucun groupement n'est spécifié avec l'option --grouping")
 
-        df = pd.read_excel(self.xls_merge, engine="openpyxl")
+        df = XlsStudentDataMerge.read_target(self.xls_merge)
 
         if self.grouping is not None:
             ensure_present_columns(

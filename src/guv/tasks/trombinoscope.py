@@ -97,7 +97,8 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
 
     def run(self):
         # On vérifie que GROUPBY et SUBGROUPBY sont licites
-        df = pd.read_excel(self.xls_merge, engine="openpyxl")
+        df = XlsStudentDataMerge.read_target(self.xls_merge)
+
         if self.groupby is not None:
             ensure_present_columns(
                 df, self.groupby, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
