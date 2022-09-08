@@ -211,14 +211,32 @@ class XlsStudentData(UVTask):
 
     def run(self):
         if self.extraction_ENT is not None:
-            if not os.path.exists(self.extraction_ENT):
-                raise Exception("Le fichier '{}' n'existe pas".format(self.extraction_ENT))
+            logger.info(
+                "Chargement des données issues de l'ENT: `%s`",
+                rel_to_dir(self.extraction_ENT, self.settings.cwd),
+            )
+            if not os.path.isfile(self.extraction_ENT):
+                raise Exception(
+                    "Le chemin `{}` n'existe pas ou n'est pas un fichier".format(
+                        rel_to_dir(self.extraction_ENT, self.settings.cwd)
+                    )
+                )
 
-            logger.info("Chargement de données issues de l'ENT")
             df = self.load_ENT_data()
 
             if self.csv_moodle is not None:
-                logger.info("Ajout des données issues de Moodle")
+                logger.info(
+                    "Ajout des données issues de Moodle: `%s`",
+                    rel_to_dir(self.csv_moodle, self.settings.MOODLE_LISTING),
+                )
+
+                if not os.path.isfile(self.csv_moodle):
+                    raise Exception(
+                        "Le chemin `{}` n'existe pas ou n'est pas un fichier".format(
+                            rel_to_dir(self.csv_moodle, self.settings.cwd)
+                        )
+                    )
+
                 df_moodle = self.load_moodle_data()
                 df = self.add_moodle_data(df, df_moodle)
         else:
