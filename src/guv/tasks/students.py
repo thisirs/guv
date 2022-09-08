@@ -115,7 +115,7 @@ class CsvInscrits(UVTask):
                         )
                     elif line.strip():
                         logger.warning("La ligne ci-après n'est pas reconnue :")
-                        logger.warning(line)
+                        logger.warning(line.strip())
 
         df = pd.DataFrame(rows)
         df = pd.pivot_table(
