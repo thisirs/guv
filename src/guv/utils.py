@@ -79,6 +79,14 @@ def score_codenames(libs):
     return tuple(sc)
 
 
+def convert_author(author):
+    if isinstance(author, str):
+        parts = re.split('[ -]', author)
+        return ''.join(e[0].upper() for e in parts)
+    else:
+        return ''
+
+
 class FormatDict(dict):
     def __missing__(self, key):
         return "{" + key + "}"

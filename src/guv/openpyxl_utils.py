@@ -1,5 +1,6 @@
 from itertools import groupby
 from operator import attrgetter
+from types import SimpleNamespace
 
 from openpyxl import utils
 from openpyxl.styles import Border, Side
@@ -7,6 +8,8 @@ from openpyxl.utils.cell import absolute_coordinate
 
 
 def frame_range(cell1, cell2):
+    """Draw a frame around range delimited by `cell1` and `cell2`."""
+
     cell_range = cell1.coordinate + ":" + cell2.coordinate
     thin = Side(border_style="thin", color="000000")
     top = Border(top=thin)
@@ -80,6 +83,7 @@ def get_range_from_cells(cell1, cell2, absolute=False, add_worksheet_name=None, 
 
 def get_segment(cell1, cell2):
     """Return a generator giving cells from cell1 to cell2"""
+
     if cell1.row == cell2.row:
         if cell1.column > cell2.column:
             cell1, cell2 = cell2, cell1
@@ -176,3 +180,28 @@ def fill_row(row_cells, **elts):
 
         cell.value = value
 
+
+class Block():
+    def __init__(self, upper_left_cell=None, lower_right_cell=None, **kwargs):
+        self.upper_left_cell = upper_left_cell
+        self.lower_right_cell = lower_right_cell
+        self._content = kwargs
+
+    @property
+    def content(self):
+        return SimpleNamespace(**self._content)
+
+    def set_content(self, **kwargs):
+        self._content = kwargs
+
+    @property
+    def lower_left(self):
+        return row_and_col(self.lower_right_cell, self.upper_left_cell)
+
+    @property
+    def lower_right(self):
+        return self.lower_right_cell
+
+    @property
+    def upper_left(self):
+        return self.upper_left_cell

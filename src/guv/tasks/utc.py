@@ -21,9 +21,9 @@ from openpyxl import Workbook
 from ..config import settings
 from ..exceptions import ImproperlyConfigured
 from ..logger import logger
-from ..openpyxl_utils import get_range_from_cells, get_segment, frame_range, get_row_cells, fill_row
-from ..utils_config import (Output, ask_choice, generate_row, rel_to_dir,
-                            selected_uv)
+from ..openpyxl_utils import fill_row, get_row_cells, get_range_from_cells, get_segment, frame_range, row_and_col, Block
+from ..utils import convert_author, score_codenames
+from ..utils_config import (Output, ask_choice, generate_row, rel_to_dir, selected_uv)
 from .base import TaskBase, UVTask
 
 
@@ -305,7 +305,7 @@ class PlanningSlots(UVTask):
     - Planning: P2021
     - Responsable:
     - Intervenants: Fisher
-    - Responsable: 
+    - Responsable:
     - date: 2021-03-08
     - num: 1
     - numAB: 1
@@ -465,6 +465,9 @@ class WeekSlots(UVTask):
         if df["Lib. créneau"].isnull().any():
             fn = rel_to_dir(week_slots, settings.CWD)
             raise Exception(f"La colonne `Lib. créneau` du fichier `{fn}` ne doit pas contenir d'élément vide.")
+
+        # Add instructor_abbrev
+        df["Intervenants abbrev"] = df["Intervenants"].apply(convert_author)
 
         return df
 
