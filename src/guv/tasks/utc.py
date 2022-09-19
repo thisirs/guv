@@ -21,7 +21,7 @@ from openpyxl import Workbook
 from ..config import settings
 from ..exceptions import ImproperlyConfigured
 from ..logger import logger
-from ..openpyxl_utils import fill_row, get_cell_in_row, get_range_from_cells, get_segment, frame_range
+from ..openpyxl_utils import get_range_from_cells, get_segment, frame_range, get_row_cells, fill_row
 from ..utils_config import (Output, ask_choice, generate_row, rel_to_dir,
                             selected_uv)
 from .base import TaskBase, UVTask
@@ -631,38 +631,6 @@ class UTP(TaskBase):
             "Heures éq. TD TD",
             "Heures éq. TD TP",
         ]
-
-        def get_row_cells(ref_cell, i, *keywords):
-            """Return a dictionary of `keywords` vs cells at row `i` wrt to `ref_cell`."""
-
-            return {
-                kw: ref_cell.below(i).right(j) for j, kw in enumerate(keywords)
-            }
-
-        def get_range_cells(ref_cell, i, *keywords):
-            return {
-                kw: get_range_from_cells(ref_cell.below().right(j), ref_cell.below(i).right(j))
-                for j, kw in enumerate(keywords)
-            }
-
-        def fill_row(row_cells, **elts):
-            """Fill cells in dictionary `row_cells` with elements from dictionary `elts`.
-
-            `row_cells` is a dictionary of keywords vs cells and `elts` a
-            dictionary of keywords vs values. If values are callables, they are
-            called with `row_cells`.
-
-            """
-
-            for column_name, value in elts.items():
-                if column_name not in row_cells:
-                    raise ValueError(f"Keyword `{column_name}` in `elts` but not in `row_cells`")
-
-                cell = row_cells[column_name]
-                if callable(value):
-                    value = value(row_cells)
-
-                cell.value = value
 
         def switch(ifs, default):
             """Nested if conditionals with a default value."""

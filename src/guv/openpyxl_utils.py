@@ -144,41 +144,35 @@ def generate_ranges(ref_cell, by="col", length=None, nranges=None):
         raise Exception("Wrong 'by' argument")
 
 
-def fill_row(refcell, *elements):
-    """Fill row starting at `refcell` with `elements`.
+def get_row_cells(ref_cell, i, *keywords):
+    """Return a dictionary of `keywords` vs cells at row `i` wrt to `ref_cell`."""
 
-    `elements` can be raw values but also callables that will be
-    called with the current cell.
-    """
+    return {
+        kw: ref_cell.below(i).right(j) for j, kw in enumerate(keywords)
+    }
 
-    def get_value(cell, elt):
-        if callable(elt):
-            return elt(cell)
-        return elt
+def get_range_cells(ref_cell, i, *keywords):
+    return {
+        kw: get_range_from_cells(ref_cell.below().right(j), ref_cell.below(i).right(j))
+        for j, kw in enumerate(keywords)
+    }
 
-    for i, elt in enumerate(elements):
-        cell = refcell.right(i)
-        cell.value = get_value(cell, elt)
+def fill_row(row_cells, **elts):
+    """Fill cells in dictionary `row_cells` with elements from dictionary `elts`.
 
-    return refcell.right(len(elements))
-
-
-def get_cell_in_row(ref_cell, *keywords):
-    """Return a function that will return a cell.
-
-    The returned function takes a cell and a keyword. The cell's row
-    and the column corresponding to the keyword in the sequence
-    `keywords` from `ref_cell` are used to identify the returned cell.
+    `row_cells` is a dictionary of keywords vs cells and `elts` a
+    dictionary of keywords vs values. If values are callables, they are
+    called with `row_cells`.
 
     """
 
-    def func(cell, keyword):
-        if keyword in keywords:
-            return cell.parent.cell(
-                row=cell.row,
-                column=ref_cell.col_idx + keywords.index(keyword)
-            )
-        else:
-            raise Exception("Unknown keyword", keyword)
+    for column_name, value in elts.items():
+        if column_name not in row_cells:
+            raise ValueError(f"Keyword `{column_name}` in `elts` but not in `row_cells`")
 
-    return func
+        cell = row_cells[column_name]
+        if callable(value):
+            value = value(row_cells)
+
+        cell.value = value
+
