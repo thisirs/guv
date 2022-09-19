@@ -603,6 +603,8 @@ class WeekSlots(UVTask):
 
 
 class UTP(TaskBase):
+    """Crée un fichier Excel de prévisions des UTP globales."""
+
     target_dir = "."
     target_name = "UTP.xlsx"
 
@@ -631,7 +633,7 @@ class UTP(TaskBase):
         ]
 
         def get_row_cells(ref_cell, i, *keywords):
-            """Return a dictionary that maps `keywords` to cells at row `i` wrt to `ref_cell`."""
+            """Return a dictionary of `keywords` vs cells at row `i` wrt to `ref_cell`."""
 
             return {
                 kw: ref_cell.below(i).right(j) for j, kw in enumerate(keywords)
@@ -643,14 +645,18 @@ class UTP(TaskBase):
                 for j, kw in enumerate(keywords)
             }
 
-        def fill_with_range
-
         def fill_row(row_cells, **elts):
-            """Fill cells in dictionary `row_cells` with elements from dictionary `elts`."""
+            """Fill cells in dictionary `row_cells` with elements from dictionary `elts`.
+
+            `row_cells` is a dictionary of keywords vs cells and `elts` a
+            dictionary of keywords vs values. If values are callables, they are
+            called with `row_cells`.
+
+            """
 
             for column_name, value in elts.items():
                 if column_name not in row_cells:
-                    raise ValueError("Keyword in `elts` not present in `row_cells`")
+                    raise ValueError(f"Keyword `{column_name}` in `elts` but not in `row_cells`")
 
                 cell = row_cells[column_name]
                 if callable(value):
@@ -709,7 +715,7 @@ class UTP(TaskBase):
             )
         }
 
-        # Write header
+        # Write header at `ref_cell`
         row_cells = get_row_cells(ref_cell, 0, *header)
         fill_row(row_cells, **{e: e for e in header})
 
@@ -743,19 +749,13 @@ class UTP(TaskBase):
         first_row = get_row_cells(ref_cell, 1, *header)
         last_row = get_row_cells(ref_cell, n_row, *header)
 
+        # Subtotals
         for kw in kw_totals:
-            total_cell = last_row[kw].below()
             range_cells = get_range_from_cells(first_row[kw], last_row[kw])
+            total_cell = last_row[kw].below()
             total_cell.value = "=SUM({})".format(range_cells)
 
-        # ranges = [
-        #     (last_row[kw].below(), get_range_from_cells(first_row[kw], last_row[kw]))
-        #     for kw in kw_totals
-        # ]
-
-        # for total_cell, range_cells in ranges:
-        #     total_cell.value = "=SUM({})".format(range_cells)
-
+        # Overall totals
         range_cells = get_range_from_cells(last_row["CM"].below(), last_row["TP"].below())
         last_row["TP"].below().right().value = "=SUM({})".format(range_cells)
 
