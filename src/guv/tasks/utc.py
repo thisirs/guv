@@ -527,49 +527,30 @@ class WeekSlots(UVTask):
             "Heure brute"
         ]
 
-        fill_row(ref_cell, *keywords)
-
-        def get_cell_in_row(ref_cell, *keywords):
-            def func(cell, keyword):
-                if keyword in keywords:
-                    return cell.parent.cell(
-                        row=cell.row,
-                        column=ref_cell.col_idx + keywords.index(keyword)
-                    )
-                else:
-                    raise Exception
-
-            return func
-
-        cell_in_row = get_cell_in_row(ref_cell, *keywords)
+        row_cells = get_row_cells(ref_cell, 0, *keywords)
+        fill_row(row_cells, **{e: e for e in keywords})
 
         for i in range(N):
-            cell = ref_cell.below(i + 1)
-            elts = [
-                None,
-                None,
-                None,
-                None,
-                None,
-                lambda cell: "=2*16*{}".format(cell_in_row(cell, "Cours").coordinate),
-                lambda cell: "=2*16*{}".format(cell_in_row(cell, "TD").coordinate),
-                lambda cell: "=2*16*{}".format(cell_in_row(cell, "TP").coordinate),
-                lambda cell: "=2*16*2.25*{}+2*16*1.5*{}+2*16*{}*{}".format(
-                    cell_in_row(cell, "Cours").coordinate,
-                    cell_in_row(cell, "TD").coordinate,
-                    cell_in_row(cell, "TP").coordinate,
-                    cell_in_row(cell, "Statut").coordinate,
+            row_cells = get_row_cells(ref_cell, i+1, *keywords)
+            elts = {
+                "Heures Cours prév": lambda row: "=2*16*{}".format(row["Cours"].coordinate),
+                "Heures TD prév": lambda row: "=2*16*{}".format(row["TD"].coordinate),
+                "Heures TP prév": lambda row: "=2*16*{}".format(row["TP"].coordinate),
+                "UTP": "=2*16*2.25*{cours_cell}+2*16*1.5*{TD_cell}+2*16*{TP_cell}*{status_cell}".format(
+                    cours_cell=row["Cours"].coordinate,
+                    TD_cell=row["TD"].coordinate,
+                    TP_cell=row["TP"].coordinate,
+                    status_cell=row["Statut"].coordinate,
                 ),
-                lambda cell: "=2/3*{}".format(
-                    cell_in_row(cell, "UTP").coordinate,
-                ),
-                lambda cell: "=2*16*{}+2*16*{}+2*16*{}".format(
-                    cell_in_row(cell, "Cours").coordinate,
-                    cell_in_row(cell, "TD").coordinate,
-                    cell_in_row(cell, "TP").coordinate,
+                "Heure équivalent TD": "=2/3*{}".format(row["UTP"].coordinate),
+                "Heure brute": "=2*16*{cours_cell}+2*16*{TD_cell}+2*16*{TP_cell}".format(
+                    cours_cell=row["Cours"].coordinate,
+                    TD_cell=row["TD"].coordinate,
+                    TP_cell=row["TP"].coordinate,
                 )
-            ]
-            fill_row(cell, *elts)
+            }
+
+            fill_row(row_cells, elts)
 
         total_cell = ref_cell.below(N+1)
         expected_cell = ref_cell.below(N+2)
