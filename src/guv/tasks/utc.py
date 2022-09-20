@@ -16,12 +16,12 @@ from ..openpyxl_patched import fixit
 
 fixit(openpyxl)
 
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 
 from ..config import settings
 from ..exceptions import ImproperlyConfigured
 from ..logger import logger
-from ..openpyxl_utils import fill_row, get_row_cells, get_range_from_cells, get_segment, frame_range, row_and_col, Block
+from ..openpyxl_utils import fill_row, get_row_cells, get_range_from_cells, get_segment, frame_range, row_and_col, Block, get_range_cells
 from ..utils import convert_author, score_codenames
 from ..utils_config import (Output, ask_choice, generate_row, rel_to_dir, selected_uv)
 from .base import TaskBase, UVTask
@@ -431,9 +431,13 @@ class WeekSlots(UVTask):
         self.file_dep = [self.uvlist_csv]
 
     def run(self):
+        df = pd.read_csv(self.uvlist_csv)
+        self.df_uv = df.loc[df["Code enseig."] == self.uv, :]
+
         output_obj = self.create_excel_file()
         if output_obj.action not in ["abort", "keep"]:
-            self.add_second_worksheet()
+            workbook = load_workbook(filename=self.target)
+            self.add_second_worksheet(workbook)
 
     @staticmethod
     def read_target(week_slots):
@@ -495,26 +499,33 @@ class WeekSlots(UVTask):
                 "Intervenants",
                 "Responsable",
             ]
-            df_uv_select = pd.DataFrame(columns=columns)
+            self.df_uv = pd.DataFrame(columns=columns)
         else:
-            df_uv_select = self.df_uv.sort_values(["Lib. créneau", "Semaine"])
-            df_uv_select = df_uv_select.drop(["Code enseig."], axis=1)
-            df_uv_select["Intervenants"] = ""
-            df_uv_select["Responsable"] = ""
+            self.df_uv = self.df_uv.sort_values(["Lib. créneau", "Semaine"])
+            self.df_uv = self.df_uv.drop(["Code enseig."], axis=1)
+            self.df_uv["Intervenants"] = ""
+            self.df_uv["Responsable"] = ""
 
         # Write to disk
         with Output(self.target, protected=True) as out:
-            df_uv_select.to_excel(out.target, sheet_name="Intervenants", index=False)
+            self.df_uv.to_excel(out.target, sheet_name="Intervenants", index=False)
 
         # Return decision in Output
         return out
 
-    def add_second_worksheet(self):
-        N = 10
-        workbook = openpyxl.load_workbook(self.target)
+    def add_second_worksheet(self, workbook):
         worksheet = workbook.create_sheet("Décompte des heures")
 
-        ref_cell = worksheet.cell(2, 2)
+        # Make current worksheet the default one, useful for get_address_of_cell
+        workbook.active = worksheet
+
+        ref = worksheet.cell(1, 1)
+        num_record = len(self.df_uv)
+        if num_record == 0:
+            num_record = 10
+
+        semAB = not self.df_uv.loc[self.df_uv["Activité"] == "TP", "Semaine"].isna().all()
+        has_TP = "TP" in self.df_uv["Activité"].values
 
         keywords = [
             "Intervenants",
@@ -530,58 +541,82 @@ class WeekSlots(UVTask):
             "Heure brute"
         ]
 
-        row_cells = get_row_cells(ref_cell, 0, *keywords)
-        fill_row(row_cells, **{e: e for e in keywords})
+        if not has_TP:
+            del keywords[keywords.index("Statut")]
+            del keywords[keywords.index("TP")]
+            del keywords[keywords.index("Heures TP prév")]
 
-        for i in range(N):
-            row_cells = get_row_cells(ref_cell, i+1, *keywords)
+        # Write header
+        row_cells = get_row_cells(ref, 0, *keywords)
+        headers = {e: e for e in keywords}
+        if has_TP and semAB:
+            headers["TP"] = "TP A/B"
+        fill_row(row_cells, **headers)
+        for cell in row_cells.values():
+            cell.style = "Pandas"
+
+        # Write rows
+        for i in range(num_record):
+            row_cells = get_row_cells(ref, i+1, *keywords)
             elts = {
                 "Heures Cours prév": lambda row: "=2*16*{}".format(row["Cours"].coordinate),
                 "Heures TD prév": lambda row: "=2*16*{}".format(row["TD"].coordinate),
-                "Heures TP prév": lambda row: "=2*16*{}".format(row["TP"].coordinate),
-                "UTP": "=2*16*2.25*{cours_cell}+2*16*1.5*{TD_cell}+2*16*{TP_cell}*{status_cell}".format(
+                "Heure équivalent TD": lambda row: "=2/3*{}".format(row["UTP"].coordinate),
+            }
+
+            if has_TP:
+                elts["Heures TP prév"] = lambda row: "=2*{num_week}*{TP_cell}".format(
+                    TP_cell=row["TP"].coordinate,
+                    num_week="8" if semAB else "16"
+                )
+                elts["UTP"] = lambda row: "=2*16*2.25*{cours_cell}+2*16*1.5*{TD_cell}+2*{num_week}*{TP_cell}*{status_cell}".format(
                     cours_cell=row["Cours"].coordinate,
                     TD_cell=row["TD"].coordinate,
                     TP_cell=row["TP"].coordinate,
                     status_cell=row["Statut"].coordinate,
-                ),
-                "Heure équivalent TD": "=2/3*{}".format(row["UTP"].coordinate),
-                "Heure brute": "=2*16*{cours_cell}+2*16*{TD_cell}+2*16*{TP_cell}".format(
+                    num_week="8" if semAB else "16"
+                )
+                elts["Heure brute"] = lambda row: "=2*16*{cours_cell}+2*16*{TD_cell}+2*{num_week}*{TP_cell}".format(
                     cours_cell=row["Cours"].coordinate,
                     TD_cell=row["TD"].coordinate,
                     TP_cell=row["TP"].coordinate,
+                    num_week="8" if semAB else "16"
                 )
-            }
+                elts["Statut"] = 1.5
+            else:
+                elts["UTP"] = lambda row: "=2*16*2.25*{cours_cell}+2*16*1.5*{TD_cell}".format(
+                    cours_cell=row["Cours"].coordinate,
+                    TD_cell=row["TD"].coordinate,
+                )
+                elts["Heure brute"] = lambda row: "=2*16*{cours_cell}+2*16*{TD_cell}".format(
+                    cours_cell=row["Cours"].coordinate,
+                    TD_cell=row["TD"].coordinate,
+                )
 
-            fill_row(row_cells, elts)
+            fill_row(row_cells, **elts)
 
-        total_cell = ref_cell.below(N+1)
-        expected_cell = ref_cell.below(N+2)
+        frame_range(ref, row_cells[keywords[-1]])
 
+        # Write real
+        row_cells = get_row_cells(ref, num_record+1, *keywords)
+        range_cells = get_range_cells(ref.below(), num_record-1, *keywords)
+        row_cells["Cours"].value = "=SUM({})".format(range_cells["Cours"])
+        row_cells["TD"].value = "=SUM({})".format(range_cells["TD"])
+        if has_TP:
+            row_cells["TP"].value = "=SUM({})".format(range_cells["TP"])
+        row_cells["Cours"].left().text("Total")
+
+        # Write expected
         n_cours = len(self.df_uv.loc[self.df_uv["Activité"] == "Cours"])
         n_TD = len(self.df_uv.loc[self.df_uv["Activité"] == "TD"])
-        n_TP = len(self.df_uv.loc[self.df_uv["Activité"] == "TP"])
 
-        first_cours = ref_cell.below().right(2)
-        first_TD = ref_cell.below().right(3)
-        first_TP = ref_cell.below().right(4)
-
-        last_cours = ref_cell.below(N).right(2)
-        last_TD = ref_cell.below(N).right(3)
-        last_TP = ref_cell.below(N).right(4)
-
-        range_ = get_range_from_cells(first_cours, last_cours)
-        total_cell.right(2).text(f"=SUM({range_})")
-
-        range_ = get_range_from_cells(first_TD, last_TD)
-        total_cell.right(3).text(f"=SUM({range_})")
-
-        range_ = get_range_from_cells(first_TP, last_TP)
-        total_cell.right(4).text(f"=SUM({range_})")
-
-        expected_cell.right().text(n_cours)
-        expected_cell.right(2).text(n_TD)
-        expected_cell.right(3).text(n_TP)
+        row_cells = get_row_cells(ref, num_record+2, *keywords)
+        row_cells["Cours"].value = n_cours
+        row_cells["TD"].value = n_TD
+        if has_TP:
+            n_TP = len(self.df_uv.loc[self.df_uv["Activité"] == "TP"])
+            row_cells["TP"].value = n_TP
+        row_cells["Cours"].left().text("Attendu")
 
         workbook.save(self.target)
 

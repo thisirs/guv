@@ -157,7 +157,7 @@ def get_row_cells(ref_cell, i, *keywords):
 
 def get_range_cells(ref_cell, i, *keywords):
     return {
-        kw: get_range_from_cells(ref_cell.below().right(j), ref_cell.below(i).right(j))
+        kw: get_range_from_cells(ref_cell.right(j), ref_cell.below(i).right(j))
         for j, kw in enumerate(keywords)
     }
 
