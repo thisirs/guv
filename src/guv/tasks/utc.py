@@ -470,8 +470,8 @@ class WeekSlots(UVTask):
             fn = rel_to_dir(week_slots, settings.CWD)
             raise Exception(f"La colonne `Lib. créneau` du fichier `{fn}` ne doit pas contenir d'élément vide.")
 
-        # Add instructor_abbrev
-        df["Intervenants abbrev"] = df["Intervenants"].apply(convert_author)
+        if df["Intervenants"].isnull().any():
+            logger.warning("Certains créneaux n'ont pas d'intervenant renseigné")
 
         return df
 
