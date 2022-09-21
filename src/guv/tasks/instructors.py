@@ -347,7 +347,7 @@ class XlsRemplacements(UVTask):
 
             elts = {
                 "Intervenant": data["Intervenants"],
-                "Abbrev": data["Intervenants abbrev"],
+                "Abbrev": data["Abbrev"],
                 "Cours": data["Cours"],
                 "TD": data["TD"],
                 "Balance Cours": lambda row: get_formula(tmpl, "Cours", inst_dict, rep_dict, row["Abbrev"]),
