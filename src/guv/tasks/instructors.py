@@ -49,7 +49,7 @@ class XlsInstructors(TaskBase):
         if not os.path.exists(self.target):
             logger.warning(
                 "Le fichier `%s` n'existe pas, création d'un fichier vide",
-                rel_to_dir(self.target, self.settings.SEMESTER_DIR),
+                rel_to_dir(self.target, self.settings.CWD),
             )
             columns = ["Intervenants", "Abbrev", "Statut", "Email", "Website"]
             with Output(self.target) as out:
