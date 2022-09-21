@@ -71,7 +71,7 @@ def create_uv_dirs(base_dir, uvs):
         content = tmpl.render(context)
         new_path = os.path.join(uv_dir, "config.py")
 
-        logger.info("Création du ficher %s", os.path.relpath(new_path, os.getcwd()))
+        logger.info("Création du fichier %s", os.path.relpath(new_path, os.getcwd()))
         if os.path.exists(new_path):
             raise Exception("Le fichier `%s` existe déjà" % os.path.relpath(new_path, os.getcwd()))
         with open(new_path, "w", encoding="utf-8") as new_file:
@@ -106,7 +106,7 @@ def run_creastesemester(args):
     content = tmpl.render(context)
     new_path = os.path.join(base_dir, "config.py")
 
-    logger.info("Création du ficher %s", os.path.relpath(new_path, os.getcwd()))
+    logger.info("Création du fichier %s", os.path.relpath(new_path, os.getcwd()))
     if os.path.exists(new_path):
         raise Exception("Le fichier `%s` existe déjà" % os.path.relpath(new_path, os.getcwd()))
     with open(new_path, "w", encoding="utf-8") as new_file:
