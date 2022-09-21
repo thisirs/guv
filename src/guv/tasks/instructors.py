@@ -95,7 +95,7 @@ class WeekSlotsDetails(UVTask):
         df_left = df_left.drop(["_merge"], axis=1)
 
         df_missing = df_outer[df_outer["_merge"].isin(["left_only"])]
-        inst_missing = df_missing["Intervenants"].unique()
+        inst_missing = df_missing["Intervenants"].dropna().unique()
         for inst in inst_missing:
             logger.warning("Pas d'informations détaillées sur l'intervenant: %s", inst)
 
