@@ -30,10 +30,10 @@
     \hline
     Nom ((* for s in slots_name *)) & ((( s | escape_tex )))((* endfor *)) \\ \hline
     ((* for student in students *))
-    \begin{minipage}{3cm}\scriptsize
+    \begin{minipage}[c][.7cm]{3cm}\scriptsize
       ((( student['name'] )))
     \end{minipage}
-    ((* for i in range(nslot) *)) & ((* endfor *)) \\[8pt] \hline
+    ((* for i in range(nslot) *)) & ((* endfor *)) \\ \hline
     ((* endfor *))
   \end{tabular}
 \end{center}
