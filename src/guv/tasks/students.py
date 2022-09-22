@@ -246,7 +246,10 @@ class XlsStudentData(UVTask):
             df = self.load_moodle_data()
 
         if self.csv_UTC is not None:
-            logger.info("Ajout des affectations aux Cours/TD/TP")
+            logger.info(
+                "Ajout des affectations aux Cours/TD/TP : `%s`",
+                rel_to_dir(self.csv_UTC, self.settings.cwd),
+            )
             df = self.add_UTC_data(df, self.csv_UTC)
 
         dff = sort_values(df, ["Nom", "Prénom"])
@@ -340,7 +343,7 @@ class XlsStudentData(UVTask):
                 print(f"  ({i}) {fullname_ro}")
 
             choice = ask_choice(
-                "Choix ? (entrée si pas de correspondance)",
+                "Choix ? (entrée si pas de correspondance) ",
                 {**{str(i): i for i in range(len(ro.index))}, "": None}
             )
 
@@ -388,14 +391,14 @@ class XlsStudentData(UVTask):
             key = row["fullname_slug"]
             branch = row["Branche"]
             semester = row["Semestre"]
-            logger.warning("(`%s`, `%s`, `%s`) not in UTC data", key, branch, semester)
+            logger.warning("(`%s`, `%s`, `%s`) présent dans `ENT_LISTING` mais pas dans `AFFECTATION_LISTING`", key, branch, semester)
 
         ro = dfr.loc[dfr["_merge"] == "right_only"]
         for index, row in ro.iterrows():
             key = row["Name"]
             branch = row["Branche"]
             semester = row["Semestre"]
-            logger.warning("(`%s`, `%s`, `%s`) only in UTC data", key, branch, semester)
+            logger.warning("(`%s`, `%s`, `%s`) présent dans `AFFECTATION_LISTING` mais pas dans `ENT_LISTING`", key, branch, semester)
 
         # Trying to merge manually lo and ro
         for index, row in lo.iterrows():
@@ -406,7 +409,7 @@ class XlsStudentData(UVTask):
                 print(f"  ({i}) {fullname_ro}")
 
             choice = ask_choice(
-                "Choix ? (entrée si pas de correspondance)",
+                "Choix ? (entrée si pas de correspondance) ",
                 {**{str(i): i for i in range(len(ro.index))}, "": None}
             )
 
@@ -419,6 +422,9 @@ class XlsStudentData(UVTask):
                 row_merge = lo.loc[index, :].copy()
                 row_merge["_merge"] = "both"
                 dfr_clean = dfr_clean.append(row_merge)
+
+        for index, row in ro.iterrows():
+            logger.warning("`%s` présent dans `AFFECTATION_LISTING` est ignoré", row_ro["Name"])
 
         dfr_clean = dfr_clean.drop(["_merge", "fullname_slug", "Name"], axis=1)
 
