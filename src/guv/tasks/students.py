@@ -344,7 +344,7 @@ class XlsStudentData(UVTask):
                 {**{str(i): i for i in range(len(ro.index))}, "": None}
             )
 
-            if choice:
+            if choice is not None:
                 row_merge = lo.loc[index, :].combine_first(ro.iloc[choice, :])
                 ro = ro.drop(index=ro.iloc[[choice]].index)
                 row_merge["_merge"] = "both"
@@ -410,7 +410,7 @@ class XlsStudentData(UVTask):
                 {**{str(i): i for i in range(len(ro.index))}, "": None}
             )
 
-            if choice:
+            if choice is not None:
                 row_merge = lo.loc[index, :].combine_first(ro.iloc[choice, :])
                 ro = ro.drop(index=ro.iloc[[choice]].index)
                 row_merge["_merge"] = "both"
