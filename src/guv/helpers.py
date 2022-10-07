@@ -1032,7 +1032,7 @@ class Switch(FileOperation):
     sauvegardée avant toute modification (avec un suffixe ``_orig``).
     Si l'argument ``new_colname`` est fourni la colonne est copiée
     vers une nouvelle colonne de nom ``new_colname`` et les
-    modifications sont faites sur cette nouvelle colonnne.
+    modifications sont faites sur cette nouvelle colonne.
 
     Parameters
     ----------
