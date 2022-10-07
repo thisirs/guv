@@ -883,7 +883,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
 
     """
 
-    uptodate = True
+    uptodate = False
     target_dir = "generated"
     target_name = "{title}_groups.csv"
     cli_args = (
