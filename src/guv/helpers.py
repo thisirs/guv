@@ -1089,7 +1089,6 @@ class Switch(FileOperation):
             new_colname=self.new_colname,
             new_column=new_column,
             backup=False,
-            errors="ignore"
         )
 
         df = df.drop("fullname_slug", axis=1)
@@ -1097,7 +1096,7 @@ class Switch(FileOperation):
 
 
 def replace_column_aux(
-    df, new_colname=None, colname=None, new_column=None, backup=False, errors="warning"
+    df, new_colname=None, colname=None, new_column=None, backup=False
 ):
     """Helper function for `replace_regex` and `replace_column`."""
 
@@ -1110,7 +1109,7 @@ def replace_column_aux(
     else:
         target_colname = colname
 
-    ensure_absent_columns(df, target_colname, errors=errors)
+    ensure_absent_columns(df, target_colname, errors="warning")
     df = df.assign(**{target_colname: new_column})
 
     return df

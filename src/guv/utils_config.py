@@ -30,11 +30,8 @@ def check_filename(filename, **kwargs):
 
 
 def ensure_absent_columns(dataframe, columns, errors="raise", file=None, base_dir=None):
-    if errors not in ("raise", "warning", "ignore"):
+    if errors not in ("raise", "warning", "silent"):
         raise ValueError("invalid error value specified")
-
-    if errors == "ignore":
-        return
 
     if isinstance(columns, str):
         columns = [columns]
@@ -55,9 +52,11 @@ def ensure_absent_columns(dataframe, columns, errors="raise", file=None, base_di
         if errors == "warning":
             logger.warning(msg)
 
+    return not not common_cols
+
 
 def ensure_present_columns(dataframe, columns, errors="raise", file=None, base_dir=None):
-    if errors not in ("raise", "warning"):
+    if errors not in ("raise", "warning", "silent"):
         raise ValueError("invalid error value specified")
 
     if isinstance(columns, str):
@@ -79,6 +78,8 @@ def ensure_present_columns(dataframe, columns, errors="raise", file=None, base_d
             raise Exception(msg)
         if errors == "warning":
             logger.warning(msg)
+
+    return not not missing_cols
 
 
 def configured_uv(uvs):
