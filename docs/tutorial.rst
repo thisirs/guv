@@ -415,6 +415,10 @@ on peut utiliser les fonctions suivantes :
 
    .. automethod:: guv.helpers.Documents.replace_column
 
+-  Fonction ``flag``
+
+   .. automethod:: guv.helpers.Documents.flag
+
 -  Fonction ``switch``
 
    .. automethod:: guv.helpers.Documents.switch
