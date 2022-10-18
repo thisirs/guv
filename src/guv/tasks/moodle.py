@@ -1266,7 +1266,11 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
 
         series_list = []
         for group in groups:
-            group_name = pformat(next(name_gen), group_name=name)
+            try:
+                name_tmpl = next(name_gen)
+            except StopIteration as e:
+                raise Exception("Les noms de groupes disponibles sont épuisés, utiliser # ou @ dans le modèle ou rajouter des noms dans `--names`.") from e
+            group_name = pformat(name_tmpl, group_name=name)
             series = pd.Series([group_name]*len(group), index=group, name=group_name)
             series_list.append(series)
 
