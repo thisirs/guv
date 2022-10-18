@@ -19,7 +19,7 @@ from .moodle import (CsvCreateGroups, CsvGroups, CsvGroupsGroupings,
                      FetchGroupId, HtmlInst, HtmlTable, JsonGroup,
                      JsonRestriction)
 from .students import (CsvExamGroups, CsvInscrits, CsvMoodleGroups,
-                       XlsStudentData, XlsStudentDataMerge, ZoomBreakoutRooms)
+                       XlsStudentData, XlsStudentDataMerge, ZoomBreakoutRooms, MaggleTeams)
 from .trombinoscope import PdfTrombinoscope
 from .utc import (UTP, PlanningSlots, PlanningSlotsAll, UtcUvListToCsv,
                   WeekSlots, WeekSlotsAll)
