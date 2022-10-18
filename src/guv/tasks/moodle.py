@@ -1262,14 +1262,13 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
     def add_names_to_grouping(self, groups, name, name_gen):
         """Give names to `groups`"""
 
-        def name_gen0():
-            for n in name_gen:
-                yield pformat(n, grouping_name=name)
+        logger.info("%s groups in subgroup %s", len(groups), name)
 
-        series_list = [
-            pd.Series([group_name]*len(group), index=group, name=group_name)
-            for group_name, group in zip(name_gen0(), groups)
-        ]
+        series_list = []
+        for group in groups:
+            group_name = pformat(next(name_gen), group_name=name)
+            series = pd.Series([group_name]*len(group), index=group, name=group_name)
+            series_list.append(series)
 
         return series_list
 
