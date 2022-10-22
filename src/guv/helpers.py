@@ -977,7 +977,11 @@ class Flag(FileOperation):
 
     .. code:: text
 
+       # Des commentaires
        Bob Morane
+
+       # Robuste à la permutation circulaire
+       arctor bob
 
     L'instruction d'agrégation :
 
