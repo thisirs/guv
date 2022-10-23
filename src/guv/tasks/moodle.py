@@ -31,7 +31,14 @@ import guv
 from ..exceptions import InvalidGroups
 from ..logger import logger
 from ..scripts.moodle_date import CondDate, CondGroup, CondOr, CondProfil
-from ..utils import argument, score_codenames, split_codename, make_groups, pformat, sort_values
+from ..utils import (
+    argument,
+    score_codenames,
+    split_codename,
+    make_groups,
+    pformat,
+    sort_values,
+)
 from ..utils_config import Output, ensure_present_columns, rel_to_dir
 from .base import CliArgsMixin, TaskBase, UVTask
 from .instructors import WeekSlotsDetails
@@ -954,7 +961,14 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             "--other-groups",
             nargs="+",
             required=False,
+            default=[],
             help="Liste de colonnes de groupes déjà formés qui ne doivent plus être reformés. Valable uniquement pour les binomes et trinomes."
+        ),
+        argument(
+            "--max-iter",
+            type=int,
+            default=1000,
+            help="Nombre maximum d'essais pour trouver des groupes avec contraintes."
         )
     )
 
@@ -1109,32 +1123,87 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         value is the group name generated from `name` and `name_gen`.
 
         """
+        def get_coocurrence_matrix_from_array(series):
+            """Return co-occurence matrix of a series as a Pandas dataframe."""
+            one_hot = pd.get_dummies(series)
+            return (one_hot @ one_hot.T)
 
-        # Generate valid subgroups as a list of list of elements of
-        # `df` index.
-        for i in range(100000):
-            try:
-                # Make groups based on proportions, num_groups or
-                # group_size.
-                groups = self.make_groups_index(df)
+        def get_coocurrence_matrix_from_partition(groups, index):
+            """Return co-occurence matrix from a partition of index."""
+            N = sum(len(p) for p in groups)
+            A = pd.DataFrame(np.zeros((N, N), dtype=int), index=index, columns=index)
+            for p in groups:
+                A.loc[p, p] = 1
+            return A
 
-                # Check validity (group sizes of 2 and 3 only)
-                self.check_valid_groups(df, groups)
-            except InvalidGroups:
-                if self.ordered:
-                    raise Exception("Les groupes obtenus avec ``ordered`` sont incompatibles avec les contraintes de binomes/trinomes ou ``other-groups`` fournies.")
-                df = df.sample(frac=1)
-                continue
-            else:
+        n_constraints = len(self.other_groups)
+        N = len(df.index)
+
+        cooccurence_matrices = {
+            column: get_coocurrence_matrix_from_array(df[column])
+            for column in self.other_groups
+        }
+
+        cooccurence_total = sum(cm for _, cm in cooccurence_matrices.items())
+
+        old_cost = np.inf
+
+        niter = 0
+        itermax = self.max_iter
+        while niter < itermax:
+            # New contiguous partition of df.index
+            groups = self.make_groups_index(df)
+
+            # Get its coocurrence pandas dataframe
+            cooccurence_matrix = get_coocurrence_matrix_from_partition(groups, df.index)
+
+            # Compute cost wrt to constraints
+            cost = (cooccurence_matrix * cooccurence_total).to_numpy().sum()
+
+            # Optimal cost
+            if cost == N * n_constraints:
+                best_groups = groups
                 break
+
+            if old_cost > cost:
+                old_cost = cost
+                best_groups = groups
+
+            if self.ordered:
+                raise Exception("Les groupes obtenus avec ``ordered`` sont incompatibles avec les contraintes fournies dans ``other-groups``.")
+
+            # Shuffle to test a different partition
+            df = df.sample(frac=1)
+            niter += 1
+
+        if niter < itermax:
+            if n_constraints > 0:
+                logger.info(f"Partition optimale pour le groupe `{name}` trouvée en {niter+1} essais.")
         else:
-            # If no break
-            raise Exception(f"Aucune des {i+1} configurations testées n'est valide")
+            logger.warning(f"Pas de solution trouvée pour le groupe `{name}` en {itermax} essais :")
+            best_cm = get_coocurrence_matrix_from_partition(best_groups, df.index)
+            for column, cm in cooccurence_matrices.items():
+                # Non-zero off-diagonal element of prod signals a
+                # common cooccurence.
+                prod = cm * best_cm
+                if prod.to_numpy(dtype=int).sum() > N:
+                    logger.warning(f"- contrainte `{column}` violée {(prod.to_numpy(dtype=int).sum() - N)//2} fois :")
 
-        if i > 0:
-            logger.warning("%d configuration(s) testée(s)", i+1)
+                    # Compute locations as a dataframe of (index,
+                    # index) where there is a common cooccurence.
+                    df0 = pd.melt(prod.reset_index(), id_vars="index")
+                    df0.variable = df0.variable.astype(int)
+                    df0 = df0.loc[(df0.value > 0) & (df0["index"] < df0["variable"]), ["index", "variable"]]
 
-        series_list = self.add_names_to_grouping(groups, name, name_gen)
+                    for index, row in df0.iterrows():
+                        i, j = row[["index", "variable"]]
+                        stu1 = " ".join(df.loc[i, ["Nom", "Prénom"]])
+                        stu2 = " ".join(df.loc[j, ["Nom", "Prénom"]])
+                        logger.warning(f"  - {stu1} -- {stu2}")
+                else:
+                    logger.warning(f"- contrainte `{column}` vérifiée")
+
+        series_list = self.add_names_to_grouping(best_groups, name, name_gen)
 
         # Print when groups are in alphabetical order
         if self.ordered is not None and len(self.ordered) == 0:
@@ -1261,8 +1330,6 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
 
     def add_names_to_grouping(self, groups, name, name_gen):
         """Give names to `groups`"""
-
-        logger.info("%s groups in subgroup %s", len(groups), name)
 
         series_list = []
         for group in groups:
