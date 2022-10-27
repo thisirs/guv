@@ -6,6 +6,7 @@ from collections.abc import Callable
 from datetime import timedelta
 from typing import List, Optional, Union
 
+import numpy as np
 import pandas as pd
 
 from .exceptions import ImproperlyConfigured
@@ -1340,6 +1341,8 @@ def validate_pair(df, colname, part1, part2):
 
     if part2 in names:  # Le deuxième élément est une colonne
         return "move", stu1idx, part2
+    elif part2 in ["null", "nan"]:
+        return "quit", stu1idx, None
     elif "@etu" in part2:  # Le deuxième élément est une adresse email
         stu2row = df.loc[df["Courriel"] == part2]
         if len(stu2row) != 1:
@@ -1379,6 +1382,11 @@ def swap_column(df, filename, colname):
             logger.info("Étudiant(e) `%s` affecté(e) au groupe `%s`", nom, idx2)
 
             new_column[idx1] = idx2
+        elif type == "quit":
+            nom = " ".join(df.loc[idx1, ["Nom", "Prénom"]])
+            logger.info("Abandon étudiant(e) `%s`", nom)
+
+            new_column[idx1] = np.nan
 
     return new_column
 
