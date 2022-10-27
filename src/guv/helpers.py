@@ -1396,7 +1396,8 @@ class AggregateMoodleGrades(FileOperation):
 
     Les notes peuvent être téléchargées avec un certain nombre de
     colonnes inutiles. Cette tâche permet d'agréger uniquement les
-    notes présentes dans le fichier Excel ou csv.
+    notes présentes dans le fichier Excel ou csv. Un renommage des
+    colonnes peut être effectué en renseignant ``rename``.
 
     Examples
     --------
@@ -1407,8 +1408,9 @@ class AggregateMoodleGrades(FileOperation):
 
     """
 
-    def __init__(self, filename: str):
+    def __init__(self, filename: str, rename: Optional[dict] = None,):
         super().__init__(filename)
+        self.rename = rename
 
     def apply(self, df):
         op = Aggregate(
@@ -1416,6 +1418,7 @@ class AggregateMoodleGrades(FileOperation):
             left_on="Courriel",
             right_on="Adresse de courriel",
             kw_read={"na_values": "-"},
+            rename=self.rename,
             drop=[
                 "Prénom",
                 "Nom",
