@@ -175,17 +175,10 @@ class Tabular:
 
     def __exit__(self, type, value, traceback):
         if type is None:
-            book = openpyxl.load_workbook(str(self.file_path))
-            writer = pd.ExcelWriter(
-                str(self.file_path),
-                engine="openpyxl",
-                mode="a",
-                if_sheet_exists="replace",
-            )
-            writer.book = book
-            writer.sheets = dict((ws.title, ws) for ws in book.worksheets)
-            self.df.to_excel(writer, sheet_name=self.sheet_name, index=False)
-            writer.save()
+            with pd.ExcelWriter(
+                self.file_path, mode="a", if_sheet_exists="replace"
+            ) as writer:
+                self.df.to_excel(writer, sheet_name=self.sheet_name, index=False)
 
 
 class Workbook:
