@@ -964,10 +964,10 @@ class Flag(FileOperation):
         Le chemin du fichier à agréger.
 
     colname : :obj:`str`
-        Nom de la colonne dans laquelle mettre la drapeau.
+        Nom de la colonne dans laquelle mettre le drapeau.
 
     flags : :obj:`str`, optional
-        Les drapeaux utilisés, par défaut "Oui" et vide.
+        Les deux drapeaux utilisés, par défaut "Oui" et vide.
 
     Examples
     --------
