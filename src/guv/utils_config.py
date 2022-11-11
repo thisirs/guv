@@ -23,10 +23,24 @@ def rel_to_dir(path, root):
     return path
 
 
-def check_filename(filename, **kwargs):
-    if not os.path.exists(filename):
-        fn = rel_to_dir(filename, kwargs["base_dir"])
-        raise ImproperlyConfigured(f"Le fichier `{fn}` n'existe pas")
+def check_filename(filename, errors="raise", **kwargs):
+    if errors not in ("raise", "warning", "silent"):
+        raise ValueError("invalid error value specified")
+
+    if os.path.exists(filename):
+        return True
+
+    fn = rel_to_dir(filename, kwargs["base_dir"])
+    msg = f"Le fichier `{fn}` n'existe pas"
+
+    if errors == "raise":
+        raise ImproperlyConfigured(msg)
+    elif errors == "warning":
+        logger.warning(msg)
+    elif errors == "silent":
+        return False
+    else:
+        raise ValueError("invalid error value specified")
 
 
 def ensure_absent_columns(dataframe, columns, errors="raise", file=None, base_dir=None):
