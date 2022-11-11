@@ -951,7 +951,56 @@ class AggregateOrg(FileOperation):
         return df
 
 
-class Flag(FileOperation):
+class FileStringOperation(FileOperation):
+    def __init__(self, filename_or_string, base_dir=None):
+        super().__init__(filename_or_string)
+        self.filename_or_string = filename_or_string
+        self.base_dir = base_dir
+        self._is_file = None
+
+    @property
+    def is_file(self):
+        if self._is_file is None:
+            # Heuristic to decide whether `filename_or_string` is a file or
+            # string
+            self._is_file = (
+                "\n" not in self.filename_or_string
+                and "---" not in self.filename_or_string
+                and "*" not in self.filename_or_string
+            )
+
+        return self._is_file
+
+    @property
+    def lines(self):
+        if self.is_file:
+            if self.base_dir:
+                filename =  os.path.join(self.base_dir, self.filename_or_string)
+            else:
+                filename = self.filename_or_string
+
+            check_filename(filename, base_dir=self.base_dir)
+            lines = open(filename, "r").readlines()
+        else:
+            lines = self.filename_or_string.splitlines(keepends=True)
+
+        return lines
+
+    @property
+    def deps(self):
+        if self.is_file:
+            return [self.filename_or_string]
+        else:
+            return []
+
+    def message(self, ref_dir=""):
+        if self.is_file:
+            return f"Agrégation du fichier `{rel_to_dir(self.filename_or_string, ref_dir)}`"
+        else:
+            return f"Agrégation directe"
+
+
+class Flag(FileStringOperation):
     """Signaler une liste d'étudiants dans une nouvelle colonne.
 
     Le document à agréger est une liste de noms d'étudiants affichés
@@ -960,8 +1009,8 @@ class Flag(FileOperation):
     Parameters
     ----------
 
-    filename : :obj:`str`
-        Le chemin du fichier à agréger.
+    filename_or_string : :obj:`str`
+        Le chemin du fichier à agréger ou directement le texte du fichier.
 
     colname : :obj:`str`
         Nom de la colonne dans laquelle mettre le drapeau.
@@ -992,13 +1041,12 @@ class Flag(FileOperation):
 
     """
 
-    def __init__(self, filename: str, *, colname: str, flags: Optional[List[str]] = ["Oui", ""]):
-        super().__init__(filename)
+    def __init__(self, filename_or_string: str, *, colname: str, flags: Optional[List[str]] = ["Oui", ""]):
+        super().__init__(filename_or_string)
         self.colname = colname
         self.flags = flags
 
     def apply(self, df):
-        check_filename(self.filename, base_dir=settings.SEMESTER_DIR)
         ensure_absent_columns(df, self.colname)
 
         df[self.colname] = self.flags[1]
@@ -1007,29 +1055,28 @@ class Flag(FileOperation):
         tf_df = slugrot("Nom", "Prénom")
         df["fullname_slug"] = tf_df(df)
 
-        with open(self.filename, 'r') as fd:
-            for line in fd:
-                # Saute commentaire ou ligne vide
-                line = line.strip()
-                if line.startswith('#'):
-                    continue
-                if not line:
-                    continue
+        for line in self.lines:
+            # Saute commentaire ou ligne vide
+            line = line.strip()
+            if line.startswith('#'):
+                continue
+            if not line:
+                continue
 
-                slugname = slugrot_string(line)
+            slugname = slugrot_string(line)
 
-                res = df.loc[df.fullname_slug == slugname]
-                if len(res) == 0:
-                    raise Exception('Pas de correspondance pour `{:s}`'.format(line))
-                if len(res) > 1:
-                    raise Exception('Plusieurs correspondances pour `{:s}`'.format(line))
-                df.loc[res.index[0], self.colname] = self.flags[0]
+            res = df.loc[df.fullname_slug == slugname]
+            if len(res) == 0:
+                raise Exception('Pas de correspondance pour `{:s}`'.format(line))
+            if len(res) > 1:
+                raise Exception('Plusieurs correspondances pour `{:s}`'.format(line))
+            df.loc[res.index[0], self.colname] = self.flags[0]
 
         df = df.drop('fullname_slug', axis=1)
         return df
 
 
-class Switch(FileOperation):
+class Switch(FileStringOperation):
     """Réalise des échanges de valeurs dans une colonne.
 
     L'argument ``colname`` est la colonne dans laquelle opérer les
@@ -1042,8 +1089,8 @@ class Switch(FileOperation):
     Parameters
     ----------
 
-    filename : :obj:`str`
-        Le chemin du fichier à agréger.
+    filename_or_string : :obj:`str`
+        Le chemin du fichier à agréger ou directement le texte du fichier.
     colname : :obj:`str`
         Nom de la colonne où opérer les changements
     backup : :obj:`bool`
@@ -1061,13 +1108,13 @@ class Switch(FileOperation):
     """
     def __init__(
         self,
-        filename: str,
+        filename_or_string: str,
         *,
         colname: str,
         backup: bool = False,
         new_colname: Optional[str] = None,
     ):
-        super().__init__(filename)
+        super().__init__(filename_or_string)
         self.colname = colname
         self.backup = backup
         self.new_colname = new_colname
@@ -1079,15 +1126,14 @@ class Switch(FileOperation):
                 "Les arguments `backup` et `new_colname` sont incompatibles."
             )
 
-        # Check that filename and column exist
-        check_filename(self.filename, base_dir=settings.SEMESTER_DIR)
+        # Check that column exist
         ensure_present_columns(df, self.colname)
 
         # Add slugname column
         tf_df = slugrot("Nom", "Prénom")
         df["fullname_slug"] = tf_df(df)
 
-        new_column = swap_column(df, self.filename, self.colname)
+        new_column = swap_column(df, self.lines, self.colname)
         df = replace_column_aux(
             df,
             colname=self.colname,
@@ -1299,23 +1345,22 @@ def aggregate_df(
 
     return agg_df
 
-def read_pairs(filename):
-    """Generate pairs read in `filename`."""
+def read_pairs(lines):
+    """Generate pairs read in `lines`. """
 
-    with open(filename, "r") as fd:
-        for line in fd:
-            if line.strip().startswith("#"):
-                continue
-            if not line.strip():
-                continue
-            try:
-                parts = [e.strip() for e in line.split("---")]
-                stu1, stu2 = parts
-                if not stu1 or not stu2:
-                    raise Exception(f"Ligne incorrecte: `{line.strip()}`")
-                yield stu1, stu2
-            except ValueError:
+    for line in lines:
+        if line.strip().startswith("#"):
+            continue
+        if not line.strip():
+            continue
+        try:
+            parts = [e.strip() for e in line.split("---")]
+            stu1, stu2 = parts
+            if not stu1 or not stu2:
                 raise Exception(f"Ligne incorrecte: `{line.strip()}`")
+            yield stu1, stu2
+        except ValueError:
+            raise Exception(f"Ligne incorrecte: `{line.strip()}`")
 
 
 def validate_pair(df, colname, part1, part2):
@@ -1361,12 +1406,12 @@ def validate_pair(df, colname, part1, part2):
         return "swap", stu1idx, stu2idx
 
 
-def swap_column(df, filename, colname):
-    """Return copy of column `colname` modified by swaps from `filename`."""
+def swap_column(df, lines, colname):
+    """Return copy of column `colname` modified by swaps from `lines`. """
 
     new_column = df[colname].copy()
 
-    for part1, part2 in read_pairs(filename):
+    for part1, part2 in read_pairs(lines):
         type, idx1, idx2 = validate_pair(df, colname, part1, part2)
 
         if type == "swap":
@@ -1502,7 +1547,7 @@ class Documents:
 
 
 def add_action_method(cls, klass, method_name):
-    """Add `func` as a method in class `cls`"""
+    """Add new method named `method_name` to class `cls`"""
 
     @functools.wraps(klass.__init__)
     def dummy(self, *args, **kwargs):
