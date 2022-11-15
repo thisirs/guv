@@ -327,12 +327,32 @@ class ApplyDf(Operation):
     Examples
     --------
 
-    .. code:: python
+    - Rajouter un étudiant absent de l'effectif officiel :
 
-       DOCS.apply_df(
-           lambda df: df.loc[~df["Adresse de courriel"].duplicated(), :],
-           msg="Retirer les utilisateurs dupliqués"
-       )
+      .. code:: python
+
+         import pandas as pd
+
+         df_one = (
+             pd.DataFrame(
+                 {
+                     "Nom": ["NICHOLS"],
+                     "Prénom": ["Juliette"],
+                     "Courriel": ["juliette.nichols@silo18.fr"],
+                 }
+             ),
+         )
+
+         DOCS.apply_df(lambda df: pd.concat((df, df_one)))
+
+    - Retirer les étudiants dupliqués :
+
+      .. code:: python
+
+         DOCS.apply_df(
+             lambda df: df.loc[~df["Adresse de courriel"].duplicated(), :],
+             msg="Retirer les étudiants dupliqués"
+         )
 
     """
 
