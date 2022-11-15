@@ -158,7 +158,7 @@ class ReplaceRegex(Operation):
     backup : :obj:`bool`
         Sauvegarder la colonne avant tout changement
     msg : :obj:`str`
-        Un message descriptif utilisé
+        Un message décrivant l'opération
 
     Examples
     --------
@@ -241,7 +241,7 @@ class ReplaceColumn(Operation):
     backup : :obj:`bool`
         Sauvegarder la colonne avant tout changement
     msg : :obj:`str`
-        Un message descriptif utilisé
+        Un message décrivant l'opération
 
     Examples
     --------
@@ -322,7 +322,7 @@ class ApplyDf(Operation):
         Fonction prenant en argument un *DataFrame* et renvoyant un
         *DataFrame* modifié
     msg : :obj:`str`
-        Un message descriptif utilisé
+        Un message décrivant l'opération
 
     Examples
     --------
@@ -371,7 +371,7 @@ class ApplyColumn(Operation):
         Fonction prenant en argument un élément et renvoyant l'élément
         modifié
     msg : :obj:`str`
-        Un message descriptif utilisé
+        Un message décrivant l'opération
 
     Examples
     --------
@@ -424,7 +424,7 @@ class ComputeNewColumn(Operation):
     colname : :obj:`str`
         Nom de la colonne à créer
     msg : :obj:`str`
-        Un message descriptif utilisé
+        Un message décrivant l'opération
 
     Examples
     --------
@@ -517,7 +517,7 @@ class ApplyCell(Operation):
         La valeur à affecter.
 
     msg : :obj:`str`
-        Un message descriptif utilisé
+        Un message décrivant l'opération
 
     Examples
     --------
