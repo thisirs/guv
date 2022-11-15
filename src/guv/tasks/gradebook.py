@@ -9,6 +9,7 @@ pour :
 
 import math
 from collections import OrderedDict
+import textwrap
 
 import openpyxl
 from schema import And, Optional, Or, Schema, Use
@@ -702,6 +703,15 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
+
+    def message(self, target):
+        base_message = super().message(target)
+        return base_message + textwrap.dedent("""\
+
+        Pour ensuite pourvoir charger les notes ECTS sur l'ENT :
+
+        guv csv_for_upload -g "Note ECTS" --ects
+        """)
 
     def get_columns(self, **kwargs):
         # Les colonnes classiques
