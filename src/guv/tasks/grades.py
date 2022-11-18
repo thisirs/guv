@@ -156,6 +156,8 @@ class CsvForUpload(UVTask, CliArgsMixin):
         À charger sur :
         - https://webapplis.utc.fr/smeappli/resultats_intermediaires/
         - https://webapplis.utc.fr/smeappli/resultats_finaux/
+
+        Il faut grader l'encodage par défault (latin-1).
         """))
 
 

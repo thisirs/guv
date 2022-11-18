@@ -668,11 +668,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
 
     .. code:: python
 
-       DOCS.aggregate(
-           "generated/jury_gradebook.xlsx",
-           on="Courriel",
-           subset=["Note agrégée", "Note ECTS"],
-       )
+       DOCS.aggregate_jury("generated/jury_gradebook.xlsx")
 
     {options}
 
@@ -705,13 +701,19 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
         super().__init__(planning, uv, info)
 
     def message(self, target):
-        base_message = super().message(target)
-        return base_message + textwrap.dedent("""\
+        return textwrap.dedent("""\
 
-        Pour ensuite pourvoir charger les notes ECTS sur l'ENT :
+        Pour agréger les notes au fichier central `effectifs.xlsx`, ajouter :
+
+        DOCS.aggregate_jury("%(filename)s")
+
+        dans le fichier `config.py` de l'UV/UE.
+
+        Pour ensuite pouvoir charger les notes ECTS sur l'ENT :
 
         guv csv_for_upload -g "Note ECTS" --ects
-        """)
+
+        """.format({"filename": rel_to_dir(target, self.settings.UV_DIR)}))
 
     def get_columns(self, **kwargs):
         # Les colonnes classiques
