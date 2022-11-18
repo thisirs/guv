@@ -69,12 +69,12 @@ class Documents:
     ):
         pass
 
-    def flag(self, filename: str, *, colname: str, flags: Optional[List[str]] = ["Oui", ""]):
+    def flag(self, filename_or_string: str, *, colname: str, flags: Optional[List[str]] = ["Oui", ""]):
         pass
 
     def switch(
         self,
-        filename: str,
+        filename_or_string: str,
         *,
         colname: str,
         backup: bool = False,
@@ -82,7 +82,7 @@ class Documents:
     ):
         pass
 
-    def aggregate_moodle_grades(self, filename: str):
+    def aggregate_moodle_grades(self, filename: str, rename: Optional[dict] = None):
         pass
 
     def aggregate_jury(self, filename: str):
