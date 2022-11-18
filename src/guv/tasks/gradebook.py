@@ -333,16 +333,16 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
                 self.group_by
             )
             for name, group in gb:
-                if self.order_by is not None:
-                    group = sort_values(group, [self.order_by])
+                order_by = self.order_by if self.order_by is not None else "Nom"
+                group = sort_values(group, [order_by])
 
                 # Illegal character in sheet name
                 name = name.replace("/", " ")
                 self.create_worksheet(name, group)
         else:
             group = self.first_df
-            if self.order_by is not None:
-                group = sort_values(group, [self.order_by])
+            order_by = self.order_by if self.order_by is not None else "Nom"
+            group = sort_values(group, [order_by])
             self.create_worksheet("grade", group)
 
     def create_worksheet(self, name, group):
