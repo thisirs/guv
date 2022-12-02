@@ -1159,7 +1159,7 @@ class Switch(FileStringOperation):
             colname=self.colname,
             new_colname=self.new_colname,
             new_column=new_column,
-            backup=False,
+            backup=self.backup,
             errors="silent"
         )
 
