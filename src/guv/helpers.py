@@ -107,6 +107,10 @@ class FillnaColumn(Operation):
             df[self.colname].fillna(self.na_value, inplace=True)
         else:
             def fill_by_group(g):
+                if not isinstance(g.name, str):
+                    logger.warning("La colonne `%s` contient des entrées vides", self.group_column)
+                    return g
+
                 idx_first = g[self.colname].first_valid_index()
                 idx_last = g[self.colname].last_valid_index()
                 if idx_first is not None:
@@ -119,7 +123,7 @@ class FillnaColumn(Operation):
                 return g
 
             ensure_present_columns(df, [self.colname, self.group_column])
-            df = df.groupby(self.group_column).apply(fill_by_group)
+            df = df.groupby(self.group_column, dropna=False).apply(fill_by_group)
 
         return df
 
