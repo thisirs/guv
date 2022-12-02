@@ -113,9 +113,9 @@ class FillnaColumn(Operation):
                     if idx_first == idx_last:
                         g[self.colname] = g.loc[idx_first, self.colname]
                     else:
-                        logger.warning("Plusieurs valeurs non-NA dans le groupe `%s`", g)
+                        logger.warning("Plusieurs valeurs non-NA dans le groupe `%s`", g.name)
                 else:
-                    logger.warning("Aucune valeur non-NA dans le groupe `%s`", g)
+                    logger.warning("Aucune valeur non-NA dans le groupe `%s`", g.name)
                 return g
 
             ensure_present_columns(df, [self.colname, self.group_column])
