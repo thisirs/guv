@@ -1460,6 +1460,41 @@ def swap_column(df, lines, colname):
     return new_column
 
 
+class AggregateMoodleGroups(FileOperation):
+    """Agrége des données de groupes issue de l'activité "Choix de Groupe".
+
+    Le nom de la colonne des groupes étant toujours "Groupe", l'argument
+    ``colname`` permet d'en spécifier un nouveau.
+
+    Examples
+    --------
+
+    .. code:: python
+
+       DOCS.aggregate_moodle_groups("documents/Paper study groups.xlsx", "Paper")
+
+    """
+
+    def __init__(self, filename: str, colname: str):
+        super().__init__(filename)
+        self.colname = colname
+
+    def apply(self, df):
+        op = Aggregate(
+            self.filename,
+            left_on="Courriel",
+            right_on="Adresse de courriel",
+            drop=[
+                "Nom",
+                "Prénom",
+                "Numéro d'identification",
+                "Choix"
+            ],
+            rename={"Groupe": self.colname}
+        )
+        return op.apply(df)
+
+
 class AggregateMoodleGrades(FileOperation):
     """Agrège toutes les notes issues de Moodle.
 
@@ -1594,6 +1629,7 @@ actions = [
     ("add", Add),
     ("aggregate", Aggregate),
     ("aggregate_moodle_grades", AggregateMoodleGrades),
+    ("aggregate_moodle_groups", AggregateMoodleGroups),
     ("aggregate_jury", AggregateJury),
     ("aggregate_org", AggregateOrg),
     ("flag", Flag),
