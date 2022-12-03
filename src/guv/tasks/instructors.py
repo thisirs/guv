@@ -233,7 +233,7 @@ class XlsRemplacements(UVTask):
                 .right()
                 .text(row["Heure fin"])
                 .right()
-                .text(row["Intervenants abbrev"])
+                .text(row["Abbrev"])
             )
             current = current.below()
 
@@ -285,9 +285,9 @@ class XlsRemplacements(UVTask):
         for cell in row_cells.values():
             cell.style = "Pandas"
 
-        # Compute dataframe with columns "Intervenants", "Intervenants
-        # abbrev", "Cours", "TD", ("TP")
-        index_cols = ["Intervenants", "Intervenants abbrev"]
+        # Compute dataframe with columns "Intervenants", "Abbrev",
+        # "Cours", "TD", ("TP")
+        index_cols = ["Intervenants", "Abbrev"]
         df1 = df_ws.groupby(index_cols).agg(
             Order=("Activité", score_codenames),
             Statut=("Statut", "first")
