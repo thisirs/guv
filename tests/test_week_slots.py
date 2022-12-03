@@ -24,6 +24,7 @@ class TestWeekSlots:
             "Locaux",
             "Lib. créneau",
             "Intervenants",
+            "Abbrev",
             "Responsable",
         )
 

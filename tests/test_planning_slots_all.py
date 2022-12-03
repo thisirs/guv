@@ -22,6 +22,7 @@ def test_planning_slots_all(guv, xlsx, guvcapfd):
         "Locaux",
         "Lib. créneau",
         "Intervenants",
+        "Abbrev",
         "Responsable",
         "date",
         "num",

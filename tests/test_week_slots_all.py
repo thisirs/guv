@@ -21,6 +21,7 @@ def test_week_slots_all(guv, guvcapfd, xlsx):
         "Locaux",
         "Lib. créneau",
         "Intervenants",
+        "Abbrev",
         "Responsable"
     )
 

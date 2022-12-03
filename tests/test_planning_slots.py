@@ -24,6 +24,7 @@ class TestPlanningSlots:
             "Locaux",
             "Lib. créneau",
             "Intervenants",
+            "Abbrev",
             "Responsable",
             "date",
             "num",
