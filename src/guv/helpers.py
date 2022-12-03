@@ -1129,6 +1129,10 @@ class Switch(FileStringOperation):
 
        DOCS.switch("fichier_échange_TP", colname="TP")
 
+    .. code:: python
+
+       DOCS.switch("Dupont --- Dupond", colname="TP")
+
     """
     def __init__(
         self,
