@@ -474,7 +474,6 @@ class WeekSlots(UVTask):
             logger.warning("Certains créneaux n'ont pas d'intervenant renseigné")
 
         # Create abbrev column and populate it where possible
-        df["Abbrev"] = np.nan
         empty = df["Abbrev"].isna() & ~df["Intervenants"].isna()
         df.loc[empty, "Abbrev"] = df.loc[empty, "Intervenants"].apply(convert_author)
 
@@ -510,14 +509,16 @@ class WeekSlots(UVTask):
                 "Semaine",
                 "Lib. créneau",
                 "Intervenants",
+                "Abbrev",
                 "Responsable",
             ]
             self.df_uv = pd.DataFrame(columns=columns)
         else:
             self.df_uv = self.df_uv.sort_values(["Lib. créneau", "Semaine"])
             self.df_uv = self.df_uv.drop(["Code enseig."], axis=1)
-            self.df_uv["Intervenants"] = ""
-            self.df_uv["Responsable"] = ""
+            self.df_uv["Intervenants"] = np.nan
+            self.df_uv["Abbrev"] = np.nan
+            self.df_uv["Responsable"] = np.nan
 
         # Write to disk
         with Output(self.target, protected=True) as out:
