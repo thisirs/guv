@@ -473,6 +473,19 @@ class WeekSlots(UVTask):
         if df["Intervenants"].isnull().any():
             logger.warning("Certains créneaux n'ont pas d'intervenant renseigné")
 
+        # Create abbrev column and populate it where possible
+        df["Abbrev"] = np.nan
+        empty = df["Abbrev"].isna() & ~df["Intervenants"].isna()
+        df.loc[empty, "Abbrev"] = df.loc[empty, "Intervenants"].apply(convert_author)
+
+        # Warn if abbrev clashes
+        dups = df["Abbrev"].dropna().duplicated()
+        if dups.any():
+            insts = ", ".join(df.loc[dups, "Intervenants"])
+            fn = rel_to_dir(XlsInstructors.target_from(), settings.CWD)
+            logger.warning(f"Les intervenants suivants ont les mêmes initiales : {insts}. "
+                           f"Modifier la colonne `Abbrev` dans le fichier `{fn}`.")
+
         return df
 
     def create_excel_file(self):

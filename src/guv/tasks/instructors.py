@@ -113,18 +113,6 @@ class WeekSlotsDetails(UVTask):
         df["Statut"] = df["Statut"].astype(status_type)
         df["Email"] = df["Email"].fillna("").astype("string")
 
-        # Add abbrev name if non empty instructor
-        empty = df["Abbrev"].isna() & ~df["Intervenants"].isna()
-        df.loc[empty, "Abbrev"] = df.loc[empty, "Intervenants"].apply(convert_author)
-
-        # Warn if abbrev clashes
-        dups = df["Abbrev"].dropna().duplicated()
-        if dups.any():
-            insts = ", ".join(df.loc[dups, "Intervenants"])
-            fn = rel_to_dir(XlsInstructors.target_from(), settings.CWD)
-            logger.warning(f"Les intervenants suivants ont les mêmes initiales : {insts}. "
-                           f"Modifier la colonne `Abbrev` dans le fichier `{fn}`.")
-
         return df
 
 
