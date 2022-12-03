@@ -162,13 +162,16 @@ Intervenants
 .. automodule:: guv.tasks.instructors
    :exclude-members:
 
-.. autoclass:: guv.tasks.instructors.XlsUTP
+.. autoclass:: guv.tasks.instructors.XlsRemplacements
    :exclude-members:
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.utc.WeekSlots`
-   - :class:`guv.tasks.instructors.XlsInstructors`
+   - :class:`guv.tasks.utc.PlanningSlots`
+   - :class:`guv.tasks.instructors.WeekSlotsDetails`
+
+.. autoclass:: guv.tasks.utc.XlsUTP
+   :exclude-members:
 
 Moodle
 ------
@@ -191,7 +194,7 @@ Moodle
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.utc.WeekSlotsDetails`
+   - :class:`guv.tasks.instructors.WeekSlotsDetails`
 
 .. autoclass:: guv.tasks.moodle.HtmlTable
    :exclude-members:
@@ -246,6 +249,7 @@ besoin d'exécuter car elles sont des dépendances des tâches usuelles.
 
    Cette tâche est une dépendance pour les tâches suivantes :
 
+   - :class:`guv.tasks.instructors.XlsRemplacements`
    - :class:`guv.tasks.utc.PlanningSlotsAll`
    - :class:`guv.tasks.moodle.HtmlTable`
    - :class:`guv.tasks.moodle.JsonRestriction`
@@ -331,6 +335,10 @@ besoin d'exécuter car elles sont des dépendances des tâches usuelles.
    - :class:`guv.tasks.utc.WeekSlots`
    - :class:`guv.tasks.instructors.XlsInstructors`
 
+   Cette tâche est une dépendance pour les tâches suivantes :
+
+   - :class:`guv.tasks.instructors.XlsRemplacements`
+
 .. autoclass:: guv.tasks.utc.WeekSlots
    :exclude-members:
 
@@ -345,5 +353,4 @@ besoin d'exécuter car elles sont des dépendances des tâches usuelles.
    - :class:`guv.tasks.calendar.CalUv`
    - :class:`guv.tasks.moodle.HtmlInst`
    - :class:`guv.tasks.instructors.WeekSlotsDetails`
-   - :class:`guv.tasks.instructors.XlsUTP`
    - :class:`guv.tasks.grades.XlsAssignmentGrade`

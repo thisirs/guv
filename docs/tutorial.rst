@@ -472,7 +472,7 @@ créé et il faut renseigner manuellement les différents créneaux.
 
 Dès lors, on peut utiliser les tâches suivantes :
 
-- :class:`guv.tasks.instructors.XlsUTP`
+- :class:`guv.tasks.instructors.XlsRemplacements`
 - :class:`guv.tasks.calendar.CalInst`
 - :class:`guv.tasks.ical.IcalInst`
 - :class:`guv.tasks.moodle.HtmlInst`

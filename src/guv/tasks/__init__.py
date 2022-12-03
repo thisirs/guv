@@ -21,5 +21,5 @@ from .moodle import (CsvCreateGroups, CsvGroups, CsvGroupsGroupings,
 from .students import (CsvExamGroups, CsvInscrits, CsvMoodleGroups,
                        XlsStudentData, XlsStudentDataMerge, ZoomBreakoutRooms, MaggleTeams)
 from .trombinoscope import PdfTrombinoscope
-from .utc import (UTP, PlanningSlots, PlanningSlotsAll, UtcUvListToCsv,
+from .utc import (XlsUTP, PlanningSlots, PlanningSlotsAll, UtcUvListToCsv,
                   WeekSlots, WeekSlotsAll)

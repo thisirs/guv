@@ -635,7 +635,7 @@ class WeekSlots(UVTask):
         workbook.save(self.target)
 
 
-class UTP(TaskBase):
+class XlsUTP(TaskBase):
     """Crée un fichier Excel de prévisions des UTP globales."""
 
     target_dir = "."
