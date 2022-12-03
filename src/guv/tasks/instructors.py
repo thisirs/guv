@@ -20,7 +20,6 @@ from openpyxl.styles import PatternFill
 
 from ..logger import logger
 from ..config import settings
-from ..scripts.excel_hours import create_excel_file
 from ..utils_config import Output, rel_to_dir
 from ..utils import score_codenames, convert_author
 from ..openpyxl_utils import fill_row, get_range_from_cells, row_and_col, get_row_cells, Block, frame_range, get_segment
@@ -32,10 +31,7 @@ class XlsInstructors(TaskBase):
     """Fichier de détails global des intervenants toutes UV confondues.
 
     Il sert à la tâche :class:`~guv.tasks.moodle.HtmlInst` pour
-    générer un descriptif des intervenants d'une UV et à la tâche
-    :class:`guv.tasks.instructors.XlsUTP` pour le calcul des UTP
-    effectuées et des remplacements.
-
+    générer un descriptif des intervenants d'une UV.
     """
 
     hidden = True
@@ -114,31 +110,6 @@ class WeekSlotsDetails(UVTask):
         df["Email"] = df["Email"].fillna("").astype("string")
 
         return df
-
-
-class XlsUTP(UVTask):
-    """Crée un document Excel pour calcul des heures et remplacements."""
-
-    target_dir = "generated"
-    target_name = "remplacement.xlsx"
-
-    def setup(self):
-        super().setup()
-        self.target = self.build_target()
-
-        self.week_slots_details = WeekSlotsDetails.target_from(**self.info)
-        self.file_dep = [self.week_slots_details]
-
-    def run(self):
-        df = WeekSlotsDetails.read_target(self.week_slots_details)
-
-        dfs = df.sort_values(
-            ["Responsable", "Statut"], ascending=False
-        )
-        dfs = dfs.reset_index()
-
-        with Output(self.target, protected=True) as out:
-            create_excel_file(out.target, dfs)
 
 
 class XlsRemplacements(UVTask):
