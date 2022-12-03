@@ -186,12 +186,10 @@ class XlsRemplacements(UVTask):
             self.workbook.save(out.target)
 
     def write_slots(self, ref):
-        inst_dict = {
-            activity: [] for activity in self.df_week_slots["Activité"].unique()
-        }
-        rep_dict = {
-            activity: [] for activity in self.df_week_slots["Activité"].unique()
-        }
+        activities = self.df_week_slots["Activité"].unique()
+
+        inst_dict = {a: [] for a in activities}
+        rep_dict = {a: [] for a in activities}
 
         df_planning_slots = PlanningSlots.read_target(self.planning_slots)
 
