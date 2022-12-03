@@ -48,7 +48,7 @@ class XlsInstructors(TaskBase):
                 "Le fichier `%s` n'existe pas, création d'un fichier vide",
                 rel_to_dir(self.target, self.settings.CWD),
             )
-            columns = ["Intervenants", "Abbrev", "Statut", "Email", "Website"]
+            columns = ["Intervenants", "Statut", "Email", "Website"]
             with Output(self.target) as out:
                 pd.DataFrame(columns=columns).to_excel(out.target, index=False)
 
