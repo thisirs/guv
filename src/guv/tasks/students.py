@@ -434,6 +434,7 @@ class XlsStudentData(UVTask):
     def read_target(student_data):
         return pd.read_excel(student_data, engine="openpyxl")
 
+
 class XlsStudentDataMerge(UVTask):
     """Ajoute toutes les autres informations étudiants
 
