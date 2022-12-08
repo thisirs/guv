@@ -1114,8 +1114,21 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         with Output(csv_target) as out:
             df_groups.to_csv(out.target, index=False)
 
+        if "MOODLE_ID" in self.settings:
+            id = str(self.settings.MOODLE_ID)
+        else:
+            id = "<MOODLE_ID>"
+
+        url = f"https://moodle.utc.fr/local/userenrols/import.php?id={id}"
+
         logger.info(textwrap.dedent("""\
-        Ajouter au fichier `effectifs.xlsx` avec :
+        Charger les groupes sur Moodle à l'adresse %(url)s en spécifiant :
+
+        - Champ utilisateur: "Nom d'utilisateur"
+        - Inscrire dans les groupes : "Oui"
+        - Créer les groupes: "Oui" s'il ne sont pas déjà créés
+
+        Ajouter les groupes au fichier `effectifs.xlsx` avec le code suivant dans le fichier `config.py` de l'UV :
 
         DOCS.aggregate(
             "%(filename)s",
@@ -1123,14 +1136,10 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             kw_read={"header": None, "names": ["Courriel", "%(title)s_group"]}
         )
         """ % {
+            "url": url,
             "filename": rel_to_dir(self.target, self.settings.UV_DIR),
             "title": self.title
         }))
-
-        if "MOODLE_ID" in self.settings:
-            id = str(self.settings.MOODLE_ID)
-            url = f"https://moodle.utc.fr/local/userenrols/import.php?id={id}"
-            logger.info(f"À charger sur {url}")
 
     def make_groups(self, name, df, name_gen):
         """Try to make subgroups in dataframe `df`.
