@@ -981,19 +981,6 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         self.parse_args()
         self.target = self.build_target()
 
-        # Set template used to generate group names
-        if self.template is None:
-            if self.names is None:
-                if self.grouping is None:
-                    self.template = "{title}_group_#"
-                else:
-                    self.template = "{title}_{grouping_name}_group_#"
-            else:
-                if self.grouping is None:
-                    self.template = "{title}_{group_name}"
-                else:
-                    self.template = "{title}_{grouping_name}_{group_name}"
-
     def create_name_gen(self, tmpl):
         "Générateur de noms pour les groupes"
 
@@ -1033,11 +1020,35 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                 yield pformat(tmpl, group_name=n)
 
     def run(self):
+        # Set template used to generate group names
+        if self.template is None:
+            if self.names is None:
+                if self.grouping is None:
+                    self.template = "{title}_group_#"
+                else:
+                    self.template = "{title}_{grouping_name}_group_#"
+            else:
+                if self.grouping is None:
+                    self.template = "{title}_{group_name}"
+                else:
+                    self.template = "{title}_{grouping_name}_{group_name}"
+
+            logger.info("Pas de template spécifiée. La template par défaut est `%s`", self.template)
+
         if (self.proportions is not None) + (self.group_size is not None) + (
             self.num_groups is not None
         ) != 1:
             raise self.parser.error(
                 "Spécifier un et un seul argument parmi --proportions, --group-size, --num-groups",
+            )
+
+        num_placeholders = ("{group_name}" in self.template) + ("@" in self.template) + ("#" in self.template)
+        if num_placeholders != 1:
+            raise Exception("Spécifier un et un seul remplacement dans la template parmi `@`, `#` et `{group_name}`")
+
+        if "{group_name}" in self.template and self.names is None:
+            raise Exception(
+                "La template contient '{group_name}' mais --names n'est pas spécifié"
             )
 
         if "{grouping_name}" in self.template and self.grouping is None:
