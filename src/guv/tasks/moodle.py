@@ -137,10 +137,10 @@ class CsvGroupsGroupings(UVTask, CliArgsMixin):
 
     .. code:: bash
 
-       guv csv_groups_grouping -G 3 -F Groupement_P1 -g 14 -f D##_P1_@
-       guv csv_groups_grouping -G 2 -F Groupement_D1 -g 14 -f D1_P##_@
-       guv csv_groups_grouping -G 2 -F Groupement_D2 -g 14 -f D2_P##_@
-       guv csv_groups_grouping -G 2 -F Groupement_D3 -g 14 -f D3_P##_@
+       guv csv_groups_groupings -G 3 -F Groupement_P1 -g 14 -f D##_P1_@
+       guv csv_groups_groupings -G 2 -F Groupement_D1 -g 14 -f D1_P##_@
+       guv csv_groups_groupings -G 2 -F Groupement_D2 -g 14 -f D2_P##_@
+       guv csv_groups_groupings -G 2 -F Groupement_D3 -g 14 -f D3_P##_@
 
     """
 
