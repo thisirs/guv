@@ -1060,6 +1060,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             ensure_present_columns(
                 df, self.grouping, file=self.xls_merge, base_dir=self.settings.CWD
             )
+            df = df.loc[~df[self.grouping].isnull()]
 
         if self.other_groups is not None:
             ensure_present_columns(
