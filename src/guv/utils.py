@@ -227,16 +227,19 @@ def render_latex_template(template, context):
     temp_dir = tempfile.mkdtemp()
     filename_no_ext = context["filename_no_ext"]
 
-    # Write pdf
-    pdf = latex.build_pdf(tex)
-    filepath = os.path.join(temp_dir, filename_no_ext + ".pdf")
-    pdf.save_to(filepath)
-
     # Write tex
     tex_filepath = os.path.join(temp_dir, filename_no_ext + ".tex")
     with open(tex_filepath, "w") as fd:
         fd.write(tex)
 
-    return filepath, tex_filepath
+    return tex_filepath
 
+
+def compile_latex_file(tex_file):
+    # Write pdf
+    pdf = latex.build_pdf(open(tex_file))
+    pdf_file = os.path.splitext(tex_file)[0] + ".pdf"
+    pdf.save_to(pdf_file)
+
+    return pdf_file
 

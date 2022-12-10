@@ -4,11 +4,12 @@ import shutil
 import time
 import zipfile
 from datetime import timedelta
+import logging
 
 from .config import settings
 from .exceptions import AbortWithBody, ImproperlyConfigured, NotUVDirectory
 from .logger import logger
-from .utils import render_latex_template
+from .utils import render_latex_template, compile_latex_file
 
 
 def rel_to_dir(path, root):
@@ -282,9 +283,24 @@ def render_from_contexts(template, contexts, save_tex=False, target=None):
     pdfs = []
     texs = []
     for context in contexts:
-        filepath, tex_filepath = render_latex_template(template, context)
-        pdfs.append(filepath)
-        texs.append(tex_filepath)
+        try:
+            tex_filepath = render_latex_template(template, context)
+            texs.append(tex_filepath)
+        except Exception as e:
+            if settings.DEBUG <= logging.DEBUG:
+                raise e from e
+            else:
+                logger.error("Erreur dans la création du fichier .tex")
+
+        try:
+            pdf_filepath = compile_latex_file(tex_filepath)
+            pdfs.append(pdf_filepath)
+        except Exception as e:
+            if settings.DEBUG <= logging.DEBUG:
+                raise e from e
+            else:
+                logger.error("Erreur dans la compilation du fichier .tex")
+
 
     # Écriture du pdf dans un zip si plusieurs
     if len(pdfs) == 1:
