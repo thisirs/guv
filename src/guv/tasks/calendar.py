@@ -217,9 +217,6 @@ class CalInst(CliArgsMixin, TaskBase):
     def run(self):
         for inst, target in zip(self.insts, self.targets):
             df = WeekSlotsAll.read_target(self.week_slots_all)
-            if "Intervenants" not in df.columns:
-                raise Exception("Pas d'enregistrement des intervenants")
-
             df_inst = df.loc[
                 (df["Intervenants"].astype(str) == inst)
                 & (df["Planning"].isin(self.plannings)),
