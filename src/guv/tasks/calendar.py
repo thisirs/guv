@@ -10,7 +10,8 @@ import pandas as pd
 
 import guv
 
-from ..utils import argument
+from ..logger import logger
+from ..utils import argument, ps, px
 from ..utils_config import render_from_contexts
 from .base import CliArgsMixin, TaskBase, UVTask
 from .utc import WeekSlots, WeekSlotsAll
@@ -222,5 +223,12 @@ class CalInst(CliArgsMixin, TaskBase):
                 & (df["Planning"].isin(self.plannings)),
                 :,
             ]
+
+            if len(df_inst) == 0:
+                raise Exception(f"Pas de créneau pour `{inst}`")
+
+            logger.info("%d créneau%s pour `%s` pour le%s planning%s : %s", len(df_inst), px(len(df_inst)), inst, ps(len(self.plannings)), ps(len(self.plannings)), ", ".join(f"`{p}`" for p in self.plannings))
+
             text = r"{uv} \\ {name} \\ {room}"
+
             create_cal_from_dataframe(df_inst, text, target, save_tex=self.save_tex)

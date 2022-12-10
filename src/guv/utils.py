@@ -87,6 +87,21 @@ def convert_author(author):
         return ''
 
 
+def plural(num, plural, singular):
+    if num > 1:
+        return plural
+    else:
+        return singular
+
+
+def ps(num):
+    return plural(num, "s", "")
+
+
+def px(num):
+    return plural(num, "x", "")
+
+
 class FormatDict(dict):
     def __missing__(self, key):
         return "{" + key + "}"
