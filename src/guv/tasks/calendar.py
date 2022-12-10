@@ -145,12 +145,10 @@ class CalUv(UVTask, CliArgsMixin):
 
     def run(self):
         df = WeekSlots.read_target(self.week_slots)
-        # df_uv_real = df.loc[~pd.isnull(df['Intervenants']), :]
-        df_uv_real = df
-        df_uv_real["Code enseig."] = self.uv
+        df["Code enseig."] = self.uv
 
         text = r"{name} \\ {room} \\ {author}"
-        create_cal_from_dataframe(df_uv_real, text, self.target, save_tex=self.save_tex)
+        create_cal_from_dataframe(df, text, self.target, save_tex=self.save_tex)
 
 
 class CalInst(CliArgsMixin, TaskBase):
