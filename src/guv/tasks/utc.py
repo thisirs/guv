@@ -214,6 +214,7 @@ class WeekSlotsAll(TaskBase):
     - Semaine
     - Lib. créneau
     - Intervenants
+    - Abbrev
     - Responsable
 
     """
