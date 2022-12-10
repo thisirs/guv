@@ -11,7 +11,6 @@ import openpyxl
 import pandas as pd
 from PyPDF2 import PdfFileReader
 from tabula import read_pdf
-import datetime
 
 from ..openpyxl_patched import fixit
 
@@ -23,7 +22,7 @@ from ..config import settings
 from ..exceptions import ImproperlyConfigured
 from ..logger import logger
 from ..openpyxl_utils import fill_row, get_row_cells, get_range_from_cells, get_segment, frame_range, row_and_col, Block, get_range_cells
-from ..utils import convert_author, score_codenames
+from ..utils import convert_author, score_codenames, convert_to_time
 from ..utils_config import (Output, ask_choice, generate_row, rel_to_dir, selected_uv)
 from .base import TaskBase, UVTask
 
@@ -250,20 +249,8 @@ class WeekSlotsAll(TaskBase):
     def read_target(week_slots_all):
         df = pd.read_excel(week_slots_all, engine="openpyxl")
 
-        # Replace by datetime.time objects
-        def convert_to_time(value):
-            if isinstance(value, datetime.time):
-                return value
-            elif isinstance(value, datetime.datetime):
-                return value.time()
-            else:
-                try:
-                    return datetime.datetime.strptime(value, "%H:%M").time()
-                except ValueError:
-                    return datetime.datetime.strptime(value, "%H:%M:%S").time()
-
         df["Heure début"] = df["Heure début"].apply(convert_to_time)
-        df["Heure début"] = df["Heure début"].apply(convert_to_time)
+        df["Heure fin"] = df["Heure fin"].apply(convert_to_time)
 
         return df
 
@@ -305,7 +292,12 @@ class PlanningSlotsAll(TaskBase):
 
     @staticmethod
     def read_target(planning_slots_all):
-        return pd.read_excel(planning_slots_all, engine="openpyxl")
+        df = pd.read_excel(planning_slots_all, engine="openpyxl")
+
+        df["Heure début"] = df["Heure début"].apply(convert_to_time)
+        df["Heure fin"] = df["Heure fin"].apply(convert_to_time)
+
+        return df
 
 
 class PlanningSlots(UVTask):
@@ -425,7 +417,12 @@ class PlanningSlots(UVTask):
 
     @staticmethod
     def read_target(planning_slots):
-        return pd.read_excel(planning_slots, engine="openpyxl")
+        df = pd.read_excel(planning_slots, engine="openpyxl")
+
+        df["Heure début"] = df["Heure début"].apply(convert_to_time)
+        df["Heure fin"] = df["Heure fin"].apply(convert_to_time)
+
+        return df
 
 
 class WeekSlots(UVTask):
@@ -492,20 +489,8 @@ class WeekSlots(UVTask):
         if df["Intervenants"].isnull().any():
             logger.warning("Certains créneaux n'ont pas d'intervenant renseigné")
 
-        # Replace by datetime.time objects
-        def convert_to_time(value):
-            if isinstance(value, datetime.time):
-                return value
-            elif isinstance(value, datetime.datetime):
-                return value.time()
-            else:
-                try:
-                    return datetime.datetime.strptime(value, "%H:%M").time()
-                except ValueError:
-                    return datetime.datetime.strptime(value, "%H:%M:%S").time()
-
         df["Heure début"] = df["Heure début"].apply(convert_to_time)
-        df["Heure début"] = df["Heure début"].apply(convert_to_time)
+        df["Heure fin"] = df["Heure fin"].apply(convert_to_time)
 
         # Populate "Abbrev" column where possible
         empty = df["Abbrev"].isna() & ~df["Intervenants"].isna()

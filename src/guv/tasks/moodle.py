@@ -608,18 +608,10 @@ class JsonRestriction(UVTask, CliArgsMixin):
                 else:
                     group = row["Lib. créneau"]
 
-                date = row["date"].strftime('%Y-%m-%d')
-                hd = row["Heure début"]
-                hf = row["Heure fin"]
+                hd = dt.datetime.combine(row["date"], row["Heure début"])
+                hf = dt.datetime.combine(row["date"], row["Heure fin"])
 
-                dtd = dt.datetime.strptime(
-                    date + "_" + hd, DATE_FORMAT + "_" + TIME_FORMAT
-                )
-                dtf = dt.datetime.strptime(
-                    date + "_" + hf, DATE_FORMAT + "_" + TIME_FORMAT
-                )
-
-                return group, dtd, dtf
+                return group, hd, hf
 
             gbe = [group_beg_end(row) for index, row in df.iterrows()]
             dt_min = min(b for g, b, e in gbe)

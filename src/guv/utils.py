@@ -1,3 +1,4 @@
+import datetime
 import hashlib
 import os
 import re
@@ -85,6 +86,18 @@ def convert_author(author):
         return ''.join(e[0].upper() for e in parts)
     else:
         return ''
+
+
+def convert_to_time(value):
+    if isinstance(value, datetime.time):
+        return value
+    elif isinstance(value, datetime.datetime):
+        return value.time()
+    else:
+        try:
+            return datetime.datetime.strptime(value, "%H:%M").time()
+        except ValueError:
+            return datetime.datetime.strptime(value, "%H:%M:%S").time()
 
 
 def plural(num, plural, singular):

@@ -24,13 +24,8 @@ def ical_events(dataframe, **settings):
     """Retourne les évènements iCal de tous les cours trouvés dans `dataframe`."""
 
     def timestamp(row):
-        d = row["date"]
-        hm = row["Heure début"].split(":")
-        h = int(hm[0])
-        m = int(hm[1])
-        timetuple = (d.year, d.month, d.day, h, m)
         local_tz = pytz.timezone("Europe/Paris")
-        return datetime.datetime(*timetuple).astimezone(local_tz).astimezone(pytz.utc)
+        return datetime.datetime.combine(row["date"], row["Heure début"]).astimezone(local_tz).astimezone(pytz.utc)
 
     ts = dataframe.apply(timestamp, axis=1)
     dataframe = dataframe.assign(timestamp=ts)
