@@ -26,8 +26,7 @@ def create_cal_from_dataframe(df, text, target, save_tex=False):
 
     # 08:15 should be 8_15
     def convert_time(time):
-        time = time.replace(':', '_')
-        return re.sub('^0', '', time)
+        return time.strftime("%H_%M")
 
     def convert_day(day):
         mapping = {'Lundi': 'Lun',

@@ -102,7 +102,7 @@
       \tikzstyle{hour}=[draw, rectangle, minimum height=4*\quarterwidth, minimum width=1.5 cm, fill=yellow!30,anchor=north east]
 
       \def\days{Lundi/Lun,Mardi/Mar,Mercredi/Mer,Jeudi/Jeu,Vendredi/Ven,Samedi/Sam}
-      \def\hours{8_00,8_15,8_30,8_45,9_00,9_15,9_30,9_45,10_00,10_15,10_30,10_45,11_00,11_15,11_30,11_45,12_00,12_15,12_30,12_45,13_00,13_15,13_30,13_45,14_00,14_15,14_30,14_45,15_00,15_15,15_30,15_45,16_00,16_15,16_30,16_45,17_00,17_15,17_30,17_45,18_00,18_15,18_30,18_45,19_00}
+      \def\hours{08_00,08_15,08_30,08_45,09_00,09_15,09_30,09_45,10_00,10_15,10_30,10_45,11_00,11_15,11_30,11_45,12_00,12_15,12_30,12_45,13_00,13_15,13_30,13_45,14_00,14_15,14_30,14_45,15_00,15_15,15_30,15_45,16_00,16_15,16_30,16_45,17_00,17_15,17_30,17_45,18_00,18_15,18_30,18_45,19_00}
 
       % Define coordinates
       \foreach \day/\sday [count=\iday] in \days {
@@ -112,15 +112,15 @@
       }
 
       % Draw days
-      \node[day] (lundi) at (Lun-8_00) {Lundi};
+      \node[day] (lundi) at (Lun-08_00) {Lundi};
       \node[day] (mardi) [right = of lundi] {Mardi};
       \node[day] (mercredi) [right = of mardi] {Mercredi};
       \node[day] (jeudi) [right = of mercredi] {Jeudi};
       \node[day] (vendredi) [right = of jeudi] {Vendredi};
 
       % Draw hours
-      \node[hour] at (Lun-8_00) {\heure{08}{00}--\heure{09}{00}};
-      \node[hour] at (Lun-9_00) {\heure{09}{00}--\heure{10}{00}};
+      \node[hour] at (Lun-08_00) {\heure{08}{00}--\heure{09}{00}};
+      \node[hour] at (Lun-09_00) {\heure{09}{00}--\heure{10}{00}};
       \node[hour] at (Lun-10_00) {\heure{10}{00}--\heure{11}{00}};
       \node[hour] at (Lun-11_00) {\heure{11}{00}--\heure{12}{00}};
       \node[hour] at (Lun-12_00) {\heure{12}{00}--\heure{13}{00}};
@@ -148,7 +148,7 @@
       \tikzstyle{TD}=[fill=yellow!20]
 
       \foreach \dummy/\day in \days {
-        \draw (\day-8_00) -- (\day-19_00);
+        \draw (\day-08_00) -- (\day-19_00);
       }
       \draw (Lun-19_00) -- (Sam-19_00);
 
@@ -157,7 +157,7 @@
 
       % Draw dotted lines
       \foreach \day in {Lun,Mar,Mer,Jeu,Ven} {
-        \draw[dotted, ] ([xshift=.5*\daywidth]\day-8_00) -- ([xshift=.5*\daywidth]\day-19_00);
+        \draw[dotted, ] ([xshift=.5*\daywidth]\day-08_00) -- ([xshift=.5*\daywidth]\day-19_00);
       }
 
       (((blocks)))
