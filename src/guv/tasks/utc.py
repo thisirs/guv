@@ -512,12 +512,15 @@ class WeekSlots(UVTask):
         df.loc[empty, "Abbrev"] = df.loc[empty, "Intervenants"].apply(convert_author)
 
         # Warn if abbrev clashes
-        dups = df["Abbrev"].dropna().duplicated()
-        if dups.any():
-            insts = ", ".join(df.loc[dups, "Intervenants"])
-            fn = rel_to_dir(week_slots, settings.CWD)
-            logger.warning(f"Les intervenants suivants ont les mêmes initiales : {insts}. "
-                           f"Modifier la colonne `Abbrev` dans le fichier `{fn}`.")
+        def check_for_dups(df):
+            insts = df["Intervenants"].unique()
+            if len(insts) > 1:
+                insts_list = ", ".join(insts)
+                fn = rel_to_dir(week_slots, settings.CWD)
+                logger.warning(f"Les intervenants suivants ont les mêmes initiales : {insts_list}. "
+                               f"Modifier la colonne `Abbrev` dans le fichier `{fn}`.")
+
+        df.groupby("Abbrev").apply(check_for_dups)
 
         return df
 
