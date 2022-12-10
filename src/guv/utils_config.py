@@ -290,7 +290,7 @@ def render_from_contexts(template, contexts, save_tex=False, target=None):
     if len(pdfs) == 1:
         with Output(target + ".pdf") as out:
             shutil.move(pdfs[0], out.target)
-    else:
+    elif len(pdfs) > 1:
         with Output(target + ".zip") as out:
             with zipfile.ZipFile(out.target, "w") as z:
                 for filepath in pdfs:
@@ -301,7 +301,7 @@ def render_from_contexts(template, contexts, save_tex=False, target=None):
         if len(texs) == 1:
             with Output(target + ".tex") as out:
                 shutil.move(texs[0], out.target)
-        else:
+        elif len(texs) > 1:
             with Output(target + "_source.zip") as out:
                 with zipfile.ZipFile(out.target, "w") as z:
                     for filepath in texs:
