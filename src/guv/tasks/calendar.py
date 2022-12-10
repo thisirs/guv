@@ -224,7 +224,7 @@ class CalInst(CliArgsMixin, TaskBase):
             ]
 
             if len(df_inst) == 0:
-                raise Exception(f"Pas de créneau pour `{inst}`")
+                logger.warning(f"Pas de créneau pour `%s`", inst)
 
             logger.info("%d créneau%s pour `%s` pour le%s planning%s : %s", len(df_inst), px(len(df_inst)), inst, ps(len(self.plannings)), ps(len(self.plannings)), ", ".join(f"`{p}`" for p in self.plannings))
 
