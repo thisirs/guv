@@ -11,6 +11,7 @@ import openpyxl
 import pandas as pd
 from PyPDF2 import PdfFileReader
 from tabula import read_pdf
+import datetime
 
 from ..openpyxl_patched import fixit
 
@@ -246,7 +247,24 @@ class WeekSlotsAll(TaskBase):
 
     @staticmethod
     def read_target(week_slots_all):
-        return pd.read_excel(week_slots_all, engine="openpyxl")
+        df = pd.read_excel(week_slots_all, engine="openpyxl")
+
+        # Replace by datetime.time objects
+        def convert_to_time(value):
+            if isinstance(value, datetime.time):
+                return value
+            elif isinstance(value, datetime.datetime):
+                return value.time()
+            else:
+                try:
+                    return datetime.datetime.strptime(value, "%H:%M").time()
+                except ValueError:
+                    return datetime.datetime.strptime(value, "%H:%M:%S").time()
+
+        df["Heure début"] = df["Heure début"].apply(convert_to_time)
+        df["Heure début"] = df["Heure début"].apply(convert_to_time)
+
+        return df
 
 
 class PlanningSlotsAll(TaskBase):
@@ -472,6 +490,21 @@ class WeekSlots(UVTask):
 
         if df["Intervenants"].isnull().any():
             logger.warning("Certains créneaux n'ont pas d'intervenant renseigné")
+
+        # Replace by datetime.time objects
+        def convert_to_time(value):
+            if isinstance(value, datetime.time):
+                return value
+            elif isinstance(value, datetime.datetime):
+                return value.time()
+            else:
+                try:
+                    return datetime.datetime.strptime(value, "%H:%M").time()
+                except ValueError:
+                    return datetime.datetime.strptime(value, "%H:%M:%S").time()
+
+        df["Heure début"] = df["Heure début"].apply(convert_to_time)
+        df["Heure début"] = df["Heure début"].apply(convert_to_time)
 
         # Populate "Abbrev" column where possible
         empty = df["Abbrev"].isna() & ~df["Intervenants"].isna()
