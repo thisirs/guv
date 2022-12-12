@@ -17,98 +17,107 @@ from .base import CliArgsMixin, TaskBase, UVTask
 from .utc import WeekSlots, WeekSlotsAll
 
 
-def create_cal_from_dataframe(df, text, target, save_tex=False):
-    """Crée un calendrier des créneaux dans `df`.
+class InvalidBlock(Exception):
+    def __str__(self):
+        row = self.args[0]
+        beg, end = row["Heure début"].strftime("%H:%M"), row["Heure fin"].strftime("%H:%M")
+        return f"{row['Jour']} de {beg} à {end}"
 
-    `text` dans les cases.
+
+def convert_day(day):
+    mapping = {'Lundi': 'Lun',
+               'Mardi': 'Mar',
+               'Mercredi': 'Mer',
+               'Jeudi': 'Jeu',
+               'Vendredi': 'Ven',
+               'Samedi': 'Sam',
+               'Dimanche': 'Dim'}
+    return mapping[day]
+
+
+def build_block(row, template, location="full"):
+    """Return Tikz node for calendar."""
+
+    uv = row['Code enseig.']
+
+    name = row['Lib. créneau'].replace(' ', '')
+    if re.match('^T', name):
+        ctype = 'TP'
+        if isinstance(row['Semaine'], str):
+            name = name + row['Semaine']
+    elif re.match('^D', name):
+        ctype = 'TD'
+    elif re.match('^C', name):
+        ctype = 'Cours'
+
+    if pd.isnull(row['Abbrev']):
+        author = 'N/A'
+    else:
+        author = row["Abbrev"]
+
+    room = row['Locaux']
+    if isinstance(room, str):
+        room = room.replace(' ', '').replace('BF', 'F')
+    else:
+        room = ""
+
+    text = template.format(room=room, name=name, author=author, uv=uv)
+
+    time_beg, time_end = row["Heure début"], row["Heure fin"]
+
+    if time_beg.minute not in [0, 15, 30, 45]:
+        raise InvalidBlock(row)
+
+    if time_end.minute not in [0, 15, 30, 45]:
+        raise InvalidBlock(row)
+
+    if time_beg.hour not in [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]:
+        raise InvalidBlock(row)
+
+    if time_end.hour not in [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]:
+        raise InvalidBlock(row)
+
+    bh = time_beg.strftime("%H_%M")
+    eh = time_end.strftime("%H_%M")
+    day = convert_day(row['Jour'])
+
+    if location == "left":
+        return rf"\node[draw, {ctype}, fit={{({day}-{bh}) ({day}-{eh}-half)}}] {{{text}}};"
+    elif location == "right":
+        return rf"\node[draw, {ctype}, fit={{({day}-{bh}-half) ({day}-{eh}-end)}}] {{{text}}};"
+    elif location == "full":
+        return rf"\node[draw, {ctype}, fit={{({day}-{bh}) ({day}-{eh}-end)}}] {{{text}}};"
+    else:
+        raise RuntimeError("`location` must be `left`, `right` or `full`")
+
+
+def create_cal_from_dataframe(df, template, target, save_tex=False):
+    """Crée un calendrier des créneaux présents dans `df`.
+
+    `template` dans les cases.
 
     """
 
-    # 08:15 should be 8_15
-    def convert_time(time):
-        return time.strftime("%H_%M")
-
-    def convert_day(day):
-        mapping = {'Lundi': 'Lun',
-                   'Mardi': 'Mar',
-                   'Mercredi': 'Mer',
-                   'Jeudi': 'Jeu',
-                   'Vendredi': 'Ven',
-                   'Samedi': 'Sam',
-                   'Dimanche': 'Dim'}
-        return mapping[day]
-
-    def convert_author(author):
-        parts = re.split('[ -]', author)
-        return ''.join(e[0].upper() for e in parts)
-
-    # Returns blocks like \node[2hours, full, {course}] at ({day}-{bh}) {{{text}}};
-    def build_block(row, text, half=False):
-        uv = row['Code enseig.']
-
-        name = row['Lib. créneau'].replace(' ', '')
-        if re.match('^T', name):
-            ctype = 'TP'
-            if isinstance(row['Semaine'], str):
-                name = name + row['Semaine']
-        elif re.match('^D', name):
-            ctype = 'TD'
-        elif re.match('^C', name):
-            ctype = 'Cours'
-
-        if 'Intervenants' in row.keys():
-            if pd.isnull(row['Intervenants']):
-                author = 'N/A'
-            else:
-                author = convert_author(row['Intervenants'])
-        else:
-            author = 'N/A'
-
-        room = row['Locaux']
-        if isinstance(room, str):
-            room = room.replace(' ', '').replace('BF', 'F')
-        else:
-            room = ""
-
-        text = text.format(room=room, name=name, author=author, uv=uv)
-
-        # if half:
-        #     text = r"""
-        #     \begin{fitbox}{1.4cm}{1.8cm}
-        #     \begin{center}
-        #     (((text)))
-        #     \end{center}
-        #     \end{fitbox}
-        #     """.replace('(((text)))', text)
-
-        bh = convert_time(row['Heure début'])
-        day = convert_day(row['Jour'])
-
-        if not half:
-            half = 'full'
-        return rf'\node[2hours, {half}, {ctype}] at ({day}-{bh}) {{{text}}};'
-
-    def generate_contexts():
-        blocks = []
-        for hour, group in df.groupby(['Jour', 'Heure début', 'Heure fin']):
+    blocks = []
+    for hour, group in df.groupby(['Jour', 'Heure début', 'Heure fin']):
+        try:
             if len(group) > 2:
                 raise Exception("Trop de créneaux en même temps")
             elif len(group) == 2:
                 group = group.sort_values('Semaine')
-                block1 = build_block(group.iloc[0], text, half='atleft')
-                block2 = build_block(group.iloc[1], text, half='atright')
+                block1 = build_block(group.iloc[0], template, location='left')
+                block2 = build_block(group.iloc[1], template, location='right')
                 blocks += [block1, block2]
             elif len(group) == 1:
-                block = build_block(group.iloc[0], text)
+                block = build_block(group.iloc[0], template, location="full")
                 blocks.append(block)
+        except InvalidBlock as e:
+            logger.warning("Créneau invalide ignoré : %s", e)
+            continue
 
-        blocks = '\n'.join(blocks)
-
-        yield {"blocks": blocks, "filename_no_ext": os.path.basename(target)}
-
-    contexts = generate_contexts()
-    template = 'calendar_template.tex.jinja2'
-    render_from_contexts(template, contexts, target=target, save_tex=save_tex)
+    context = {"blocks": blocks, "filename_no_ext": os.path.basename(target)}
+    jinja2_template = 'calendar_template.tex.jinja2'
+    render_from_contexts(jinja2_template, [context], target=target, save_tex=save_tex)
 
 
 class CalUv(UVTask, CliArgsMixin):
@@ -213,18 +222,28 @@ class CalInst(CliArgsMixin, TaskBase):
         ]
 
     def run(self):
+        df = WeekSlotsAll.read_target(self.week_slots_all)
+
         for inst, target in zip(self.insts, self.targets):
-            df = WeekSlotsAll.read_target(self.week_slots_all)
             df_inst = df.loc[
                 (df["Intervenants"].astype(str) == inst)
                 & (df["Planning"].isin(self.plannings)),
                 :,
             ]
-
             if len(df_inst) == 0:
-                logger.warning(f"Pas de créneau pour `%s`", inst)
+                log_function = logger.warning
+            else:
+                log_function = logger.info
 
-            logger.info("%d créneau%s pour `%s` pour le%s planning%s : %s", len(df_inst), px(len(df_inst)), inst, ps(len(self.plannings)), ps(len(self.plannings)), ", ".join(f"`{p}`" for p in self.plannings))
+            log_function(
+                "%d créneau%s pour `%s` pour le%s planning%s : %s",
+                len(df_inst),
+                px(len(df_inst)),
+                inst,
+                ps(len(self.plannings)),
+                ps(len(self.plannings)),
+                ", ".join(f"`{p}`" for p in self.plannings),
+            )
 
             text = r"{uv} \\ {name} \\ {room}"
 
