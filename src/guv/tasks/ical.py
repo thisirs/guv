@@ -14,7 +14,7 @@ import pandas as pd
 import pytz
 from icalendar import Calendar, Event
 
-from ..utils import argument
+from ..utils import argument, ps
 from ..utils_config import Output
 from .base import CliArgsMixin, TaskBase, UVTask
 from .utc import PlanningSlots, PlanningSlotsAll
@@ -149,7 +149,7 @@ class IcalInst(TaskBase, CliArgsMixin):
 
         if not set(self.insts).issubset(set(all_insts)):
             unknown = set(self.insts).difference(all_insts)
-            plural = "s" if len(unknown) > 1 else ""
+            plural = ps(len(unknown))
             all_insts = "Aucun" if not all_insts else ', '.join(all_insts)
             raise Exception(f"Intervenant{plural} inconnu{plural}: {', '.join(unknown)}, intervenant(s) enregistré(s): {all_insts}")
 
