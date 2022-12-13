@@ -6,6 +6,7 @@ image: registry.gitlab.utc.fr/syrousse/guv:latest
 stages:
   - test
   - deploy
+  - publish
 
 cache:
   paths:
@@ -28,3 +29,10 @@ pages:
       - public
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+package:
+  stage: publish
+  script:
+    - pip install build twine
+    - python -m build
+    - TWINE_PASSWORD=${CI_JOB_TOKEN} TWINE_USERNAME=gitlab-ci-token python -m twine upload --repository-url ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi dist/*
