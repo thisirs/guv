@@ -143,7 +143,7 @@ class IcalInst(TaskBase, CliArgsMixin):
     def run(self):
         df = PlanningSlotsAll.read_target(self.planning_slots_all)
 
-        all_insts = df["Intervenants"].fillna("").unique()
+        all_insts = df["Intervenants"].dropna().unique()
         if len(self.insts) == 1 and self.insts[0] == "all":
             self.insts = all_insts
 
