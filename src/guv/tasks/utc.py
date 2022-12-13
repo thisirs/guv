@@ -294,7 +294,7 @@ class PlanningSlotsAll(TaskBase):
     def read_target(planning_slots_all):
         df = pd.read_excel(planning_slots_all, engine="openpyxl")
 
-        df["date"] = pd.to_datetime(df["date"])
+        df["date"] = pd.to_datetime(df["date"]).dt.date
         df["Heure début"] = df["Heure début"].apply(convert_to_time)
         df["Heure fin"] = df["Heure fin"].apply(convert_to_time)
 
@@ -420,7 +420,7 @@ class PlanningSlots(UVTask):
     def read_target(planning_slots):
         df = pd.read_excel(planning_slots, engine="openpyxl")
 
-        df["date"] = pd.to_datetime(df["date"])
+        df["date"] = pd.to_datetime(df["date"]).dt.date
         df["Heure début"] = df["Heure début"].apply(convert_to_time)
         df["Heure fin"] = df["Heure fin"].apply(convert_to_time)
 
