@@ -2,7 +2,7 @@ import pytest
 from tests.plugins.test_path import path_dependency
 
 
-@path_dependency("test_csv_inscrits", name="test_xls_student_data")
+@path_dependency("test_csv_inscrits", name="test_xls_student_data", cache=True)
 class TestXlsStudentData:
 
     def test_xls_student_data0(self, guv, guvcapfd):
