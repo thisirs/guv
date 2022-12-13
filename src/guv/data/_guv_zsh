@@ -23,16 +23,17 @@ _shtab_guv_commands() {
     "ical_uv:Fichiers iCal de tous les créneaux sur le semestre."
     "json_group:Fichier json des restrictions d\'accès aux ressources sur Moodle par adresse courriel"
     "json_restriction:Fichier json de restrictions d\'accès aux ressources Moodle basées sur le début\/fin des séances"
+    "maggle_teams:Crée un fichier csv prêt à charger sur django-maggle pour faire des groupes"
     "pdf_attendance:Fichier pdf de feuilles de présence."
     "pdf_attendance_full:Fichier zip de feuilles de présence nominatives par groupe et par semestre."
     "pdf_trombinoscope:Fichier PDF des trombinoscopes par groupes et\/ou sous-groupes."
-    "utp:"
     "xls_assignment_grade:Création d\'un fichier Excel pour remplissage des notes par les intervenants"
     "xls_grade_book_group:Fichier Excel de notes par groupe."
     "xls_grade_book_jury:Fichier Excel pour la gestion d\'un jury d\'UV"
     "xls_grade_book_no_group:Fichier Excel de notes individuelles."
     "xls_merge_final_grade:Fichier Excel des notes finales attribuées"
-    "xls_utp:Crée un document Excel pour calcul des heures et remplacements."
+    "xls_remplacements:Crée un fichier Excel pour enregistrer les remplacements."
+    "xls_utp:Crée un fichier Excel de prévisions des UTP globales."
     "yaml_qcm:Génère un fichier yaml prérempli pour noter un QCM"
     "zoom_breakout_rooms:Crée un fichier csv prêt à charger sur Zoom pour faire des groupes"
   )
@@ -78,6 +79,7 @@ _shtab_guv_csv_create_groups_options=(
   {-g,--global}"[Ne pas remettre à zéro la suite des noms de groupes entre chaque groupement]"
   {-r,--random}"[Permuter aléatoirement les noms de groupes]"
   "--other-groups[Liste de colonnes de groupes déjà formés qui ne doivent plus être reformés. Valable uniquement pour les binomes et trinomes.]:other_groups:"
+  "--max-iter[Nombre maximum d\'essais pour trouver des groupes avec contraintes.]:max_iter:"
   ":Nom associé à l\'ensemble des groupes créés. Repris dans le nom du fichier créé et dans le nom des groupes créés suivant la \*template\* utilisée.:"
 )
 
@@ -159,6 +161,11 @@ _shtab_guv_json_restriction_options=(
   {-a,--num-AB}"[Permet de prendre en compte les semaines A\/B. Ainsi, la fin d\'une séance est à la fin de la semaine B.]"
 )
 
+_shtab_guv_maggle_teams_options=(
+  "(- :)"{-h,--help}"[show this help message and exit]"
+  ":Le nom de la colonne des groupes:"
+)
+
 _shtab_guv_pdf_attendance_options=(
   "(- :)"{-h,--help}"[show this help message and exit]"
   {-t,--title}"[Spécifie un titre qui sera utilisé dans les feuilles de présence.]:title:"
@@ -185,10 +192,6 @@ _shtab_guv_pdf_trombinoscope_options=(
   {-g,--group}"[Nom de colonne utilisée pour réaliser le groupement. Un fichier pdf est généré pour chaque groupe. Lorsque le nom de groupe est \`\`all\`\`, il y a un seul groupe (donc un seul fichier pdf) comportant la totalité des étudiants.]:groupby:"
   {-s,--subgroup}"[Nom de colonne utilisée pour faire des sous-groupes (binômes, trinômes) parmi le groupement déjà existant.]:subgroupby:"
   "--save-tex[Permet de laisser les fichiers .tex générés pour modification éventuelle.]"
-)
-
-_shtab_guv_utp_options=(
-  "(- :)"{-h,--help}"[show this help message and exit]"
 )
 
 _shtab_guv_xls_assignment_grade_options=(
@@ -222,6 +225,10 @@ _shtab_guv_xls_grade_book_no_group_options=(
 _shtab_guv_xls_merge_final_grade_options=(
   "(- :)"{-h,--help}"[show this help message and exit]"
   {-e,--exam}"[Nom de l\'examen]:exam:"
+)
+
+_shtab_guv_xls_remplacements_options=(
+  "(- :)"{-h,--help}"[show this help message and exit]"
 )
 
 _shtab_guv_xls_utp_options=(
@@ -269,15 +276,16 @@ _shtab_guv() {
         ical_uv) _arguments -C $_shtab_guv_ical_uv_options ;;
         json_group) _arguments -C $_shtab_guv_json_group_options ;;
         json_restriction) _arguments -C $_shtab_guv_json_restriction_options ;;
+        maggle_teams) _arguments -C $_shtab_guv_maggle_teams_options ;;
         pdf_attendance) _arguments -C $_shtab_guv_pdf_attendance_options ;;
         pdf_attendance_full) _arguments -C $_shtab_guv_pdf_attendance_full_options ;;
         pdf_trombinoscope) _arguments -C $_shtab_guv_pdf_trombinoscope_options ;;
-        utp) _arguments -C $_shtab_guv_utp_options ;;
         xls_assignment_grade) _arguments -C $_shtab_guv_xls_assignment_grade_options ;;
         xls_grade_book_group) _arguments -C $_shtab_guv_xls_grade_book_group_options ;;
         xls_grade_book_jury) _arguments -C $_shtab_guv_xls_grade_book_jury_options ;;
         xls_grade_book_no_group) _arguments -C $_shtab_guv_xls_grade_book_no_group_options ;;
         xls_merge_final_grade) _arguments -C $_shtab_guv_xls_merge_final_grade_options ;;
+        xls_remplacements) _arguments -C $_shtab_guv_xls_remplacements_options ;;
         xls_utp) _arguments -C $_shtab_guv_xls_utp_options ;;
         yaml_qcm) _arguments -C $_shtab_guv_yaml_qcm_options ;;
         zoom_breakout_rooms) _arguments -C $_shtab_guv_zoom_breakout_rooms_options ;;
