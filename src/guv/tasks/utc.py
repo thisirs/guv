@@ -500,7 +500,7 @@ class WeekSlots(UVTask):
 
         # Warn if abbrev clashes
         def check_for_dups(df):
-            insts = df["Intervenants"].unique()
+            insts = df["Intervenants"].dropna().unique()
             if len(insts) > 1:
                 insts_list = ", ".join(insts)
                 fn = rel_to_dir(week_slots, settings.CWD)
