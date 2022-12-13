@@ -274,7 +274,7 @@ class PlanningSlotsAll(TaskBase):
 
     def run(self):
         def func(planning, uv, xls_aff):
-            df = WeekSlots.read_target(xls_aff)
+            df = PlanningSlots.read_target(xls_aff)
             df.insert(0, "Code enseig.", uv)
             df.insert(0, "Planning", planning)
             return df
