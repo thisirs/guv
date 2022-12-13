@@ -706,7 +706,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
 
         Pour agréger les notes au fichier central `effectifs.xlsx`, ajouter :
 
-        DOCS.aggregate_jury("%(filename)s")
+        DOCS.aggregate_jury("{filename}")
 
         dans le fichier `config.py` de l'UV/UE.
 
@@ -714,7 +714,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
 
         guv csv_for_upload -g "Note ECTS" --ects
 
-        """.format({"filename": rel_to_dir(target, self.settings.UV_DIR)}))
+        """.format(**{"filename": rel_to_dir(target, self.settings.UV_DIR)}))
 
     def get_columns(self, **kwargs):
         # Les colonnes classiques

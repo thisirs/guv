@@ -1114,6 +1114,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         url = f"https://moodle.utc.fr/local/userenrols/import.php?id={id}"
 
         logger.info(textwrap.dedent("""\
+
         Charger les groupes sur Moodle à l'adresse %(url)s en spécifiant :
 
         - Champ utilisateur: "Nom d'utilisateur"

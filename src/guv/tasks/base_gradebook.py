@@ -97,16 +97,16 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
         Pour agréger les notes au fichier central `effectifs.xlsx`, ajouter :
 
         DOCS.aggregate(
-            "%(filename)s",
+            "{filename}",
             on="Courriel",
-            subset=%(columns)s
+            subset={columns}
         )
 
         dans le fichier `config.py` de l'UV/UE.
-        """ % {
+        """.format(**{
             "filename": rel_to_dir(target, self.settings.UV_DIR),
             "columns": columns
-        })
+        }))
 
     def get_sorted_columns(self):
         """Return list of columns sorted by priority."""
