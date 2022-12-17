@@ -100,13 +100,18 @@ class CsvGroups(UVTask, CliArgsMixin):
                 with Output(target) as out:
                     dff.to_csv(out.target, index=False, header=False)
             else:
-                ensure_present_columns(
-                    df, ctype, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
-                )
-                dff = df[["Courriel", ctype]]
+                if not ensure_present_columns(
+                    df,
+                    ctype,
+                    file=self.xls_merge,
+                    base_dir=self.settings.SEMESTER_DIR,
+                    errors="warning",
+                ):
+                    dff = df[["Courriel", ctype]]
 
-                with Output(target) as out:
-                    dff.to_csv(out.target, index=False, header=False)
+                    with Output(target) as out:
+                        dff.to_csv(out.target, index=False, header=False)
+
 
 
 class CsvGroupsGroupings(UVTask, CliArgsMixin):
