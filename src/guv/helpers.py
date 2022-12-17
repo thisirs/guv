@@ -13,7 +13,7 @@ from .exceptions import ImproperlyConfigured
 from .config import settings
 from .logger import logger
 from .utils import slugrot_string
-from .utils_config import rel_to_dir, check_if_present, ensure_absent_columns, check_filename
+from .utils_config import rel_to_dir, check_if_present, check_if_absent, check_filename
 
 
 def slugrot(*columns):
