@@ -112,6 +112,22 @@ class CsvGroups(UVTask, CliArgsMixin):
                     with Output(target) as out:
                         dff.to_csv(out.target, index=False, header=False)
 
+        if "MOODLE_ID" in self.settings:
+            id = str(self.settings.MOODLE_ID)
+        else:
+            id = "<MOODLE_ID>"
+
+        url = f"https://moodle.utc.fr/local/userenrols/import.php?id={id}"
+
+        logger.info(textwrap.dedent(f"""\
+
+        Charger les groupes sur Moodle à l'adresse {url} en spécifiant :
+
+        - Champ utilisateur: "Nom d'utilisateur"
+        - Inscrire dans les groupes : "Oui"
+        - Créer les groupes: "Oui" s'il ne sont pas déjà créés
+
+        """))
 
 
 class CsvGroupsGroupings(UVTask, CliArgsMixin):
