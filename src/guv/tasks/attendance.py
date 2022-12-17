@@ -7,7 +7,7 @@ import pandas as pd
 
 from ..utils import (LaTeXEnvironment, argument, make_groups, pformat,
                      sort_values)
-from ..utils_config import ensure_present_columns, render_from_contexts
+from ..utils_config import check_if_present, render_from_contexts
 from .base import CliArgsMixin, UVTask
 from .students import XlsStudentDataMerge
 
@@ -152,7 +152,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
                 context["blank"] = False
 
                 if self.tiers_temps:
-                    ensure_present_columns(
+                    check_if_present(
                         df, "Tiers-temps", file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
                     )
                     df_tt = df[df["Tiers-temps"] == "Oui"]
@@ -182,7 +182,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
             df = sort_values(df, ["Nom", "Prénom"])
 
             if self.tiers_temps:
-                ensure_present_columns(
+                check_if_present(
                     df, "Tiers-temps", file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
                 )
                 df_tt = df[df["Tiers-temps"] == 1]
@@ -196,7 +196,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
                 yield context
 
             if self.group is not None:
-                ensure_present_columns(
+                check_if_present(
                     df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
                 )
 
@@ -280,7 +280,7 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
     def run(self):
         df = XlsStudentDataMerge.read_target(self.xls_merge)
         if self.group is not None:
-            ensure_present_columns(
+            check_if_present(
                 df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
             )
 

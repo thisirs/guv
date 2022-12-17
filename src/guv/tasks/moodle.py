@@ -39,7 +39,7 @@ from ..utils import (
     pformat,
     sort_values,
 )
-from ..utils_config import Output, ensure_present_columns, rel_to_dir
+from ..utils_config import Output, check_if_present, rel_to_dir
 from .base import CliArgsMixin, TaskBase, UVTask
 from .instructors import WeekSlotsDetails
 from .students import XlsStudentDataMerge
@@ -100,7 +100,7 @@ class CsvGroups(UVTask, CliArgsMixin):
                 with Output(target) as out:
                     dff.to_csv(out.target, index=False, header=False)
             else:
-                if not ensure_present_columns(
+                if check_if_present(
                     df,
                     ctype,
                     file=self.xls_merge,
@@ -768,7 +768,7 @@ class JsonGroup(UVTask, CliArgsMixin):
     def run(self):
         df = XlsStudentDataMerge.read_target(self.xls_merge)
 
-        ensure_present_columns(
+        check_if_present(
             df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
         )
         dff = df[["Adresse de courriel", self.group]]
@@ -1070,13 +1070,13 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         df = XlsStudentDataMerge.read_target(self.xls_merge)
 
         if self.grouping is not None:
-            ensure_present_columns(
+            check_if_present(
                 df, self.grouping, file=self.xls_merge, base_dir=self.settings.CWD
             )
             df = df.loc[~df[self.grouping].isnull()]
 
         if self.other_groups is not None:
-            ensure_present_columns(
+            check_if_present(
                 df, self.other_groups, file=self.xls_merge, base_dir=self.settings.CWD
             )
 
@@ -1086,7 +1086,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         elif len(self.ordered) == 0:
             df = sort_values(df, ["Nom", "Prénom"])
         else:
-            ensure_present_columns(
+            check_if_present(
                 df, self.ordered, file=self.xls_merge, base_dir=self.settings.CWD
             )
             df = sort_values(df, self.ordered)

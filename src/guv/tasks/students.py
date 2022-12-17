@@ -25,7 +25,7 @@ from ..exceptions import ImproperlyConfigured
 from ..helpers import Documents
 from ..logger import logger
 from ..utils import argument, sort_values
-from ..utils_config import Output, ensure_present_columns, rel_to_dir, ask_choice
+from ..utils_config import Output, check_if_present, rel_to_dir, ask_choice
 from .base import CliArgsMixin, UVTask
 
 
@@ -619,7 +619,7 @@ class CsvExamGroups(UVTask, CliArgsMixin):
             dff["TPE"] = pd.concat([sg1, sg2])
             return dff
 
-        ensure_present_columns(
+        check_if_present(
             df,
             [self.tp, self.tiers_temps],
             file=self.xls_merge,
@@ -685,7 +685,7 @@ class CsvMoodleGroups(UVTask, CliArgsMixin):
 
     def run(self):
         df = XlsStudentDataMerge.read_target(self.xls_merge)
-        ensure_present_columns(
+        check_if_present(
             df, self.course, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
         )
 
@@ -860,7 +860,7 @@ class ZoomBreakoutRooms(UVTask, CliArgsMixin):
 
     def run(self):
         df = XlsStudentDataMerge.read_target(self.xls_merge)
-        ensure_present_columns(
+        check_if_present(
             df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
         )
 
@@ -894,7 +894,7 @@ class MaggleTeams(UVTask, CliArgsMixin):
 
     def run(self):
         df = XlsStudentDataMerge.read_target(self.xls_merge)
-        ensure_present_columns(
+        check_if_present(
             df,
             [
                 "Login",

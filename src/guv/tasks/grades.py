@@ -12,7 +12,7 @@ import textwrap
 
 from ..logger import logger
 from ..utils import argument, sort_values
-from ..utils_config import Output, ensure_present_columns
+from ..utils_config import Output, check_if_present
 from .base import CliArgsMixin, UVTask
 from .instructors import WeekSlots
 from .students import XlsStudentDataMerge
@@ -93,7 +93,7 @@ class CsvForUpload(UVTask, CliArgsMixin):
 
         df = XlsStudentDataMerge.read_target(self.xls_merge)
 
-        ensure_present_columns(
+        check_if_present(
             df, self.grade_colname, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
         )
 
@@ -132,7 +132,7 @@ class CsvForUpload(UVTask, CliArgsMixin):
                 col_names.append("Commentaire")
                 cols["Commentaire"] = ""
             else:
-                ensure_present_columns(
+                check_if_present(
                     df, self.comment_colname, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
                 )
                 col_names.append("Commentaire")
