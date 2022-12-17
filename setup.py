@@ -7,7 +7,7 @@ with open(path.join(this_directory, "README.md"), encoding="utf-8") as f:
 
 setup(
     name="guv",
-    version="0.1",
+    version="0.11",
     author="Sylvain Rousseau",
     author_email="sylvain.rousseau@hds.utc.fr",
     description="Programme d'aide à la gestion d'UV",
