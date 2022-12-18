@@ -9,14 +9,17 @@ feuilles de notes...
 
 ## Installation
 
-Il faut d'abord télécharger l'archive du projet sur Gitlab et
-l'installer avec `pip` :
+`guv` est installable directement via `pip` :
 
 ``` shell
-pip install .
+pip install guv --extra-index-url https://<identifiant>:<mot_de_passe>@gitlab.utc.fr/api/v4/projects/9255/packages/pypi/simple
 ```
 
-On peut également cloner le projet si `git` est installé comme suit :
+Il faut remplacer `<identifiant>` par votre identifiant ENT et `<mot_de_passe>`
+par le mot de passe correspondant.
+
+On peut également cloner le projet avec `git` et ensuite l'installer comme
+suit :
 
 ``` shell
 git clone git@gitlab.utc.fr:syrousse/guv.git
