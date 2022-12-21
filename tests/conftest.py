@@ -90,14 +90,8 @@ class Guv:
                     f.write(f"{k}={v}\n\n")
 
 
-
 @pytest.fixture(
     params=[
-        {
-            "semester": "A2022",
-            "uvs": ["SY19", "SY02"],
-            "creneaux_uv": "Creneaux-UV-def-A21.pdf",
-        },
         {
             "semester": "P2022",
             "uvs": ["SY09", "SY02"],
@@ -111,26 +105,39 @@ class Guv:
     ],
     scope="session",
 )
-def guv_data(request):
+def guv_data_old(request):
     return request.param
+
+
+@pytest.fixture(scope="session")
+def guv_data_current(request):
+    return {
+        "semester": "A2022",
+        "uvs": ["SY19", "SY02"],
+        "creneaux_uv": "Creneaux-UV-Prov_A22-V01.pdf",
+    }
 
 
 from tests.plugins.test_path import _TestPath
 
-@pytest.fixture(scope="class")
-def my_test_path(request, tmp_path_factory, guv_data):
-    return _TestPath(request, tmp_path_factory).path, guv_data
-
 
 @pytest.fixture(scope="class")
-def guv(my_test_path, request):
-    foo_test_path, data = my_test_path
-    g = Guv(foo_test_path, request, data)
+def guv(request, tmp_path_factory, guv_data_current):
+    path = _TestPath(request, tmp_path_factory).path
+    g = Guv(path, request, guv_data_current)
     g.update_db()
     return g
 
 
-class Guvcapfd():
+@pytest.fixture(scope="class")
+def guv_old(request, tmp_path_factory, guv_data_old):
+    path = _TestPath(request, tmp_path_factory).path
+    g = Guv(path, request, guv_data_old)
+    g.update_db()
+    return g
+
+
+class Guvcapfd:
     def __init__(self, capfd):
         self.capfd = capfd
 
