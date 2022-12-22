@@ -166,6 +166,10 @@ class Tabular:
             )
         return self._df
 
+    @df.setter
+    def df(self, df):
+        self._df = df
+
     def __enter__(self):
         return self
 
