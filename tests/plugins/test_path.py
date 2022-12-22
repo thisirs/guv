@@ -55,7 +55,10 @@ class _TestPath:
         Use `name` defined in `path_dependency`
         """
 
+        # Get name of item at function scope level
         name = self.request._getscopeitem("function").name
+
+
         marker = self.request.node.get_closest_marker("path_dependency")
         if marker is None:
             return name
@@ -70,6 +73,7 @@ class _TestPath:
     def path(self):
         """Return a temporary path that is a copy of the one of another test."""
 
+        # Path to use
         path = self.tmp_path_factory.mktemp(self.request._getscopeitem("function").name, numbered=False)
 
         # If not marked with path_dependency decorator, just return a
