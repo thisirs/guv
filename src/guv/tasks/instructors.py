@@ -78,6 +78,10 @@ class WeekSlotsDetails(UVTask):
 
     def run(self):
         week_slots = WeekSlots.read_target(self.week_slots)
+
+        if week_slots["Intervenants"].isnull().any():
+            logger.warning("Certains créneaux n'ont pas d'intervenant renseigné")
+
         insts = XlsInstructors.read_target(self.insts)
 
         # Add details from inst_details

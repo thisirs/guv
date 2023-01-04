@@ -488,9 +488,6 @@ class WeekSlots(UVTask):
             fn = rel_to_dir(week_slots, settings.CWD)
             raise Exception(f"La colonne `Lib. créneau` du fichier `{fn}` ne doit pas contenir d'élément vide.")
 
-        if df["Intervenants"].isnull().any():
-            logger.warning("Certains créneaux n'ont pas d'intervenant renseigné")
-
         df["Heure début"] = df["Heure début"].apply(convert_to_time)
         df["Heure fin"] = df["Heure fin"].apply(convert_to_time)
 

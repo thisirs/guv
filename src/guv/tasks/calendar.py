@@ -154,6 +154,10 @@ class CalUv(UVTask, CliArgsMixin):
 
     def run(self):
         df = WeekSlots.read_target(self.week_slots)
+
+        if df["Intervenants"].isnull().any():
+            logger.warning("Certains créneaux n'ont pas d'intervenant renseigné")
+
         df["Code enseig."] = self.uv
 
         text = r"{name} \\ {room} \\ {author}"

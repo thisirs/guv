@@ -260,6 +260,10 @@ class XlsAssignmentGrade(UVTask, CliArgsMixin):
 
     def run(self):
         week_slots = WeekSlots.read_target(self.week_slots)
+
+        if week_slots["Intervenants"].isnull().any():
+            logger.warning("Certains créneaux n'ont pas d'intervenant renseigné")
+
         TD = week_slots['Lib. créneau'].str.contains('^D')
         week_slots_TD = week_slots.loc[TD]
         insts = week_slots_TD['Intervenants'].unique()
