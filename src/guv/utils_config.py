@@ -248,8 +248,8 @@ def generate_row(beg, end, skip, turn):
         if i % 7 == 0:
             nweek += 1
 
-        # Ignore week-end
-        if date.weekday() in [5, 6]:
+        # Ignore Sunday
+        if date.weekday() == 6:
             continue
 
         # Skip days
