@@ -102,6 +102,11 @@ class Guv:
             "uvs": ["SY19", "SY02"],
             "creneaux_uv": "Creneaux-UV-def-A21.pdf",
         },
+        {
+            "semester": "A2022",
+            "uvs": ["SY19", "SY02"],
+            "creneaux_uv": "Creneaux-UV-Prov_A22-V01.pdf",
+        }
     ],
     scope="session",
 )
@@ -112,9 +117,9 @@ def guv_data_old(request):
 @pytest.fixture(scope="session")
 def guv_data_current(request):
     return {
-        "semester": "A2022",
-        "uvs": ["SY19", "SY02"],
-        "creneaux_uv": "Creneaux-UV-Prov_A22-V01.pdf",
+        "semester": "P2023",
+        "uvs": ["SY09", "SY02"],
+        "creneaux_uv": "Creneaux-UV-P23- Prov.pdf",
     }
 
 
