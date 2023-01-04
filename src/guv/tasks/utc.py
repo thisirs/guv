@@ -394,6 +394,19 @@ class PlanningSlots(UVTask):
             columns=["date", "Jour", "num", "Semaine", "numAB", "nweek"],
         )
 
+        for planning, text, number in (
+                (planning_C, "cours", 14),
+                (planning_D, "TD", 13),
+                (planning_T, "TP", 14),
+        ):
+            counts = planning["Jour"].value_counts()
+            unique = counts.unique()
+            if len(unique) != 1:
+                serie = ", ".join(f"{index} : {value}" for index, value in counts.items())
+                logger.warning("Le nombre de créneaux de %s n'est pas le même pour tous les jours : %s", text, serie)
+            elif unique.item() != number:
+                logger.warning("Le nombre de créneaux de %s est différent de %d : %d", text, number, unique.item())
+
         planning_C = planning_C.drop("Semaine", axis=1)
         df_Cp = pd.merge(df_C, planning_C, how="left", on="Jour")
 
