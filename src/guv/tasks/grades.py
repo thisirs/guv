@@ -266,7 +266,7 @@ class XlsAssignmentGrade(UVTask, CliArgsMixin):
 
         TD = week_slots['Lib. créneau'].str.contains('^D')
         week_slots_TD = week_slots.loc[TD]
-        insts = week_slots_TD['Intervenants'].unique()
+        insts = week_slots_TD['Intervenants'].dropna().unique()
 
         df = XlsStudentDataMerge.read_target(self.xls_merge)
         df = df[['Nom', 'Prénom', 'Courriel']]
