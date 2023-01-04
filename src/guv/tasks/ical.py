@@ -9,8 +9,6 @@ import os
 import tempfile
 import zipfile
 
-import numpy as np
-import pandas as pd
 import pytz
 from icalendar import Calendar, Event
 

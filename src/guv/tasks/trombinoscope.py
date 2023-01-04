@@ -12,7 +12,6 @@ import shutil
 import aiohttp
 import browser_cookie3
 import numpy as np
-import pandas as pd
 
 import guv
 

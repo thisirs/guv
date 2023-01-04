@@ -3,8 +3,6 @@ Ce module rassemble les tâches liées à la création de fiches de
 présence.
 """
 
-import pandas as pd
-
 from ..utils import (LaTeXEnvironment, argument, make_groups, pformat,
                      sort_values)
 from ..utils_config import check_if_present, render_from_contexts
