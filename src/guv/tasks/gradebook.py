@@ -296,10 +296,14 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
         if self.order_by is not None:
             columns.append((self.order_by, "hide", 5))
 
-        if self.group_by is not None:
-            columns.append((self.group_by, "raw", 5))
+        if self.extra_cols is not None:
+            for colname in self.extra_cols:
+                columns.append((colname, "raw", 6))
 
-        columns.append((self.name + " brut", "cell", 6))
+        if self.group_by is not None:
+            columns.append((self.group_by, "raw", 6))
+
+        columns.append((self.name + " brut", "cell", 7))
 
         self.agg_colname = self.name
 
@@ -323,6 +327,15 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
             metavar="colname",
             dest="group_by",
             help="Colonne utilisée pour grouper en plusieurs feuilles"
+        )
+
+        self.add_argument(
+            "-e",
+            "--extra-cols",
+            nargs="+",
+            metavar="colname",
+            required=False,
+            help="Colonnes supplémentaires à inclure dans la feuille de notes"
         )
 
     def create_other_worksheets(self):
