@@ -32,6 +32,7 @@ from ..openpyxl_utils import (fit_cells_at_col, frame_range, generate_ranges,
                               get_segment, row_and_col)
 from ..utils import sort_values
 from ..utils_config import rel_to_dir
+from ..utils_ask import checkboxlist_prompt, prompt_number
 from . import base
 from . import base_gradebook as baseg
 
@@ -740,6 +741,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
     """
 
     config_help = "Fichier de configuration spécifiant les notes à utiliser"
+    config_required = False
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
@@ -785,6 +787,60 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
     def create_other_worksheets(self):
         self.create_second_worksheet()
         self.update_first_worksheet()
+
+    def ask_config(self):
+        cols = self.data_df.columns.values.tolist()
+
+        grade_cols = cols.copy()
+        for c in [
+            "Nom",
+            "Prénom",
+            "Date de naissance",
+            "Dernier diplôme obtenu",
+            "Courriel",
+            "Login",
+            "Tel. 1",
+            "Tel. 2",
+            "Branche",
+            "Semestre",
+            "Prénom_moodle",
+            "Nom_moodle",
+            "Numéro d'identification",
+            "Adresse de courriel",
+            "Cours",
+            "TD",
+            "TP"
+        ]:
+            if c in grade_cols:
+                grade_cols.remove(c)
+
+        grades = checkboxlist_prompt(
+            "Indiquer les colonnes contenants des notes (SPACE: sélectionner, ENTER: valider):",
+            [(c, c) for c in grade_cols]
+        )
+        grades_props = []
+        for grade in grades:
+            props = {"name": grade}
+            props["coefficient"] = prompt_number(f"Coefficient for {grade}: ", default="1")
+            props["passing grade"] = prompt_number(f"Passing grade for {grade}: ", default="-1")
+            grades_props.append(props)
+
+        other_cols = cols.copy()
+        for c in ["Nom", "Prénom", "Courriel",]:
+            if c in other_cols:
+                other_cols.remove(c)
+        for c in grades:
+            other_cols.remove(c)
+
+        others = checkboxlist_prompt(
+            "Indiquer d'autres colonnes :",
+            [(c, c) for c in other_cols]
+        )
+
+        return self.validate_config({
+            "grades": grades_props,
+            "others": others
+        })
 
     def validate_config(self, config):
         """Validation du fichier de configuration

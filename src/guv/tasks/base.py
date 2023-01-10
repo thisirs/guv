@@ -379,24 +379,41 @@ class ConfigOpt(CliArgsInheritMixin):
         """Call `build_config` and cache result."""
 
         if not hasattr(self, "_config") or self._config is None:
-            self._config = self.parse_config()
+            self._config = self.build_config()
         return self._config
 
-    def validate_config(self, config):
-        return config
-
-    def parse_config(self):
+    def build_config(self):
+        """Build config from cli argument"""
         config_file = self.config_file
         if config_file is not None:
-            if not os.path.exists(config_file):
-                raise Exception(f"{self.config_help} `{config_file}` non trouvé")
+            return self.parse_config(config_file)
 
-            with open(config_file, "r") as stream:
-                config = list(yaml.load_all(stream, Loader=yaml.SafeLoader))[0]
-                config = self.validate_config(config)
-                return config
+        
+
+        if self.config_required:
+            return self.ask_config()
         else:
-            return self.validate_config(None)
+            return self.ask_config()
+
+    def validate_config(self, config):
+        """Return a valid configuration.
+
+        Return a default configuration if `config` is None.
+        """
+
+        return config
+
+    def ask_config(self):
+        raise Exception("Un fichier de configuration est requis")
+
+    def parse_config(self, config_file):
+        if not os.path.exists(config_file):
+            raise Exception(f"{self.config_help} `{config_file}` non trouvé")
+
+        with open(config_file, "r") as stream:
+            config = list(yaml.load_all(stream, Loader=yaml.SafeLoader))[0]
+            config = self.validate_config(config)
+            return config
 
 
 class GroupOpt(CliArgsInheritMixin):

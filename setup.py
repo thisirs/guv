@@ -33,6 +33,7 @@ setup(
         "openpyxl",
         "oyaml",
         "pandas",
+        "prompt_toolkit",
         "pynliner",
         "pytz",
         "requests",
