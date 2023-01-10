@@ -21,7 +21,7 @@ from guv.helpers import Documents
 DOCS = Documents()
 
 # Chemin relatif vers le fichier des tiers-temps
-# Il s'agit d'une liste d'édudiants, un par ligne bénéficiant d'un
+# Il s'agit d'une liste d'étudiants, un par ligne bénéficiant d'un
 # tiers temps.
 TIERS_TEMPS = None
 
