@@ -30,7 +30,7 @@ setup(
         "openpyxl",
         "pandas",
         "pynliner",
-        "PyPDF2",
+        "PyPDF2>=3.0.0",
         "tabula-py",
         "unidecode",
         "oyaml",

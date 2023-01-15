@@ -9,7 +9,7 @@ import re
 import numpy as np
 import openpyxl
 import pandas as pd
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfReader
 from tabula import read_pdf
 
 from ..openpyxl_patched import fixit
@@ -53,8 +53,8 @@ class UtcUvListToCsv(TaskBase):
             self.file_dep = []
 
     def read_pdf(self):
-        pdf = PdfFileReader(open(self.uv_list_filename, 'rb'))
-        npages = pdf.getNumPages()
+        pdf = PdfReader(open(self.uv_list_filename, 'rb'))
+        npages = len(pdf.pages)
 
         possible_cols = ['Code enseig.', 'Activité', 'Jour', 'Heure début',
                          'Heure fin', 'Semaine', 'Locaux', 'Type créneau',
