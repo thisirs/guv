@@ -198,12 +198,8 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
             get_column_letter(idx - 1), N + 1
         )
 
-        if idx - 1 >= 10:
-            # Freeze header row and first two columns if more than 10 columns
-            self.first_ws.freeze_panes = "C2"
-        else:
-            # Freeze header row
-            self.first_ws.freeze_panes = "A2"
+        # Freeze header row and first two columns
+        self.first_ws.freeze_panes = "C2"
 
     def create_other_worksheets(self):
         raise NotImplementedError
