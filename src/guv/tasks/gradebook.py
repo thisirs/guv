@@ -7,12 +7,17 @@ pour :
 
 """
 
+import os
 import math
 from collections import OrderedDict
 import textwrap
+import json
 
+import jsonschema
 import openpyxl
 from schema import And, Optional, Or, Schema, Use
+
+import guv
 
 from ..openpyxl_patched import fixit
 
@@ -663,37 +668,41 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
     première feuille :
 
     - les notes spécifiées dans le fichier de configuration via
-      ``--config`` qui participe à la note finale,
-    - une colonne spéciale nommée "Note agrégée" destinée à contenir
-      la note agrégée sur 20, charge à vous de la remplir avec une
-      formule agrégeant toutes les notes,
-    - une note ECTS automatiquement calculée représentant la note
-      agrégée.
+      ``--config`` qui participent à la note finale,
+    - une colonne spéciale nommée "Note agrégée" contenant une note sur 20 avec
+      une formule par défaut utilisant les coefficients et les notes maximales
+      renseignées dans le fichier de configuration,
+    - une note ECTS (ABCDEF) automatiquement calculée représentant la note
+      agrégée en fonction de percentiles,
+    - d'autres colonnes utiles pour le jury et qui ne sont pas des notes.
 
-    La deuxième feuille met à disposition des barres d'admission pour
-    chaque note, des barres pour la conversion de la note agrégée en
-    note ECTS ainsi que quelques statistiques sur la répartition des
-    notes.
+    La deuxième feuille met à disposition des barres d'admission pour chaque
+    note, les coefficients de chaque note, les notes maximales pour chaque note
+    ainsi que les barres pour la conversion de la note agrégée en note ECTS
+    ainsi que quelques statistiques sur la répartition des notes.
 
-    Le fichier de configuration est un fichier au format YAML. Les
-    notes devant être utilisées (qu'elles existent ou non dans le
-    fichier ``effectifs.xlsx``) sont listées dans la section
-    ``marks``. On peut spécifier une note de passage avec ``passing
-    mark``. Par défaut, une note de passage de -1 est utilisée mais on
-    peut la modifier dans le fichier Excel. Si on souhaite copier ou
-    créer une colonne qui n'a pas vocation à contenir une note (et
-    donc pas de gestion de note de passage) on doit spécifier le type
-    ``raw``.
+    Le fichier de configuration est un fichier au format YAML. Les notes devant
+    être utilisées (qu'elles existent ou non dans le fichier ``effectifs.xlsx``)
+    sont listées dans la section ``grades``. On doit spécifier le nom de la
+    colonne avec ``name`` et optionnellement :
+
+    - une barre de passage avec ``passing grade``, par défaut -1,
+    - un coefficient avec ``coefficient``, par défault 1,
+    - une note maximale avec ``maximum grade``, par défault 20,
+
+    Les colonnes qui ne sont pas des notes peuvent être spécifiées avec
+    ``others``. Par exemple :
 
     .. code:: yaml
 
-       marks:
-         grade1:
-           passing mark: 8
-         grade2
-         grade3
-         info:
-           type: raw
+       grades:
+         - name: grade1
+           passing grade: 8
+           coefficient: 2
+         - name: grade2
+         - name: grade3
+       others:
+         - info
 
     La note ECTS et la note agrégée peuvent ensuite être facilement
     incorporées au fichier central en renseignant la variable
@@ -709,7 +718,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
     --------
 
     - Feuille de notes avec la note ``median``, la note ``final`` avec
-      une barre à 6 et l'information ``TD`` :
+      une barre à 6 et l'information ``Branche`` :
 
       .. code:: bash
 
@@ -719,12 +728,14 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
 
       .. code:: yaml
 
-         marks:
-           median:
-           final
-             passing mark: 6
-           TD:
-             type: raw
+         grades:
+           - name: median
+             coefficient: .4
+           - name: final
+             coefficient: .6
+             passing grade: 6
+         others:
+           - Branche
 
     """
 
@@ -753,16 +764,19 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
         columns = [("Nom", "raw", 0), ("Prénom", "raw", 0), ("Courriel", "raw", 0)]
 
         # Les colonnes nécessaires pour les différents calculs
-        columns.append(("Admis", "cell", 0))
-        columns.append(("Note admis", "cell", 0))
+        columns.append(("Admis", "cell", 2))
+        columns.append(("Note admis", "cell", 2))
 
         # Les colonnes spécifiées dans le fichier de configuration
-        for name, props in self.config["marks"].items():
-            col_type = props.get("type") if props is not None else None
-            columns.append((name, col_type, 0))
+        for grade in self.config["grades"]:
+            name = grade["name"]
+            columns.append((name, "cell", 3))
+
+        for other in self.config["others"]:
+            columns.append((other, "raw", 1))
 
         # La colonne de la note finale : A, B, C, D, E, F
-        columns.append(("Note ECTS", "cell", 0))
+        columns.append(("Note ECTS", "cell", 4))
 
         self.agg_colname = ["Note agrégée", "Note ECTS"]
 
@@ -775,115 +789,59 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
     def validate_config(self, config):
         """Validation du fichier de configuration
 
-        marks:
-          grade1:
-            passing mark: 8
-          grade2
-          grade3
-          info:
-            type: raw
+        grades:
+          - name: grade1
+            passing grade: 8
+            coefficient: 2
+          - name: grade2
+          - name: grade3
+        others:
+          - info
         """
 
-        def validate_grade2(data):
-            if data.get("type", "grade") == "grade":
-                schema = Schema(
-                    {
-                        Optional("type", default="grade"): "grade",
-                        Optional("passing mark", default=-1): -1,
-                        Optional("Coefficient", default=1): 1,
-                        Optional("Maximum grade", default=20): 20,
-                        Optional(str): object,
-                    }
-                )
-            else:
-                schema = Schema(
-                    {"type": Or("raw", "hide", "cell"), Optional(str): object,}
-                )
-            return schema.validate(data)
+        tmpl_dir = os.path.join(guv.__path__[0], "schemas")
+        schema_file = os.path.join(tmpl_dir, "gradebook_jury_schema.json")
+        schema = json.load(open(schema_file, "rb"))
 
-        validate_grade = Schema(
-            Or(
-                And(
-                    Or(None, {}, ""),
-                    Use(lambda dummy: {"type": "grade", "passing mark": -1, "coefficient": 1, "maximum grade": 20}),
-                ),
-                And(dict, Use(validate_grade2)),
-            )
-        )
+        jsonschema.validate(config, schema)
 
-        DEFAULT_MARKS = {"Note agrégée": {"type": "grade", "passing mark": -1, "coefficient": 1, "maximum grade": 20}}
+        # Add default value in grades
+        if "Percentile A" not in config:
+            config["Percentile note A"] = .9
+        if "Percentile note B" not in config:
+            config["Percentile note B"] = .65
+        if "Percentile note C" not in config:
+            config["Percentile note C"] = .35
+        if "Percentile note D" not in config:
+            config["Percentile note D"] = .1
 
-        validate_marks = Or(
-            And(Or(None, {}, ""), Use(lambda dummy: DEFAULT_MARKS)),
-            {
-                Optional("Note agrégée", default=DEFAULT_MARKS["Note agrégée"]): {},
-                Optional(str): validate_grade,
-            },
-        )
+        for grade in config["grades"]:
+            if "coefficient" not in grade:
+                grade["coefficient"] = 1
+            if "maximum grade" not in grade:
+                grade["maximum grade"] = 20
+            if "passing grade" not in grade:
+                grade["passing grade"] = -1
 
-        DEFAULT_OPTIONS = {
-            "Percentile note A": 0.9,
-            "Percentile note B": 0.65,
-            "Percentile note C": 0.35,
-            "Percentile note D": 0.1,
-        }
+        config["grades"].append({
+            "name": "Note agrégée",
+            "passing grade": -1
+        })
 
-        validate_options = Or(
-            And(Or(None, {}, ""), Use(lambda dummy: DEFAULT_OPTIONS)),
-            {
-                "Percentile note A": float,
-                "Percentile note B": float,
-                "Percentile note C": float,
-                "Percentile note D": float,
-                Optional(str): object,
-            },
-            {Optional(str): object},
-        )
+        if "others" not in config:
+            config["others"] = []
 
-        sc = Schema(
-            Or(
-                And(
-                    None,
-                    Use(
-                        lambda dummy: {
-                            "marks": validate_marks.validate(None),
-                            "options": validate_options.validate(None),
-                        }
-                    ),
-                ),
-                {
-                    Optional(
-                        "marks", default=validate_marks.validate(None)
-                    ): validate_marks,
-                    Optional(
-                        "options", default=validate_options.validate(None)
-                    ): validate_options,
-                },
-            )
-        )
-
-        # Validate config
-        validated_config = sc.validate(config)
-
-        # Validation does not preserve order
-        old_columns = validated_config["marks"].copy()
-        new_columns = {}
-        for name in list(config["marks"].keys()):
-            new_columns[name] = old_columns.pop(name)
-        new_columns.update(old_columns)
-        validated_config["marks"] = new_columns
-
-        return validated_config
+        return config
 
     @property
     def grade_columns(self):
         """Colonnes associées à des notes"""
 
-        for name, props in self.config["marks"].items():
-            if props["type"] == "grade":
-                props2 = props.copy()
-                del props2["type"]
-                yield name, props2
+        for props in self.config["grades"]:
+            props2 = props.copy()
+            name = props2["name"]
+            del props2["name"]
+            yield name, props2
 
     def write_key_value_props(self, ref_cell, title, props):
         """Helper function to write key-value table.
@@ -936,11 +894,10 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
 
         # Add default global options block
         current_cell = self.gradesheet.cell(row=max_height + 4, column=1)
-        options = self.config.get("options", {})
-        for ects, grade in zip("ABCD", [0.9, 0.65, 0.35, 0.1]):
-            if ("Percentile note " + ects) not in options:
-                options["Percentile note " + ects] = grade
-
+        options = self.config.copy()
+        del options["grades"]
+        if "others" in options:
+            del options["others"]
         lower_right, self.global_options = self.write_key_value_props(
             current_cell, "Options globales", options
         )
@@ -1043,7 +1000,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
                     "IF(ISNUMBER({0}), {0}>={1}, 1)".format(
                         get_address_of_cell(record[name]),
                         get_address_of_cell(
-                            self.grades_options[name]["passing mark"],
+                            self.grades_options[name]["passing grade"],
                             absolute=True,
                         ),
                     )
@@ -1126,7 +1083,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
         )
 
         for name, opts in self.grades_options.items():
-            threshold_cell = opts["passing mark"]
+            threshold_cell = opts["passing grade"]
             threshold_addr = get_address_of_cell(threshold_cell, compat=True)
             self.first_ws.conditional_formatting.add(
                 self.get_column_range(name),

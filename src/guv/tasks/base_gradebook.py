@@ -141,7 +141,7 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
         # information DATA_DF to first worksheet
         columns = self.get_sorted_columns()
 
-        # Write `first_ws` and `first_df` column by column from
+        # Write `first_ws` and `first_df` attributes column by column from
         # data in `data_df`
         idx = 1
         for name, type in columns:

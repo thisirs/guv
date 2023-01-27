@@ -1,0 +1,41 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+        "grades": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "passing grade": {
+                        "type": "number"
+                    },
+                    "coefficient": {
+                        "type": "number"
+                    },
+                    "maximum grade": {
+                        "type": "number"
+                    }
+                },
+                "required": ["name"],
+                "additionalProperties": false
+            }
+        },
+        "others": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        }
+    },
+    "patternProperties": {
+        "Percentile [ABCDE]": {
+            "type": "number"
+        }
+    },
+    "required": ["grades"],
+    "additionalProperties": false
+}

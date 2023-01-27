@@ -1,3 +1,8 @@
-marks:
-  grade1:
-    type: raw
+grades:
+  - name: grade1
+    passing grade: 8
+    coefficient: 2
+  - name: grade2
+  - name: grade3
+others:
+  - Branche
