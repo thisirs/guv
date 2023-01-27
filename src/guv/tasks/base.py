@@ -376,6 +376,8 @@ class ConfigOpt(CliArgsInheritMixin):
 
     @property
     def config(self):
+        """Call `build_config` and cache result."""
+
         if not hasattr(self, "_config") or self._config is None:
             self._config = self.parse_config()
         return self._config
