@@ -867,8 +867,8 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
     def write_key_value_props(self, ref_cell, title, props):
         """Helper function to write key-value table.
 
-        Written at `ref_cell` with header `title` and key-value in
-        `props`.
+        Written at `ref_cell` with header `title` and key-value in `props`.
+        Return lower-right cell and dictionary of property name to actual cell.
 
         """
 
