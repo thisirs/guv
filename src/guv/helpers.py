@@ -976,6 +976,9 @@ class AggregateOrg(FileOperation):
 
 
 class FileStringOperation(FileOperation):
+    msg_file = "Agrégation du fichier `{filename}`"
+    msg_string = "Agrégation directe de \"{string}\""
+
     def __init__(self, filename_or_string, base_dir=None):
         super().__init__(filename_or_string)
         self.filename_or_string = filename_or_string
@@ -1019,9 +1022,9 @@ class FileStringOperation(FileOperation):
 
     def message(self, ref_dir=""):
         if self.is_file:
-            return f"Agrégation du fichier `{rel_to_dir(self.filename_or_string, ref_dir)}`"
+            return self.msg_file.format(filename=rel_to_dir(self.filename_or_string, ref_dir))
         else:
-            return f"Agrégation directe"
+            return self.msg_string.format(string=self.filename_or_string.lstrip().splitlines()[0] + "...")
 
 
 class Flag(FileStringOperation):
@@ -1134,6 +1137,10 @@ class Switch(FileStringOperation):
        DOCS.switch("Dupont --- Dupond", colname="TP")
 
     """
+
+    msg_file = "Agrégation du fichier d'échanges `{filename}`"
+    msg_string = "Agrégation directe des échanges \"{string}\""
+
     def __init__(
         self,
         filename_or_string: str,
