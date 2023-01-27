@@ -1054,8 +1054,8 @@ class Flag(FileStringOperation):
        # Des commentaires
        Bob Morane
 
-       # Robuste à la permutation circulaire
-       arctor bob
+       # Robuste à la permutation circulaire et à la casse
+       aRcTor BoB
 
     L'instruction d'agrégation :
 
