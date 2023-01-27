@@ -771,6 +771,8 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
                     {
                         Optional("type", default="grade"): "grade",
                         Optional("passing mark", default=-1): -1,
+                        Optional("Coefficient", default=1): 1,
+                        Optional("Maximum grade", default=20): 20,
                         Optional(str): object,
                     }
                 )
@@ -784,13 +786,13 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
             Or(
                 And(
                     Or(None, {}, ""),
-                    Use(lambda dummy: {"type": "grade", "passing mark": -1}),
+                    Use(lambda dummy: {"type": "grade", "passing mark": -1, "coefficient": 1, "maximum grade": 20}),
                 ),
                 And(dict, Use(validate_grade2)),
             )
         )
 
-        DEFAULT_MARKS = {"Note agrégée": {"type": "grade", "passing mark": -1}}
+        DEFAULT_MARKS = {"Note agrégée": {"type": "grade", "passing mark": -1, "coefficient": 1, "maximum grade": 20}}
 
         validate_marks = Or(
             And(Or(None, {}, ""), Use(lambda dummy: DEFAULT_MARKS)),
@@ -971,6 +973,36 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
     def update_first_worksheet(self):
         # Pour que get_address_of_cell marche correctement
         self.workbook.active = self.first_ws
+
+        # On écrit la note agrégée basée sur la note maximum et le coefficient
+        # de chaque note
+        coef_sum = "+".join(
+            get_address_of_cell(
+                self.grades_options[name]["coefficient"],
+                absolute=True,
+            )
+            for name, props in self.grade_columns
+            if name != "Note agrégée"
+        )
+
+        for i, (index, record) in enumerate(self.first_df.iterrows()):
+            formula = "=(" + "+".join(
+                "{coef}*{grade}/{grade_max}*20".format(
+                    coef=get_address_of_cell(
+                        self.grades_options[name]["coefficient"],
+                        absolute=True,
+                    ),
+                    grade=get_address_of_cell(record[name]),
+                    grade_max=get_address_of_cell(
+                        self.grades_options[name]["maximum grade"],
+                        absolute=True,
+                    ),
+                )
+                for name, props in self.grade_columns
+                if name != "Note agrégée"
+            ) + f")/({coef_sum})"
+
+            record["Note agrégée"].value = formula
 
         # On écrit la colonne "Admis" des admis/refusés basée sur les
         # barres
