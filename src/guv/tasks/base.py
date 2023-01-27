@@ -279,6 +279,15 @@ class UVTask(TaskBase):
 
 
 class CliArgsMixin:
+    """Mixin class that adds a `parse_args` function.
+
+    The `parse_args` function must be used in the `setup` function.
+    The parser is built with the `cli_args` attribute.
+
+    """
+
+    cli_args = []
+
     def __init__(self):
         self._parser = None
 
