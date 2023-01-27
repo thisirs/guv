@@ -907,8 +907,11 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
             self.grades_options[name] = keytocell
             current_cell = current_cell.right(3)
 
+        # Maximum number of options
+        max_height = max(len(v) for k, v in self.grades_options.items())
+
         # Add default global options block
-        current_cell = self.gradesheet.cell(row=10, column=1)
+        current_cell = self.gradesheet.cell(row=max_height + 4, column=1)
         options = self.config.get("options", {})
         for ects, grade in zip("ABCD", [0.9, 0.65, 0.35, 0.1]):
             if ("Percentile note " + ects) not in options:
