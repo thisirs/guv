@@ -882,7 +882,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
             keytocell[key] = current_cell.right()
 
         frame_range(ref_cell, current_cell.right())
-        return ref_cell.right(), keytocell
+        return current_cell.right(), keytocell
 
     def create_second_worksheet(self):
         # Write new gradesheet
