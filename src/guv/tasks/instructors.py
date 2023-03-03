@@ -112,6 +112,7 @@ class WeekSlotsDetails(UVTask):
 
         df["Statut"] = df["Statut"].astype(status_type)
         df["Email"] = df["Email"].fillna("").astype("string")
+        df["Locaux"] = df["Locaux"].fillna("")
 
         return df
 
