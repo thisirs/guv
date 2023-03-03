@@ -524,7 +524,7 @@ class HtmlTable(UVTask, CliArgsMixin):
 
         # Reorder columns
         if len(df.columns) > 1:
-            cols = sorted(df.columns.tolist(), key=score_codenames)
+            cols = sorted(df.columns.tolist(), key=split_codename)
             df = df[cols]
 
         # Give name to indexes
