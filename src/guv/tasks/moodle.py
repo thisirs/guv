@@ -123,7 +123,7 @@ class CsvGroups(UVTask, CliArgsMixin):
 
         Charger les groupes sur Moodle à l'adresse {url} en spécifiant :
 
-        - Champ utilisateur: "Nom d'utilisateur"
+        - Champ utilisateur: "Adresse de courriel"
         - Inscrire dans les groupes : "Oui"
         - Créer les groupes: "Oui" s'il ne sont pas déjà créés
 
@@ -1138,7 +1138,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
 
         Charger les groupes sur Moodle à l'adresse %(url)s en spécifiant :
 
-        - Champ utilisateur: "Nom d'utilisateur"
+        - Champ utilisateur: "Adresse de couriel"
         - Inscrire dans les groupes : "Oui"
         - Créer les groupes: "Oui" s'il ne sont pas déjà créés
 
