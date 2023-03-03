@@ -591,6 +591,12 @@ class JsonRestriction(UVTask, CliArgsMixin):
             action="store_true",
             help="Permet de prendre en compte les semaines A/B. Ainsi, la fin d'une séance est à la fin de la semaine B.",
         ),
+        argument(
+            "-l",
+            "--long",
+            action="store_true",
+            help="Utilise les noms de groupes de Cours/TD/TP au format long, c'est à dire \"TP1\" et \"TD1\" au lieu de \"T1\" et \"D1\""
+        )
     )
 
     def setup(self):
@@ -613,6 +619,17 @@ class JsonRestriction(UVTask, CliArgsMixin):
             )
 
         df_c = df.loc[df["Activité"] == self.course]
+
+        # Maybe rename T1A, D1 into TP1A, TD1
+        if self.long:
+            new_col = (
+                df_c["Lib. créneau"]
+                .str.replace("D([0-9]+)", r"TD\1", regex=True)
+                .replace("T([0-9]+)", r"TP\1", regex=True)
+            )
+
+            df_c = df_c.assign(**{"Lib. créneau": new_col})
+
         key = "numAB" if self.num_AB else "num"
         gb = df_c.groupby(key)
 
