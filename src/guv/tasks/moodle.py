@@ -78,6 +78,12 @@ class CsvGroups(UVTask, CliArgsMixin):
             default=["Cours", "TD", "TP", "singleton"],
             help="Liste des groupements à considérer via un nom de colonne. Par défaut, les groupements ``Cours``, ``TD``, ``TP`` et ``singleton`` sont utilisés.",
         ),
+        argument(
+            "-l",
+            "--long",
+            action="store_true",
+            help="Utilise les noms de groupes de Cours/TD/TP au format long, c'est à dire \"TP1\" et \"TD1\" au lieu de \"T1\" et \"D1\""
+        )
     )
 
     def setup(self):
@@ -108,6 +114,14 @@ class CsvGroups(UVTask, CliArgsMixin):
                     errors="warning",
                 ):
                     dff = df[["Courriel", ctype]]
+                    if ctype in ["TP", "TD"] and self.long:
+                        new_col = (
+                            dff[ctype]
+                            .str.replace("D([0-9]+)", r"TD\1", regex=True)
+                            .replace("T([0-9]+)", r"TP\1", regex=True)
+                        )
+
+                        dff = dff.assign(**{ctype: new_col})
 
                     with Output(target) as out:
                         dff.to_csv(out.target, index=False, header=False)
