@@ -60,24 +60,19 @@ def split_codename(lib):
     return crs, no, sem
 
 
-def score_codenames(libs):
+def score_codenames(slot_names):
     """Renvoie un tuple comptant les types de cours Cours/TD/TP"""
 
-    if isinstance(libs, str):
-        libs = [libs]
-    sc = [0, 0, 0]
-    mapping = {'C': 0, 'D': 1, 'T': 2}
-    for lib in libs:
-        m = re.search('([CDT])[0-9]*([AB]?)', lib)
-        if m:
-            ix = mapping[m.group(1)]
-            if m.group(2):
-                sc[ix] += .5
-            else:
-                sc[ix] += 1
-        else:
-            raise Exception(f"L'identifiant {lib} n'est pas matché")
-    return tuple(sc)
+    if isinstance(slot_names, str):
+        slot_names = [slot_names]
+
+    C_slots = sorted([slot_name for slot_name in slot_names if re.search("C[0-9]*", slot_name)])
+    D_slots = sorted([slot_name for slot_name in slot_names if re.search("D[0-9]*", slot_name)])
+    T_slots = sorted([slot_name for slot_name in slot_names if re.search("T[0-9]*([AB])?", slot_name)])
+
+    return (- len(C_slots), "empty" if len(C_slots) == 0 else C_slots[0],
+            - len(D_slots), "empty" if len(D_slots) == 0 else D_slots[0],
+            - len(T_slots), "empty" if len(T_slots) == 0 else T_slots[0])
 
 
 def convert_author(author):

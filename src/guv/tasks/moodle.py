@@ -291,9 +291,9 @@ class HtmlInst(UVTask):
         def sort_groups(groups):
             def sorter(elt):
                 name, group = elt
-                is_manager = int(any(group["Responsable"]))
-                return (is_manager, score_codenames(group["Name"]))
-            return sorted(groups, key=sorter)[::-1]
+                not_manager = 1 - int(any(group["Responsable"]))
+                return (not_manager, score_codenames(group["Name"]))
+            return sorted(groups, key=sorter)
 
         context = {
             "slots": [
