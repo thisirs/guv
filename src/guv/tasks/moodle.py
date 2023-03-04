@@ -274,8 +274,8 @@ class HtmlInst(UVTask):
             return ", ".join(sorted(slots, key=split_codename))
 
         def format_start(day, start, week):
-            "8:00 -> 8h"
-            start = start.replace(":00", "h").replace(":", "h").lstrip("0")
+            start = start.strftime("%Hh%M")
+            start = start.replace("h00", "h").lstrip("0")
             if not pd.isnull(week):
                 return f"{day[:3]}. {week} {start}"
             else:

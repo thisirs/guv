@@ -21,7 +21,7 @@ from openpyxl.styles import PatternFill
 from ..logger import logger
 from ..config import settings
 from ..utils_config import Output, rel_to_dir
-from ..utils import score_codenames, convert_author
+from ..utils import score_codenames, convert_author, convert_to_time
 from ..openpyxl_utils import fill_row, get_range_from_cells, row_and_col, get_row_cells, Block, frame_range, get_segment
 from .base import TaskBase, UVTask
 from .utc import WeekSlots, PlanningSlots
@@ -113,6 +113,8 @@ class WeekSlotsDetails(UVTask):
         df["Statut"] = df["Statut"].astype(status_type)
         df["Email"] = df["Email"].fillna("").astype("string")
         df["Locaux"] = df["Locaux"].fillna("")
+        df["Heure début"] = df["Heure début"].apply(convert_to_time)
+        df["Heure fin"] = df["Heure fin"].apply(convert_to_time)
 
         return df
 
