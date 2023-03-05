@@ -193,7 +193,7 @@ class UtcUvListToCsv(TaskBase):
             else:
                 return group
 
-        df = df.groupby(['Code enseig.', 'Activité']).apply(fix_semaineAB)
+        df = df.groupby(['Code enseig.', 'Activité'], group_keys=False).apply(fix_semaineAB)
 
         with Output(self.target) as out:
             df.to_csv(out.target, index=False)

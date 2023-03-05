@@ -123,7 +123,7 @@ class FillnaColumn(Operation):
                 return g
 
             check_if_present(df, [self.colname, self.group_column])
-            df = df.groupby(self.group_column, dropna=False).apply(fill_by_group)
+            df = df.groupby(self.group_column, dropna=False, group_keys=False).apply(fill_by_group)
 
         return df
 
