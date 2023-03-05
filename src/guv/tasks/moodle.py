@@ -481,7 +481,7 @@ class HtmlTable(UVTask, CliArgsMixin):
         def mondays(beg, end):
             while beg <= end:
                 nbeg = beg + dt.timedelta(days=7)
-                yield (pd.Timestamp(beg), pd.Timestamp(nbeg))
+                yield beg, nbeg
                 beg = nbeg
 
         def merge_slots(df):
