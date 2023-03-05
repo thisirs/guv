@@ -545,7 +545,7 @@ class XlsStudentDataMerge(UVTask):
         # ou la taille de l'en-tête
         for cell in ws[1]:
             width = None
-            header_value = cell.value
+            header_value = str(cell.value)
 
             if header_value in column_dimensions:
                 width = column_dimensions[header_value]
