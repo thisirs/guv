@@ -417,11 +417,11 @@ class XlsStudentData(UVTask):
                 row_merge = lo.loc[index, :].combine_first(ro.iloc[choice, :])
                 ro = ro.drop(index=ro.iloc[[choice]].index)
                 row_merge["_merge"] = "both"
-                dfr_clean = dfr_clean.append(row_merge)
+                dfr_clean = pd.concat((dfr_clean, row_merge.to_frame().T))
             else:
                 row_merge = lo.loc[index, :].copy()
                 row_merge["_merge"] = "both"
-                dfr_clean = dfr_clean.append(row_merge)
+                dfr_clean = pd.concat((dfr_clean, row_merge.to_frame().T))
 
         for index, row in ro.iterrows():
             logger.warning("`%s` présent dans `AFFECTATION_LISTING` est ignoré", row_ro["Name"])
