@@ -466,7 +466,7 @@ class HtmlTable(UVTask, CliArgsMixin):
             .set_table_attributes('align="center" cellspacing="10" cellpadding="2"')
         )
 
-        return dfs.render()
+        return dfs.to_html()
 
     def get_table(self, courses):
         """Get a Pandas DataFrame from all COURSES"""
