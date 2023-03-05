@@ -517,7 +517,7 @@ class HtmlTable(UVTask, CliArgsMixin):
                 e = cr_week.groupby("Lib. créneau").apply(merge_slots)
                 rows.append(e)
             else:
-                rows.append(pd.Series())
+                rows.append(pd.Series(dtype="object"))
 
         # Weeks on rows
         df = pd.concat(rows, axis=1, sort=True).transpose()
