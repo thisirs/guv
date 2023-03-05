@@ -259,6 +259,7 @@ class HtmlInst(UVTask):
 
     target_dir = "generated"
     target_name = "intervenants.html"
+    uptodate = False
 
     def setup(self):
         super().setup()
@@ -341,7 +342,7 @@ class HtmlInst(UVTask):
         md = template.render(**context)
         html = markdown.markdown(md)
 
-        with Output(self.target) as out:
+        with Output(self.target, protected=True) as out:
             with open(out.target, "w") as fd:
                 fd.write(html)
 
@@ -367,6 +368,7 @@ class HtmlTable(UVTask, CliArgsMixin):
 
     target_dir = "generated"
     target_name = "{name}{AB}_table.html"
+    uptodate = False
 
     cli_args = (
         argument(
@@ -421,7 +423,7 @@ class HtmlTable(UVTask, CliArgsMixin):
         # Inline style for Moodle
         output = pynliner.fromString(html)
 
-        with Output(target) as out:
+        with Output(target, protected=True) as out:
             with open(out.target, "w") as fd:
                 fd.write(output)
 
