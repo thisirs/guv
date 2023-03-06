@@ -128,6 +128,28 @@ _SETTING_LIST = [
         schema=Schema(int),
         help="Identifiant de l'UV/UE sur Moodle"
     ),
+    Setting(
+        "PORT",
+        schema=Schema(int),
+        help="Port pour l'envoi de courriel",
+        default=587
+    ),
+    Setting(
+        "SMTP_SERVER",
+        schema=Schema(str),
+        help="Serveur SMTP pour l'envoi de courriel",
+        default="smtps.utc.fr"
+    ),
+    Setting(
+        "FROM_EMAIL",
+        schema=Schema(str),
+        help="Adresse de courriel d'origine des courriels envoyés"
+    ),
+    Setting(
+        "LOGIN",
+        schema=Schema(str),
+        help="Login pour le server smtp"
+    )
 ]
 
 SETTINGS = {
