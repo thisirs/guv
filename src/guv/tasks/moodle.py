@@ -593,7 +593,7 @@ class JsonRestriction(UVTask, CliArgsMixin):
 
     target_dir = "generated"
     target_name = "moodle_restrictions_{course}{AB}.json"
-    uptodate = True
+    uptodate = False
 
     cli_args = (
         argument(
