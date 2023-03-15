@@ -337,7 +337,7 @@ class PlanningSlots(UVTask):
         self.week_slots = WeekSlots.target_from(**self.info)
         self.file_dep = [self.week_slots]
 
-        # Set uptodate value without raising Exception of displaying
+        # Set uptodate value without raising Exception or displaying
         # warnings
         self.uptodate = {}
         try:
