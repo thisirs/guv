@@ -599,7 +599,6 @@ class JsonRestriction(UVTask, CliArgsMixin):
         argument(
             "-c",
             "--course",
-            choices=["Cours", "TD", "TP"],
             required=True,
             help="Type de séances considérées parmi ``Cours``, ``TD`` ou ``TP``.",
         ),
