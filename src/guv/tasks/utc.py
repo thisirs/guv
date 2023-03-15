@@ -22,7 +22,7 @@ from ..config import settings
 from ..exceptions import ImproperlyConfigured
 from ..logger import logger
 from ..openpyxl_utils import fill_row, get_row_cells, get_range_from_cells, get_segment, frame_range, row_and_col, Block, get_range_cells
-from ..utils import convert_author, score_codenames, convert_to_time
+from ..utils import convert_author, score_codenames, convert_to_time, plural, ps, px
 from ..utils_config import (Output, ask_choice, generate_row, rel_to_dir, selected_uv)
 from .base import TaskBase, UVTask
 
@@ -375,10 +375,36 @@ class PlanningSlots(UVTask):
 
         df = WeekSlots.read_target(self.week_slots)
 
-        # DataFrames of slots for a week
-        df_C = df.loc[df["Lib. créneau"].str.startswith("C"), :]
-        df_D = df.loc[df["Lib. créneau"].str.startswith("D"), :]
-        df_T = df.loc[df["Lib. créneau"].str.startswith("T"), :]
+        mask_C = df["Activité"] == "Cours"
+        mask_D = df["Activité"] == "TD"
+        mask_T = df["Activité"] == "TP"
+
+        df_C = df.loc[mask_C]
+        df_D = df.loc[mask_D]
+        df_T = df.loc[mask_T]
+
+        df_other = df.loc[~(mask_C | mask_D | mask_T)]
+
+        if len(df_other) > 0:
+            for name, group in df_other.groupby("Activité"):
+                logger.warning(
+                    "%d créneau%s %s étiqueté%s `%s`, le%s compter comme `Cours`, `TD` ou `TP` ?",
+                    len(df_other),
+                    px(len(df_other)),
+                    plural(len(df_other), "sont", "est"),
+                    ps(len(df_other)),
+                    name,
+                    ps(len(df_other)),
+                )
+                result = ask_choice("Choix ? ", {"Cours": "Cours", "TD": "TD", "TP": "TP"})
+                if result == "Cours":
+                    df_C = pd.concat((df_C, df_other))
+                elif result == "TD":
+                    df_D = pd.concat((df_D, df_other))
+                elif result == "TP":
+                    df_T = pd.concat((df_T, df_other))
+                else:
+                    raise RuntimeError("Logical error")
 
         # DataFrame of days in planning
         planning_C = pd.DataFrame(
@@ -485,7 +511,7 @@ class WeekSlots(UVTask):
         if rest:
             rest_msg = ", ".join(f"`{e}`" for e in rest)
             fn = rel_to_dir(week_slots, settings.CWD)
-            raise Exception(f"La colonne `Activité` du fichier `{fn}` ne doit contenir que `Cours`, `TD` ou `TP`, elle contient {rest_msg}")
+            logger.warning("La colonne `Activité` du fichier `%s` contient des libellés non standards (`Cours`, `TD` et `TP`) : %s", fn, rest_msg)
 
         if df["Jour"].isnull().any():
             fn = rel_to_dir(week_slots, settings.CWD)
