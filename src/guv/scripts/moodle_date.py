@@ -6,8 +6,8 @@ from datetime import date, datetime
 
 
 class Cond:
-    def __init__(self, sts=[]):
-        self.visible = False
+    def __init__(self, sts=[], visible=False):
+        self.visible = visible
         self.sts = sts
 
     def to_PHP(self, **info):
@@ -42,20 +42,20 @@ class Cond:
 
 
 class CondDate(Cond):
-    def __init__(self, sign=None, dt=None):
-        super().__init__()
+    def __init__(self, sign=None, dt=None, visible=False):
+        super().__init__(visible=visible)
         self.sign = sign
         self.dt = dt
 
     def __ge__(self, other):
         if isinstance(other, (datetime, date)):
-            return CondDate(sign='>=', dt=other)
+            return CondDate(sign='>=', dt=other, visible=self.visible)
         else:
             raise Exception()
 
     def __lt__(self, other):
         if isinstance(other, (datetime, date)):
-            return CondDate(sign='<', dt=other)
+            return CondDate(sign='<', dt=other, visible=self.visible)
         else:
             raise Exception()
 
@@ -70,13 +70,13 @@ class CondDate(Cond):
 
 
 class CondGroup(Cond):
-    def __init__(self, grp=None):
-        super().__init__()
+    def __init__(self, grp=None, visible=False):
+        super().__init__(visible=visible)
         self.grp = grp
 
     def __eq__(self, other):
         if isinstance(other, str):
-            return CondGroup(grp=other)
+            return CondGroup(grp=other, visible=self.visible)
         else:
             raise Exception()
 
@@ -90,8 +90,8 @@ class CondGroup(Cond):
 
 
 class CondProfil(Cond):
-    def __init__(self, field, value=None, rel=None):
-        super().__init__()
+    def __init__(self, field, value=None, rel=None, visible=False):
+        super().__init__(visible=visible)
         self.field = field
         self.value = value
         self.rel = rel
