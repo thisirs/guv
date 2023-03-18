@@ -79,6 +79,7 @@ autodoc_mock_imports = [
     "pynliner",
     "PyPDF2",
     "tabula-py",
+    "pytz",
     "tabula",
     "unidecode",
     "oyaml",
