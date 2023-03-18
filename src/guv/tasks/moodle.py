@@ -856,7 +856,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
     ``--grouping``) est controlé par une des options mutuellement
     exclusives ``--proportions``, ``--group-size`` et
     ``--num-groups``. L'option ``--proportions`` permet de spécifier
-    un nombre de groups via une liste de proprotions. L'option
+    un nombre de groups via une liste de proportions. L'option
     ``--group-size`` permet de spécifier la taille maximale de chaque
     groupe. L'option ``--num-groups`` permet de spécifier le nombre de
     sous-groupes désirés.
