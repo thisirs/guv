@@ -582,14 +582,14 @@ class CsvExamGroups(UVTask, CliArgsMixin):
             "--tiers-temps",
             required=False,
             default="Tiers-temps",
-            help="Nom de la colonne des tiers-temps",
+            help="Nom de la colonne des tiers-temps (par défaut %(default)s)",
         ),
         argument(
             "-p",
             "--tp",
             required=False,
             default="TP",
-            help="Nom de la colonne pour réaliser un groupement",
+            help="Nom de la colonne pour réaliser un groupement (par défaut %(default)s)",
         ),
     )
 

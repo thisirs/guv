@@ -195,7 +195,7 @@ class CsvGroupsGroupings(UVTask, CliArgsMixin):
             dest="ngroupsf",
             metavar="FORMAT",
             default="D##_P1_@",
-            help="Format du nom de groupe (defaut: %(default)s)",
+            help="Format du nom de groupe (par défaut: %(default)s)",
         ),
         argument(
             "-G",
@@ -210,7 +210,7 @@ class CsvGroupsGroupings(UVTask, CliArgsMixin):
             dest="ngroupingsf",
             metavar="FORMAT",
             default="D##_P1",
-            help="Format du nom de groupement (defaut: %(default)s)",
+            help="Format du nom de groupement (par défaut: %(default)s)",
         ),
     )
 
@@ -1024,7 +1024,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             "--max-iter",
             type=int,
             default=1000,
-            help="Nombre maximum d'essais pour trouver des groupes avec contraintes."
+            help="Nombre maximum d'essais pour trouver des groupes avec contraintes (par défaut %(default)s)."
         )
     )
 
