@@ -748,7 +748,9 @@ class JsonRestriction(UVTask, CliArgsMixin):
                     for p, q in ((0, 30),):
                         no_group[f"accessible si: B + {p}min <= t < B + {q}min par groupe"] = CondOr(windows(window_group_start, gbe, p, q)).to_PHP(**info)
 
-            return "Séance " + str(num), no_group
+            session = f"Séance {num} : {dt_min_monday.strftime('%d-%m-%Y')} -- {dt_max_friday.strftime('%d-%m-%Y')}"
+
+            return session, no_group
 
         moodle_date = dict(get_beg_end_date_each(name, g) for name, g in gb)
         max_len = max(len(s) for s in list(moodle_date.values())[0])
