@@ -118,8 +118,8 @@ Configuration des plannings avec ``PLANNINGS``
 ++++++++++++++++++++++++++++++++++++++++++++++
 
 Si l'arborescence a été créée avec la tâche ``createsemester`` et un
-nom de semestre reconnu par **guv** (de type A2021, P2022,...) les
-variables ``PLANNINGS`` est automatiquement renseignées. Si en plus
+nom de semestre reconnu par **guv** (de type A2021, P2022,...) la
+variable ``PLANNINGS`` est automatiquement renseignée. Si en plus
 les dossiers d'UV ont été créés avec l'option ``--uv``, la variable
 ``UVS`` est aussi renseignée et on peut sauter cette section.
 
