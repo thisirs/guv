@@ -90,13 +90,6 @@ Calendrier hebdomadaire
 
    - :class:`guv.tasks.students.XlsStudentDataMerge`
 
-.. autoclass:: guv.tasks.students.CsvMoodleGroups
-   :exclude-members:
-
-   Cette tâche dépend de :
-
-   - :class:`guv.tasks.students.XlsStudentDataMerge`
-
 .. autoclass:: guv.tasks.students.SendEmail
    :exclude-members:
 

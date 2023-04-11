@@ -27,7 +27,6 @@ from .moodle import (
 from .students import (
     CsvExamGroups,
     CsvInscrits,
-    CsvMoodleGroups,
     XlsStudentData,
     XlsStudentDataMerge,
     ZoomBreakoutRooms,
