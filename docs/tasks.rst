@@ -305,7 +305,7 @@ besoin d'exécuter car elles sont des dépendances des tâches usuelles.
    - :class:`guv.tasks.moodle.CsvGroups`
    - :class:`guv.tasks.moodle.JsonGroup`
    - :class:`guv.tasks.students.CsvExamGroups`
-   - :class:`guv.tasks.students.CsvMoodleGroups`
+   - :class:`guv.tasks.students.SendEmail`
    - :class:`guv.tasks.students.ZoomBreakoutRooms`
    - :class:`guv.tasks.trombinoscope.PdfTrombinoscope`
 
