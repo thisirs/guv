@@ -872,7 +872,7 @@ class AggregateOrg(FileOperation):
     """Agrégation d'un fichier au format Org.
 
     Le document à agréger est au format Org. Les titres servent de clé
-    pour l'agrégation et le contenu de ces titres et agréger.
+    pour l'agrégation et le contenu de ces titres est agrégé.
 
     Parameters
     ----------
