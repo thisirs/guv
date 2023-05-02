@@ -1301,7 +1301,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
     def make_groups_index(self, df):
         """Return a partition of the index of dataframe `df`.
 
-        Partition is encoded as a list of list of elements of the
+        Partition is encoded as a list of lists of elements of the
         index.
 
         """
