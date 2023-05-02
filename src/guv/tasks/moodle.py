@@ -394,7 +394,7 @@ class HtmlTable(UVTask, CliArgsMixin):
             "-n",
             "--names",
             nargs="+",
-            help="Liste ou fichier contenant les noms des colonnes du tableau. Par défaut, les noms de colonnes sont ``D1``, ``D2``,... ou ``T1``, ``T2``,...",
+            help="Liste ou fichier contenant les intitulés des cours à la place de ``C1``, ``C2``,...",
         ),
         argument(
             "--header-row-format",
