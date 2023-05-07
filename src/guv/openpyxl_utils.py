@@ -97,7 +97,7 @@ def get_segment(cell1, cell2):
         for i in range(cell1.row, cell2.row+1):
             yield cell1.parent.cell(column=cell1.column, row=i)
     else:
-        raise Exception('Must have same row or column')
+        raise Exception(f'Must have same row or column: {cell1.coordinate} -- {cell2.coordinate}')
 
 
 def row_and_col(cell1, cell2):
