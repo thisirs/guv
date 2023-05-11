@@ -365,14 +365,21 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
         # Make current worksheet the default one, useful for get_address_of_cell
         self.workbook.active = gradesheet
 
-        ref = gradesheet.cell(4, 2)
-        ms = MarkingScheme(self.config)
-        ms.write(gradesheet, ref)
+        # Leave room from statistics
+        ref_stats = gradesheet.cell(4, 2)
+        formula = '=IF(ISERROR(QUARTILE({{marks_range}}, {num})), "", QUARTILE({{marks_range}}, {num}))'
+        stats = [
+            (name, formula.format(num=num))
+            for name, num in (("Min", 0), ("Q1", 1), ("médiane", 2), ("Q3", 3), ("Max", 4))
+        ]
+        ref_marking_scheme = ref_stats.right(len(stats))
 
-        ref = row_and_col(ref, ms.bottom_right)
+        ms = MarkingScheme(self.config)
+        ms.write(gradesheet, ref_marking_scheme)
+        ref = row_and_col(ref_marking_scheme, ms.bottom_right)
 
         # Freeze the structure
-        gradesheet.freeze_panes = ref.top()
+        gradesheet.freeze_panes =  ref.top()
 
         def insert_record(ref_cell, i, record):
             index = ref_cell.text(str(i) + ".")
@@ -426,6 +433,18 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
         for j, (index, record) in enumerate(group.iterrows()):
             ref_cell = ref.right(j).above(3)
             last_cell = insert_record(ref_cell, j + 1, record)
+
+        # Add statistics of grades
+        for i, (first, last) in enumerate(zip(
+            get_segment(ref, row_and_col(last_cell, ref)),
+            get_segment(row_and_col(ref, last_cell), last_cell),
+        )):
+            marks_range = get_range_from_cells(first, last)
+            for j, (name, formula) in enumerate(stats):
+                if i == 0:
+                    ref_stats.right(j).below(-1).text(name)
+                ref_stats.right(j).below(i).text(formula.format(marks_range=marks_range))
+
 
         # Around grades
         frame_range(ref.above(3), last_cell.above(3))
