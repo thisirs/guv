@@ -599,23 +599,235 @@ class HtmlTable(UVTask, CliArgsMixin):
         return df
 
 
+def group_beg_end(row, num_AB=None):
+    """Return slotname, start datetime and end datetime from row."""
+
+    if num_AB:
+        group = row["Lib. créneau"] + row["Semaine"]
+    else:
+        group = row["Lib. créneau"]
+
+    hd = dt.datetime.combine(row["date"], row["Heure début"])
+    hf = dt.datetime.combine(row["date"], row["Heure fin"])
+
+    return group, hd, hf
+
+
+def get_datetime_context(df_slots, num_AB=None):
+    name_start_end = [group_beg_end(row, num_AB=num_AB) for index, row in df_slots.iterrows()]
+
+    # Get relevant datetimes for this session
+    dt_min = min(start for name, start, end in name_start_end)
+    dt_min3 = dt_min - dt.timedelta(days=3)
+    dt_max = max(end for name, start, end in name_start_end)
+    dt_min20 = dt_min + dt.timedelta(minutes=20)
+
+    dt_min_monday = dt_min - dt.timedelta(days=dt_min.weekday())
+    dt_min_monday = dt.datetime.combine(dt_min_monday, dt.time.min)
+    dt_min_midnight = dt.datetime.combine(dt_min, dt.time.min)
+
+    dt_max_friday = dt_max + dt.timedelta(days=6 - dt_max.weekday())
+    dt_max_friday = dt.datetime.combine(dt_max_friday, dt.time.max)
+    dt_max_midnight = dt.datetime.combine(dt_max, dt.time.max)
+
+    return {
+        "name_start_end": name_start_end,
+        "dt_min": dt_min,
+        "dt_min3": dt_min3,
+        "dt_min20": dt_min20,
+        "dt_max": dt_max,
+        "dt_min_monday": dt_min_monday,
+        "dt_min_midnight": dt_min_midnight,
+        "dt_max_friday": dt_max_friday,
+        "dt_max_midnight": dt_max_midnight,
+    }
+
+
+def get_availability_restrictions(context):
+    restrictions = {
+        "accessible si: t < min(B)": (CondDate(visible=context["visible"]) < context["dt_min"]).to_PHP(),
+        "accessible si: t >= min(B)": (CondDate(visible=context["visible"]) >= context["dt_min"]).to_PHP(),
+        "accessible si: t >= min(B)-3days": (CondDate(visible=context["visible"]) >= context["dt_min3"]).to_PHP(),
+        "accessible si: t >= max(E)": (CondDate(visible=context["visible"]) >= context["dt_max"]).to_PHP(),
+        "accessible si: t < max(E)": (CondDate(visible=context["visible"]) < context["dt_max"]).to_PHP(),
+        "accessible si: t >= previous_monday(min(B))": (CondDate(visible=context["visible"]) >= context["dt_min_monday"]).to_PHP(),
+        "accessible si: t >= next_friday(max(E))": (CondDate(visible=context["visible"]) >= context["dt_max_friday"]).to_PHP(),
+        "accessible si: t >= previous_midnight(min(B))": (CondDate(visible=context["visible"]) >= context["dt_min_midnight"]).to_PHP(),
+        "accessible si: t >= next_midnight(max(E))": (CondDate(visible=context["visible"]) >= context["dt_max_midnight"]).to_PHP(),
+        "accessible si: min(B) <= t < min(B) + 20mins": ((CondDate(visible=context["visible"]) >= context["dt_min"]) & (CondDate(visible=context["visible"]) < context["dt_min20"])).to_PHP()
+    }
+
+    if len(context["name_start_end"]) > 1 and context.get("moodle_groups") is not None:
+        after_beg_group = [
+            (CondGroup(visible=context["visible"]) == g) & (CondDate(visible=context["visible"]) >= b) for g, b, e in context["name_start_end"]
+        ]
+        before_beg_group = [
+            (CondGroup(visible=context["visible"]) == g) & (CondDate(visible=context["visible"]) < b) for g, b, e in context["name_start_end"]
+        ]
+
+        after_end_group = [
+            CondOr([CondGroup(visible=context["visible"]) == g]) & (CondDate(visible=context["visible"]) >= e) for g, b, e in context["name_start_end"]
+        ]
+        before_end_group = [
+            CondOr([CondGroup(visible=context["visible"]) == g]) & (CondDate(visible=context["visible"]) < e) for g, b, e in context["name_start_end"]
+        ]
+
+        def window_group_start(g, b, e, p=0, q=0):
+            return CondOr([(CondGroup(visible=context["visible"]) == g)]) & (CondDate(visible=context["visible"]) >= b + dt.timedelta(minutes=p)) & (CondDate(visible=context["visible"]) < b + dt.timedelta(minutes=q))
+
+        def window_group(g, b, e, p=0, q=0):
+            return CondOr([(CondGroup(visible=context["visible"]) == g)]) & (CondDate(visible=context["visible"]) >= b + dt.timedelta(minutes=p)) & (CondDate(visible=context["visible"]) < e + dt.timedelta(minutes=q))
+
+        def windows(func, gbe, p=0, q=0):
+            return [func(g, b, e, p, q) for g, b, e in gbe]
+
+        info = dict(groups=context["moodle_groups"])
+        restrictions.update({
+            "accessible si: t <= B par groupe": CondOr(before_beg_group).to_PHP(**info),
+            "accessible si: t > B par groupe": CondOr(after_beg_group).to_PHP(**info),
+            "accessible si: t > E par groupe": CondOr(after_end_group).to_PHP(**info),
+            "accessible si: t <= E par groupe": CondOr(before_end_group).to_PHP(**info),
+            "accessible si: B <= t < E par groupe": CondOr(windows(window_group, context["name_start_end"])).to_PHP(**info),
+        })
+        for p, q in ((-3, 5), (0, 30)):
+            rst = CondOr(windows(window_group_start, context["name_start_end"], p, q))
+            restrictions[f"accessible si: B + {p}min <= t < B + {q}min par groupe"] = rst.to_PHP(**info)
+
+        for p, q in ((0, 15),):
+            restrictions[f"accessible si: B + {p}min <= t < E + {q}min par groupe"] = CondOr(windows(window_group, context["name_start_end"], p, q)).to_PHP(**info)
+
+    return restrictions
+
+
+def get_timing_restrictions(info):
+    return {
+        "accessible si: t < min(B)": {
+            "#id_timeclose_day": info["dt_min"].day,
+            "#id_timeclose_month": info["dt_min"].month,
+            "#id_timeclose_year": info["dt_min"].year,
+            "#id_timeclose_hour": info["dt_min"].hour,
+            "#id_timeclose_minute": info["dt_min"].minute,
+        },
+        "accessible si: t >= min(B)": {
+            "#id_timeopen_day": info["dt_min"].day,
+            "#id_timeopen_month": info["dt_min"].month,
+            "#id_timeopen_year": info["dt_min"].year,
+            "#id_timeopen_hour": info["dt_min"].hour,
+            "#id_timeopen_minute": info["dt_min"].minute,
+        },
+        "accessible si: t >= min(B)-3days": {
+            "#id_timeopen_day": info["dt_min3"].day,
+            "#id_timeopen_month": info["dt_min3"].month,
+            "#id_timeopen_year": info["dt_min3"].year,
+            "#id_timeopen_hour": info["dt_min3"].hour,
+            "#id_timeopen_minute": info["dt_min3"].minute,
+        },
+        "accessible si: t >= max(E)": {
+            "#id_timeopen_day": info["dt_max"].day,
+            "#id_timeopen_month": info["dt_max"].month,
+            "#id_timeopen_year": info["dt_max"].year,
+            "#id_timeopen_hour": info["dt_max"].hour,
+            "#id_timeopen_minute": info["dt_max"].minute,
+        },
+        "accessible si: t < max(E)": {
+            "#id_timeclose_day": info["dt_max"].day,
+            "#id_timeclose_month": info["dt_max"].month,
+            "#id_timeclose_year": info["dt_max"].year,
+            "#id_timeclose_hour": info["dt_max"].hour,
+            "#id_timeclose_minute": info["dt_max"].minute,
+        },
+        "accessible si: t >= previous_monday(min(B))": {
+            "#id_timeopen_day": info["dt_min_monday"].day,
+            "#id_timeopen_month": info["dt_min_monday"].month,
+            "#id_timeopen_year": info["dt_min_monday"].year,
+            "#id_timeopen_hour": info["dt_min_monday"].hour,
+            "#id_timeopen_minute": info["dt_min_monday"].minute,
+        },
+        "accessible si: t >= next_friday(max(E))": {
+            "#id_timeopen_day": info["dt_max_friday"].day,
+            "#id_timeopen_month": info["dt_max_friday"].month,
+            "#id_timeopen_year": info["dt_max_friday"].year,
+            "#id_timeopen_hour": info["dt_max_friday"].hour,
+            "#id_timeopen_minute": info["dt_max_friday"].minute,
+        },
+        "accessible si: t >= previous_midnight(min(B))": {
+            "#id_timeopen_day": info["dt_min_midnight"].day,
+            "#id_timeopen_month": info["dt_min_midnight"].month,
+            "#id_timeopen_year": info["dt_min_midnight"].year,
+            "#id_timeopen_hour": info["dt_min_midnight"].hour,
+            "#id_timeopen_minute": info["dt_min_midnight"].minute,
+        },
+        "accessible si: t >= next_midnight(max(E))": {
+            "#id_timeopen_day": info["dt_max_midnight"].day,
+            "#id_timeopen_month": info["dt_max_midnight"].month,
+            "#id_timeopen_year": info["dt_max_midnight"].year,
+            "#id_timeopen_hour": info["dt_max_midnight"].hour,
+            "#id_timeopen_minute": info["dt_max_midnight"].minute,
+        },
+        "accessible si: min(B) <= t < min(B) + 20mins": {
+            "#id_timeopen_day": info["dt_min"].day,
+            "#id_timeopen_month": info["dt_min"].month,
+            "#id_timeopen_year": info["dt_min"].year,
+            "#id_timeopen_hour": info["dt_min"].hour,
+            "#id_timeopen_minute": info["dt_min"].minute,
+            "#id_timeclose_day": info["dt_min20"].day,
+            "#id_timeclose_month": info["dt_min20"].month,
+            "#id_timeclose_year": info["dt_min20"].year,
+            "#id_timeclose_hour": info["dt_min20"].hour,
+            "#id_timeclose_minute": info["dt_min20"].minute,
+        },
+    }
+
+
+def write_json_restrictions(restrictions, target):
+    max_len = max(len(s) for s in list(restrictions.values())[0])
+
+    with Output(target, protected=True) as out:
+        with open(out.target, "w") as fd:
+            s = (
+                "{\n"
+                + ",\n".join(
+                    (
+                        f'  "{slot}": {"{"}\n'
+                        + ",\n".join(
+                            (
+                                f'    "{name}": {" " * (max_len - len(name))}'
+                                + json.dumps(moodle_json, ensure_ascii=False)
+                            )
+                            for name, moodle_json in dates.items()
+                        )
+                        + "\n  }"
+                        for slot, dates in restrictions.items()
+                    )
+                )
+                + "\n}"
+            )
+            print(s, file=fd)
+
+
 class JsonRestriction(UVTask, CliArgsMixin):
-    """Fichier json de restrictions d'accès aux ressources Moodle basées sur le début/fin des séances
+    """Fichiers json de restrictions d'accès aux ressources Moodle basées sur le début/fin des séances
 
-    Le fichier json contient des restrictions d'accès pour les
-    créneaux de Cours/TD/TP basé sur l'appartenance aux groupes de
-    Cours/TD/TP, sur les début/fin de séance, début/fin de semaine.
+    La tâche génère deux fichiers au format json qui contiennent des contraintes
+    d'accès aux activités Moodle pour chaque séance facilement transférable au
+    moyen de scripts Greasemonkey.
 
-    Le fragment json peut être transféré sous Moodle en tant que
-    restriction d'accès grâce au script Greasemonkey disponible
-    :download:`ici <../../resources/moodle_availability_conditions.js>`.
-
-    Pour les contraintes par créneaux qui s'appuie sur l'appartenance
-    à un groupe, il est nécessaire de renseigner la variable
-    ``MOODLE_GROUPS`` dans le fichier ``config.py`` qui relie le nom
-    des groupes de Cours/TD/TP dans le fichier ``effectif.xlsx`` aux
-    identifiants Moodle correspondant (voir la tâche
+    Le premier fichier contient des restrictions d'accès pour les activités
+    Moodle (voir section "Restrictions d'accès" dans les paramètres d'une
+    activité) qu'on peut transférer sur Moodle avec le script disponible
+    :download:`ici <../resources/moodle_availability_conditions.js>`. Le script
+    fournit une boite de texte dans laquelle on peut coller le fragment json
+    correspondant à la restriction qu'on souhaite paramétrer. Pour les
+    contraintes par créneaux qui s'appuient sur l'appartenance à un groupe, il
+    est nécessaire de renseigner la variable ``MOODLE_GROUPS`` dans le fichier
+    ``config.py`` qui relie le nom des groupes de Cours/TD/TP dans le fichier
+    ``effectif.xlsx`` aux identifiants Moodle correspondant (voir la tâche
     :class:`~guv.tasks.moodle.FetchGroupId` pour récupérer la correspondance).
+
+    Le deuxième fichier contient des restrictions d'accès sur des dates de début
+    et de fin d'activité qui sont présentes dans plusieurs activités (quiz,
+    sondage,...). Il faut installer le script disponible :download:`ici
+    <../resources/moodle_set_datetimes.js>`.
 
     L'argument ``-c`` permet de spécifier les activités considérées, à
     choisir parmi Cours, TD ou TP.
@@ -652,7 +864,7 @@ class JsonRestriction(UVTask, CliArgsMixin):
     """
 
     target_dir = "generated"
-    target_name = "moodle_restrictions_{course}{AB}.json"
+    target_name = "moodle_{kind}_restrictions_{course}{AB}.json"
     uptodate = False
 
     cli_args = (
@@ -689,7 +901,10 @@ class JsonRestriction(UVTask, CliArgsMixin):
 
         self.parse_args()
         AB = "_AB" if self.num_AB else ""
-        self.target = self.build_target(AB=AB)
+        self.targets = [
+            self.build_target(AB=AB, kind="availability"),
+            self.build_target(AB=AB, kind="timings")
+        ]
 
     def run(self):
         df = PlanningSlots.read_target(self.planning_slots)
@@ -699,6 +914,14 @@ class JsonRestriction(UVTask, CliArgsMixin):
             raise Exception(
                 "Aucun créneau de type `%s`. Choisir parmi %s"
                 % (self.course, ", ".join(f"`{c}`" for c in available_courses))
+            )
+
+        use_moodle_groups = True
+        if "MOODLE_GROUPS" not in self.settings or not self.settings.MOODLE_GROUPS:
+            use_moodle_groups = False
+            logger.warning(
+                "La variable `MOODLE_GROUPS` n'est pas spécifiée (voir tâche `FetchGroupId`). "
+                "Elle est nécessaire pour avoir des contraintes liées aux groupes Moodle"
             )
 
         df_c = df.loc[df["Activité"] == self.course]
@@ -713,128 +936,26 @@ class JsonRestriction(UVTask, CliArgsMixin):
 
             df_c = df_c.assign(**{"Lib. créneau": new_col})
 
-        visible = self.visible
-
         key = "numAB" if self.num_AB else "num"
-        gb = df_c.groupby(key)
 
-        if "MOODLE_GROUPS" not in self.settings or not self.settings.MOODLE_GROUPS:
-            logger.warning(
-                "La variable `MOODLE_GROUPS` n'est pas spécifiée (voir tâche `FetchGroupId`). "
-                "Elle est nécessaire pour avoir des contraintes liées aux groupes Moodle"
-            )
+        availability_restrictions = {}
+        timing_restrictions = {}
 
-        def get_beg_end_date_each(num, df):
-            def group_beg_end(row):
-                if self.num_AB:
-                    group = row["Lib. créneau"] + row["Semaine"]
-                else:
-                    group = row["Lib. créneau"]
+        for num, group in df_c.groupby(key):
+            context = get_datetime_context(group, num_AB=self.num_AB)
+            context["visible"] = self.visible
+            context["num"] = num
 
-                hd = dt.datetime.combine(row["date"], row["Heure début"])
-                hf = dt.datetime.combine(row["date"], row["Heure fin"])
+            session = f"Séance {num} : {context['dt_min_monday'].strftime('%d-%m-%Y')} -- {context['dt_max_friday'].strftime('%d-%m-%Y')}"
+            timing_restrictions[session] = get_timing_restrictions(context)
 
-                return group, hd, hf
+            if use_moodle_groups:
+                context["moodle_groups"] = self.settings.MOODLE_GROUPS
 
-            gbe = [group_beg_end(row) for index, row in df.iterrows()]
-            dt_min = min(b for g, b, e in gbe)
-            dt_min3 = dt_min - dt.timedelta(days=3)
-            dt_max = max(e for g, b, e in gbe)
+            availability_restrictions[session] = get_availability_restrictions(context)
 
-            dt_min_monday = dt_min - dt.timedelta(days=dt_min.weekday())
-            dt_min_monday = dt.datetime.combine(dt_min_monday, dt.time.min)
-            dt_min_midnight = dt.datetime.combine(dt_min, dt.time.min)
-
-            if len(gbe) > 1:
-                after_beg_group = [
-                    (CondGroup(visible=visible) == g) & (CondDate(visible=visible) >= b) for g, b, e in gbe
-                ]
-                before_beg_group = [
-                    (CondGroup(visible=visible) == g) & (CondDate(visible=visible) < b) for g, b, e in gbe
-                ]
-
-            dt_max_friday = dt_max + dt.timedelta(days=6 - dt_max.weekday())
-            dt_max_friday = dt.datetime.combine(dt_max_friday, dt.time.max)
-            dt_max_midnight = dt.datetime.combine(dt_max, dt.time.max)
-
-            no_group = {
-                "accessible si: t < min(B)": (CondDate(visible=visible) < dt_min).to_PHP(),
-                "accessible si: t >= min(B)": (CondDate(visible=visible) >= dt_min).to_PHP(),
-                "accessible si: t >= min(B)-3days": (CondDate(visible=visible) >= dt_min3).to_PHP(),
-                "accessible si: t >= max(E)": (CondDate(visible=visible) >= dt_max).to_PHP(),
-                "accessible si: t < max(E)": (CondDate(visible=visible) < dt_max).to_PHP(),
-                "accessible si: t >= previous_monday(min(B))": (CondDate(visible=visible) >= dt_min_monday).to_PHP(),
-                "accessible si: t >= next_friday(max(E))": (CondDate(visible=visible) >= dt_max_friday).to_PHP(),
-                "accessible si: t >= previous_midnight(min(B))": (CondDate(visible=visible) >= dt_min_midnight).to_PHP(),
-                "accessible si: t >= next_midnight(max(E))": (CondDate(visible=visible) >= dt_max_midnight).to_PHP(),
-                "accessible si: min(B) <= t < min(B) + 20mins": ((CondDate(visible=visible) >= dt_min) & (CondDate(visible=visible) < dt_min + dt.timedelta(minutes=20))).to_PHP()
-            }
-
-            if len(gbe) > 1:
-                after_end_group = [
-                    CondOr([CondGroup(visible=visible) == g]) & (CondDate(visible=visible) >= e) for g, b, e in gbe
-                ]
-                before_end_group = [
-                    CondOr([CondGroup(visible=visible) == g]) & (CondDate(visible=visible) < e) for g, b, e in gbe
-                ]
-
-                def window_group_start(g, b, e, p=0, q=0):
-                    return CondOr([(CondGroup(visible=visible) == g)]) & (CondDate(visible=visible) >= b + dt.timedelta(minutes=p)) & (CondDate(visible=visible) < b + dt.timedelta(minutes=q))
-
-                def window_group(g, b, e, p=0, q=0):
-                    return CondOr([(CondGroup(visible=visible) == g)]) & (CondDate(visible=visible) >= b + dt.timedelta(minutes=p)) & (CondDate(visible=visible) < e + dt.timedelta(minutes=q))
-
-                def windows(func, gbe, p=0, q=0):
-                    return [
-                        func(g, b, e, p, q) for g, b, e in gbe
-                    ]
-
-                if "MOODLE_GROUPS" in self.settings and self.settings.MOODLE_GROUPS:
-                    info = dict(groups=self.settings.MOODLE_GROUPS)
-                    no_group.update({
-                        "accessible si: t <= B par groupe": CondOr(before_beg_group).to_PHP(**info),
-                        "accessible si: t > B par groupe": CondOr(after_beg_group).to_PHP(**info),
-                        "accessible si: t > E par groupe": CondOr(after_end_group).to_PHP(**info),
-                        "accessible si: t <= E par groupe": CondOr(before_end_group).to_PHP(**info),
-                        "accessible si: B <= t < E par groupe": CondOr(windows(window_group, gbe)).to_PHP(**info),
-                    })
-                    for p, q in ((-3, 5),):
-                        rst = CondOr(windows(window_group_start, gbe, p, q))
-                        no_group[f"accessible si: B + {p}min <= t < B + {q}min par groupe"] = rst.to_PHP(**info)
-
-                    for p, q in ((0, 15),):
-                        no_group[f"accessible si: B + {p}min <= t < E + {q}min par groupe"] = CondOr(windows(window_group, gbe, p, q)).to_PHP(**info)
-
-                    for p, q in ((0, 30),):
-                        no_group[f"accessible si: B + {p}min <= t < B + {q}min par groupe"] = CondOr(windows(window_group_start, gbe, p, q)).to_PHP(**info)
-
-            session = f"Séance {num} : {dt_min_monday.strftime('%d-%m-%Y')} -- {dt_max_friday.strftime('%d-%m-%Y')}"
-
-            return session, no_group
-
-        moodle_date = dict(get_beg_end_date_each(name, g) for name, g in gb)
-        max_len = max(len(s) for s in list(moodle_date.values())[0])
-        with Output(self.target, protected=True) as out:
-            with open(out.target, "w") as fd:
-                s = (
-                    "{\n"
-                    + ",\n".join(
-                        (
-                            f'  "{slot}": {"{"}\n'
-                            + ",\n".join(
-                                (
-                                    f'    "{name}": {" " * (max_len - len(name))}'
-                                    + json.dumps(moodle_json, ensure_ascii=False)
-                                )
-                                for name, moodle_json in dates.items()
-                            )
-                            + "\n  }"
-                            for slot, dates in moodle_date.items()
-                        )
-                    )
-                    + "\n}"
-                )
-                print(s, file=fd)
+        write_json_restrictions(availability_restrictions, self.targets[0])
+        write_json_restrictions(timing_restrictions, self.targets[1])
 
 
 class JsonGroup(UVTask, CliArgsMixin):
@@ -899,159 +1020,6 @@ class JsonGroup(UVTask, CliArgsMixin):
                             f'  "{group_name}": '
                             + json.dumps(json_string, ensure_ascii=False)
                             for group_name, json_string in json_dict.items()
-                        )
-                    )
-                    + "\n}"
-                )
-                print(s, file=fd)
-
-
-class JsonTiming(UVTask, CliArgsMixin):
-    """Fichier json de restrictions d'accès aux activités Début/Fin basées sur le début/fin des séances
-
-    Le fichier json contient des restrictions d'accès pour les
-    créneaux de Cours/TD/TP basé sur l'appartenance aux groupes de
-    Cours/TD/TP, sur les début/fin de séance, début/fin de semaine.
-
-    Le fragment json peut être transféré sous Moodle en tant que
-    restriction d'accès grâce au script Greasemonkey disponible
-    :download:`ici <../../resources/moodle_availability_conditions.js>`.
-
-    Pour les contraintes par créneaux qui s'appuie sur l'appartenance
-    à un groupe, il est nécessaire de renseigner la variable
-    ``MOODLE_GROUPS`` dans le fichier ``config.py`` qui relie le nom
-    des groupes de Cours/TD/TP dans le fichier ``effectif.xlsx`` aux
-    identifiants Moodle correspondant (voir la tâche
-    :class:`~guv.tasks.moodle.FetchGroupId` pour récupérer la correspondance).
-
-    L'argument ``-c`` permet de spécifier les activités considérées, à
-    choisir parmi Cours, TD ou TP.
-
-    Le drapeau ``-a`` permet de grouper les séances par deux semaines
-    dans le cas où il y a des semaines A et B. La fin d'une activité
-    est alors identifiée à la fin de la semaine B.
-
-    Les restrictions globales implémentées sont les suivantes :
-
-    - antérieur à la date du premier créneau
-    - postérieur à la date du premier créneau
-    - postérieur à la date du premier créneau moins 3 jours
-    - postérieur à la date du dernier créneau
-    - antérieur à la date du dernier créneau
-    - postérieur au lundi précédant immédiatement le premier créneau
-    - postérieur au vendredi suivant immédiatement le dernier créneau
-    - postérieur à minuit juste avant le premier créneau
-    - postérieur à minuit juste après le dernier créneau
-
-    Les restrictions dépendant de l'appartenance à un groupe sont les
-    suivantes :
-
-    - antérieur à la date de début de créneau de l'étudiant
-    - postérieur à la date de début de créneau de l'étudiant
-    - postérieur à la date de fin de créneau de l'étudiant
-    - antérieur à la date de fin de créneau de l'étudiant
-    - restreint à la séance de l'étudiant
-    - restreint à la séance de l'étudiant plus 15 minutes après
-    - restreint au début de la séance, 3 minutes avant, 5 minutes après
-
-    {options}
-
-    """
-
-    target_dir = "generated"
-    target_name = "moodle_timing_{course}{AB}.json"
-    uptodate = False
-
-    cli_args = (
-        argument(
-            "-c",
-            "--course",
-            required=True,
-            help="Type de séances considérées parmi ``Cours``, ``TD`` ou ``TP``.",
-        ),
-        argument(
-            "-a",
-            "--num-AB",
-            action="store_true",
-            help="Permet de prendre en compte les semaines A/B. Ainsi, la fin d'une séance est à la fin de la semaine B.",
-        ),
-    )
-
-    def setup(self):
-        super().setup()
-        self.planning_slots = PlanningSlots.target_from(**self.info)
-        self.file_dep = [self.planning_slots]
-
-        self.parse_args()
-        AB = "_AB" if self.num_AB else ""
-        self.target = self.build_target(AB=AB)
-
-    def run(self):
-        df = PlanningSlots.read_target(self.planning_slots)
-        available_courses = df["Activité alt"].unique()
-
-        if self.course not in available_courses:
-            raise Exception(
-                "Aucun créneau de type `%s`. Choisir parmi %s"
-                % (self.course, ", ".join(f"`{c}`" for c in available_courses))
-            )
-
-        df_c = df.loc[df["Activité alt"] == self.course]
-
-        key = "numAB" if self.num_AB else "num"
-        gb = df_c.groupby(key)
-
-        def get_beg_end_date_each(num, df):
-            def group_beg_end(row):
-                if self.num_AB:
-                    group = row["Lib. créneau"] + row["Semaine"]
-                else:
-                    group = row["Lib. créneau"]
-
-                hd = dt.datetime.combine(row["date"], row["Heure début"])
-                hf = dt.datetime.combine(row["date"], row["Heure fin"])
-
-                return group, hd, hf
-
-            gbe = [group_beg_end(row) for index, row in df.iterrows()]
-            dt_min = min(b for g, b, e in gbe)
-            dt_min3 = dt_min - dt.timedelta(days=3)
-            dt_max = max(e for g, b, e in gbe)
-
-            dt_min_monday = dt_min - dt.timedelta(days=dt_min.weekday())
-            dt_min_monday = dt.datetime.combine(dt_min_monday, dt.time.min)
-            dt_min_midnight = dt.datetime.combine(dt_min, dt.time.min)
-
-            dt_max_friday = dt_max + dt.timedelta(days=6 - dt_max.weekday())
-            dt_max_friday = dt.datetime.combine(dt_max_friday, dt.time.max)
-            dt_max_midnight = dt.datetime.combine(dt_max, dt.time.max)
-
-            no_group = {
-                "accessible si: ": {"start": dt_min.timestamp(), "end": dt_max.timestamp()}
-            }
-
-            session = f"Séance {num} : {dt_min_monday.strftime('%d-%m-%Y')} -- {dt_max_friday.strftime('%d-%m-%Y')}"
-
-            return session, no_group
-
-        moodle_date = dict(get_beg_end_date_each(name, g) for name, g in gb)
-        max_len = max(len(s) for s in list(moodle_date.values())[0])
-        with Output(self.target, protected=True) as out:
-            with open(out.target, "w") as fd:
-                s = (
-                    "{\n"
-                    + ",\n".join(
-                        (
-                            f'  "{slot}": {"{"}\n'
-                            + ",\n".join(
-                                (
-                                    f'    "{name}": {" " * (max_len - len(name))}'
-                                    + json.dumps(moodle_json, ensure_ascii=False)
-                                )
-                                for name, moodle_json in dates.items()
-                            )
-                            + "\n  }"
-                            for slot, dates in moodle_date.items()
                         )
                     )
                     + "\n}"
