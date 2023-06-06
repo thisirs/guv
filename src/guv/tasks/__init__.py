@@ -36,6 +36,7 @@ from .students import (
 from .trombinoscope import PdfTrombinoscope
 from .utc import (
     XlsUTP,
+    Planning,
     PlanningSlots,
     PlanningSlotsAll,
     UtcUvListToCsv,

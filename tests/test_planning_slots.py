@@ -17,6 +17,7 @@ class TestPlanningSlots:
         doc = xlsx.tabular(guv.cwd / uv / "generated" / "planning.xlsx")
         doc.check_columns(
             "Activité",
+            "Activité alt",
             "Jour",
             "Heure début",
             "Heure fin",

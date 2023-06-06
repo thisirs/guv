@@ -303,6 +303,95 @@ class PlanningSlotsAll(TaskBase):
         return df
 
 
+class Planning(TaskBase):
+    """Fichier csv de tous les jours composant le planning du semestre."""
+
+    hidden = True
+    target_name = "planning_{planning}.csv"
+    target_dir = "generated"
+
+    def setup(self):
+        super().setup()
+        self.target = self.build_target()
+
+        self.targets = [
+            self.build_target(planning=planning)
+            for planning in self.settings.SELECTED_PLANNINGS
+        ]
+
+        # Set uptodate value without raising Exception or displaying warnings
+        self.uptodate = {"plannings": ", ".join(self.settings.SELECTED_PLANNINGS)}
+        for planning in self.settings.SELECTED_PLANNINGS:
+            try:
+                props = self.settings.PLANNINGS[planning]
+            except ImproperlyConfigured:
+                props = {}
+
+            for name in ["PL_BEG", "PL_END", "TURN", "SKIP_DAYS_C", "SKIP_DAYS_D", "SKIP_DAYS_T"]:
+                try:
+                    if name in props:
+                        value = props[name]
+                    else:
+                        value = self.settings[name]
+                    self.uptodate[planning + "_" + name.lower()] = value
+                except ImproperlyConfigured:
+                    self.uptodate[planning + "_" + name.lower()] = None
+
+    def run(self):
+        for planning in self.settings.SELECTED_PLANNINGS:
+            props = self.settings.PLANNINGS[planning]
+
+            for name in ["PL_BEG", "PL_END", "TURN", "SKIP_DAYS_C", "SKIP_DAYS_D", "SKIP_DAYS_T"]:
+                if name not in props:
+                    logger.warning(
+                        f"La clé `{name}` est absente du planning `{self.planning}` dans la "
+                        f"variable `PLANNINGS`, utilisation de la variable globale `{name}`."
+                    )
+                    props[name] = self.settings[name]
+
+            pl_beg = props["PL_BEG"]
+            pl_end = props["PL_END"]
+            skip_days_c = props["SKIP_DAYS_C"]
+            skip_days_d = props["SKIP_DAYS_D"]
+            skip_days_t = props["SKIP_DAYS_T"]
+            turn = props["TURN"]
+
+            # DataFrame of days in planning
+            planning_C = pd.DataFrame(
+                generate_row(pl_beg, pl_end, skip_days_c, turn),
+                columns=["date", "Jour", "num", "Semaine", "numAB", "nweek"],
+            )
+            planning_D = pd.DataFrame(
+                generate_row(pl_beg, pl_end, skip_days_d, turn),
+                columns=["date", "Jour", "num", "Semaine", "numAB", "nweek"],
+            )
+            planning_T = pd.DataFrame(
+                generate_row(pl_beg, pl_end, skip_days_t, turn),
+                columns=["date", "Jour", "num", "Semaine", "numAB", "nweek"],
+            )
+
+            for plng, text, number in (
+                    (planning_C, "cours", 14),
+                    (planning_D, "TD", 13),
+                    (planning_T, "TP", 14),
+            ):
+                counts = plng["Jour"].value_counts()
+                unique = counts.unique()
+                if len(unique) != 1:
+                    serie = ", ".join(f"{index} : {value}" for index, value in counts.items())
+                    logger.warning("Le nombre de créneaux de %s n'est pas le même pour tous les jours : %s", text, serie)
+                elif unique.item() != number:
+                    logger.warning("Le nombre de créneaux de %s est différent de %d : %d", text, number, unique.item())
+
+            planning_C["Activité"] = "Cours"
+            planning_D["Activité"] = "TD"
+            planning_T["Activité"] = "TP"
+            df = pd.concat((planning_C, planning_D, planning_T))
+
+            with Output(self.target.format(planning=planning)) as out:
+                df.to_csv(out.target, index=False)
+
+
 class PlanningSlots(UVTask):
     """Fichier Excel des créneaux sur le planning entier.
 
@@ -337,58 +426,31 @@ class PlanningSlots(UVTask):
         self.target = self.build_target()
 
         self.week_slots = WeekSlots.target_from(**self.info)
-        self.file_dep = [self.week_slots]
-
-        # Set uptodate value without raising Exception or displaying
-        # warnings
-        self.uptodate = {}
-        try:
-            props = self.settings.PLANNINGS[self.planning]
-        except ImproperlyConfigured:
-            props = {}
-
-        for name in ["PL_BEG", "PL_END", "TURN", "SKIP_DAYS_C", "SKIP_DAYS_D", "SKIP_DAYS_T"]:
-            try:
-                if name in props:
-                    value = props[name]
-                else:
-                    value = self.settings[name]
-                self.uptodate[self.uv + "_" + name.lower()] = value
-            except ImproperlyConfigured:
-                self.uptodate[self.uv + "_" + name.lower()] = None
-
-    def set_vars(self):
-        props = self.settings.PLANNINGS[self.planning]
-
-        for name in ["PL_BEG", "PL_END", "TURN", "SKIP_DAYS_C", "SKIP_DAYS_D", "SKIP_DAYS_T"]:
-            if name not in props:
-                logger.warning(
-                    f"La clé `{name}` est absente du planning `{self.planning}` dans la "
-                    f"variable `PLANNINGS`, utilisation de la variable globale `{name}`."
-                )
-                value = self.settings[name]
-            else:
-                value = props[name]
-
-            setattr(self, name.lower(), value)
+        self.planning = Planning.target_from(**self.info)
+        self.file_dep = [self.week_slots, self.planning]
 
     def run(self):
-        self.set_vars()
+        # Load all days in the planning with "Activité" being either "Cours",
+        # "TD", "TP"
+        planning = pd.read_csv(self.planning)
 
+        # Load week slots and rename "Activité" column that need not be "Cours",
+        # "TD", "TP" only.
         df = WeekSlots.read_target(self.week_slots)
+        df = df.rename(columns={"Activité": "Activité alt"})
+        mask_C = df["Activité alt"] == "Cours"
+        mask_D = df["Activité alt"] == "TD"
+        mask_T = df["Activité alt"] == "TP"
 
-        mask_C = df["Activité"] == "Cours"
-        mask_D = df["Activité"] == "TD"
-        mask_T = df["Activité"] == "TP"
-
+        # Separate based on "Activité alt"
         df_C = df.loc[mask_C]
         df_D = df.loc[mask_D]
         df_T = df.loc[mask_T]
 
+        # Handle where "Activité alt" is not "Cours", "TD" or "TP" in week slots
         df_other = df.loc[~(mask_C | mask_D | mask_T)]
-
         if len(df_other) > 0:
-            for name, group in df_other.groupby("Activité"):
+            for name, group in df_other.groupby("Activité alt"):
                 logger.warning(
                     "%d créneau%s %s étiqueté%s `%s`, le%s compter comme `Cours`, `TD` ou `TP` ?",
                     len(df_other),
@@ -408,49 +470,20 @@ class PlanningSlots(UVTask):
                 else:
                     raise RuntimeError("Logical error")
 
-        # DataFrame of days in planning
-        planning_C = pd.DataFrame(
-            generate_row(self.pl_beg, self.pl_end, self.skip_days_c, self.turn),
-            columns=["date", "Jour", "num", "Semaine", "numAB", "nweek"],
-        )
-        planning_D = pd.DataFrame(
-            generate_row(self.pl_beg, self.pl_end, self.skip_days_d, self.turn),
-            columns=["date", "Jour", "num", "Semaine", "numAB", "nweek"],
-        )
-        planning_T = pd.DataFrame(
-            generate_row(self.pl_beg, self.pl_end, self.skip_days_t, self.turn),
-            columns=["date", "Jour", "num", "Semaine", "numAB", "nweek"],
-        )
+        planning_noweek = planning.drop("Semaine", axis=1)
 
-        for planning, text, number in (
-                (planning_C, "cours", 14),
-                (planning_D, "TD", 13),
-                (planning_T, "TP", 14),
-        ):
-            counts = planning["Jour"].value_counts()
-            unique = counts.unique()
-            if len(unique) != 1:
-                serie = ", ".join(f"{index} : {value}" for index, value in counts.items())
-                logger.warning("Le nombre de créneaux de %s n'est pas le même pour tous les jours : %s", text, serie)
-            elif unique.item() != number:
-                logger.warning("Le nombre de créneaux de %s est différent de %d : %d", text, number, unique.item())
+        planning_noweek_Cours = planning_noweek.loc[planning_noweek["Activité"] == "Cours"]
+        df_Cp = pd.merge(df_C, planning_noweek_Cours, how="left", on="Jour")
 
-        planning_C = planning_C.drop("Semaine", axis=1)
-        df_Cp = pd.merge(df_C, planning_C, how="left", on="Jour")
-
-        planning_D = planning_D.drop("Semaine", axis=1)
-        df_Dp = pd.merge(df_D, planning_D, how="left", on="Jour")
+        planning_noweek_TD = planning_noweek.loc[planning_noweek["Activité"] == "TD"]
+        df_Dp = pd.merge(df_D, planning_noweek_TD, how="left", on="Jour")
 
         if df_T["Semaine"].hasnans:
-            planning_T = planning_T.drop("Semaine", axis=1)
-            df_Tp = pd.merge(df_T, planning_T, how="left", on="Jour")
+            planning_noweek_TP = planning_noweek.loc[planning_noweek["Activité"] == "TP"]
+            df_Tp = pd.merge(df_T, planning_noweek_TP, how="left", on="Jour")
         else:
-            df_Tp = pd.merge(
-                df_T,
-                planning_T,
-                how="left",
-                on=["Jour", "Semaine"],
-            )
+            planning_TP = planning.loc[planning_noweek["Activité"] == "TP"]
+            df_Tp = pd.merge(df_T, planning_TP, how="left", on=["Jour", "Semaine"])
 
         dfp = pd.concat([df_Cp, df_Dp, df_Tp], ignore_index=True)
 

@@ -15,6 +15,7 @@ def test_planning_slots_all(guv, xlsx, guvcapfd):
         "Code enseig.",
         "Planning",
         "Activité",
+        "Activité alt",
         "Jour",
         "Heure début",
         "Heure fin",
