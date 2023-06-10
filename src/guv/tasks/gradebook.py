@@ -922,8 +922,11 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
                 )
 
             # Write key-value table
+            keys = ["name", "passing grade", "coefficient", "maximum grade"]
+            ordered_props = {k: props[k] for k in keys if k in props}
+            rest = {k: props[k] for k in props if k not in keys}
             lower_right, keytocell = self.write_key_value_props(
-                current_cell, name, props
+                current_cell, name, ordered_props | rest
             )
             self.grades_options[name] = keytocell
             current_cell = current_cell.right(3)
