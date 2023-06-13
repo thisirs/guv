@@ -1,0 +1,25 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "id": "item",
+    "patternProperties": {
+        ".": {
+            "oneOf": [
+                {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "points": {
+                            "type": "number"
+                        },
+                        "coeff": {
+                            "type": "number"
+                        }
+                    }
+                }},
+                {"$ref": "item"}
+            ]
+        }
+    }
+}

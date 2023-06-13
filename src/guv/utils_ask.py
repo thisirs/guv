@@ -65,6 +65,7 @@ def is_number(text):
 def prompt_number(message, **kwargs):
     validator = Validator.from_callable(
         is_number,
-        error_message='Nombre pas reconnu',
+        error_message="Nombre pas reconnu",
         move_cursor_to_end=True)
-    return float(prompt(message, validator=validator, **kwargs))
+    number = float(prompt(message, validator=validator, **kwargs))
+    return int(number) if number.is_integer() else number

@@ -7,17 +7,16 @@ pour :
 
 """
 
-import os
-import math
-from collections import OrderedDict
-import textwrap
 import json
-
-import jsonschema
-import openpyxl
-from schema import And, Optional, Or, Schema, Use
+import math
+import os
+import textwrap
+from collections import OrderedDict
 
 import guv
+import jsonschema
+import openpyxl
+import yaml
 
 from ..openpyxl_patched import fixit
 
@@ -31,8 +30,8 @@ from ..openpyxl_utils import (fit_cells_at_col, frame_range, generate_ranges,
                               get_address_of_cell, get_range_from_cells,
                               get_segment, row_and_col)
 from ..utils import sort_values
-from ..utils_config import rel_to_dir
 from ..utils_ask import checkboxlist_prompt, prompt_number
+from ..utils_config import rel_to_dir, ask_choice
 from . import base
 from . import base_gradebook as baseg
 
@@ -108,7 +107,7 @@ class MarkingScheme:
     @property
     def coeffs(self):
         "Return depth-first list of coeffs"
-        return get_values(self.tree, "coeffs")
+        return get_values(self.tree, "coeff")
 
     def write(self, worksheet, ref):
         row = ref.row
@@ -170,19 +169,18 @@ class MarkingScheme:
 class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
     """Fichier Excel de notes individuelles.
 
-    Cette tâche permet de générer un fichier Excel pour rentrer
-    facilement des notes avec un barème détaillé. Le fichier Excel
-    peut être divisé en plusieurs feuilles suivant une colonne du
-    fichier ``effectifs.xlsx`` et l'argument ``--worksheets`` et les
-    étudiants dans chaque feuille peut être ordonnés suivant
-    l'argument ``--order-by``. Un fichier de barème détaillé peut être
-    fourni via l'argument ``--marking-scheme``. Par défaut, un barème
-    d'une seule note sur 5 sera utilisé. Le fichier de barème doit
-    être au format YAML. La structure du devoir est spécifiée de
-    manière arborescente avec une liste finale pour les questions
-    contenant les points accordés à cette question et éventuellement
-    le coefficient (par défaut 1) et des détails (ne figurant pas dans
-    le fichier Excel). Par exemple :
+    Cette tâche permet de générer un fichier Excel pour rentrer facilement des
+    notes avec un barème détaillé. Le fichier Excel peut être divisé en
+    plusieurs feuilles de calculs selon une colonne du fichier
+    ``effectifs.xlsx`` via l'argument ``--worksheets``. Dans chacune de ces
+    feuilles, les étudiants peuvent être ordonnés suivant l'argument
+    ``--order-by``. Le chemin vers un fichier de barème détaillé peut être
+    fourni via l'argument ``--marking-scheme``. S'il n'est pas fourni le barème
+    sera demandé interactivement. Le fichier de barème doit être au format YAML.
+    La structure du devoir est spécifiée de manière arborescente avec une liste
+    finale pour les questions contenant les points accordés à cette question et
+    éventuellement le coefficient (par défaut 1) et des détails (ne figurant pas
+    dans le fichier Excel). Par exemple :
 
     .. code:: yaml
 
@@ -195,7 +193,7 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
              - points: 2
            Question 2:
              - points: 2
-             - coeffs: 3
+             - coeff: 3
            Question 3:
              - points: 2
              - détails: |
@@ -215,8 +213,8 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
     Examples
     --------
 
-    - Fichier de notes sans barème sur 5 points sur une seule feuille
-      Excel :
+    - Fichier de notes avec un barème à définir interactivement sur une seule
+      feuille Excel :
 
       .. code:: bash
 
@@ -271,28 +269,67 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
 
+    def ask_config(self):
+        def ask_subitem(item_name=None):
+            subitems = {}
+            if item_name is not None:
+                prompt = f"Nom d'une sous-question de `{item_name}` ? "
+            else:
+                prompt = "Nom d'une sous-question ? "
+
+            name = input(prompt)
+            if name:
+                if item_name is not None:
+                    prompt = f"Nom d'une autre sous-question de `{item_name}` ? "
+                else:
+                    prompt = "Nom d'une autre sous-question ? "
+
+                subitems[name] = ask_subitem(item_name=name)
+                while True:
+                    name = input(prompt)
+                    if name:
+                        subitems[name] = ask_subitem(item_name=name)
+                    else:
+                        break
+            else:
+                points = prompt_number(f"Points pour la sous-question `{item_name}` : ", default="1")
+                coeff = prompt_number(f"Coefficient pour la sous-question `{item_name}` : ", default="1")
+                subitems = [{"points": points, "coeff": coeff}]
+
+            return subitems
+
+        while True:
+            config = ask_subitem()
+            print("Fichier YAML construit :")
+            print(yaml.dump(config))
+            result = ask_choice("Valider ? (y/n) ", {"y": True, "n": False})
+            if result:
+                break
+
+        return self.validate_config(config)
+
     def validate_config(self, config):
-        """Validate marking scheme"""
+        """Validation du fichier de configuration"""
 
-        if config is None:
-            return {"Note": [{"points": 5}]}
+        tmpl_dir = os.path.join(guv.__path__[0], "schemas")
+        schema_file = os.path.join(tmpl_dir, "gradebook_marking_schema.json")
+        schema = json.load(open(schema_file, "rb"))
 
-        def validate_subsections(data):
-            return Schema(
-                Or(
-                    And(lambda e: e is None, Use(lambda _: [{}])),
-                    [
-                        {
-                            Optional("points"): Or(int, float),
-                            Optional("coeffs"): Or(int, float),
-                            Optional("détails"): str,
-                        }
-                    ],
-                    {str: Use(validate_subsections)},
-                )
-            ).validate(data)
+        jsonschema.validate(config, schema)
 
-        return Schema({str: Use(validate_subsections)}).validate(config)
+        def set_default(elt):
+            if isinstance(elt, dict):
+                for value in elt.values():
+                    set_default(value)
+            elif isinstance(elt, list):
+                if all("points" not in d for d in elt):
+                    elt.append({"points": 1})
+                if all("coeff" not in d for d in elt):
+                    elt.append({"coeff": 1})
+            else:
+                raise RuntimeError
+
+        return config
 
     def get_columns(self):
         columns = super().get_columns()
@@ -462,14 +499,13 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
 class XlsGradeBookGroup(XlsGradeBookNoGroup):
     """Fichier Excel de notes par groupe.
 
-    Cette tâche permet de créer un fichier Excel pour attribuer des
-    notes par groupes évitant ainsi de recopier la note pour chaque
-    membre du groupe. Les groupes d'étudiants sont spécifiés par
-    l'argument ``--group-by``. Un barème détaillé peut être fourni via
-    l'argument ``--marking-scheme``. Par défaut, un barème d'une seule
-    note sur 5 sera utilisé. Le fichier peut être divisé en plusieurs
-    feuilles suivant l'argument ``--worksheets`` et chaque feuille
-    peut être ordonnée suivant l'argument ``--order-by``.
+    Cette tâche permet de créer un fichier Excel pour attribuer des notes par
+    groupes évitant ainsi de recopier la note pour chaque membre du groupe. Les
+    groupes d'étudiants sont spécifiés par l'argument ``--group-by``. Un barème
+    détaillé peut être fourni via l'argument ``--marking-scheme``. S'il n'est
+    pas fourni, un barème sera demandé interactivement. Le fichier peut être
+    divisé en plusieurs feuilles suivant l'argument ``--worksheets`` et chaque
+    feuille peut être ordonnée suivant l'argument ``--order-by``.
 
     Le fichier spécifiant le barème est au format YAML. La structure
     du devoir est spécifiée de manière arborescente avec une liste
@@ -488,7 +524,7 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
              - points: 2
            Question 2:
              - points: 2
-             - coeffs: 3
+             - coeff: 3
            Question 3:
              - points: 2
              - détails: |
