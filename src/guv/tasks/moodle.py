@@ -971,7 +971,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             "--group-size",
             type=int,
             required=False,
-            help="Taille des groupes : binomes, trinomes ou plus",
+            help="Taille des groupes : binômes, trinômes ou plus",
         ),
         argument(
             "-p",
@@ -1020,7 +1020,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             nargs="+",
             required=False,
             default=[],
-            help="Liste de colonnes de groupes déjà formés qui ne doivent plus être reformés. Valable uniquement pour les binomes et trinomes."
+            help="Liste de colonnes de groupes déjà formés qui ne doivent plus être reformés. Valable uniquement pour les binômes et trinômes."
         ),
         argument(
             "--max-iter",
