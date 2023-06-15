@@ -77,6 +77,8 @@ autodoc_mock_imports = [
     "openpyxl",
     "pandas",
     "pynliner",
+    "jsonschema",
+    "prompt_toolkit",
     "PyPDF2",
     "tabula-py",
     "pytz",
