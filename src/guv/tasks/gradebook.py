@@ -319,8 +319,14 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
 
         def set_default(elt):
             if isinstance(elt, dict):
-                for value in elt.values():
-                    set_default(value)
+                for key, value in elt.items():
+                    if value is None:
+                        elt[key] = [{
+                            "points": 1,
+                            "coeff": 1
+                        }]
+                    else:
+                        set_default(value)
             elif isinstance(elt, list):
                 if all("points" not in d for d in elt):
                     elt.append({"points": 1})
