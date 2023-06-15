@@ -1,0 +1,81 @@
+[build-system]
+requires = ["setuptools>=45"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "guv"
+authors = [
+  {name = "Sylvain Rousseau", email = "sylvain.rousseau@hds.utc.fr"},
+]
+readme = "README.md"
+description = "Programme d'aide à la gestion d'UV"
+dynamic = ["version"]
+requires-python = ">=3.7"
+license = {text = "MIT"}
+scripts = {guv = "guv.runner:main"}
+dependencies = [
+  "PyPDF2>=3.0.0",
+  "aiohttp",
+  "browser_cookie3",
+  "datetime",
+  "doit",
+  "icalendar",
+  "jinja2",
+  "jsonschema",
+  "latex",
+  "markdown",
+  "numpy",
+  "openpyxl",
+  "oyaml",
+  "pandas",
+  "prompt_toolkit",
+  "pynliner",
+  "pytz",
+  "requests",
+  "schema",
+  "tabula-py",
+  "unidecode",
+  "xlrd",
+  "yapf",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest >= 5.0.0",
+  "pytest-dependency",
+  "pytest-order"
+]
+doc = [
+  "tox",
+  "sphinx",
+  "furo",
+  "schema"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+guv = ["schemas", "data", "images", "templates"]
+
+[tool.setuptools.dynamic]
+version = {attr = "guv.__version__"}
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+skipsdist = true
+
+[testenv:tests]
+deps = pytest
+       pytest-dependency
+       pytest-order
+commands = pip install -e .
+           pytest {posargs}
+
+[testenv:docs]
+deps = sphinx
+       furo
+       schema
+commands = sphinx-build -b html docs public {posargs}
+"""
