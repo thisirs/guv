@@ -17,21 +17,28 @@ sont accessibles :
 - :class:`guv.tasks.attendance.PdfAttendanceFull`
 - :class:`guv.tasks.attendance.PdfAttendance`
 - :class:`guv.tasks.calendar.CalUv`
+- :class:`guv.tasks.calendar.CalInst`
 - :class:`guv.tasks.grades.CsvForUpload`
 - :class:`guv.tasks.grades.XlsAssignmentGrade`
+- :class:`guv.tasks.grades.YamlQCM`
 - :class:`guv.tasks.gradebook.XlsGradeBookJury`
 - :class:`guv.tasks.gradebook.XlsGradeBookGroup`
 - :class:`guv.tasks.gradebook.XlsGradeBookNoGroup`
-- :class:`guv.tasks.grades.YamlQCM`
 - :class:`guv.tasks.ical.IcalUv`
-- :class:`guv.tasks.moodle.HtmlTable`
+- :class:`guv.tasks.ical.IcalInst`
 - :class:`guv.tasks.moodle.CsvCreateGroups`
 - :class:`guv.tasks.moodle.CsvGroups`
+- :class:`guv.tasks.moodle.CsvGroupsGroupings`
+- :class:`guv.tasks.moodle.FetchGroupId`
+- :class:`guv.tasks.moodle.HtmlInst`
+- :class:`guv.tasks.moodle.HtmlTable`
 - :class:`guv.tasks.moodle.JsonGroup`
+- :class:`guv.tasks.moodle.JsonRestriction`
 - :class:`guv.tasks.students.CsvExamGroups`
-- :class:`guv.tasks.students.CsvMoodleGroups`
 - :class:`guv.tasks.students.ZoomBreakoutRooms`
+- :class:`guv.tasks.students.SendEmail`
 - :class:`guv.tasks.trombinoscope.PdfTrombinoscope`
+- :class:`guv.tasks.utc.XlsUTP`
 
 **guv** travaille avec une arborescence prédéfinie. Les documents
 spécifiques à une UV sont stockées dans un dossier d'UV. Tous les
