@@ -97,13 +97,15 @@ class UtcUvListToCsv(TaskBase):
                     'Lib.\rcréneau': 'Lib. créneau',
                     'Heuredébut': 'Heure début',
                     'Heure d': 'Heure début',
+                    'Heure déb': 'Heure début',
+                    'Hteure fin': 'Heure fin',
                     'Heurefin': 'Heure fin',
                     'Locaux hybrides': "Locaux"
                 })
 
                 unknown_cols = list(set(df.columns) - set(possible_cols))
                 if unknown_cols:
-                    raise Exception("Colonnes inconnues détectées:", " ".join(unknown_cols))
+                    raise Exception("Colonnes inconnues détectées:", ", ".join(unknown_cols))
 
                 # Get list of detected columns
                 cols = df.columns.to_list()
