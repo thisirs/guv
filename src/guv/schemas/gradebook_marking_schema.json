@@ -5,6 +5,7 @@
     "patternProperties": {
         ".": {
             "oneOf": [
+                {"type": "null"},
                 {
                 "type": "array",
                 "items": {
