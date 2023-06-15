@@ -335,6 +335,8 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
             else:
                 raise RuntimeError
 
+        set_default(config)
+
         return config
 
     def get_columns(self):
