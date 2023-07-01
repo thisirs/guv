@@ -492,7 +492,7 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
             marks_range = get_range_from_cells(first, last)
             for j, (name, formula) in enumerate(stats):
                 if i == 0:
-                    ref_stats.right(j).below(-1).text(name)
+                    ref_stats.right(j).below(-1).text(name).center()
                 ref_stats.right(j).below(i).text(formula.format(marks_range=marks_range))
 
 
