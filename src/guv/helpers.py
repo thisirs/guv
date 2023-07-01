@@ -104,7 +104,8 @@ class FillnaColumn(Operation):
 
         if self.na_value is not None:
             check_if_present(df, self.colname)
-            df[self.colname].fillna(self.na_value, inplace=True)
+            with pd.option_context('mode.chained_assignment', None):
+                df.loc[:, self.colname] = df[self.colname].fillna(self.na_value)
         else:
             def fill_by_group(g):
                 if not isinstance(g.name, str):
