@@ -156,9 +156,9 @@ class MarkingScheme:
                 for cell_point, cell_coeff in zip(self.points_cells, self.coeff_cells)
             )
         )
-        ref_points_last.below(2).left().text("Grade")
+        self.global_total_rescale = ref_points_last.below(3).text(20)
 
-        ref_points_last.below(3).text(20)
+        ref_points_last.below(2).left().text("Grade")
         ref_points_last.below(3).left().text("Grade /20")
 
         self.width = tree_width + 2
@@ -457,11 +457,10 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
             total.value = formula
 
             total_20.text(
-                '=IF(ISTEXT(%s),"",%s/%s*20)'
-                % (
-                    get_address_of_cell(total),
-                    get_address_of_cell(total),
-                    get_address_of_cell(ms.global_total, absolute=True),
+                '=IF(ISTEXT({stu_total}),"",{stu_total}/{global_total}*{rescaling})'.format(
+                    stu_total=get_address_of_cell(total),
+                    global_total=get_address_of_cell(ms.global_total, absolute=True),
+                    rescaling=get_address_of_cell(ms.global_total_rescale, absolute=True)
                 )
             )
 
