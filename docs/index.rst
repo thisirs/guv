@@ -16,7 +16,7 @@ Démarrage
 
    get_started
 
-Tutorial
+Tutoriel
 ========
 
 .. toctree::
