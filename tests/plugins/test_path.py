@@ -45,7 +45,7 @@ class _TestPath:
 
     @property
     def suffix(self):
-        name = self.request._getscopeitem("function").name
+        name = self.request._pyfuncitem.name
         return re.search(r"(\[[^]]+\])?$", name)[0]
 
     @property
@@ -56,7 +56,7 @@ class _TestPath:
         """
 
         # Get name of item at function scope level
-        name = self.request._getscopeitem("function").name
+        name = self.request._pyfuncitem.name
 
 
         marker = self.request.node.get_closest_marker("path_dependency")
@@ -74,7 +74,7 @@ class _TestPath:
         """Return a temporary path that is a copy of the one of another test."""
 
         # Path to use
-        path = self.tmp_path_factory.mktemp(self.request._getscopeitem("function").name, numbered=False)
+        path = self.tmp_path_factory.mktemp(self.request._pyfuncitem.name, numbered=False)
 
         # If not marked with path_dependency decorator, just return a
         # path.
