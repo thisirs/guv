@@ -9,7 +9,7 @@ def test_utc_uv_list_to_csv_old(guv_old, guvcapfd):
     guv_old.cd(guv_old.semester)
     guv_old.copy_file(guv_old.creneaux_uv, "documents")
     guv_old.change_config(CRENEAU_UV=f"documents/{guv_old.creneaux_uv}")
-    guv_old("utc_uv_list_to_csv", input="A\n").succeed()
+    guv_old("utc_uv_list_to_csv", input="A\nA\n").succeed()
 
     assert (guv_old.cwd / "documents" / "UTC_UV_list.csv").is_file()
     guvcapfd.stdout_search(". utc_uv_list_to_csv")
@@ -34,7 +34,7 @@ def test_utc_uv_list_to_csv(guv, guvcapfd):
     guv.cd(guv.semester)
     guv.copy_file(guv.creneaux_uv, "documents")
     guv.change_config(CRENEAU_UV=f"documents/{guv.creneaux_uv}")
-    guv("utc_uv_list_to_csv", input="A\n").succeed()
+    guv("utc_uv_list_to_csv", input="A\nA\n").succeed()
 
     assert (guv.cwd / "documents" / "UTC_UV_list.csv").is_file()
     guvcapfd.stdout_search(". utc_uv_list_to_csv")
