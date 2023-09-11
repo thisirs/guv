@@ -1393,10 +1393,10 @@ def read_pairs(lines):
             parts = [e.strip() for e in line.split("---")]
             stu1, stu2 = parts
             if not stu1 or not stu2:
-                raise Exception(f"Ligne incorrecte: `{line.strip()}`")
+                raise Exception(f"Ligne incorrecte: `{line.strip()}`. Format `etu1 --- etu2` attendu.")
             yield stu1, stu2
         except ValueError:
-            raise Exception(f"Ligne incorrecte: `{line.strip()}`")
+            raise Exception(f"Ligne incorrecte: `{line.strip()}`. Format `etu1 --- etu2` attendu.")
 
 
 def validate_pair(df, colname, part1, part2):
