@@ -93,14 +93,14 @@ class Guv:
 @pytest.fixture(
     params=[
         {
+            "semester": "A2023",
+            "uvs": ["SY19", "SY02"],
+            "creneaux_uv": "Creneaux-UV-A23-Def.pdf",
+        },
+        {
             "semester": "P2022",
             "uvs": ["SY09", "SY02"],
             "creneaux_uv": "Creneaux-UV-P22_V02.pdf",
-        },
-        {
-            "semester": "A2021",
-            "uvs": ["SY19", "SY02"],
-            "creneaux_uv": "Creneaux-UV-def-A21.pdf",
         },
         {
             "semester": "A2022",
