@@ -304,7 +304,7 @@ class PlanningSlotsAll(TaskBase):
 
 
 class Planning(TaskBase):
-    """Fichier csv de tous les jours composant le planning du semestre."""
+    """Fichier csv de tous les jours composant le ou les plannings du semestre."""
 
     hidden = True
     target_name = "planning_{planning}.csv"
@@ -316,16 +316,13 @@ class Planning(TaskBase):
 
         self.targets = [
             self.build_target(planning=planning)
-            for planning in self.settings.SELECTED_PLANNINGS
+            for planning in self.settings.PLANNINGS
         ]
 
         # Set uptodate value without raising Exception or displaying warnings
-        self.uptodate = {"plannings": ", ".join(self.settings.SELECTED_PLANNINGS)}
-        for planning in self.settings.SELECTED_PLANNINGS:
-            try:
-                props = self.settings.PLANNINGS[planning]
-            except ImproperlyConfigured:
-                props = {}
+        self.uptodate = {"plannings": ", ".join(self.settings.PLANNINGS)}
+        for planning in self.settings.PLANNINGS:
+            props = self.settings.PLANNINGS[planning]
 
             for name in ["PL_BEG", "PL_END", "TURN", "SKIP_DAYS_C", "SKIP_DAYS_D", "SKIP_DAYS_T"]:
                 try:
@@ -338,7 +335,7 @@ class Planning(TaskBase):
                     self.uptodate[planning + "_" + name.lower()] = None
 
     def run(self):
-        for planning in self.settings.SELECTED_PLANNINGS:
+        for planning in self.settings.PLANNINGS:
             props = self.settings.PLANNINGS[planning]
 
             for name in ["PL_BEG", "PL_END", "TURN", "SKIP_DAYS_C", "SKIP_DAYS_D", "SKIP_DAYS_T"]:

@@ -71,11 +71,6 @@ _SETTING_LIST = [
         help="La variable 'MOODLE_LISTING' est incorrecte : un chemin relatif vers l'effectif fourni par Moodle est attendu",
     ),
     Setting(
-        "SELECTED_PLANNINGS",
-        schema=Schema([str]),
-        help="La variable 'SELECTED_PLANNINGS' est incorrecte : une liste des plannings actifs est attendue et la variable vaut '{value}'",
-    ),
-    Setting(
         "DEFAULT_INSTRUCTOR",
         schema=Schema(str),
         help="La variable 'DEFAULT_INSTRUCTOR' est incorrecte : une chaîne de caractères est attendue",
@@ -183,9 +178,6 @@ class Settings:
 
     def __getitem__(self, name):
         return getattr(self, name)
-
-    def SELECTED_PLANNINGS_default(self):
-        return list(self.PLANNINGS.keys())
 
     def __getattr__(self, name):
         logger.debug("Accessing setting `%s`", name)

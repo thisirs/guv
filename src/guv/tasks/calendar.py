@@ -187,7 +187,7 @@ class CalInst(CliArgsMixin, TaskBase):
             "--plannings",
             nargs="*",
             default=None,
-            help="Spécifie les UV/UE concernées via les plannings. Par défaut, toutes les UV/UE des plannings ``SELECTED_PLANNINGS`` sont concernées.",
+            help="Spécifie les UV/UE concernées via les plannings. Par défaut, toutes les UV/UE des plannings configurées dans ``PLANNINGS`` sont concernées.",
         ),
         argument(
             "-i",
@@ -213,7 +213,7 @@ class CalInst(CliArgsMixin, TaskBase):
 
         self.parse_args()
         if self.plannings is None:
-            self.plannings = self.settings.SELECTED_PLANNINGS
+            self.plannings = self.settings.PLANNINGS.keys()
         if self.insts is None:
             self.insts = [self.settings.DEFAULT_INSTRUCTOR]
 
