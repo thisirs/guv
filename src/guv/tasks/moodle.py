@@ -52,7 +52,7 @@ TIME_FORMAT = "%H:%M"
 class CsvGroups(UVTask, CliArgsMixin):
     """Fichiers csv de groupes présents dans ``effectifs.xlsx`` pour Moodle.
 
-    Crée par défault des fichiers csv des groupes de Cours/TD/TP pour
+    Crée par défaut des fichiers csv des groupes de Cours/TD/TP pour
     chaque UV sélectionnée. Avec l'option ``-g``, on peut spécifier
     d'autres groupes à exporter sous Moodle.
 
@@ -846,6 +846,33 @@ class JsonGroup(UVTask, CliArgsMixin):
                 print(s, file=fd)
 
 
+def get_coocurrence_matrix_from_array(series):
+    """Return co-occurence matrix of a series as a Pandas dataframe."""
+    one_hot = pd.get_dummies(series)
+    return one_hot @ one_hot.T
+
+def get_coocurrence_matrix_from_partition(groups, index):
+    """Return co-occurence matrix from a partition of index."""
+    N = sum(len(p) for p in groups)
+    assert(N == len(index))
+
+    A = pd.DataFrame(np.zeros((N, N), dtype=int), index=index, columns=index)
+    for p in groups:
+        A.loc[p, p] = 1
+    return A
+
+def get_coocurrence_dict(df, columns):
+    """Return a dictionary mapping column with their coocurrence matrix."""
+    cooc_dict = {}
+    for column in columns:
+        cooc = get_coocurrence_matrix_from_array(df[column])
+        if column in cooc_dict:
+            cooc_dict[column] = cooc_dict[column] + cooc
+        else:
+            cooc_dict[column] = cooc
+    return cooc_dict
+
+
 class CsvCreateGroups(UVTask, CliArgsMixin):
     """Création aléatoire de groupes d'étudiants prêt à charger sous Moodle.
 
@@ -858,12 +885,12 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
     ``--grouping``) est controlé par une des options mutuellement
     exclusives ``--proportions``, ``--group-size`` et
     ``--num-groups``. L'option ``--proportions`` permet de spécifier
-    un nombre de groups via une liste de proportions. L'option
+    un nombre de groupes via une liste de proportions. L'option
     ``--group-size`` permet de spécifier la taille maximale de chaque
     groupe. L'option ``--num-groups`` permet de spécifier le nombre de
     sous-groupes désirés.
 
-    Le nom des groupes est controlé par l'option ``--template``. Les
+    Le nom des groupes est contrôlé par l'option ``--template``. Les
     remplacements suivants sont disponibles à l'intérieur de
     ``--template`` :
 
@@ -893,24 +920,26 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
     peut également fournir une liste de colonnes selon lesquelles
     trier.
 
-    Pour les binomes et trinomes, on peut imposer qu'ils soient
-    différents par rapport à un autre ou plusieurs groupements
-    effectués antérieurement à travers l'option ``--other-groups`` qui
-    accepte une liste de colonnes de groupes déjà construits.
+    On peut indiquer des contraintes dans la création des groupes avec l'option
+    ``--other-groups`` qui spécifie des noms de colonnes de groupes déjà formés
+    qu'on va s'efforcer de ne pas reformer. On peut également indiquer des
+    affinités dans la création des groupes avec l'option ``--affinity-groups``
+    qui spécifie des noms de colonnes de groupes déjà formés qu'on va s'efforcer
+    de reformer à nouveau.
 
     {options}
 
     Examples
     --------
 
-    - Faire des trinomes à l'intérieur de chaque sous-groupe de TD :
+    - Faire des trinômes à l'intérieur de chaque sous-groupe de TD :
 
       .. code:: bash
 
          guv csv_create_groups Projet1 -G TD --group-size 3
 
-    - Faire des trinomes à l'intérieur de chaque sous-groupe de TD sans
-      qu'aucun des trinomes n'ait déjà été choisi dans la colonne
+    - Faire des trinômes à l'intérieur de chaque sous-groupe de TD en
+      s'efforçant de choisir des nouveaux trinômes par rapport à la colonne
       ``Projet1`` :
 
       .. code:: bash
@@ -1020,7 +1049,14 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             nargs="+",
             required=False,
             default=[],
-            help="Liste de colonnes de groupes déjà formés qui ne doivent plus être reformés. Valable uniquement pour les binômes et trinômes."
+            help="Liste de colonnes de groupes déjà formés qui ne doivent plus être reformés."
+        ),
+        argument(
+            "--affinity-groups",
+            nargs="+",
+            required=False,
+            default=[],
+            help="Liste de colonnes de groupes d'affinité."
         ),
         argument(
             "--max-iter",
@@ -1125,6 +1161,11 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                 df, self.other_groups, file=self.xls_merge, base_dir=self.settings.CWD
             )
 
+        if self.affinity_groups is not None:
+            check_if_present(
+                df, self.affinity_groups, file=self.xls_merge, base_dir=self.settings.CWD
+            )
+
         # Shuffled or ordered rows according to `ordered`
         if self.ordered is None:
             df = df.sample(frac=1).reset_index(drop=True)
@@ -1207,28 +1248,21 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         value is the group name generated from `name` and `name_gen`.
 
         """
-        def get_coocurrence_matrix_from_array(series):
-            """Return co-occurence matrix of a series as a Pandas dataframe."""
-            one_hot = pd.get_dummies(series)
-            return (one_hot @ one_hot.T)
 
-        def get_coocurrence_matrix_from_partition(groups, index):
-            """Return co-occurence matrix from a partition of index."""
-            N = sum(len(p) for p in groups)
-            A = pd.DataFrame(np.zeros((N, N), dtype=int), index=index, columns=index)
-            for p in groups:
-                A.loc[p, p] = 1
-            return A
+        cooc_repulse_dict = get_coocurrence_dict(df, self.other_groups)
+        cooc_repulse = sum(cooc for _, cooc in cooc_repulse_dict.items())
+        n_repulse = len(self.other_groups)
 
-        n_constraints = len(self.other_groups)
+        cooc_affinity_dict = get_coocurrence_dict(df, self.affinity_groups)
+        cooc_affinity = sum(cooc for _, cooc in cooc_affinity_dict.items())
+        n_affinity = len(self.other_groups)
+
+        cooc_final = cooc_repulse - cooc_affinity
+        minimum_score = cooc_final.min(axis=None)
+
+        # Final distance matrix: 0 means OK, > 0 means a constraint is violated
+        cooc_final = cooc_final - minimum_score
         N = len(df.index)
-
-        cooccurence_matrices = {
-            column: get_coocurrence_matrix_from_array(df[column])
-            for column in self.other_groups
-        }
-
-        cooccurence_total = sum(cm for _, cm in cooccurence_matrices.items())
 
         old_cost = np.inf
 
@@ -1242,10 +1276,10 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             cooccurence_matrix = get_coocurrence_matrix_from_partition(groups, df.index)
 
             # Compute cost wrt to constraints
-            cost = (cooccurence_matrix * cooccurence_total).to_numpy().sum()
+            cost = (cooccurence_matrix * cooc_final).to_numpy().sum()
 
-            # Optimal cost
-            if cost == N * n_constraints:
+            # Check if cost is minimal
+            if cost == N * (n_repulse - n_affinity - minimum_score):
                 best_groups = groups
                 break
 
@@ -1261,20 +1295,20 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             niter += 1
 
         if niter < itermax:
-            if n_constraints > 0:
+            if n_affinity > 0 or n_repulse > 0:
                 logger.info(f"Partition optimale pour le groupe `{name}` trouvée en {niter+1} essais.")
         else:
             logger.warning(f"Pas de solution trouvée pour le groupe `{name}` en {itermax} essais :")
             best_cm = get_coocurrence_matrix_from_partition(best_groups, df.index)
-            for column, cm in cooccurence_matrices.items():
-                # Non-zero off-diagonal element of prod signals a
-                # common cooccurence.
+            for column, cm in cooc_repulse_dict.items():
+                # Non-zero off-diagonal element of prod signals a common
+                # cooccurence.
                 prod = cm * best_cm
                 if prod.to_numpy(dtype=int).sum() > N:
-                    logger.warning(f"- contrainte `{column}` violée {(prod.to_numpy(dtype=int).sum() - N)//2} fois :")
+                    logger.warning(f"- contrainte de non-appartenance par la colonne `{column}` violée {(prod.to_numpy(dtype=int).sum() - N)//2} fois :")
 
-                    # Compute locations as a dataframe of (index,
-                    # index) where there is a common cooccurence.
+                    # Compute locations as a dataframe of (index, index) where
+                    # there is a common cooccurence.
                     df0 = pd.melt(prod.reset_index(), id_vars="index")
                     df0.variable = df0.variable.astype(int)
                     df0 = df0.loc[(df0.value > 0) & (df0["index"] < df0["variable"]), ["index", "variable"]]
@@ -1285,7 +1319,28 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                         stu2 = " ".join(df.loc[j, ["Nom", "Prénom"]])
                         logger.warning(f"  - {stu1} -- {stu2}")
                 else:
-                    logger.warning(f"- contrainte `{column}` vérifiée")
+                    logger.warning(f"- contrainte de non-appartenance par la colonne `{column}` vérifiée")
+
+            for column, cm in cooc_affinity_dict.items():
+                # Non-zero off-diagonal element of prod signals a common
+                # cooccurence.
+                prod = (1 - cm) * best_cm
+                if prod.to_numpy(dtype=int).sum() > 0:
+                    logger.warning(f"- contrainte d'affinité par la colonne `{column}` violée {(prod.to_numpy(dtype=int).sum())//2} fois :")
+
+                    # Compute locations as a dataframe of (index, index) where
+                    # there is a common cooccurence.
+                    df0 = pd.melt(prod.reset_index(), id_vars="index")
+                    df0.variable = df0.variable.astype(int)
+                    df0 = df0.loc[(df0.value > 0) & (df0["index"] < df0["variable"]), ["index", "variable"]]
+
+                    for index, row in df0.iterrows():
+                        i, j = row[["index", "variable"]]
+                        stu1 = " ".join(df.loc[i, ["Nom", "Prénom"]])
+                        stu2 = " ".join(df.loc[j, ["Nom", "Prénom"]])
+                        logger.warning(f"  - {stu1} -- {stu2}")
+                else:
+                    logger.warning(f"- contrainte d'affinité par la colonne `{column}` vérifiée")
 
         series_list = self.add_names_to_grouping(best_groups, name, name_gen)
 
