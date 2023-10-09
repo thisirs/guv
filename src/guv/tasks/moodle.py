@@ -113,7 +113,7 @@ class CsvGroups(UVTask, CliArgsMixin):
                     base_dir=self.settings.SEMESTER_DIR,
                     errors="warning",
                 ):
-                    dff = df[["Courriel", ctype]]
+                    dff = df[["Login", ctype]]
                     if ctype in ["TP", "TD"] and self.long:
                         new_col = (
                             dff[ctype]
@@ -137,7 +137,7 @@ class CsvGroups(UVTask, CliArgsMixin):
 
         Charger les groupes sur Moodle à l'adresse {url} en spécifiant :
 
-        - Champ utilisateur: "Adresse de courriel"
+        - Champ utilisateur: "Nom d'utilisateur"
         - Inscrire dans les groupes : "Oui"
         - Créer les groupes: "Oui" s'il ne sont pas déjà créés
 
@@ -1200,8 +1200,8 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         s_groups = pd.concat(df_gen())
 
         # Add Courriel column, use index to merge
-        df_out = pd.DataFrame({"Courriel": df["Courriel"], "group": s_groups})
-        df_out = df_out.sort_values(["group", "Courriel"])
+        df_out = pd.DataFrame({"Login": df["Login"], "group": s_groups})
+        df_out = df_out.sort_values(["group", "Login"])
 
         with Output(self.target) as out:
             df_out.to_csv(out.target, index=False, header=False)
@@ -1224,7 +1224,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
 
         Charger les groupes sur Moodle à l'adresse %(url)s en spécifiant :
 
-        - Champ utilisateur: "Adresse de courriel"
+        - Champ utilisateur: "Nom d'utilisateur"
         - Inscrire dans les groupes : "Oui"
         - Créer les groupes: "Oui" s'il ne sont pas déjà créés
 
@@ -1232,8 +1232,8 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
 
         DOCS.aggregate(
             "%(filename)s",
-            on="Courriel",
-            kw_read={"header": None, "names": ["Courriel", "%(title)s_group"]}
+            on="Login",
+            kw_read={"header": None, "names": ["Login", "%(title)s_group"]}
         )
         """ % {
             "url": url,
