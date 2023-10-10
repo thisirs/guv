@@ -256,7 +256,7 @@ class Settings:
                 "verbosity": 2,
                 "default_tasks": ["week_slots"],
             }
-            to_load = Path(self.conf_dir) / "config.py"
+            to_load = [Path(self.conf_dir) / "config.py"]
 
         elif self.is_uv_dir:
             self.config_files = [
