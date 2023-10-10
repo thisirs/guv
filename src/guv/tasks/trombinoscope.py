@@ -147,7 +147,7 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
                 fp = os.path.join(
                     self.settings.SEMESTER_DIR, f"documents/images/{login}.jpg"
                 )
-                if len(content) < 100:
+                if len(content) < 3000:
                     logger.debug("Échec du téléchargement pour `%s`", login)
                     shutil.copyfile(
                         os.path.join(guv.__path__[0], "images", "inconnu.jpg"),
