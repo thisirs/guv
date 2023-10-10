@@ -261,6 +261,27 @@ class XlsStudentData(UVTask):
             dff.to_excel(out.target, index=False)
 
     def load_ENT_data(self):
+        try:
+            return self.load_ENT_data_old()
+        except pd.errors.ParserError as e:
+            return self.load_ENT_data_new()
+
+    def load_ENT_data_new(self):
+        df = pd.read_excel(self.extraction_ENT)
+
+        # Split information in 2 columns
+        df[["Branche", "Semestre"]] = df.pop('Spécialité').str.extract(
+            '(?P<Branche>[a-zA-Z]+) *(?P<Semestre>[0-9]+)',
+            expand=True
+        )
+        df["Semestre"] = pd.to_numeric(df['Semestre'])
+
+        # Drop unrelevant columns
+        df = df.drop(['Réussite', 'Résultat ECTS', 'Mention'], axis=1)
+
+        return df
+
+    def load_ENT_data_old(self):
         df = pd.read_csv(self.extraction_ENT, sep="\t", encoding='ISO_8859_1')
 
         # Split information in 2 columns
