@@ -1138,15 +1138,15 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
 
         num_placeholders = ("{group_name}" in self.template) + ("@" in self.template) + ("#" in self.template)
         if num_placeholders != 1:
-            raise Exception("Spécifier un et un seul remplacement dans la template parmi `@`, `#` et `{group_name}`")
+            raise self.parser.error("Spécifier un et un seul remplacement dans la template parmi `@`, `#` et `{group_name}`")
 
         if "{group_name}" in self.template and self.names is None:
-            raise Exception(
+            raise self.parser.error(
                 "La template contient '{group_name}' mais --names n'est pas spécifié"
             )
 
         if "{grouping_name}" in self.template and self.grouping is None:
-            raise Exception("La template contient '{grouping_name}' mais aucun groupement n'est spécifié avec l'option --grouping")
+            raise self.parser.error("La template contient '{grouping_name}' mais aucun groupement n'est spécifié avec l'option --grouping")
 
         df = XlsStudentDataMerge.read_target(self.xls_merge)
 
@@ -1176,6 +1176,9 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                 df, self.ordered, file=self.xls_merge, base_dir=self.settings.CWD
             )
             df = sort_values(df, self.ordered)
+
+        if self.ordered is not None and (self.affinity_groups or self.other_groups):
+            raise self.parser.error("L'option ``ordered`` est incompatible avec les contraintes ``other-groups`` et ``affinity_groups``.")
 
         # Add title to template
         tmpl = self.template
