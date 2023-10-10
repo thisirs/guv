@@ -1244,13 +1244,8 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             "title": self.title
         }))
 
-    def make_groups(self, name, df, name_gen):
-        """Try to make subgroups in dataframe `df`.
-
-        Returns a Pandas series whose index is the one of `df` and
-        value is the group name generated from `name` and `name_gen`.
-
-        """
+    def get_cooc_data(self, df):
+        """Return various data to handle group constraints"""
 
         cooc_repulse_dict = get_coocurrence_dict(df, self.other_groups)
         cooc_repulse = sum(cooc for _, cooc in cooc_repulse_dict.items())
@@ -1267,11 +1262,20 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         cooc_final = cooc_final - minimum_score
         N = len(df.index)
 
-        old_cost = np.inf
+        return {
+            "cooc_cost": cooc_final,
+            "min_cost": N * (n_repulse - n_affinity - minimum_score),
+            "cooc_repulse_dict": cooc_repulse_dict,
+            "cooc_affinity_dict": cooc_affinity_dict
+        }
 
+    def search_groups(self, df, cooc_data):
+        """Random search of groups that meet constraints"""
+
+        old_cost = np.inf
         niter = 0
-        itermax = self.max_iter
-        while niter < itermax:
+
+        while niter < self.max_iter:
             # New contiguous partition of df.index
             groups = self.make_groups_index(df)
 
@@ -1279,10 +1283,10 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             cooccurence_matrix = get_coocurrence_matrix_from_partition(groups, df.index)
 
             # Compute cost wrt to constraints
-            cost = (cooccurence_matrix * cooc_final).to_numpy().sum()
+            cost = (cooccurence_matrix * cooc_data["cooc_cost"]).to_numpy().sum()
 
             # Check if cost is minimal
-            if cost == N * (n_repulse - n_affinity - minimum_score):
+            if cost == cooc_data["min_cost"]:
                 best_groups = groups
                 break
 
@@ -1290,20 +1294,28 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                 old_cost = cost
                 best_groups = groups
 
-            if self.ordered:
-                raise Exception("Les groupes obtenus avec ``ordered`` sont incompatibles avec les contraintes fournies dans ``other-groups``.")
-
             # Shuffle to test a different partition
             df = df.sample(frac=1)
             niter += 1
 
-        if niter < itermax:
-            if n_affinity > 0 or n_repulse > 0:
-                logger.info(f"Partition optimale pour le groupe `{name}` trouvée en {niter+1} essais.")
+        return best_groups, niter
+
+    def make_groups_aux(self, name, df):
+        """Make groups and report"""
+
+        if not self.affinity_groups and not self.other_groups:
+            return self.make_groups_index(df)
+
+        cooc_data = self.get_cooc_data(df)
+        groups, niter = self.search_groups(df, cooc_data)
+        if niter < self.max_iter:
+            logger.info(f"Partition optimale pour le groupe `{name}` trouvée en {niter+1} essais.")
         else:
-            logger.warning(f"Pas de solution trouvée pour le groupe `{name}` en {itermax} essais :")
-            best_cm = get_coocurrence_matrix_from_partition(best_groups, df.index)
-            for column, cm in cooc_repulse_dict.items():
+            logger.warning(f"Pas de solution optimale trouvée pour le groupe `{name}` en {self.max_iter} essais, meilleure solution :")
+
+            N = len(df.index)
+            best_cm = get_coocurrence_matrix_from_partition(groups, df.index)
+            for column, cm in cooc_data["cooc_repulse_dict"].items():
                 # Non-zero off-diagonal element of prod signals a common
                 # cooccurence.
                 prod = cm * best_cm
@@ -1324,7 +1336,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                 else:
                     logger.warning(f"- contrainte de non-appartenance par la colonne `{column}` vérifiée")
 
-            for column, cm in cooc_affinity_dict.items():
+            for column, cm in cooc_data["cooc_affinity_dict"].items():
                 # Non-zero off-diagonal element of prod signals a common
                 # cooccurence.
                 prod = (1 - cm) * best_cm
@@ -1345,7 +1357,18 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                 else:
                     logger.warning(f"- contrainte d'affinité par la colonne `{column}` vérifiée")
 
-        series_list = self.add_names_to_grouping(best_groups, name, name_gen)
+        return groups
+
+    def make_groups(self, name, df, name_gen):
+        """Try to make subgroups in dataframe `df`.
+
+        Returns a Pandas series whose index is the one of `df` and
+        value is the group name generated from `name` and `name_gen`.
+
+        """
+        groups = self.make_groups_aux(name, df)
+
+        series_list = self.add_names_to_grouping(groups, name, name_gen)
 
         # Print when groups are in alphabetical order
         if self.ordered is not None and len(self.ordered) == 0:
