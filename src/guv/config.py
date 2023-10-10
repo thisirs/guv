@@ -160,6 +160,17 @@ VALIDATION_SCHEMES = {
 }
 
 
+def rel_to_dir_aux(path, root, semester_dir):
+    """Maybe shorten `path` if absolute and child of `root`"""
+    if not os.path.isabs(path):
+        return path
+
+    if os.path.commonpath([semester_dir]) == os.path.commonpath([semester_dir, path]):
+        return os.path.relpath(path, root)
+
+    return path
+
+
 class Settings:
     def __init__(self, conf_dir=None):
         if conf_dir is None:
@@ -245,7 +256,7 @@ class Settings:
                 "verbosity": 2,
                 "default_tasks": ["week_slots"],
             }
-            self.load_file(Path(self.conf_dir) / "config.py")
+            to_load = Path(self.conf_dir) / "config.py"
 
         elif self.is_uv_dir:
             self.config_files = [
@@ -264,24 +275,29 @@ class Settings:
                 "default_tasks": ["utc_uv_list_to_csv", "xls_student_data_merge"],
             }
 
-            self.load_file(Path(self.conf_dir).parent / "config.py")
-            self.load_file(Path(self.conf_dir) / "config.py")
-
+            to_load = [
+                Path(self.conf_dir).parent / "config.py",
+                Path(self.conf_dir) / "config.py"
+            ]
         else:
             raise Exception("Pas dans un dossier d'UV/semestre")
 
+        for config_file in to_load:
+            try:
+                self.load_file(config_file)
+            except ImportError as e:
+                logger.warning("Problème de chargement du fichier `%s`, ignoré",
+                               rel_to_dir_aux(config_file, self._settings["CWD"], self._settings["SEMESTER_DIR"]))
+            except Exception as e:
+                config_file = rel_to_dir_aux(config_file, self._settings["CWD"], self._settings["SEMESTER_DIR"])
+                raise ImproperlyConfigured(f"Problème de chargement du fichier `{config_file}`: {e}") from e
+
     def load_file(self, config_file):
         logger.debug("Loading configuration file: `%s`", config_file)
-
-        try:
-            module_name = os.path.splitext(os.path.basename(config_file))[0]
-            spec = importlib.util.spec_from_file_location(module_name, config_file)
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
-        except ImportError as e:
-            logger.warning("Problème de chargement du fichier `%s`, ignoré", config_file)
-        except Exception as e:
-            raise ImproperlyConfigured(f"Problème de chargement du fichier `{config_file}`: {e}") from e
+        module_name = os.path.splitext(os.path.basename(config_file))[0]
+        spec = importlib.util.spec_from_file_location(module_name, config_file)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
 
         settings = [s for s in dir(module) if s.isupper()]
         for setting in settings:
