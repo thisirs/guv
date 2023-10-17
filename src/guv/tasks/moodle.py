@@ -14,6 +14,8 @@ import math
 import os
 import pprint
 import random
+import shlex
+import sys
 import textwrap
 
 import browser_cookie3
@@ -1233,6 +1235,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
 
         Ajouter les groupes au fichier `effectifs.xlsx` avec le code suivant dans le fichier `config.py` de l'UV :
 
+        # Créé avec la commande : %(command_line)s
         DOCS.aggregate(
             "%(filename)s",
             on="Login",
@@ -1241,7 +1244,8 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         """ % {
             "url": url,
             "filename": rel_to_dir(self.target, self.settings.UV_DIR),
-            "title": self.title
+            "title": self.title,
+            "command_line": "guv " + " ".join(map(shlex.quote, sys.argv[1:]))
         }))
 
     def get_cooc_data(self, df):
