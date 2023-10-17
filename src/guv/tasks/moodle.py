@@ -152,14 +152,14 @@ class CsvGroupsGroupings(UVTask, CliArgsMixin):
     ``-G``.
 
     Le nom des groupements est controlé par un modèle spécifié par
-    l'argument ``-F`` (par défault "D##_P1"). Les remplacements
+    l'argument ``-F`` (par défaut "D##_P1"). Les remplacements
     disponibles sont :
 
     - ## : remplacé par des nombres
     - @@ : remplacé par des lettres
 
     Le nom des groupes est controlé par un modèle spécifié par
-    l'argument ``-f`` (par défault "D##_P1_@"). Les remplacements
+    l'argument ``-f`` (par défaut "D##_P1_@"). Les remplacements
     disponibles sont :
 
     - # : remplacé par des nombres

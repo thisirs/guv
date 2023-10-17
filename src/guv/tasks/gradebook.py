@@ -731,8 +731,8 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
     colonne avec ``name`` et optionnellement :
 
     - une barre de passage avec ``passing grade``, par défaut -1,
-    - un coefficient avec ``coefficient``, par défault 1,
-    - une note maximale avec ``maximum grade``, par défault 20,
+    - un coefficient avec ``coefficient``, par défaut 1,
+    - une note maximale avec ``maximum grade``, par défaut 20,
 
     Les colonnes qui ne sont pas des notes peuvent être spécifiées avec
     ``others``. Par exemple :
