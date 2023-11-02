@@ -25,7 +25,6 @@ from .moodle import (
     JsonRestriction,
 )
 from .students import (
-    CsvExamGroups,
     CsvInscrits,
     XlsStudentData,
     XlsStudentDataMerge,
