@@ -54,9 +54,14 @@ TIME_FORMAT = "%H:%M"
 class CsvGroups(UVTask, CliArgsMixin):
     """Fichiers csv de groupes présents dans ``effectifs.xlsx`` pour Moodle.
 
-    Crée par défaut des fichiers csv des groupes de Cours/TD/TP pour
-    chaque UV sélectionnée. Avec l'option ``-g``, on peut spécifier
-    d'autres groupes à exporter sous Moodle.
+    L'option ``--groups`` permet de sélectionner les colonnes de groupes à
+    exporter sous Moodle. Par défaut, les colonnes exportées sont les colonnes
+    ``Cours``, ``TD`` et ``TP``.
+
+    L'option ``--long`` permet d'exporter les noms de groupes de TD/TP au format
+    long c'est à dire ``TP1`` et ``TD1`` au lieu de ``T1`` et ``D1``
+
+    L'option ``--single`` permet de ne générer qu'un seul fichier.
 
     {options}
 
@@ -69,6 +74,7 @@ class CsvGroups(UVTask, CliArgsMixin):
 
     """
 
+    uptodate = False
     target_dir = "generated"
     target_name = "{ctype}_group_moodle.csv"
 
@@ -77,14 +83,20 @@ class CsvGroups(UVTask, CliArgsMixin):
             "-g",
             "--groups",
             nargs="+",
-            default=["Cours", "TD", "TP", "singleton"],
-            help="Liste des groupements à considérer via un nom de colonne. Par défaut, les groupements ``Cours``, ``TD``, ``TP`` et ``singleton`` sont utilisés.",
+            default=["Cours", "TD", "TP"],
+            help="Liste des groupements à considérer via un nom de colonne. Par défaut, les groupements ``Cours``, ``TD``, ``TP`` et sont utilisés.",
         ),
         argument(
             "-l",
             "--long",
             action="store_true",
-            help="Utilise les noms de groupes de Cours/TD/TP au format long, c'est à dire \"TP1\" et \"TD1\" au lieu de \"T1\" et \"D1\""
+            help="Utiliser les noms de groupes de Cours/TD/TP au format long, c'est à dire \"TP1\" et \"TD1\" au lieu de \"T1\" et \"D1\""
+        ),
+        argument(
+            "-s",
+            "--single",
+            action="store_true",
+            help="Créer un unique fichier"
         )
     )
 
@@ -93,40 +105,62 @@ class CsvGroups(UVTask, CliArgsMixin):
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
         self.file_dep = [self.xls_merge]
         self.parse_args()
-        self.targets = [
-            self.build_target(ctype=ctype)
-            for ctype in self.groups
-        ]
+        if self.single:
+            self.targets = [self.build_target(ctype="_".join(self.groups))]
+        else:
+            self.targets = [
+                self.build_target(ctype=ctype)
+                for ctype in self.groups
+            ]
+
+    def build_dataframes(self, df):
+        dfs = []
+        for column_name in self.groups:
+            if check_if_present(
+                df,
+                column_name,
+                file=self.xls_merge,
+                base_dir=self.settings.SEMESTER_DIR,
+                errors="warning",
+            ):
+                null = df[column_name].isnull()
+                if null.any():
+                    for index, row in df.loc[null].iterrows():
+                        stu = row["Nom"] + " " + row["Prénom"]
+                        logger.warning("Valeur non définie dans la colonne `%s` pour l'étudiant(e) %s", column_name, stu)
+
+                dff = df.loc[~null][["Login", column_name]]
+
+                if column_name in ["TP", "TD"] and self.long:
+                    new_col = (
+                        dff[column_name]
+                        .str.replace("D([0-9]+)", r"TD\1", regex=True)
+                        .replace("T([0-9]+)", r"TP\1", regex=True)
+                    )
+
+                    dff = dff.assign(**{column_name: new_col})
+
+                # Rename columns to be able to (eventually) concatenate
+                dff.columns = range(2)
+
+                dfs.append(dff)
+
+        return dfs
 
     def run(self):
         df = XlsStudentDataMerge.read_target(self.xls_merge)
 
-        for ctype, target in zip(self.groups, self.targets):
-            if ctype == "singleton":
-                dff = df[["Courriel", "Login"]]
+        dfs = self.build_dataframes(df)
 
+        if self.single:
+            df_final = pd.concat(dfs)
+            target = self.targets[0]
+            with Output(target) as out:
+                df_final.to_csv(out.target, index=False, header=False)
+        else:
+            for df, target in zip(dfs, self.targets):
                 with Output(target) as out:
-                    dff.to_csv(out.target, index=False, header=False)
-            else:
-                if check_if_present(
-                    df,
-                    ctype,
-                    file=self.xls_merge,
-                    base_dir=self.settings.SEMESTER_DIR,
-                    errors="warning",
-                ):
-                    dff = df[["Login", ctype]]
-                    if ctype in ["TP", "TD"] and self.long:
-                        new_col = (
-                            dff[ctype]
-                            .str.replace("D([0-9]+)", r"TD\1", regex=True)
-                            .replace("T([0-9]+)", r"TP\1", regex=True)
-                        )
-
-                        dff = dff.assign(**{ctype: new_col})
-
-                    with Output(target) as out:
-                        dff.to_csv(out.target, index=False, header=False)
+                    df.to_csv(out.target, index=False, header=False)
 
         if "MOODLE_ID" in self.settings:
             id = str(self.settings.MOODLE_ID)
