@@ -10,7 +10,6 @@ _shtab_guv_commands() {
     "createsemester:Crée un dossier de semestre"
     "createuv:Crée des dossiers d\'UV"
     "csv_create_groups:Création aléatoire de groupes d\'étudiants prêt à charger sous Moodle."
-    "csv_exam_groups:Fichier csv des demi-groupe de TP pour le passage des examens de TP"
     "csv_for_upload:Fichier csv de notes prêtes à être chargées sur l\'ENT."
     "csv_groups:Fichiers csv de groupes présents dans \`\`effectifs.xlsx\`\` pour Moodle."
     "csv_groups_groupings:Fichier csv de groupes et groupements à charger sur Moodle pour les créer."
@@ -46,7 +45,7 @@ _shtab_guv_options=(
 
 _shtab_guv_cal_inst_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
-  {-p,--plannings}"[Spécifie les UV\/UE concernées via les plannings. Par défaut, toutes les UV\/UE des plannings \`\`SELECTED_PLANNINGS\`\` sont concernées.]:plannings:"
+  {-p,--plannings}"[Spécifie les UV\/UE concernées via les plannings. Par défaut, toutes les UV\/UE des plannings configurées dans \`\`PLANNINGS\`\` sont concernées.]:plannings:"
   {-i,--insts}"[Spécifie la liste des intervenants pour qui créer le calendrier. Par défaut, la liste se limite à \`\`DEFAULT_INSTRUCTOR\`\`.]:insts:"
   "--save-tex[Permet de laisser les fichiers .tex générés pour modification éventuelle.]"
 )
@@ -78,15 +77,10 @@ _shtab_guv_csv_create_groups_options=(
   {-o,--ordered}"[Ordonner la liste des étudiants par ordre alphabétique ou par colonnes]:ordered:"
   {-g,--global}"[Ne pas remettre à zéro la suite des noms de groupes entre chaque groupement]"
   {-r,--random}"[Permuter aléatoirement les noms de groupes]"
-  "--other-groups[Liste de colonnes de groupes déjà formés qui ne doivent plus être reformés. Valable uniquement pour les binômes et trinômes.]:other_groups:"
+  "--other-groups[Liste de colonnes de groupes déjà formés qui ne doivent plus être reformés.]:other_groups:"
+  "--affinity-groups[Liste de colonnes de groupes d\'affinité.]:affinity_groups:"
   "--max-iter[Nombre maximum d\'essais pour trouver des groupes avec contraintes (par défaut \%(default)s).]:max_iter:"
   ":Nom associé à l\'ensemble des groupes créés. Repris dans le nom du fichier créé et dans le nom des groupes créés suivant la \*template\* utilisée.:"
-)
-
-_shtab_guv_csv_exam_groups_options=(
-  "(- : *)"{-h,--help}"[show this help message and exit]"
-  {-t,--tiers-temps}"[Nom de la colonne des tiers-temps (par défaut \%(default)s)]:tiers_temps:"
-  {-p,--tp}"[Nom de la colonne pour réaliser un groupement (par défaut \%(default)s)]:tp:"
 )
 
 _shtab_guv_csv_for_upload_options=(
@@ -99,8 +93,9 @@ _shtab_guv_csv_for_upload_options=(
 
 _shtab_guv_csv_groups_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
-  {-g,--groups}"[Liste des groupements à considérer via un nom de colonne. Par défaut, les groupements \`\`Cours\`\`, \`\`TD\`\`, \`\`TP\`\` et \`\`singleton\`\` sont utilisés.]:groups:"
-  {-l,--long}"[Utilise les noms de groupes de Cours\/TD\/TP au format long, c\'est à dire \"TP1\" et \"TD1\" au lieu de \"T1\" et \"D1\"]"
+  {-g,--groups}"[Liste des groupements à considérer via un nom de colonne. Par défaut, les groupements \`\`Cours\`\`, \`\`TD\`\`, \`\`TP\`\` et sont utilisés.]:groups:"
+  {-l,--long}"[Utiliser les noms de groupes de Cours\/TD\/TP au format long, c\'est à dire \"TP1\" et \"TD1\" au lieu de \"T1\" et \"D1\"]"
+  {-s,--single}"[Créer un unique fichier]"
 )
 
 _shtab_guv_csv_groups_groupings_options=(
@@ -253,7 +248,7 @@ _shtab_guv() {
   if ((${_shtab_guv_options[(I)${(q)one_or_more}*]} + ${_shtab_guv_options[(I)${(q)remainder}*]} == 0)); then  # noqa: E501
     _shtab_guv_options+=(': :_shtab_guv_commands' '*::: :->guv')
   fi
-  _arguments -C -s $_shtab_guv_options
+  _arguments -C $_shtab_guv_options
 
   case $state in
     guv)
@@ -261,37 +256,36 @@ _shtab_guv() {
       (( CURRENT += 1 ))
       curcontext="${curcontext%:*:*}:_shtab_guv-$line[1]:"
       case $line[1] in
-        cal_inst) _arguments -C -s $_shtab_guv_cal_inst_options ;;
-        cal_uv) _arguments -C -s $_shtab_guv_cal_uv_options ;;
-        createsemester) _arguments -C -s $_shtab_guv_createsemester_options ;;
-        createuv) _arguments -C -s $_shtab_guv_createuv_options ;;
-        csv_create_groups) _arguments -C -s $_shtab_guv_csv_create_groups_options ;;
-        csv_exam_groups) _arguments -C -s $_shtab_guv_csv_exam_groups_options ;;
-        csv_for_upload) _arguments -C -s $_shtab_guv_csv_for_upload_options ;;
-        csv_groups) _arguments -C -s $_shtab_guv_csv_groups_options ;;
-        csv_groups_groupings) _arguments -C -s $_shtab_guv_csv_groups_groupings_options ;;
-        doit) _arguments -C -s $_shtab_guv_doit_options ;;
-        fetch_group_id) _arguments -C -s $_shtab_guv_fetch_group_id_options ;;
-        html_inst) _arguments -C -s $_shtab_guv_html_inst_options ;;
-        html_table) _arguments -C -s $_shtab_guv_html_table_options ;;
-        ical_inst) _arguments -C -s $_shtab_guv_ical_inst_options ;;
-        ical_uv) _arguments -C -s $_shtab_guv_ical_uv_options ;;
-        json_group) _arguments -C -s $_shtab_guv_json_group_options ;;
-        json_restriction) _arguments -C -s $_shtab_guv_json_restriction_options ;;
-        maggle_teams) _arguments -C -s $_shtab_guv_maggle_teams_options ;;
-        pdf_attendance) _arguments -C -s $_shtab_guv_pdf_attendance_options ;;
-        pdf_attendance_full) _arguments -C -s $_shtab_guv_pdf_attendance_full_options ;;
-        pdf_trombinoscope) _arguments -C -s $_shtab_guv_pdf_trombinoscope_options ;;
-        send_email) _arguments -C -s $_shtab_guv_send_email_options ;;
-        xls_assignment_grade) _arguments -C -s $_shtab_guv_xls_assignment_grade_options ;;
-        xls_grade_book_group) _arguments -C -s $_shtab_guv_xls_grade_book_group_options ;;
-        xls_grade_book_jury) _arguments -C -s $_shtab_guv_xls_grade_book_jury_options ;;
-        xls_grade_book_no_group) _arguments -C -s $_shtab_guv_xls_grade_book_no_group_options ;;
-        xls_merge_final_grade) _arguments -C -s $_shtab_guv_xls_merge_final_grade_options ;;
-        xls_remplacements) _arguments -C -s $_shtab_guv_xls_remplacements_options ;;
-        xls_utp) _arguments -C -s $_shtab_guv_xls_utp_options ;;
-        yaml_qcm) _arguments -C -s $_shtab_guv_yaml_qcm_options ;;
-        zoom_breakout_rooms) _arguments -C -s $_shtab_guv_zoom_breakout_rooms_options ;;
+        cal_inst) _arguments -C $_shtab_guv_cal_inst_options ;;
+        cal_uv) _arguments -C $_shtab_guv_cal_uv_options ;;
+        createsemester) _arguments -C $_shtab_guv_createsemester_options ;;
+        createuv) _arguments -C $_shtab_guv_createuv_options ;;
+        csv_create_groups) _arguments -C $_shtab_guv_csv_create_groups_options ;;
+        csv_for_upload) _arguments -C $_shtab_guv_csv_for_upload_options ;;
+        csv_groups) _arguments -C $_shtab_guv_csv_groups_options ;;
+        csv_groups_groupings) _arguments -C $_shtab_guv_csv_groups_groupings_options ;;
+        doit) _arguments -C $_shtab_guv_doit_options ;;
+        fetch_group_id) _arguments -C $_shtab_guv_fetch_group_id_options ;;
+        html_inst) _arguments -C $_shtab_guv_html_inst_options ;;
+        html_table) _arguments -C $_shtab_guv_html_table_options ;;
+        ical_inst) _arguments -C $_shtab_guv_ical_inst_options ;;
+        ical_uv) _arguments -C $_shtab_guv_ical_uv_options ;;
+        json_group) _arguments -C $_shtab_guv_json_group_options ;;
+        json_restriction) _arguments -C $_shtab_guv_json_restriction_options ;;
+        maggle_teams) _arguments -C $_shtab_guv_maggle_teams_options ;;
+        pdf_attendance) _arguments -C $_shtab_guv_pdf_attendance_options ;;
+        pdf_attendance_full) _arguments -C $_shtab_guv_pdf_attendance_full_options ;;
+        pdf_trombinoscope) _arguments -C $_shtab_guv_pdf_trombinoscope_options ;;
+        send_email) _arguments -C $_shtab_guv_send_email_options ;;
+        xls_assignment_grade) _arguments -C $_shtab_guv_xls_assignment_grade_options ;;
+        xls_grade_book_group) _arguments -C $_shtab_guv_xls_grade_book_group_options ;;
+        xls_grade_book_jury) _arguments -C $_shtab_guv_xls_grade_book_jury_options ;;
+        xls_grade_book_no_group) _arguments -C $_shtab_guv_xls_grade_book_no_group_options ;;
+        xls_merge_final_grade) _arguments -C $_shtab_guv_xls_merge_final_grade_options ;;
+        xls_remplacements) _arguments -C $_shtab_guv_xls_remplacements_options ;;
+        xls_utp) _arguments -C $_shtab_guv_xls_utp_options ;;
+        yaml_qcm) _arguments -C $_shtab_guv_yaml_qcm_options ;;
+        zoom_breakout_rooms) _arguments -C $_shtab_guv_zoom_breakout_rooms_options ;;
       esac
   esac
 }
