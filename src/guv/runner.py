@@ -3,6 +3,7 @@ import importlib
 import inspect
 import logging
 import os
+import shlex
 import sys
 
 import jinja2
@@ -198,6 +199,7 @@ def main(argv=sys.argv[1:]):
     args, other = parser.parse_known_args(argv)
 
     try:
+        ret = None
         if "-h" in other:
             task_loader = get_task_loader()
             parser = get_parser(task_loader.tasks)
@@ -213,7 +215,7 @@ def main(argv=sys.argv[1:]):
             createsemester_parser.add_argument("--uv", nargs="*", default=[])
             args = createsemester_parser.parse_args(other)
 
-            return run_creastesemester(args)
+            ret = run_creastesemester(args)
 
         if args.command == "createuv":
             logger.debug("Run createuv task")
@@ -223,9 +225,9 @@ def main(argv=sys.argv[1:]):
             )
             createuv_parser.add_argument("uv", nargs="+")
             args = createuv_parser.parse_args(other)
-            return run_createuv(args)
+            ret = run_createuv(args)
 
-        return run_task(args.command)
+        ret = run_task(args.command)
 
     except Exception as e:
         if logger.level < logging.INFO:
@@ -234,3 +236,11 @@ def main(argv=sys.argv[1:]):
             logger.error(e)
             sys.exit(1)
 
+    else:
+        command_line = "guv " + " ".join(map(shlex.quote, sys.argv[1:])) + "\n"
+        fp = os.path.join(settings.SEMESTER_DIR, ".history")
+
+        with open(fp, "a") as file:
+            file.write(command_line)
+
+    return ret
