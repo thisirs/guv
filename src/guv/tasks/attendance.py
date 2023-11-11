@@ -285,9 +285,6 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
         if self.template is None:
             self.template = "S{number}"
 
-        if self.group is None and "{group_name}" in self.template:
-            raise Exception("Pas de groupe mais `{group_name}` présent dans le modèle")
-
         contexts = self.generate_contexts(df)
 
         render_from_contexts(
