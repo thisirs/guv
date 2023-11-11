@@ -432,11 +432,6 @@ class HtmlTable(UVTask, CliArgsMixin):
             nargs="+",
             help="Liste ou fichier contenant les intitulés des cours à la place de ``C1``, ``C2``,...",
         ),
-        argument(
-            "--header-row-format",
-            default="{beg}--{end}",
-            help="Format pour l'en-tête de chaque ligne"
-        )
     )
 
     def setup(self):
