@@ -229,7 +229,8 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
 
     .. code:: bash
 
-       guv pdf_attendance_full --group TP --template "G{number}"
+       guv pdf_attendance_full -n 7
+       guv pdf_attendance_full --group TP --template "Séance {number}"
 
     """
 
