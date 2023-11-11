@@ -6,6 +6,7 @@
 \usepackage[french]{babel}
 \usepackage[a4paper, landscape,margin=10pt]{geometry}
 \usepackage{calc}
+\usepackage{longtable}
 
 
 \begin{document}
@@ -26,7 +27,7 @@
 \setlength{\q}{(\textwidth -(((nslot+1)))\tabcolsep * \real{2} - 3cm - (((nslot+1)))\arrayrulewidth)/(((nslot)))}
 
 \begin{center}
-  \begin{tabular}{|p{3cm}|((* for i in range(nslot) *))p{\q}|((* endfor *))}
+  \begin{longtable}{|p{3cm}|((* for i in range(nslot) *))p{\q}|((* endfor *))}
     \hline
     Nom ((* for s in slots_name *)) & ((( s | escape_tex )))((* endfor *)) \\ \hline
     ((* for student in students *))
@@ -35,7 +36,7 @@
     \end{minipage}
     ((* for i in range(nslot) *)) & ((* endfor *)) \\ \hline
     ((* endfor *))
-  \end{tabular}
+  \end{longtable}
 \end{center}
 
 \end{document}
