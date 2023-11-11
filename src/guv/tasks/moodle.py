@@ -84,7 +84,7 @@ class CsvGroups(UVTask, CliArgsMixin):
             "--groups",
             nargs="+",
             default=["Cours", "TD", "TP"],
-            help="Liste des groupements à considérer via un nom de colonne. Par défaut, les groupements ``Cours``, ``TD``, ``TP`` et sont utilisés.",
+            help="Liste des groupements à considérer via un nom de colonne. Par défaut, les groupements ``Cours``, ``TD`` et ``TP`` sont utilisés.",
         ),
         argument(
             "-l",
