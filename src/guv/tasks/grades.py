@@ -74,7 +74,7 @@ class CsvForUpload(UVTask, CliArgsMixin):
             "--format",
             required=False,
             default="{msg}",
-            help="Modèle permettant de formatter plus précisément le commentaire. Le mot-clé ``msg`` représente la donnée présente dans la colonne ``--comment-colname``. Par défaut, on a ``{msg}``.",
+            help="Modèle permettant de formatter plus précisément le commentaire. Le mot-clé ``msg`` représente la donnée présente dans la colonne ``--comment-colname``. Par défaut, on a ``%(default)s``.",
         ),
     )
 

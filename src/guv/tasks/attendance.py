@@ -57,7 +57,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
             "-t",
             "--title",
             default="Feuille de présence",
-            help="Spécifie un titre qui sera utilisé dans les feuilles de présence."
+            help="Spécifie un titre qui sera utilisé dans les feuilles de présence et le nom du fichier généré. Par défaut, on a ``%(default)s``."
         ),
         argument(
             "-g",
@@ -242,7 +242,7 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
         argument(
             "--title",
             default="Feuille de présence",
-            help="Spécifie un titre qui sera utilisé dans les feuilles de présence."
+            help="Spécifie un titre qui sera utilisé dans les feuilles de présence et le nom du fichier généré. Par défaut, on a ``%(default)s``."
         ),
         argument(
             "-g",
