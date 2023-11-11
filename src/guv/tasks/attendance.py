@@ -258,7 +258,8 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
         argument(
             "-t",
             "--template",
-            help="Modèle permettant de fixer le nom des séances successives dans la feuille de présence. Par défaut on a ``S{number}``. Le seul mot-clé supporté est ``number``.",
+            default="S{number}",
+            help="Modèle permettant de fixer le nom des séances successives dans la feuille de présence. Par défaut on a ``%(default)s``. Le seul mot-clé supporté est ``number`` qui commence à 1.",
         ),
         argument(
             "--save-tex",
@@ -281,9 +282,6 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
             check_if_present(
                 df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
             )
-
-        if self.template is None:
-            self.template = "S{number}"
 
         contexts = self.generate_contexts(df)
 
