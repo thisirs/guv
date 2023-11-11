@@ -12,12 +12,6 @@ Liste des variables reconnues dans les fichiers ``config.py`` de semestre
 - ``CRENEAU_UV`` : Chemin relatif vers le fichier pdf des créneaux des
   UVS ingénieur.
 
-- ``SELECTED_PLANNINGS`` : Liste des plannings à considérer. Par
-  défaut, tous les plannings définis dans la variables ``PLANNINGS``
-  sont considérés. La liste des plannings sélectionnés est notamment
-  utilisée dans les tâches :class:`~guv.tasks.calendar.CalInst` et
-  :class:`~guv.tasks.ical.IcalInst`.
-
 - ``DEFAULT_INSTRUCTOR`` : Intervenant par défaut utilisé dans les
   tâches :class:`~guv.tasks.calendar.CalInst` et
   :class:`~guv.tasks.ical.IcalInst`.
