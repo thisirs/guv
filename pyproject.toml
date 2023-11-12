@@ -17,7 +17,6 @@ dependencies = [
   "PyPDF2>=3.0.0",
   "aiohttp",
   "browser_cookie3",
-  "datetime",
   "doit",
   "icalendar",
   "jinja2",
