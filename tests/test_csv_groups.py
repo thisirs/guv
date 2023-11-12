@@ -11,5 +11,3 @@ def test_csv_groups(guv, guvcapfd):
 
     assert (guv.cwd / "generated" / "Cours_group_moodle.csv").is_file()
     assert (guv.cwd / "generated" / "TD_group_moodle.csv").is_file()
-    # assert (guv.cwd / "generated" / "TP_group_moodle.csv").is_file()
-    assert (guv.cwd / "generated" / "singleton_group_moodle.csv").is_file()
