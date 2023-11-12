@@ -235,10 +235,12 @@ def main(argv=sys.argv[1:]):
             sys.exit(1)
 
     else:
-        command_line = "guv " + " ".join(map(shlex.quote, sys.argv[1:])) + "\n"
-        fp = os.path.join(settings.SEMESTER_DIR, ".history")
+        # Don't trigger settings loading that might fail
+        if settings._settings is not None and "SEMESTER_DIR" in settings._settings:
+            command_line = "guv " + " ".join(map(shlex.quote, sys.argv[1:])) + "\n"
+            fp = os.path.join(settings.SEMESTER_DIR, ".history")
 
-        with open(fp, "a") as file:
-            file.write(command_line)
+            with open(fp, "a") as file:
+                file.write(command_line)
 
     return ret
