@@ -83,13 +83,6 @@ Calendrier hebdomadaire
 .. automodule:: guv.tasks.students
    :exclude-members:
 
-.. autoclass:: guv.tasks.students.CsvExamGroups
-   :exclude-members:
-
-   Cette tâche dépend de :
-
-   - :class:`guv.tasks.students.XlsStudentDataMerge`
-
 .. autoclass:: guv.tasks.students.SendEmail
    :exclude-members:
 
@@ -304,7 +297,6 @@ besoin d'exécuter car elles sont des dépendances des tâches usuelles.
    - :class:`guv.tasks.moodle.CsvCreateGroups`
    - :class:`guv.tasks.moodle.CsvGroups`
    - :class:`guv.tasks.moodle.JsonGroup`
-   - :class:`guv.tasks.students.CsvExamGroups`
    - :class:`guv.tasks.students.SendEmail`
    - :class:`guv.tasks.students.ZoomBreakoutRooms`
    - :class:`guv.tasks.trombinoscope.PdfTrombinoscope`

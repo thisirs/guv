@@ -34,7 +34,6 @@ sont accessibles :
 - :class:`guv.tasks.moodle.HtmlTable`
 - :class:`guv.tasks.moodle.JsonGroup`
 - :class:`guv.tasks.moodle.JsonRestriction`
-- :class:`guv.tasks.students.CsvExamGroups`
 - :class:`guv.tasks.students.ZoomBreakoutRooms`
 - :class:`guv.tasks.students.SendEmail`
 - :class:`guv.tasks.trombinoscope.PdfTrombinoscope`
