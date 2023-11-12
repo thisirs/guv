@@ -214,10 +214,8 @@ def main(argv=sys.argv[1:]):
             createsemester_parser.add_argument("semester")
             createsemester_parser.add_argument("--uv", nargs="*", default=[])
             args = createsemester_parser.parse_args(other)
-
             ret = run_creastesemester(args)
-
-        if args.command == "createuv":
+        elif args.command == "createuv":
             logger.debug("Run createuv task")
             createuv_parser = argparse.ArgumentParser(
                 prog="guv createuv",
@@ -226,8 +224,8 @@ def main(argv=sys.argv[1:]):
             createuv_parser.add_argument("uv", nargs="+")
             args = createuv_parser.parse_args(other)
             ret = run_createuv(args)
-
-        ret = run_task(args.command)
+        else:
+            ret = run_task(args.command)
 
     except Exception as e:
         if logger.level < logging.INFO:
