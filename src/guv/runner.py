@@ -198,8 +198,8 @@ def main(argv=sys.argv[1:]):
     parser.add_argument("command", nargs="?")
     args, other = parser.parse_known_args(argv)
 
+    ret = None
     try:
-        ret = None
         if "-h" in other:
             task_loader = get_task_loader()
             parser = get_parser(task_loader.tasks)
@@ -236,7 +236,7 @@ def main(argv=sys.argv[1:]):
 
     else:
         # Don't trigger settings loading that might fail
-        if settings._settings is not None and "SEMESTER_DIR" in settings._settings:
+        if ret == 0 and settings._settings is not None and "SEMESTER_DIR" in settings._settings:
             command_line = "guv " + " ".join(map(shlex.quote, sys.argv[1:])) + "\n"
             fp = os.path.join(settings.SEMESTER_DIR, ".history")
 
