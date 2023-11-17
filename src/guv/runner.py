@@ -235,8 +235,13 @@ def main(argv=sys.argv[1:]):
             sys.exit(1)
 
     else:
-        # Don't trigger settings loading that might fail
-        if ret == 0 and settings._settings is not None and "SEMESTER_DIR" in settings._settings:
+
+        if (
+            ret == 0
+            and settings._settings is not None # Don't trigger settings loading that might fail
+            and "SEMESTER_DIR" in settings._settings
+            and sys.argv[1:]
+        ):
             command_line = "guv " + " ".join(map(shlex.quote, sys.argv[1:])) + "\n"
             fp = os.path.join(settings.SEMESTER_DIR, ".history")
 
