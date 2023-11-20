@@ -145,7 +145,7 @@ class ReplaceRegex(Operation):
     avant toute modification (avec un suffixe ``_orig``). Si
     l'argument ``new_colname`` est fourni la colonne est copiée vers
     une nouvelle colonne de nom ``new_colname`` et les modifications
-    sont faites sur cette nouvelle colonnne.
+    sont faites sur cette nouvelle colonne.
 
     Un message ``msg`` peut être spécifié pour décrire ce que fait la
     fonction, il sera affiché lorsque l'agrégation sera effectuée.
@@ -228,7 +228,7 @@ class ReplaceColumn(Operation):
     avant toute modification (avec un suffixe ``_orig``). Si
     l'argument ``new_colname`` est fourni la colonne est copiée vers
     une nouvelle colonne de nom ``new_colname`` et les modifications
-    sont faites sur cette nouvelle colonnne.
+    sont faites sur cette nouvelle colonne.
 
     Un message ``msg`` peut être spécifié pour décrire ce que fait la
     fonction, il sera affiché lorsque l'agrégation sera effectuée.
@@ -377,7 +377,7 @@ class ApplyDf(Operation):
 
 
 class ApplyColumn(Operation):
-    """Modifie une colonne existente avec une fonction.
+    """Modifie une colonne existante avec une fonction.
 
     ``colname`` est un nom de colonne existant et ``func`` une fonction
     prenant en argument un élément de la colonne et retournant un
@@ -430,7 +430,7 @@ class ComputeNewColumn(Operation):
 
     Les colonnes nécessaires au calcul sont renseignées dans ``cols``.
     Au cas où, on voudrait changer la colonne utilisée pour le calcul
-    sans changer la function ``func``, il est possible de fournir un
+    sans changer la fonction ``func``, il est possible de fournir un
     tuple ``("col" "other_col")`` où ``col`` est le nom utilisé dans
     ``func`` et ``other_col`` est la vraie colonne utilisée.
 
@@ -1473,7 +1473,7 @@ def swap_column(df, lines, colname):
 
 
 class AggregateMoodleGroups(FileOperation):
-    """Agrége des données de groupes issue de l'activité "Choix de Groupe".
+    """Agrège des données de groupes issue de l'activité "Choix de Groupe".
 
     Le nom de la colonne des groupes étant toujours "Groupe", l'argument
     ``colname`` permet d'en spécifier un nouveau.

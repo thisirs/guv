@@ -384,9 +384,9 @@ class XlsStudentData(UVTask):
         "Incorpore les données Cours/TD/TP des inscrits UTC"
 
         if "Nom" not in df.columns:
-            raise Exception("Pas de colonnes 'Nom' pour agréger les données")
+            raise Exception("Pas de colonne 'Nom' pour agréger les données")
         if "Prénom" not in df.columns:
-            raise Exception("Pas de colonnes 'Prénom' pour agréger les données")
+            raise Exception("Pas de colonne 'Prénom' pour agréger les données")
 
         # Données issues du fichier des affectations au Cours/TD/TP
         dfu = pd.read_csv(fn)
