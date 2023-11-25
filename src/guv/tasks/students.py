@@ -230,7 +230,7 @@ class XlsStudentData(UVTask):
             if self.csv_moodle is not None:
                 logger.info(
                     "Ajout des données issues de Moodle: `%s`",
-                    rel_to_dir(self.csv_moodle, self.settings.MOODLE_LISTING),
+                    rel_to_dir(self.csv_moodle, self.settings.cwd),
                 )
 
                 if not os.path.isfile(self.csv_moodle):
