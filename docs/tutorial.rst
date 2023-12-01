@@ -321,7 +321,7 @@ Par exemple, dans le fichier pointé par ``CHANGEMENT_TD`` :
 .. code:: text
 
    # Échange autorisé
-   Ryland Grace --- Guy Montag
+   Cheradenine Zakalwe --- Éléthiomel Zakalwe
 
    # Incompatibilité Master
    Mycroft Canner --- D1
