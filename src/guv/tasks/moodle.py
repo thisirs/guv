@@ -1286,7 +1286,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
 
         cooc_affinity_dict = get_coocurrence_dict(df, self.affinity_groups)
         cooc_affinity = sum(cooc for _, cooc in cooc_affinity_dict.items())
-        n_affinity = len(self.other_groups)
+        n_affinity = len(self.affinity_groups)
 
         cooc_final = cooc_repulse - cooc_affinity
         minimum_score = cooc_final.min(axis=None)
