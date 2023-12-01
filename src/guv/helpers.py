@@ -27,7 +27,7 @@ def slugrot(*columns):
         )
 
         s = s.apply(slugrot_string)
-        s.name = "_".join(columns)
+        s.name = "guv_" + "_".join(columns)
         return s
 
     return func
