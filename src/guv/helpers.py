@@ -1492,10 +1492,17 @@ class AggregateMoodleGroups(FileOperation):
         self.colname = colname
 
     def apply(self, df):
+        if "Adresse de courriel" in df.columns:
+            left_on = "Adresse de courriel"
+            right_on = "Adresse de courriel"
+        else:
+            left_on = slugrot("Nom", "Prénom")
+            right_on = slugrot("Nom", "Prénom")
+
         op = Aggregate(
             self.filename,
-            left_on="Courriel",
-            right_on="Adresse de courriel",
+            left_on=left_on,
+            right_on=right_on,
             drop=[
                 "Nom",
                 "Prénom",
