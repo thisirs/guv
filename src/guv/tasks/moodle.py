@@ -1295,9 +1295,11 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         cooc_final = cooc_final - minimum_score
         N = len(df.index)
 
+        diagonal_cost = N * (n_repulse - n_affinity - minimum_score)
+
         return {
             "cooc_cost": cooc_final,
-            "min_cost": N * (n_repulse - n_affinity - minimum_score),
+            "min_cost": diagonal_cost,
             "cooc_repulse_dict": cooc_repulse_dict,
             "cooc_affinity_dict": cooc_affinity_dict
         }
