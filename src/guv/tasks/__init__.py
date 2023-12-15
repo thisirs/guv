@@ -13,7 +13,7 @@ from .calendar import CalInst, CalUv
 from .gradebook import XlsGradeBookGroup, XlsGradeBookJury, XlsGradeBookNoGroup
 from .grades import (CsvForUpload, XlsAssignmentGrade, XlsMergeFinalGrade,
                      YamlQCM, CsvAmcList)
-from .ical import IcalInst, IcalUv
+from .ical import IcalInst, IcalUv, IcalSlots
 from .instructors import WeekSlotsDetails, XlsInstructors, XlsRemplacements
 from .moodle import (
     CsvCreateGroups,
