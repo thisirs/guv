@@ -13,6 +13,7 @@ import unidecode
 
 import guv
 
+
 def argument(*args, **kwargs):
     return SimpleNamespace(args=args, kwargs=kwargs)
 
@@ -30,14 +31,11 @@ def md5(fname):
 def hash_rot_md5(a):
     """Return a hash invariant by rotation"""
 
-    def substring():
-        b = a + a
-        for i in range(len(a)):
-            yield b[i : (i + len(a))]
-
+    b = a + a
+    subseqs = np.unique(np.array([b[i : (i + len(a))] for i in range(len(a))]))
     s0 = "0" * len(a)
     s0 = md5(s0)
-    for s in substring():
+    for s in subseqs:
         s0 = hexxor(s0, md5(s))
 
     return s0

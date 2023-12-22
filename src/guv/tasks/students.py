@@ -25,7 +25,7 @@ from openpyxl.utils import get_column_letter
 from openpyxl.utils.dataframe import dataframe_to_rows
 
 from ..exceptions import ImproperlyConfigured
-from ..helpers import Documents
+from ..helpers import Documents, id_slug, Aggregator
 from ..logger import logger
 from ..utils import argument, sort_values
 from ..utils_config import Output, check_if_present, rel_to_dir, ask_choice
@@ -306,6 +306,8 @@ class XlsStudentData(UVTask):
             df = pd.read_csv(fn)
         elif fn.endswith(".xlsx") or fn.endswith(".xls"):
             df = pd.read_excel(fn, engine="openpyxl")
+        else:
+            raise Exception("Format de fichier non reconnu")
 
         nans = df["Nom"].isna() | df["Prénom"].isna()
         if sum(nans) != 0:
@@ -327,38 +329,44 @@ class XlsStudentData(UVTask):
     def add_moodle_data(self, df, df_moodle):
         """Incorpore les données du fichier extrait de Moodle"""
 
-        # On réalise la jointure à l'aide de l'adresse email s'il
-        # elle est présente
         if "Courriel" not in df.columns:
-            raise Exception("La colonne `Courriel` n'est pas présente")
+            raise Exception("La colonne `Courriel` n'est pas présente dans le fichier central")
 
-        dfm = pd.merge(
-            df,
-            df_moodle,
-            suffixes=("", "_moodle"),
-            how="outer",
-            left_on="Courriel",
-            right_on="Adresse de courriel",
-            indicator=True,
+        moodle_short_email = re.match(f"^\w+@", df_moodle.iloc[0]["Adresse de courriel"]) is not None
+        ent_short_email = re.match(f"^\w+@", df.iloc[0]["Courriel"]) is not None
+
+        if moodle_short_email ^ ent_short_email:
+            logger.warning("Les adresses courriels sont dans un format différent, agrégation avec les colonnes `Nom` et `Prénom`")
+            left_on = right_on = id_slug("Nom", "Prénom")
+        else:
+            left_on = "Courriel"
+            right_on = "Adresse de courriel"
+
+        # Outer aggregation only to handle specifically mismatches
+        agg = Aggregator(
+            left_df=df,
+            right_df=df_moodle,
+            left_on=left_on,
+            right_on=right_on,
+            right_suffix="_moodle"
         )
+        agg.outer_aggregate()
 
-        dfm_both = dfm.loc[dfm["_merge"] == "both"]
-
-        # On affiche la différence symétrique
-        lo = dfm.loc[dfm["_merge"] == "left_only"]
+        # Warn of any mismatch
+        lo = agg.outer_merged_df.loc[agg.outer_merged_df["_merge"] == "left_only"]
         for index, row in lo.iterrows():
             fullname = row["Nom"] + " " + row["Prénom"]
             logger.warning("`%s` n'est pas présent dans les données Moodle", fullname)
 
-        ro = dfm.loc[dfm["_merge"] == "right_only"]
+        ro = agg.outer_merged_df.loc[agg.outer_merged_df["_merge"] == "right_only"]
         for index, row in ro.iterrows():
             fullname = row["Nom_moodle"] + " " + row["Prénom_moodle"]
             logger.warning("`%s` n'est pas présent dans le fichier central", fullname)
 
-        dfm = dfm.drop("_merge", axis=1)
-        dfm = dfm.loc[~pd.isnull(dfm.Nom)]
+        # Base dataframe to add row to
+        df_both = agg.outer_merged_df.loc[agg.outer_merged_df["_merge"] == "both"]
 
-        # On demande à l'utilisateur de réaliser les correspondances
+        # Ask user to do the matching
         for index, row in lo.iterrows():
             if len(ro.index) != 0:
                 fullname = row["Nom"] + " " + row["Prénom"]
@@ -376,18 +384,17 @@ class XlsStudentData(UVTask):
                     row_merge = lo.loc[index, :].combine_first(ro.iloc[choice, :])
                     ro = ro.drop(index=ro.iloc[[choice]].index)
                     row_merge["_merge"] = "both"
-                    dfm_both = dfm_both.append(row_merge)
+                    df_both = pd.concat((df_both, row_merge.to_frame().T))
                 else:
                     row_merge = lo.loc[index, :].copy()
                     row_merge["_merge"] = "both"
-                    dfm_both = pd.concat((dfm_both, row_merge.to_frame().T))
+                    df_both = pd.concat((df_both, row_merge.to_frame().T))
             else:
                 row_merge = lo.loc[index, :].copy()
                 row_merge["_merge"] = "both"
-                dfm_both = pd.concat((dfm_both, row_merge.to_frame().T))
+                df_both = pd.concat((df_both, row_merge.to_frame().T))
 
-        dfm_both = dfm_both.drop("_merge", axis=1)
-        return dfm_both
+        return agg.clean_merge(df_both)
 
     def add_UTC_data(self, df, fn):
         "Incorpore les données Cours/TD/TP des inscrits UTC"

@@ -14,6 +14,8 @@ from .config import settings
 from .logger import logger
 from .utils import slugrot_string
 from .utils_config import rel_to_dir, check_if_present, check_if_absent, check_filename
+from .aggregator import Aggregator, ColumnsMerger
+from .operation import Operation
 
 
 def slugrot(*columns):
@@ -33,18 +35,26 @@ def slugrot(*columns):
     return func
 
 
-class Operation:
-    """Base class for operation to apply to `effectif.xlsx`."""
+def make_concat(*columns):
+    def func(df):
+        check_if_present(df, columns)
+        s = df[list(columns)].apply(
+            lambda x: "".join(x.astype(str)),
+            axis=1
+        )
 
-    def message(self):
-        return "Pas de message"
+        s.name = "guv_" + "_".join(columns)
+        return s
 
-    @property
-    def deps(self):
-        return []
+    return func
 
-    def apply(self, df):
-        pass
+
+def concat(*columns):
+    return ColumnsMerger(*columns, func=make_concat(*columns))
+
+
+def id_slug(*columns):
+    return ColumnsMerger(*columns, func=slugrot(*columns))
 
 
 class FillnaColumn(Operation):
@@ -689,18 +699,16 @@ class Aggregate(FileOperation):
         Le chemin du fichier csv/Excel à agréger.
 
     left_on : :obj:`str`
-        Le nom de colonne présent dans le fichier ``effectif.xlsx``
-        pour réaliser la jointure. Au cas où la colonne n'existe pas,
-        on peut spécifier une fonction prenant en argument le
-        *DataFrame* et renvoyant une *Series* utilisée pour la
-        jointure (voir fonction :func:`guv.helpers.slugrot`).
+        Le nom de colonne présent dans le fichier ``effectif.xlsx`` pour
+        réaliser la jointure. On peut également utiliser les fonctions
+        :func:`guv.helpers.id_slug` et :func:`guv.helpers.concat` pour une
+        jointure prenant en compte plusieurs colonnes.
 
     right_on : :obj:`str`
         Le nom de colonne présent dans le fichier à incorporer pour
-        réaliser la jointure. Au cas où la colonne n'existe pas,
-        on peut spécifier une fonction prenant en argument le
-        *DataFrame* et renvoyant une *Series* utilisée pour la
-        jointure (voir fonction :func:`guv.helpers.slugrot`).
+        réaliser la jointure. On peut également utiliser les fonctions
+        :func:`guv.helpers.id_slug` et :func:`guv.helpers.concat` pour une
+        jointure prenant en compte plusieurs colonnes.
 
     on : :obj:`str`
         Raccourci lorsque ``left_on`` et ``right_on`` ont la même
@@ -801,8 +809,8 @@ class Aggregate(FileOperation):
          from guv.helpers import slugrot
          DOCS.aggregate(
              "documents/notes.csv",
-             left_on=slugrot("Nom", "Prénom"),
-             right_on=slugrot("Nom", "Prénom")
+             left_on=id_slug("Nom", "Prénom"),
+             right_on=id_slug("Nom", "Prénom")
          )
 
     """
@@ -856,7 +864,7 @@ class Aggregate(FileOperation):
             left_on = self.left_on
             right_on = self.right_on
 
-        return aggregate_df(
+        agg = Aggregator(
             left_df,
             right_df,
             left_on=left_on,
@@ -867,6 +875,8 @@ class Aggregate(FileOperation):
             drop=self.drop,
             rename=self.rename,
         )
+
+        return agg.left_aggregate()
 
 
 class AggregateOrg(FileOperation):
@@ -966,14 +976,14 @@ class AggregateOrg(FileOperation):
         df_org = pd.DataFrame(parse_org(text), columns=["header", self.colname])
 
         if self.on is None:
-            left_on = slugrot("Nom", "Prénom")
-            right_on = slugrot("header")
+            left_on = id_slug("Nom", "Prénom")
+            right_on = id_slug("header")
         else:
             left_on = self.on
             right_on = "header"
 
-        df = aggregate_df(left_df, df_org, left_on, right_on, postprocessing=self.postprocessing)
-        return df
+        agg = Aggregator(left_df, df_org, left_on, right_on, postprocessing=self.postprocessing)
+        return agg.aggregate()
 
 
 class FileStringOperation(FileOperation):
@@ -1203,184 +1213,6 @@ def replace_column_aux(
     return df
 
 
-def aggregate_df(
-    left_df,
-    right_df,
-    left_on,
-    right_on,
-    preprocessing=None,
-    postprocessing=None,
-    subset=None,
-    drop=None,
-    rename=None,
-):
-    """Merge two dataframes"""
-
-    if preprocessing is not None:
-        if not isinstance(preprocessing, list):
-            preprocessing = [preprocessing]
-
-        for op in preprocessing:
-            if isinstance(op, Operation):
-                right_df = op.apply(right_df)
-                logger.info("Preprocessing: %s", op.message())
-            elif callable(op):
-                if hasattr(op, "__desc__"):
-                    logger.info("Preprocessing: %s", op.__desc__)
-                else:
-                    logger.info("Preprocessing")
-                right_df = op(right_df)
-            else:
-                raise Exception("Unsupported preprocessing operation", op)
-
-    # Columns that will be removed after merging
-    drop_cols = []
-
-    # Flag if left_on is a computed column
-    left_on_is_added = False
-
-    # Add column if callable, callable should return of pandas
-    # Series
-    if callable(left_on):
-        left_on = left_on(left_df)
-        left_df = left_df.assign(**{left_on.name: left_on.values})
-        left_on = left_on.name
-        left_on_is_added = True
-
-    # Check if it exists
-    if isinstance(left_on, str):
-        # Check that left_on column exists
-        check_if_present(left_df, left_on)
-    else:
-        raise Exception("L'argument 'left_on' doit être un callable ou une chaine de caractères")
-
-    # Add column if callable
-    if callable(right_on):
-        right_on = right_on(right_df)
-        right_df = right_df.assign(**{right_on.name: right_on.values})
-        right_on = right_on.name
-
-    # Check if it exists
-    if isinstance(right_on, str):
-        check_if_present(right_df, right_on)
-    else:
-        raise Exception("Unsupported type for right_on")
-
-    # Warn if right_on contains duplicates
-    if any(right_df[right_on].duplicated()):
-        logger.warning("La colonne `right_on` du fichier à agréger contient des clés identiques")
-
-    # Extract subset of columns, right_on included
-    if subset is not None:
-        if isinstance(subset, str):
-            subset = [subset]
-
-        check_if_present(right_df, subset)
-        right_df = right_df[[right_on] + subset]
-
-    # Allow to drop columns, right_on not allowed
-    if drop is not None:
-        if isinstance(drop, str):
-            drop = [drop]
-
-        if right_on in drop:
-            raise Exception(f"La colonne `{right_on}` est une clé et ne peut pas être enlevée")
-
-        right_df = right_df.drop(drop, axis=1, errors="ignore")
-
-    # Rename columns in data to be merged
-    if rename is not None:
-        if right_on in rename:
-            raise Exception("Pas de renommage de la clé possible")
-
-        check_if_present(right_df, rename.keys())
-        right_df = right_df.rename(columns=rename)
-
-    # Columns to drop after merge: primary key of right dataframe
-    # only if name is different, _merge column added by pandas
-    # during merge, programmatically added column if
-    # left_on_is_added is set
-    drop_cols = ['_merge']
-    if right_on != left_on:
-        if right_on in left_df.columns:
-            drop_cols += [right_on + "_y"]
-        else:
-            drop_cols += [right_on]
-
-    if left_on_is_added:
-        drop_cols += [left_on]
-
-    # Record same column name between right_df and left_df to
-    # merge them eventually
-    duplicated_columns = set(left_df.columns).intersection(set(right_df.columns))
-    duplicated_columns = duplicated_columns.difference(set([left_on, right_on]))
-
-    # Outer merge
-    merged_df = left_df.merge(right_df,
-                              left_on=left_on,
-                              right_on=right_on,
-                              how='outer',
-                              suffixes=('', '_y'),
-                              indicator=True)
-
-    # Select like how='left' as result
-    agg_df = merged_df[merged_df["_merge"].isin(['left_only', 'both'])]
-
-    # Select right only and report
-    merged_df_ro = merged_df[merged_df["_merge"] == 'right_only']
-    key = right_on
-    if (right_on != left_on and right_on in left_df.columns):
-        key = key + "_y"
-
-    for index, row in merged_df_ro.iterrows():
-        logger.warning(
-            "Identifiant présent dans le document à aggréger "
-            "mais introuvable dans le fichier central : `%s`",
-            row[key],
-        )
-
-    if postprocessing is not None:
-        if not isinstance(postprocessing, (list, tuple)):
-            postprocessing = [postprocessing]
-
-        for op in postprocessing:
-            if isinstance(op, Operation):
-                agg_df = op.apply(agg_df)
-                logger.info("Postprocessing: %s", op.message())
-            elif callable(op):
-                if hasattr(op, "__desc__"):
-                    logger.info("Postprocessing: %s", op.__desc__)
-                else:
-                    logger.info("Postprocessing")
-                agg_df = op(agg_df)
-            else:
-                raise Exception("Unsupported postprocessing operation", op)
-
-    # Try to merge columns
-    for c in duplicated_columns:
-        c_y = c + '_y'
-        logger.warning("Fusion des colonnes `%s`", c)
-        if any(agg_df[c_y].notna() & agg_df[c].notna()):
-            logger.warning("Fusion impossible")
-            continue
-
-        dtype = agg_df.loc[:, c].dtype
-        agg_df.loc[:, c] = agg_df.loc[:, c].fillna(agg_df.loc[:, c_y])
-        new_dtype = agg_df.loc[:, c].dtype
-        if new_dtype != dtype:
-            logger.warning("Le type de la colonne a changé suite à la fusion: %s -> %s", dtype, new_dtype)
-            try:
-                logger.warning("Conversion de type")
-                agg_df.loc[:, c] = agg_df[c].astype(dtype)
-            except ValueError:
-                logger.warning("Conversion impossible")
-        drop_cols.append(c_y)
-
-    # Drop useless columns
-    agg_df = agg_df.drop(drop_cols, axis=1, errors='ignore')
-
-    return agg_df
-
 def read_pairs(lines):
     """Generate pairs read in `lines`. """
 
@@ -1492,12 +1324,12 @@ class AggregateMoodleGroups(FileOperation):
         self.colname = colname
 
     def apply(self, df):
-        if "Adresse de courriel" in df.columns:
-            left_on = "Adresse de courriel"
-            right_on = "Adresse de courriel"
+        if re.match(r"^\w+@", df.iloc[0]["Courriel"]) is not None:
+            left_on = id_slug("Nom", "Prénom")
+            right_on = id_slug("Nom", "Prénom")
         else:
-            left_on = slugrot("Nom", "Prénom")
-            right_on = slugrot("Nom", "Prénom")
+            left_on = "Courriel"
+            right_on = "Adresse de courriel"
 
         op = Aggregate(
             self.filename,
@@ -1536,12 +1368,12 @@ class AggregateMoodleGrades(FileOperation):
         self.rename = rename
 
     def apply(self, df):
-        if "Adresse de courriel" in df.columns:
-            left_on = "Adresse de courriel"
-            right_on = "Adresse de courriel"
+        if re.match(r"^\w+@", df.iloc[0]["Courriel"]) is not None:
+            left_on = id_slug("Nom", "Prénom")
+            right_on = id_slug("Nom", "Prénom")
         else:
-            left_on = slugrot("Nom", "Prénom")
-            right_on = slugrot("Nom", "Prénom")
+            left_on = "Courriel"
+            right_on = "Adresse de courriel"
 
         op = Aggregate(
             self.filename,
