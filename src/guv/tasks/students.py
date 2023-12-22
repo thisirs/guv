@@ -348,34 +348,43 @@ class XlsStudentData(UVTask):
         lo = dfm.loc[dfm["_merge"] == "left_only"]
         for index, row in lo.iterrows():
             fullname = row["Nom"] + " " + row["Prénom"]
-            logger.warning("add_moodle_data: `%s` not in Moodle data", fullname)
+            logger.warning("`%s` n'est pas présent dans les données Moodle", fullname)
 
         ro = dfm.loc[dfm["_merge"] == "right_only"]
         for index, row in ro.iterrows():
             fullname = row["Nom_moodle"] + " " + row["Prénom_moodle"]
-            logger.warning("add_moodle_data: `%s` only in Moodle data", fullname)
+            logger.warning("`%s` n'est pas présent dans le fichier central", fullname)
 
         dfm = dfm.drop("_merge", axis=1)
         dfm = dfm.loc[~pd.isnull(dfm.Nom)]
 
         # On demande à l'utilisateur de réaliser les correspondances
         for index, row in lo.iterrows():
-            fullname = row["Nom"] + " " + row["Prénom"]
-            logger.info("Recherche de correspondance pour `%s` :", fullname)
-            for i, (index_ro, row_ro) in enumerate(ro.iterrows()):
-                fullname_ro = row_ro["Nom_moodle"] + " " + row_ro["Prénom_moodle"]
-                print(f"  ({i}) {fullname_ro}")
+            if len(ro.index) != 0:
+                fullname = row["Nom"] + " " + row["Prénom"]
+                logger.info("Recherche de correspondance pour `%s` :", fullname)
+                for i, (index_ro, row_ro) in enumerate(ro.iterrows()):
+                    fullname_ro = row_ro["Nom_moodle"] + " " + row_ro["Prénom_moodle"]
+                    print(f"  ({i}) {fullname_ro}")
 
-            choice = ask_choice(
-                "Choix ? (entrée si pas de correspondance) ",
-                {**{str(i): i for i in range(len(ro.index))}, "": None}
-            )
+                choice = ask_choice(
+                    "Choix ? (entrée si pas de correspondance) ",
+                    {**{str(i): i for i in range(len(ro.index))}, "": None}
+                )
 
-            if choice is not None:
-                row_merge = lo.loc[index, :].combine_first(ro.iloc[choice, :])
-                ro = ro.drop(index=ro.iloc[[choice]].index)
+                if choice is not None:
+                    row_merge = lo.loc[index, :].combine_first(ro.iloc[choice, :])
+                    ro = ro.drop(index=ro.iloc[[choice]].index)
+                    row_merge["_merge"] = "both"
+                    dfm_both = dfm_both.append(row_merge)
+                else:
+                    row_merge = lo.loc[index, :].copy()
+                    row_merge["_merge"] = "both"
+                    dfm_both = pd.concat((dfm_both, row_merge.to_frame().T))
+            else:
+                row_merge = lo.loc[index, :].copy()
                 row_merge["_merge"] = "both"
-                dfm_both = dfm_both.append(row_merge)
+                dfm_both = pd.concat((dfm_both, row_merge.to_frame().T))
 
         dfm_both = dfm_both.drop("_merge", axis=1)
         return dfm_both
@@ -426,22 +435,28 @@ class XlsStudentData(UVTask):
 
         # Trying to merge manually lo and ro
         for index, row in lo.iterrows():
-            fullname = row["Nom"] + " " + row["Prénom"]
-            logger.info("Recherche de correspondance pour `%s` :", fullname)
-            for i, (index_ro, row_ro) in enumerate(ro.iterrows()):
-                fullname_ro = row_ro["Name"]
-                print(f"  ({i}) {fullname_ro}")
+            if len(ro.index) != 0:
+                fullname = row["Nom"] + " " + row["Prénom"]
+                logger.info("Recherche de correspondance pour `%s` :", fullname)
 
-            choice = ask_choice(
-                "Choix ? (entrée si pas de correspondance) ",
-                {**{str(i): i for i in range(len(ro.index))}, "": None}
-            )
+                for i, (index_ro, row_ro) in enumerate(ro.iterrows()):
+                    fullname_ro = row_ro["Name"]
+                    print(f"  ({i}) {fullname_ro}")
 
-            if choice is not None:
-                row_merge = lo.loc[index, :].combine_first(ro.iloc[choice, :])
-                ro = ro.drop(index=ro.iloc[[choice]].index)
-                row_merge["_merge"] = "both"
-                dfr_clean = pd.concat((dfr_clean, row_merge.to_frame().T))
+                choice = ask_choice(
+                    "Choix ? (entrée si pas de correspondance) ",
+                    {**{str(i): i for i in range(len(ro.index))}, "": None}
+                )
+
+                if choice is not None:
+                    row_merge = lo.loc[index, :].combine_first(ro.iloc[choice, :])
+                    ro = ro.drop(index=ro.iloc[[choice]].index)
+                    row_merge["_merge"] = "both"
+                    dfr_clean = pd.concat((dfr_clean, row_merge.to_frame().T))
+                else:
+                    row_merge = lo.loc[index, :].copy()
+                    row_merge["_merge"] = "both"
+                    dfr_clean = pd.concat((dfr_clean, row_merge.to_frame().T))
             else:
                 row_merge = lo.loc[index, :].copy()
                 row_merge["_merge"] = "both"
