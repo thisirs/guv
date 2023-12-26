@@ -6,7 +6,7 @@ class Documents:
         na_value: Optional[str] = None,
         group_column: Optional[str] = None
     ):
-        pass
+        ...
 
     def replace_regex(
         self,
@@ -16,7 +16,7 @@ class Documents:
         backup: Optional[bool] = False,
         msg: Optional[str] = None,
     ):
-        pass
+        ...
 
     def replace_column(
         self,
@@ -26,22 +26,22 @@ class Documents:
         backup: Optional[bool] = False,
         msg: Optional[str] = None,
     ):
-        pass
+        ...
 
     def apply_df(self, func: Callable, msg: Optional[str] = None):
-        pass
+        ...
 
     def apply_column(self, colname: str, func: Callable, msg: Optional[str] = None):
-        pass
+        ...
 
     def compute_new_column(self, *cols: str, func: Callable, colname: str, msg: Optional[str] = None):
-        pass
+        ...
 
     def apply_cell(self, name_or_email: str, colname: str, value, msg: Optional[str] = None):
-        pass
+        ...
 
     def add(self, filename: str, func: callable):
-        pass
+        ...
 
     def aggregate(
         self,
@@ -58,7 +58,7 @@ class Documents:
         read_method: Optional[Callable] = None,
         kw_read: Optional[dict] = {}
     ):
-        pass
+        ...
 
     def aggregate_org(
         self,
@@ -67,10 +67,10 @@ class Documents:
         on: Optional[str] = None,
         postprocessing: Union[None, Callable, Operation] = None,
     ):
-        pass
+        ...
 
     def flag(self, filename_or_string: str, *, colname: str, flags: Optional[List[str]] = ["Oui", ""]):
-        pass
+        ...
 
     def switch(
         self,
@@ -80,10 +80,14 @@ class Documents:
         backup: bool = False,
         new_colname: Optional[str] = None,
     ):
-        pass
+        ...
 
-    def aggregate_moodle_grades(self, filename: str, rename: Optional[dict] = None):
-        pass
+    def aggregate_moodle_groups(self, filename: str, colname: str):
+        ...
+
+    def aggregate_moodle_grades(self, filename: str, rename: Optional[dict] = None,):
+        ...
 
     def aggregate_jury(self, filename: str):
-        pass
+        ...
+
