@@ -285,9 +285,6 @@ class Settings:
         for config_file in to_load:
             try:
                 self.load_file(config_file)
-            except ImportError as e:
-                logger.warning("Problème de chargement du fichier `%s`, ignoré",
-                               rel_to_dir_aux(config_file, self._settings["CWD"], self._settings["SEMESTER_DIR"]))
             except Exception as e:
                 config_file = rel_to_dir_aux(config_file, self._settings["CWD"], self._settings["SEMESTER_DIR"])
                 raise ImproperlyConfigured(f"Problème de chargement du fichier `{config_file}`: {e}") from e
