@@ -10,7 +10,7 @@ authors = [
 readme = "README.md"
 description = "Programme d'aide à la gestion d'UV"
 dynamic = ["version"]
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 license = {text = "MIT"}
 scripts = {guv = "guv.runner:main"}
 dependencies = [
