@@ -3,6 +3,7 @@ import importlib
 import inspect
 import logging
 import os
+import re
 import shlex
 import sys
 
@@ -80,7 +81,7 @@ def create_uv_dirs(base_dir, uvs):
 
 
 def run_creastesemester(args):
-    base_dir = os.path.join(os.getcwd(), args.semester)
+    base_dir = os.path.join(os.getcwd(), args.directory)
     doc_dir = os.path.join(base_dir, "documents")
     gen_dir = os.path.join(base_dir, "generated")
 
@@ -95,9 +96,19 @@ def run_creastesemester(args):
 
     tmpl_dir = os.path.join(guv.__path__[0], "templates")
     jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(tmpl_dir))
+
+    semester_id = args.semester or args.directory
+    if (m := re.fullmatch("([aApP])([0-9]{2})", semester_id)) is not None:
+        semester_id = m.group(1).upper() + "20" + m.group(2)
+    elif re.fullmatch("([aApP])([0-9]{4})", semester_id) is not None:
+        semester_id = semester_id.upper()
+
+    # Get template for config.py from semester_id
     try:
-        tmpl = jinja_env.get_template(f"semester_config_{args.semester}.py.jinja2")
+        tmpl = jinja_env.get_template(f"semester_config_{semester_id}.py.jinja2")
+        logger.info("Utilisation du fichier de configuration pour le semestre %s", semester_id)
     except jinja2.exceptions.TemplateNotFound:
+        logger.info("Utilisation du fichier de configuration par défaut")
         tmpl = jinja_env.get_template("semester_config.py.jinja2")
 
     context = {
@@ -211,8 +222,9 @@ def main(argv=sys.argv[1:]):
                 prog="guv createsemester",
                 description="Crée un dossier de semestre",
             )
-            createsemester_parser.add_argument("semester")
+            createsemester_parser.add_argument("directory")
             createsemester_parser.add_argument("--uv", nargs="*", default=[])
+            createsemester_parser.add_argument("--semester")
             args = createsemester_parser.parse_args(other)
             ret = run_creastesemester(args)
         elif args.command == "createuv":

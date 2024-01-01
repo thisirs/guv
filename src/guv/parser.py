@@ -55,8 +55,9 @@ def get_parser(tasks, add_hidden=False):
         description="Crée un dossier de semestre",
         help="Crée un dossier de semestre",
     )
-    createsemester_parser.add_argument("semester")
-    createsemester_parser.add_argument("--uv", nargs="*", default=[])
+    createsemester_parser.add_argument("directory", help="Nom du dossier à créer")
+    createsemester_parser.add_argument("--semester", help="Nom du semestre")
+    createsemester_parser.add_argument("--uv", nargs="*", default=[], help="Liste des UV/UE à ajouter")
 
     createuv_parser = subparsers.add_parser(
         "createuv", description="Crée des dossiers d'UV", help="Crée des dossiers d'UV"
