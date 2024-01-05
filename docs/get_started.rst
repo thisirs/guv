@@ -7,37 +7,25 @@ Installation
 
    pip install guv --index-url https://gitlab.utc.fr/api/v4/projects/9255/packages/pypi/simple
 
-On peut également cloner le projet avec ``git`` et ensuite l'installer
-comme suit :
-
-.. code:: bash
-
-   git clone git@gitlab.utc.fr:syrousse/guv.git
-   cd guv
-   pip install .
-
-Un fichier de complétion de commandes est également disponible (voir
-:ref:`fichier-de-complétion`).
-
 Exemple rapide
 ==============
 
-On commence par créer l'arborescence requise (voir
-:ref:`création-de-larborescence` pour plus de détails) :
+On commence par créer l'arborescence requise avec la sous-commande
+``createsemester`` (voir :ref:`création-de-larborescence` pour plus de
+détails). Par exemple :
 
 .. code:: bash
 
    guv createsemester P2022 --uv SY02 SY09
    cd P2022
 
-Les variables ont été renseignées dans le fichier ``config.py`` du
-semestre.
+Le fichier ``config.py`` du semestre est déjà pré-rempli avec les données du
+semestre correspondant et les UVs fournies.
 
-On renseigne ensuite dans le fichier `config.py` du semestre, le
-chemin relatif du fichier pdf de la liste officielle des créneaux du
-semestre disponible `ici
-<https://webapplis.utc.fr/ent/services/services.jsf?sid=578>`__. Si on
-le place dans le sous-dossier ``documents``, on écrit :
+On renseigne ensuite dans ce même fichier, le chemin relatif du fichier pdf de
+la liste officielle des créneaux du semestre disponible `ici
+<https://webapplis.utc.fr/ent/services/services.jsf?sid=578>`__. Si on le place
+dans le sous-dossier ``documents``, on écrit :
 
 .. code:: python
 
