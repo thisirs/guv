@@ -113,7 +113,7 @@ def run_creastesemester(args):
 
     context = {
         "UVS": ", ".join(f'"{e}"' for e in args.uv),
-        "SEMESTER": args.semester,
+        "SEMESTER": args.directory,
     }
     content = tmpl.render(context)
     new_path = os.path.join(base_dir, "config.py")
