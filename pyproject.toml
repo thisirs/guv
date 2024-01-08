@@ -55,7 +55,7 @@ doc = [
 where = ["src"]
 
 [tool.setuptools.package-data]
-guv = ["schemas", "data", "images", "templates"]
+guv = ["schemas/*", "data/*", "images/*", "templates/*"]
 
 [tool.setuptools.dynamic]
 version = {attr = "guv.__version__"}
