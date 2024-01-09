@@ -69,7 +69,7 @@ skipsdist = true
 deps = pytest
        pytest-dependency
        pytest-order
-commands = pip install -e .
+commands = pip install .
            pytest {posargs}
 
 [testenv:docs]
