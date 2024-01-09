@@ -674,23 +674,22 @@ class Add(FileOperation):
 class Aggregate(FileOperation):
     """Agrégation d'un tableau provenant d'un fichier Excel/csv.
 
-    Les arguments ``left_on`` et ``right_on`` sont les clés pour
-    réaliser une jointure : ``left_on`` est la clé du *DataFrame*
-    existant et ``right_on`` est la clé du *DataFrame* à agréger présent
-    dans le fichier. ``left_on`` et ``right_on`` peuvent aussi être
-    des callable prenant en argument le *DataFrame* correspondant et
-    renvoyant une nouvelle colonne avec laquelle faire la jointure.
-    Dans le cas où ``left_on`` et ``right_on`` ont la même valeur, on
+    Les arguments ``left_on`` et ``right_on`` sont des noms de colonnes pour
+    réaliser une jointure : ``left_on`` est une colonne présente dans le fichier
+    central ``effectif.xlsx`` et ``right_on`` est une colonne du fichier à
+    agréger. Dans le cas où la jointure est plus complexe, on peut utiliser les
+    fonctions :func:`guv.helpers.id_slug` et :func:`guv.helpers.concat` (voir
+    Exemples) Dans le cas où ``left_on`` et ``right_on`` ont la même valeur, on
     peut seulement spécifier ``on``.
 
-    ``subset`` est une liste des colonnes à garder si on ne veut pas
-    agréger la totalité des colonnes, ``drop`` une liste des colonnes
-    à enlever. ``rename`` est un dictionnaire des colonnes à renommer.
-    ``read_method`` est un *callable* appelé avec ``kw_read`` pour lire
-    le fichier contenant le *DataFrame* à agréger. ``preprocessing`` et
-    ``postprocessing`` sont des *callable* qui prennent en argument un
-    *DataFrame* et en renvoie un et qui réalise un pré ou post
-    traitement sur l'agrégation.
+    ``subset`` est une liste des colonnes à garder si on ne veut pas agréger la
+    totalité des colonnes, ``drop`` une liste des colonnes à enlever. ``rename``
+    est un dictionnaire des colonnes à renommer. ``read_method`` est un
+    *callable* appelé avec ``kw_read`` pour lire le fichier contenant le
+    *DataFrame* à agréger. ``preprocessing`` et ``postprocessing`` sont des
+    *callable* qui prennent en argument un *DataFrame* et en renvoie un et qui
+    réalise respectivement un pré-traitement sur le fichier à agréger ou un
+    post-traitement sur l'agrégation.
 
     Parameters
     ----------
@@ -799,9 +798,9 @@ class Aggregate(FileOperation):
              kw_read={"header": None, "names": ["Courriel", "Note"]},
          )
 
-    - Agrégation d'un fichier csv de notes suivant les colonnes
-      ``Nom`` et ``Prénom`` en calculant un *slug* sur ces deux
-      colonnes pour une mise en correspondance plus souple (accents,
+    - Agrégation d'un fichier csv de notes suivant les colonnes ``Nom`` et
+      ``Prénom`` en calculant un identifiant (slug) sur ces deux colonnes pour
+      une mise en correspondance plus souple (robuste par rapport aux accents,
       majuscules, tirets,...) :
 
       .. code:: python
@@ -811,6 +810,19 @@ class Aggregate(FileOperation):
              "documents/notes.csv",
              left_on=id_slug("Nom", "Prénom"),
              right_on=id_slug("Nom", "Prénom")
+         )
+
+    - Agrégation d'un fichier csv de notes suivant les colonnes ``Nom`` et
+      ``Prénom`` en les concaténant car le fichier à agréger contient seulement
+      une colonne avec ``Nom`` et ``Prénom`` :
+
+      .. code:: python
+
+         from guv.helpers import slugrot
+         DOCS.aggregate(
+             "documents/notes.csv",
+             left_on=concat("Nom", "Prénom"),
+             right_on="Nom_Prénom"
          )
 
     """
