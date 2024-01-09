@@ -203,7 +203,7 @@ informations comme les informations Moodle, les changements de TD/TP
 mais elles sont facultatives.
 
 Lorsque les modifications du fichier ``config.py`` ont été faites, il
-suffit d'exécuter la commande ``guv`` sans argument dans le dossier
+suffit d'exécuter la commande **guv** sans argument dans le dossier
 d'UV/UE pour que les différentes informations soient incorporées à un
 fichier central nommé ``effectif.xlsx`` (ainsi qu'une version csv)
 situé à la racine du dossier d'UV/UE.
@@ -466,7 +466,7 @@ effectuées.
 Pour cela, il faut remplir les fichiers ``planning_hebdomadaire.xlsx``
 situés dans le sous-dossier ``documents`` de chaque UV/UE. Ces
 fichiers sont automatiquement générés s'ils n'existent pas lorsqu'on
-exécute simplement ``guv`` sans argument dans le dossier de semestre.
+exécute simplement **guv** sans argument dans le dossier de semestre.
 
 Les fichiers ``planning_hebdomadaire.xlsx`` contiennent toutes les
 séances de l'UV/UE concernée d'après le fichier pdf renseigné dans
