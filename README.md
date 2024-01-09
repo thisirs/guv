@@ -15,15 +15,6 @@ feuilles de notes...
 pip install guv --index-url https://gitlab.utc.fr/api/v4/projects/9255/packages/pypi/simple
 ```
 
-On peut également cloner le projet avec `git` et ensuite l'installer comme
-suit :
-
-``` shell
-git clone git@gitlab.utc.fr:syrousse/guv.git
-cd guv
-pip install .
-```
-
 ## Exemple rapide
 
 On commence par créer l'arborescence requise :
@@ -49,5 +40,5 @@ On peut maintenant exécuter ``guv cal_uv`` dans le dossier ``P2022``
 pour générer les calendriers hebdomadaires des UV ou bien ``guv
 ical_uv`` pour générer des fichiers iCal de tous les créneaux.
 
-Voir la documentation [ici](https://syrousse.gitlab.utc.fr/guv/) pour
+Voir la [documentation](https://syrousse.gitlab.utc.fr/guv/) pour
 plus de détails.
