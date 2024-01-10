@@ -11,7 +11,7 @@ class Documents:
     def replace_regex(
         self,
         colname: str,
-        *reps,
+        *reps: str,
         new_colname: Optional[str] = None,
         backup: Optional[bool] = False,
         msg: Optional[str] = None,
