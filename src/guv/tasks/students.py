@@ -500,7 +500,7 @@ class XlsStudentDataMerge(UVTask):
         self.target = self.build_target()
 
         base_dir = os.path.join(self.settings.SEMESTER_DIR, self.uv)
-        documents = Documents(base_dir=base_dir)
+        documents = Documents(base_dir=base_dir, info=self.info)
 
         if "CHANGEMENT_COURS" in self.settings and self.settings.CHANGEMENT_COURS:
             documents.switch(

@@ -43,6 +43,9 @@ class Documents:
     def add(self, filename: str, func: callable):
         ...
 
+    def aggregate_self(self, *columns: str):
+        ...
+
     def aggregate(
         self,
         filename: str,

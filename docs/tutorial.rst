@@ -452,6 +452,12 @@ on peut utiliser les fonctions suivantes :
 
    .. automethod:: guv.helpers.Documents.compute_new_column
 
+Une dernière possibilité est la fonction ``aggregate_self`` qui permet de garder
+les colonnes qui ont été modifiées manuellement dans le fichier central.
+
+   .. automethod:: guv.helpers.Documents.compute_aggregate_self
+
+
 Configurations supplémentaires
 ==============================
 

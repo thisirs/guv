@@ -891,6 +891,47 @@ class Aggregate(FileOperation):
         return agg.left_aggregate()
 
 
+class AggregateSelf(Operation):
+    """Agrégation du fichier central ``effectif.xlsx`` lui-même.
+
+    Il est parfois plus pratique d'ajouter soi-même des colonnes dans le fichier
+    central ``effectif.xlsx`` au lieu d'en ajouter programmatiquement via
+    ``DOCS.aggregate(...)`` par exemple. Comme *guv* ne peut pas détecter de
+    façon fiable les colonnes ajoutées, il faut lui indiquer lesquelles ont été
+    manuellement ajoutées et qu'il faut garder lors de la mise à jour du fichier
+    central ``effectif.xlsx`.
+
+    Parameters
+    ----------
+
+    *columns : any number of :obj:`str`
+        Les colonnes manuellement ajoutées à garder lors de la mise à jour du fichier central.
+
+    """
+
+    def __init__(self, *columns):
+        super().__init__()
+        self.columns = columns
+
+    def apply(self, left_df):
+        from .tasks.students import XlsStudentDataMerge # Circular deps
+        right_df = XlsStudentDataMerge.read_target(XlsStudentDataMerge.target_from(**self.info))
+
+        agg = Aggregator(
+            left_df,
+            right_df,
+            left_on="Login",
+            right_on="Login",
+            subset=list(self.columns),
+        )
+
+        return agg.left_aggregate()
+
+    def message(self, ref_dir=None):
+        msg = ", ".join(f"`{e}`" for e in self.columns)
+        return f"Ajoute les colonnes manuelles : {msg}"
+
+
 class AggregateOrg(FileOperation):
     """Agrégation d'un fichier au format Org.
 
@@ -1442,7 +1483,8 @@ class AggregateJury(FileOperation):
 
 
 class Documents:
-    def __init__(self, base_dir=None):
+    def __init__(self, base_dir=None, info=None):
+        self.info = info
         self._base_dir = base_dir
         self._actions = []
 
@@ -1458,6 +1500,7 @@ class Documents:
 
     def add_action(self, action):
         action.base_dir = self.base_dir
+        action.info = self.info
         self._actions.append(action)
 
     @property
@@ -1498,6 +1541,7 @@ actions = [
     ("compute_new_column", ComputeNewColumn),
     ("add", Add),
     ("aggregate", Aggregate),
+    ("aggregate_self", AggregateSelf),
     ("aggregate_moodle_grades", AggregateMoodleGrades),
     ("aggregate_moodle_groups", AggregateMoodleGroups),
     ("aggregate_jury", AggregateJury),
