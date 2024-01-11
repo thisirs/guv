@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.abspath('../src'))
 # -- Project information -----------------------------------------------------
 
 project = 'guv'
-copyright = '2021-2022, Sylvain Rousseau'
+copyright = '2021-2024, Sylvain Rousseau'
 author = 'Sylvain Rousseau'
 
 
@@ -30,6 +30,7 @@ author = 'Sylvain Rousseau'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'myst_parser',
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode'
@@ -106,8 +107,7 @@ def doc_cli_args(parser):
     return """
 .. rubric:: Options
 
-{options}
-""".format(options="\n".join(docs))
+{options}\n""".format(options="\n".join(docs))
 
 
 def expand_block(parser, line):

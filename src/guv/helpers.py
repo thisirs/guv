@@ -899,7 +899,7 @@ class AggregateSelf(Operation):
     ``DOCS.aggregate(...)`` par exemple. Comme *guv* ne peut pas détecter de
     façon fiable les colonnes ajoutées, il faut lui indiquer lesquelles ont été
     manuellement ajoutées et qu'il faut garder lors de la mise à jour du fichier
-    central ``effectif.xlsx`.
+    central ``effectif.xlsx``.
 
     Parameters
     ----------
