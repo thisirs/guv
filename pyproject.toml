@@ -74,6 +74,7 @@ commands = pip install .
 
 [testenv:docs]
 deps = sphinx
+       myst_parser
        furo
        schema
 commands = sphinx-build -b html docs public {posargs}
