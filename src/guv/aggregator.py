@@ -198,7 +198,7 @@ class Aggregator:
             subset = list(set(self.right_merger.required_columns + subset))
             self._right_df = self._right_df[subset]
 
-        # Drop columns. Dropping required columns for the merge not allowed.
+        # Drop columns. Dropping required columns for the merge is not allowed.
         if self.drop is not None:
             drop = [self.drop] if isinstance(self.drop, str) else self.drop
 
