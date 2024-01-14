@@ -308,6 +308,26 @@ class Aggregator:
 
         return self.clean_merge(self._left_merge_df)
 
-    def merge_columns(self, df):
-        return merge_columns(df)
+    def merge_columns(self, df, strategy="merge", columns=[]):
+        "Try to merge columns that are duplicated after merge."
 
+        if strategy == "merge":
+            return merge_columns(df)
+        elif strategy == "keep_left":
+            return keep_left_columns(df, columns)
+        elif strategy == "keep_right":
+            return keep_right_columns(df, columns)
+        else:
+            raise ValueError("Unknown strategy", strategy)
+
+
+def keep_left_columns(df, columns):
+    duplicated_columns = [c + "_y" for c in df.columns if ((c + "_y" in df.columns) and (c in columns))]
+    df = df.drop(duplicated_columns, axis=1)
+    return df
+
+def keep_right_columns(df, columns):
+    duplicated_columns = [c for c in df.columns if ((c + "_y" in df.columns) and (c in columns))]
+    df = df.drop(duplicated_columns, axis=1)
+    df = df.rename(columns={c + "_y": c for c in duplicated_columns})
+    return df

@@ -925,7 +925,8 @@ class AggregateSelf(Operation):
             subset=list(self.columns),
         )
 
-        return agg.left_aggregate()
+        agg_df = agg.left_aggregate()
+        return agg.merge_columns(agg_df, strategy="keep_right", columns=self.columns)
 
     def message(self, ref_dir=None):
         msg = ", ".join(f"`{e}`" for e in self.columns)
