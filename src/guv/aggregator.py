@@ -202,8 +202,10 @@ class Aggregator:
         if self.drop is not None:
             drop = [self.drop] if isinstance(self.drop, str) else self.drop
 
-            if set(drop).intersection(set(self.right_merger.required_columns)):
-                raise Exception()
+            inter = list(set(drop).intersection(set(self.right_merger.required_columns)))
+            if inter:
+                msg = ", ".join(f"`{c}`" for c in inter)
+                raise Exception(f"Les colonnes {msg} sont nécessaires et ne peuvent pas être supprimées")
 
             self._right_df = self._right_df.drop(drop, axis=1, errors="ignore")
 
