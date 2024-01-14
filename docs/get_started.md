@@ -7,7 +7,6 @@ fichiers de configuration. Il permet entre autres de créer des fichiers
 iCal, des trombinoscopes, des feuilles de présences, des feuilles de
 notes...
 
-
 ## Installation
 
 **guv** est installable directement via `pip` :
