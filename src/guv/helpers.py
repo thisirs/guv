@@ -1467,7 +1467,7 @@ class AggregateMoodleGrades(FileOperation):
         elif self.filename.endswith(".xlsx") or self.filename.endswith(".xls"):
             right_df = pd.read_excel(self.filename, engine="openpyxl", **kw_read)
         else:
-            raise Exception("No read method and unsupported file extension")
+            raise Exception("Fichier Excel ou csv seulement")
 
         return right_df
 
