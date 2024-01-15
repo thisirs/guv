@@ -1401,12 +1401,14 @@ class AggregateMoodleGroups(FileOperation):
 
 
 class AggregateMoodleGrades(FileOperation):
-    """Agrège toutes les notes issues de Moodle.
+    """Agrège des feuilles de notes provenant de Moodle.
 
-    Les notes peuvent être téléchargées avec un certain nombre de
-    colonnes inutiles. Cette tâche permet d'agréger uniquement les
-    notes présentes dans le fichier Excel ou csv. Un renommage des
-    colonnes peut être effectué en renseignant ``rename``.
+    La feuille de notes peut être un export du carnet de notes de Moodle, un
+    export des notes d'une activité quiz ou un export d'une activité devoir sous
+    la forme d'un fichier Excel ou csv.
+
+    Les colonnes inutiles seront éliminées. Un renommage des colonnes peut être
+    effectué en renseignant ``rename``.
 
     Examples
     --------
@@ -1417,35 +1419,122 @@ class AggregateMoodleGrades(FileOperation):
 
     """
 
-    def __init__(self, filename: str, rename: Optional[dict] = None,):
+    gradesheet_columns = [
+        "Prénom",
+        "Nom",
+        "Numéro d'identification",
+        "Institution",
+        "Département",
+        "Adresse de courriel",
+        "Dernier téléchargement depuis ce cours",
+    ]
+
+    quiz_columns = [
+        "Nom",
+        "Prénom",
+        "Adresse de courriel",
+        "État",
+        "Commencé le",
+        "Terminé",
+        "Temps utilisé",
+    ]
+
+    assignment_columns = [
+        "Identifiant",
+        "Nom complet",
+        "Adresse de courriel",
+        "Statut",
+        "Groupe",
+        "Note maximale",
+        "La note peut être modifiée",
+        "Dernière modification (travail remis)",
+        "Dernière modification (note)",
+        "Feedback par commentaires",
+    ]
+
+    def __init__(
+        self,
+        filename: str,
+        rename: Optional[dict] = None,
+    ):
         super().__init__(filename)
         self.rename = rename
 
-    def apply(self, df):
-        if re.match(r"^\w+@", df.iloc[0]["Courriel"]) is not None:
-            left_on = id_slug("Nom", "Prénom")
-            right_on = id_slug("Nom", "Prénom")
+    def load_filename(self):
+        kw_read = {"na_values": "-"}
+        if self.filename.endswith(".csv"):
+            right_df = pd.read_csv(self.filename, **kw_read)
+        elif self.filename.endswith(".xlsx") or self.filename.endswith(".xls"):
+            right_df = pd.read_excel(self.filename, engine="openpyxl", **kw_read)
         else:
-            left_on = "Courriel"
-            right_on = "Adresse de courriel"
+            raise Exception("No read method and unsupported file extension")
 
-        op = Aggregate(
-            self.filename,
+        return right_df
+
+    def apply(self, left_df):
+        right_df = self.load_filename()
+        columns = set(right_df.columns.values)
+
+        is_gradesheet = set(self.gradesheet_columns).issubset(set(columns))
+        is_quiz = set(self.quiz_columns).issubset(set(columns))
+        is_assignment = set(self.assignment_columns).issubset(set(columns))
+
+        if is_gradesheet:
+            drop = self.gradesheet_columns
+            logger.debug("Feuille de notes reconnue")
+        elif is_quiz:
+            drop = self.quiz_columns
+            logger.debug("Feuille de notes de quiz reconnue")
+        elif is_assignment:
+            drop = self.assignment_columns
+            logger.debug("Feuille de notes de devoir reconnue")
+        else:
+            raise Exception("Le fichier n'est pas reconnu comme une feuille de notes Moodle")
+
+        moodle_short_email = (
+            re.match(f"^\w+@", right_df.iloc[0]["Adresse de courriel"]) is not None
+        )
+        ent_short_email = re.match(f"^\w+@", left_df.iloc[0]["Courriel"]) is not None
+
+        def left_right():
+            if not (moodle_short_email ^ ent_short_email):
+                return "Courriel", "Adresse de courriel"
+
+            if "Adresse de courriel" in left_df.columns:
+                ent_short_email2 = (
+                    re.match(f"^\w+@", left_df.iloc[0]["Adresse de courriel"])
+                    is not None
+                )
+                if not (moodle_short_email ^ ent_short_email2):
+                    return "Adresse de courriel", "Adresse de courriel"
+
+            if is_assignment:
+                right_on = id_slug("Nom complet")
+            else:
+                right_on = id_slug("Nom", "Prénom")
+
+            if "Nom_moodle" in left_df.columns and "Prénom_moodle" in left_df.columns:
+                left_on = id_slug("Nom_moodle", "Prénom_moodle")
+            else:
+                left_on = id_slug("Nom", "Prénom")
+
+            return left_on, right_on
+
+        left_on, right_on = left_right()
+
+        # Don't try to drop a required column
+        if right_on in drop:
+            drop.remove(right_on)
+
+        agg = Aggregator(
+            left_df=left_df,
+            right_df=right_df,
             left_on=left_on,
             right_on=right_on,
-            kw_read={"na_values": "-"},
             rename=self.rename,
-            drop=[
-                "Prénom",
-                "Nom",
-                "Numéro d'identification",
-                "Institution",
-                "Département",
-                "Total du cours (Brut)",
-                "Dernier téléchargement depuis ce cours",
-            ]
+            drop=drop,
         )
-        return op.apply(df)
+        return agg.left_aggregate()
 
 
 class AggregateJury(FileOperation):
