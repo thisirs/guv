@@ -338,9 +338,22 @@ class CliArgsMixin:
 class CliArgsInheritMixin(CliArgsMixin):
     """Mixin allowing more flexibility on the generated cli parser"""
 
+    name_required = True
+    name_default = None
+
     def add_arguments(self):
         self._parser = argparse.ArgumentParser()
-        self.add_argument("--name", required=True, help="Nom de la feuille de notes")
+        if self.name_required:
+            self.add_argument(
+                "--name", required=True, help="Nom de la feuille de notes"
+            )
+        else:
+            self.add_argument(
+                "--name",
+                required=False,
+                default=self.name_default,
+                help="Nom de la feuille de notes",
+            )
 
     def add_argument(self, *args, **kwargs):
         self._parser.add_argument(*args, **kwargs)

@@ -785,6 +785,8 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
 
     config_help = "Fichier de configuration spécifiant les notes à utiliser"
     config_required = False
+    name_required = False
+    name_default = "jury"
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
