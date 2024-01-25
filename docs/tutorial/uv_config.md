@@ -96,7 +96,7 @@ suivantes :
 
 Il s'agit d'un simple fichier texte avec commentaire éventuel listant
 ligne par ligne les étudiants bénéficiant d'un tiers-temps. Il crée la
-colonne `tiers-temps` dans le fichier central `effectifs.xlsx` de
+colonne `tiers-temps` dans le fichier central `effectif.xlsx` de
 l'UV.
 
 On peut le renseigner dans la variable `TIERS_TEMPS`. Par exemple :
@@ -111,7 +111,7 @@ Bob Arctor
 Il s'agit de fichiers de prise en compte des changements de groupes de
 TD/TP par rapport au groupes officiels tels que décrits par le fichier
 `AFFECTATION_LISTING` et présents dans les colonnes "TD" et "TP" du
-fichier `effectifs.xlsx`.
+fichier `effectif.xlsx`.
 
 Chaque ligne repère un changement qui est de la forme
 `id1 --- id2`. Les identifiants peuvent être des adresses courriel ou

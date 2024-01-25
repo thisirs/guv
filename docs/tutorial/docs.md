@@ -4,7 +4,7 @@
 
 Les informations concernant l'effectif d'une UV sont toutes
 rassemblées dans un fichier central Excel situé à la racine de l'UV :
-`effectifs.xlsx`. Un certain nombre d'informations y sont déjà
+`effectif.xlsx`. Un certain nombre d'informations y sont déjà
 incorporées automatiquement : l'effectif officiel via la variable
 `ENT_LISTING`, les affectations au Cours/TD/TP ainsi que les données
 Moodle, les tiers-temps, les changements de TD/TP et les informations

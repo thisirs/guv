@@ -4,7 +4,7 @@ Beaucoup de tâches écrivent des fichiers avec un nom prédéfini dans un
 dossier prédéfini. Il est possible de changer ces valeurs par défaut en
 utilisant les attributs de classe `target_name` et `target_dir` de
 la tâche correspondante. Par exemple, la tâche `XlsStudentDataMerge`
-est responsable de la création du fichier `effectifs.xlsx` dans le
+est responsable de la création du fichier `effectif.xlsx` dans le
 dossier de l'UV.
 
 Pour changer cela, on peut écrire le code suivant dans le fichier
