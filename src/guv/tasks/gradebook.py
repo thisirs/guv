@@ -708,14 +708,24 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
 class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
     """Fichier Excel pour la gestion d'un jury d'UV
 
-    Cette tâche permet de générer un classeur regroupant sur la
+    Cette tâche permet de générer un fichier Excel pour la gestion d'un jury
+    d'UV/UE. L'argument optionnel ``--name`` permet de spécifier un nom au
+    fichier (par défaut "jury"). Le chemin 
+
+    L'argument optionnel ``--config`` permet de spécifier un fichier pour
+    configurer les données nécessaires au jury. S'il n'est pas fourni, une
+    configuration sera demandée interactivement.
+
+    Plus précisément, le classeur créé contient deux feuilles avec sur la
     première feuille :
 
+    - les colonnes ``Nom``, ``Prénom``, ``Courriel`` du fichier central
+      ``effectif.xlsx``,
     - les notes spécifiées dans le fichier de configuration via
-      ``--config`` qui participent à la note finale,
+      ``--config`` ou interactivement qui participent à la note finale,
     - une colonne spéciale nommée "Note agrégée" contenant une note sur 20 avec
       une formule par défaut utilisant les coefficients et les notes maximales
-      renseignées dans le fichier de configuration,
+      renseignées dans le fichier de configuration ou interactivement,
     - une note ECTS (ABCDEF) automatiquement calculée représentant la note
       agrégée en fonction de percentiles,
     - d'autres colonnes utiles pour le jury et qui ne sont pas des notes.
@@ -726,9 +736,8 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
     ainsi que quelques statistiques sur la répartition des notes.
 
     Le fichier de configuration est un fichier au format YAML. Les notes devant
-    être utilisées (qu'elles existent ou non dans le fichier ``effectifs.xlsx``)
-    sont listées dans la section ``grades``. On doit spécifier le nom de la
-    colonne avec ``name`` et optionnellement :
+    être utilisées sont listées dans la section ``grades``. On doit spécifier le
+    nom de la colonne avec ``name`` et optionnellement :
 
     - une barre de passage avec ``passing grade``, par défaut -1,
     - un coefficient avec ``coefficient``, par défaut 1,
@@ -766,17 +775,20 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
 
       .. code:: bash
 
-         guv xls_grade_book_jury --name SY02_jury --config documents/config_jury.yml
+         guv xls_grade_book_jury --config documents/config_jury.yml
 
       avec le fichier YAML contenant par exemple :
 
       .. code:: yaml
 
          grades:
+           - name: quiz
+             coefficient: 0.2
+             maximum grade: 10
            - name: median
-             coefficient: .4
+             coefficient: 0.3
            - name: final
-             coefficient: .6
+             coefficient: 0.5
              passing grade: 6
          others:
            - Branche
