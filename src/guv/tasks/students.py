@@ -566,6 +566,11 @@ class XlsStudentDataMerge(UVTask):
 
         dff = sort_values(df, ["Nom", "Prénom"])
 
+        # Write set of columns for completion
+        fp = os.path.join(self.settings.SEMESTER_DIR, self.uv, "generated", ".columns.list")
+        with open(fp, "w") as file:
+            file.write("\n".join(f"\"{e}\"" for e in df.columns.values))
+
         # Get column dimensions of original effectif.xlsx
         column_dimensions = self.get_column_dimensions()
 

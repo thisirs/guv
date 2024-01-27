@@ -57,8 +57,9 @@ _shtab_guv_cal_uv_options=(
 
 _shtab_guv_createsemester_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
-  "--uv[]:uv:"
-  ":semester:"
+  "--semester[Nom du semestre]:semester:"
+  "--uv[Liste des UV\/UE à ajouter]:uv:"
+  ":Nom du dossier à créer:"
 )
 
 _shtab_guv_createuv_options=(
@@ -68,32 +69,32 @@ _shtab_guv_createuv_options=(
 
 _shtab_guv_csv_create_groups_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
-  {-G,--grouping}"[Pré-groupes dans lesquels faire des sous-groupes]:grouping:"
+  {-G,--grouping}"[Pré-groupes dans lesquels faire des sous-groupes]:grouping:_guv_column"
   {-n,--num-groups}"[Nombre de groupes à créer (par sous-groupes si spécifié)]:num_groups:"
   {-s,--group-size}"[Taille des groupes \: binômes, trinômes ou plus]:group_size:"
   {-p,--proportions}"[Liste de proportions pour créer les groupes]:proportions:"
   {-t,--template}"[Modèle pour donner des noms aux groupes avec \`\{title\}\`, \`\{grouping_name\}\` ou \`\{group_name\}\`]:template:"
   {-l,--names}"[Liste de mots clés pour construire les noms des groupes]:names:"
-  {-o,--ordered}"[Ordonner la liste des étudiants par ordre alphabétique ou par colonnes]:ordered:"
+  {-o,--ordered}"[Ordonner la liste des étudiants par ordre alphabétique ou par colonnes]:ordered:_guv_columns"
   {-g,--global}"[Ne pas remettre à zéro la suite des noms de groupes entre chaque groupement]"
   {-r,--random}"[Permuter aléatoirement les noms de groupes]"
-  "--other-groups[Liste de colonnes de groupes déjà formés qui ne doivent plus être reformés.]:other_groups:"
-  "--affinity-groups[Liste de colonnes de groupes d\'affinité.]:affinity_groups:"
+  "--other-groups[Liste de colonnes de groupes déjà formés qui ne doivent plus être reformés.]:other_groups:_guv_columns"
+  "--affinity-groups[Liste de colonnes de groupes d\'affinité.]:affinity_groups:_guv_columns"
   "--max-iter[Nombre maximum d\'essais pour trouver des groupes avec contraintes (par défaut \%(default)s).]:max_iter:"
   ":Nom associé à l\'ensemble des groupes créés. Repris dans le nom du fichier créé et dans le nom des groupes créés suivant la \*template\* utilisée.:"
 )
 
 _shtab_guv_csv_for_upload_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
-  {-g,--grade-colname}"[Nom de la colonne contenant la note à exporter.]:grade_colname:"
+  {-g,--grade-colname}"[Nom de la colonne contenant la note à exporter.]:grade_colname:_guv_column"
   "--ects[Précise si la note à exporter est une note ECTS. D\'après l\'ENT, il ne faut alors pas de colonne de commentaires et la note n\'est pas arrondie (l\'ENT n\'aime pas quand il y a trop de décimales).]"
-  {-c,--comment-colname}"[Nom de la colonne contenant un commentaire à ajouter dans le fichier exporté.]:comment_colname:"
-  {-f,--format}"[Modèle permettant de formatter plus précisément le commentaire. Le mot-clé \`\`msg\`\` représente la donnée présente dans la colonne \`\`--comment-colname\`\`. Par défaut, on a \`\`\{msg\}\`\`.]:format:"
+  {-c,--comment-colname}"[Nom de la colonne contenant un commentaire à ajouter dans le fichier exporté.]:comment_colname:_guv_column"
+  {-f,--format}"[Modèle permettant de formatter plus précisément le commentaire. Le mot-clé \`\`msg\`\` représente la donnée présente dans la colonne \`\`--comment-colname\`\`. Par défaut, on a \`\`\%(default)s\`\`.]:format:"
 )
 
 _shtab_guv_csv_groups_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
-  {-g,--groups}"[Liste des groupements à considérer via un nom de colonne. Par défaut, les groupements \`\`Cours\`\`, \`\`TD\`\`, \`\`TP\`\` et sont utilisés.]:groups:"
+  {-g,--groups}"[Liste des groupements à considérer via un nom de colonne. Par défaut, les groupements \`\`Cours\`\`, \`\`TD\`\` et \`\`TP\`\` sont utilisés.]:groups:_guv_columns"
   {-l,--long}"[Utiliser les noms de groupes de Cours\/TD\/TP au format long, c\'est à dire \"TP1\" et \"TD1\" au lieu de \"T1\" et \"D1\"]"
   {-s,--single}"[Créer un unique fichier]"
 )
@@ -126,7 +127,6 @@ _shtab_guv_html_table_options=(
   {-g,--grouped}"[Grouper les cours dans le même tableau ou faire des fichiers distincts.]"
   {-a,--num-AB}"[Permet de préciser si la numérotation des séances dans le tableau doit être en semaine A\/B (A1, B1, A2, B2,...) ou normal (1, 2, 3, 4,...). Valable uniquement pour les TP. Pour les autres types la numérotation classique est toujours utilisée.]"
   {-n,--names}"[Liste ou fichier contenant les intitulés des cours à la place de \`\`C1\`\`, \`\`C2\`\`,...]:names:"
-  "--header-row-format[Format pour l\'en-tête de chaque ligne]:header_row_format:"
 )
 
 _shtab_guv_ical_inst_options=(
@@ -140,7 +140,7 @@ _shtab_guv_ical_uv_options=(
 
 _shtab_guv_json_group_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
-  {-g,--group}"[Nom de la colonne réalisant un groupement]:group:"
+  {-g,--group}"[Nom de la colonne réalisant un groupement]:group:_guv_column"
 )
 
 _shtab_guv_json_restriction_options=(
@@ -158,8 +158,8 @@ _shtab_guv_maggle_teams_options=(
 
 _shtab_guv_pdf_attendance_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
-  {-t,--title}"[Spécifie un titre qui sera utilisé dans les feuilles de présence.]:title:"
-  {-g,--group}"[Permet de créer des groupes pour faire autant de feuilles de présence. Il faut spécifier une colonne du fichier central \`\`effectif.xlsx\`\`.]:group:"
+  {-t,--title}"[Spécifie un titre qui sera utilisé dans les feuilles de présence et le nom du fichier généré. Par défaut, on a \`\`\%(default)s\`\`.]:title:"
+  {-g,--group}"[Permet de créer des groupes pour faire autant de feuilles de présence. Il faut spécifier une colonne du fichier central \`\`effectif.xlsx\`\`.]:group:_guv_column"
   {-b,--blank}"[Ne pas faire apparaitre le nom des étudiants (utile seulement avec --group).]"
   {-c,--count}"[Utilise une liste d\'effectifs au lieu de \`\`--group\`\`. Le nom des groupes peut être spécifié par \`\`--names\`\`. Sinon, les noms de groupe sont de la forme \`\`Groupe 1\`\`, \`\`Groupe 2\`\`,...]:count:"
   {-n,--names}"[Spécifie le nom des groupes correspondants à \`\`--count\`\`. La liste doit être de même taille que \`\`--count\`\`.]:names:"
@@ -170,16 +170,16 @@ _shtab_guv_pdf_attendance_options=(
 
 _shtab_guv_pdf_attendance_full_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
-  "--title[Spécifie un titre qui sera utilisé dans les feuilles de présence.]:title:"
-  {-g,--group}"[Permet de spécifier une colonne de groupes pour faire des feuilles de présence par groupes.]:group:"
+  "--title[Spécifie un titre qui sera utilisé dans les feuilles de présence et le nom du fichier généré. Par défaut, on a \`\`\%(default)s\`\`.]:title:"
+  {-g,--group}"[Permet de spécifier une colonne de groupes pour faire des feuilles de présence par groupes.]:group:_guv_column"
   {-n,--slots}"[Permet de spécifier le nombre de séances pour le semestre c\'est à dire le nombre de colonne dans la feuille de présence.]:slots:"
-  {-t,--template}"[Modèle permettant de fixer le nom des séances successives dans la feuille de présence. Par défaut on a \`\`S\{number\}\`\`. Le seul mot-clé supporté est \`\`number\`\`.]:template:"
+  {-t,--template}"[Modèle permettant de fixer le nom des séances successives dans la feuille de présence. Par défaut on a \`\`\%(default)s\`\`. Le seul mot-clé supporté est \`\`number\`\` qui commence à 1.]:template:"
   "--save-tex[Permet de laisser les fichiers .tex générés pour modification éventuelle.]"
 )
 
 _shtab_guv_pdf_trombinoscope_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
-  {-g,--group}"[Nom de colonne utilisée pour réaliser le groupement. Un fichier pdf est généré pour chaque groupe. Lorsque le nom de groupe est \`\`all\`\`, il y a un seul groupe (donc un seul fichier pdf) comportant la totalité des étudiants.]:groupby:"
+  {-g,--group}"[Nom de colonne utilisée pour réaliser le groupement. Un fichier pdf est généré pour chaque groupe. Lorsque le nom de groupe est \`\`all\`\`, il y a un seul groupe (donc un seul fichier pdf) comportant la totalité des étudiants.]:groupby:_guv_column"
   {-s,--subgroup}"[Nom de colonne utilisée pour faire des sous-groupes (binômes, trinômes) parmi le groupement déjà existant.]:subgroupby:"
   "--save-tex[Permet de laisser les fichiers .tex générés pour modification éventuelle.]"
 )
@@ -198,10 +198,10 @@ _shtab_guv_xls_grade_book_group_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
   "--name[Nom de la feuille de notes]:name:"
   "--marking-scheme[Fichier contenant le barème détaillé]:config_file:_files"
-  {-o,--order-by}"[Colonne utilisée pour ordonner les noms dans chaque feuille]:order_by:"
-  {-w,--worksheets}"[Colonne utilisée pour grouper en plusieurs feuilles]:group_by:"
-  {-e,--extra-cols}"[Colonnes supplémentaires à inclure dans la feuille de notes]:extra_cols:"
-  {-g,--group-by}"[Colonne de groupes utilisée pour noter des groupes d\'étudiants]:subgroup_by:"
+  {-o,--order-by}"[Colonne utilisée pour ordonner les noms dans chaque feuille]:order_by:_guv_column"
+  {-w,--worksheets}"[Colonne utilisée pour grouper en plusieurs feuilles]:group_by:_guv_column"
+  {-e,--extra-cols}"[Colonnes supplémentaires à inclure dans la feuille de notes]:extra_cols:_guv_columns"
+  {-g,--group-by}"[Colonne de groupes utilisée pour noter des groupes d\'étudiants]:subgroup_by:_guv_column"
 )
 
 _shtab_guv_xls_grade_book_jury_options=(
@@ -214,9 +214,9 @@ _shtab_guv_xls_grade_book_no_group_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
   "--name[Nom de la feuille de notes]:name:"
   "--marking-scheme[Fichier contenant le barème détaillé]:config_file:_files"
-  {-o,--order-by}"[Colonne utilisée pour ordonner les noms dans chaque feuille]:order_by:"
-  {-w,--worksheets}"[Colonne utilisée pour grouper en plusieurs feuilles]:group_by:"
-  {-e,--extra-cols}"[Colonnes supplémentaires à inclure dans la feuille de notes]:extra_cols:"
+  {-o,--order-by}"[Colonne utilisée pour ordonner les noms dans chaque feuille]:order_by:_guv_column"
+  {-w,--worksheets}"[Colonne utilisée pour grouper en plusieurs feuilles]:group_by:_guv_column"
+  {-e,--extra-cols}"[Colonnes supplémentaires à inclure dans la feuille de notes]:extra_cols:_guv_columns"
 )
 
 _shtab_guv_xls_merge_final_grade_options=(
@@ -248,7 +248,7 @@ _shtab_guv() {
   if ((${_shtab_guv_options[(I)${(q)one_or_more}*]} + ${_shtab_guv_options[(I)${(q)remainder}*]} == 0)); then  # noqa: E501
     _shtab_guv_options+=(': :_shtab_guv_commands' '*::: :->guv')
   fi
-  _arguments -C $_shtab_guv_options
+  _arguments -C -s $_shtab_guv_options
 
   case $state in
     guv)
@@ -256,40 +256,58 @@ _shtab_guv() {
       (( CURRENT += 1 ))
       curcontext="${curcontext%:*:*}:_shtab_guv-$line[1]:"
       case $line[1] in
-        cal_inst) _arguments -C $_shtab_guv_cal_inst_options ;;
-        cal_uv) _arguments -C $_shtab_guv_cal_uv_options ;;
-        createsemester) _arguments -C $_shtab_guv_createsemester_options ;;
-        createuv) _arguments -C $_shtab_guv_createuv_options ;;
-        csv_create_groups) _arguments -C $_shtab_guv_csv_create_groups_options ;;
-        csv_for_upload) _arguments -C $_shtab_guv_csv_for_upload_options ;;
-        csv_groups) _arguments -C $_shtab_guv_csv_groups_options ;;
-        csv_groups_groupings) _arguments -C $_shtab_guv_csv_groups_groupings_options ;;
-        doit) _arguments -C $_shtab_guv_doit_options ;;
-        fetch_group_id) _arguments -C $_shtab_guv_fetch_group_id_options ;;
-        html_inst) _arguments -C $_shtab_guv_html_inst_options ;;
-        html_table) _arguments -C $_shtab_guv_html_table_options ;;
-        ical_inst) _arguments -C $_shtab_guv_ical_inst_options ;;
-        ical_uv) _arguments -C $_shtab_guv_ical_uv_options ;;
-        json_group) _arguments -C $_shtab_guv_json_group_options ;;
-        json_restriction) _arguments -C $_shtab_guv_json_restriction_options ;;
-        maggle_teams) _arguments -C $_shtab_guv_maggle_teams_options ;;
-        pdf_attendance) _arguments -C $_shtab_guv_pdf_attendance_options ;;
-        pdf_attendance_full) _arguments -C $_shtab_guv_pdf_attendance_full_options ;;
-        pdf_trombinoscope) _arguments -C $_shtab_guv_pdf_trombinoscope_options ;;
-        send_email) _arguments -C $_shtab_guv_send_email_options ;;
-        xls_assignment_grade) _arguments -C $_shtab_guv_xls_assignment_grade_options ;;
-        xls_grade_book_group) _arguments -C $_shtab_guv_xls_grade_book_group_options ;;
-        xls_grade_book_jury) _arguments -C $_shtab_guv_xls_grade_book_jury_options ;;
-        xls_grade_book_no_group) _arguments -C $_shtab_guv_xls_grade_book_no_group_options ;;
-        xls_merge_final_grade) _arguments -C $_shtab_guv_xls_merge_final_grade_options ;;
-        xls_remplacements) _arguments -C $_shtab_guv_xls_remplacements_options ;;
-        xls_utp) _arguments -C $_shtab_guv_xls_utp_options ;;
-        yaml_qcm) _arguments -C $_shtab_guv_yaml_qcm_options ;;
-        zoom_breakout_rooms) _arguments -C $_shtab_guv_zoom_breakout_rooms_options ;;
+        cal_inst) _arguments -C -s $_shtab_guv_cal_inst_options ;;
+        cal_uv) _arguments -C -s $_shtab_guv_cal_uv_options ;;
+        createsemester) _arguments -C -s $_shtab_guv_createsemester_options ;;
+        createuv) _arguments -C -s $_shtab_guv_createuv_options ;;
+        csv_create_groups) _arguments -C -s $_shtab_guv_csv_create_groups_options ;;
+        csv_for_upload) _arguments -C -s $_shtab_guv_csv_for_upload_options ;;
+        csv_groups) _arguments -C -s $_shtab_guv_csv_groups_options ;;
+        csv_groups_groupings) _arguments -C -s $_shtab_guv_csv_groups_groupings_options ;;
+        doit) _arguments -C -s $_shtab_guv_doit_options ;;
+        fetch_group_id) _arguments -C -s $_shtab_guv_fetch_group_id_options ;;
+        html_inst) _arguments -C -s $_shtab_guv_html_inst_options ;;
+        html_table) _arguments -C -s $_shtab_guv_html_table_options ;;
+        ical_inst) _arguments -C -s $_shtab_guv_ical_inst_options ;;
+        ical_uv) _arguments -C -s $_shtab_guv_ical_uv_options ;;
+        json_group) _arguments -C -s $_shtab_guv_json_group_options ;;
+        json_restriction) _arguments -C -s $_shtab_guv_json_restriction_options ;;
+        maggle_teams) _arguments -C -s $_shtab_guv_maggle_teams_options ;;
+        pdf_attendance) _arguments -C -s $_shtab_guv_pdf_attendance_options ;;
+        pdf_attendance_full) _arguments -C -s $_shtab_guv_pdf_attendance_full_options ;;
+        pdf_trombinoscope) _arguments -C -s $_shtab_guv_pdf_trombinoscope_options ;;
+        send_email) _arguments -C -s $_shtab_guv_send_email_options ;;
+        xls_assignment_grade) _arguments -C -s $_shtab_guv_xls_assignment_grade_options ;;
+        xls_grade_book_group) _arguments -C -s $_shtab_guv_xls_grade_book_group_options ;;
+        xls_grade_book_jury) _arguments -C -s $_shtab_guv_xls_grade_book_jury_options ;;
+        xls_grade_book_no_group) _arguments -C -s $_shtab_guv_xls_grade_book_no_group_options ;;
+        xls_merge_final_grade) _arguments -C -s $_shtab_guv_xls_merge_final_grade_options ;;
+        xls_remplacements) _arguments -C -s $_shtab_guv_xls_remplacements_options ;;
+        xls_utp) _arguments -C -s $_shtab_guv_xls_utp_options ;;
+        yaml_qcm) _arguments -C -s $_shtab_guv_yaml_qcm_options ;;
+        zoom_breakout_rooms) _arguments -C -s $_shtab_guv_zoom_breakout_rooms_options ;;
       esac
   esac
 }
 
+# Custom Preamble
+
+_guv_column() {
+    if test -e $(pwd)/generated/.columns.list; then
+        local columns=("${(@f)$(cat $(pwd)/generated/.columns.list)}")
+        _describe 'columns' columns
+    fi
+}
+
+_guv_columns() {
+    if test -e $(pwd)/generated/.columns.list; then
+        local -a columns=("${(@f)$(cat $(pwd)/generated/.columns.list)}")
+    fi
+
+    _values -s , columns $columns
+}
+
+# End Custom Preamble
 
 
 typeset -A opt_args

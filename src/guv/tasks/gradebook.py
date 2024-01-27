@@ -383,9 +383,8 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
         self.add_argument(
             "-e",
             "--extra-cols",
-            nargs="+",
-            metavar="colname",
-            required=False,
+            metavar="COL,[COL,...]",
+            type=lambda t: [s.strip() for s in t.split(",")],
             help="Colonnes supplémentaires à inclure dans la feuille de notes"
         )
 

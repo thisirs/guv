@@ -182,26 +182,86 @@ def run_task(task_name):
     return run_doit(task_loader, [task_name])
 
 
-def get_parser_shtab():
+def print_completer(shell="zsh"):
     import shtab
 
     task_loader = get_task_loader()
 
-    file_complete = {
-        "xls_grade_book_no_group": ['--marking-scheme'],
-        "xls_grade_book_group": ['--marking-scheme'],
-        "xls_grade_book_jury": ['--config']
+    shtab_complete = {
+        "csv_create_groups": {
+            "column": ["--grouping"],
+            "columns": ["--ordered", "--affinity-groups", "--other-groups"]
+        },
+        "csv_for_upload": {
+            "column": ["--grade-colname", "--comment-colname"]
+        },
+        "csv_groups": {
+            "columns": ["--groups"]
+        },
+        "json_group": {
+            "column": ["--group"]
+        },
+        "maggle_teams": {
+            "column": ["group"]
+        },
+        "pdf_attendance": {
+            "column": ["--group"]
+        },
+        "pdf_attendance_full": {
+            "column": ["--group"]
+        },
+        "pdf_trombinoscope": {
+            "column": ["--group"]
+        },
+        "xls_grade_book_group": {
+            "column": ["--order-by", "--worksheets", "--group-by"],
+            "columns": ["--extra-cols"],
+            "file": ["--marking-scheme"]
+        },
+        "xls_grade_book_no_group": {
+            "column": ["--order-by", "--worksheets"],
+            "columns": ["--extra-cols"],
+            "file": ["--marking-scheme"]
+        },
+        "xls_grade_book_jury": {
+            "file": ["--config"]
+        }
     }
 
     parser = get_parser(task_loader.tasks)
+
+    preamble = {"zsh": """
+_guv_column() {
+    if test -e $(pwd)/generated/.columns.list; then
+        local columns=("${(@f)$(cat $(pwd)/generated/.columns.list)}")
+        _describe 'columns' columns
+    fi
+}
+
+_guv_columns() {
+    if test -e $(pwd)/generated/.columns.list; then
+        local -a columns=("${(@f)$(cat $(pwd)/generated/.columns.list)}")
+    fi
+
+    _values -s , columns $columns
+}
+
+    """}
+
     subparsers = parser._actions[1]
     for task, subparser in subparsers._name_parser_map.items():
-        if task in file_complete:
+        if task in shtab_complete:
             for action in subparser._actions:
-                if set(action.option_strings).intersection(set(file_complete[task])):
+                if set(action.option_strings).intersection(set(shtab_complete[task].get("columns", []))):
+                    action.complete = {"zsh": "_guv_columns"}
+
+                if set(action.option_strings).intersection(set(shtab_complete[task].get("column", []))):
+                    action.complete = {"zsh": "_guv_column"}
+
+                if set(action.option_strings).intersection(set(shtab_complete[task].get("file", []))):
                     action.complete = shtab.FILE
 
-    return parser
+    print(shtab.complete(parser, shell=shell, root_prefix="guv", preamble=preamble))
 
 
 def main(argv=sys.argv[1:]):

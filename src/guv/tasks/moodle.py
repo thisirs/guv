@@ -82,8 +82,9 @@ class CsvGroups(UVTask, CliArgsMixin):
         argument(
             "-g",
             "--groups",
-            nargs="+",
-            default=["Cours", "TD", "TP"],
+            metavar="COL,[COL,...]",
+            type=lambda t: [s.strip() for s in t.split(",")],
+            default="Cours,TD,TP",
             help="Liste des groupements à considérer via un nom de colonne. Par défaut, les groupements ``Cours``, ``TD`` et ``TP`` sont utilisés.",
         ),
         argument(
@@ -1057,7 +1058,11 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         argument(
             "-o",
             "--ordered",
-            nargs="*",
+            nargs="?",
+            default=None,
+            const=[],
+            metavar="COL,...",
+            type=lambda t: [s.strip() for s in t.split(",")],
             required=False,
             help="Ordonner la liste des étudiants par ordre alphabétique ou par colonnes",
         ),
@@ -1077,16 +1082,16 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         ),
         argument(
             "--other-groups",
-            nargs="+",
             required=False,
-            default=[],
+            metavar="COL,[COL,...]",
+            type=lambda t: [s.strip() for s in t.split(",")],
             help="Liste de colonnes de groupes déjà formés qui ne doivent plus être reformés."
         ),
         argument(
             "--affinity-groups",
-            nargs="+",
             required=False,
-            default=[],
+            metavar="COL,[COL,...]",
+            type=lambda t: [s.strip() for s in t.split(",")],
             help="Liste de colonnes de groupes d'affinité."
         ),
         argument(
