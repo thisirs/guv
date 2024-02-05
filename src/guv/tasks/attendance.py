@@ -95,7 +95,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
             "--tiers-temps",
             action="store_true",
             default=False,
-            help="Permet de dédier une feuille de présence spécifique pour les étudiants marqués comme tiers-temps dans le fichier central ``effectifs.xlsx``."
+            help="Permet de dédier une feuille de présence spécifique pour les étudiants marqués comme tiers-temps dans le fichier central ``effectif.xlsx``."
         ),
         argument(
             "--save-tex",

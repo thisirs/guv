@@ -52,7 +52,7 @@ TIME_FORMAT = "%H:%M"
 
 
 class CsvGroups(UVTask, CliArgsMixin):
-    """Fichiers csv de groupes présents dans ``effectifs.xlsx`` pour Moodle.
+    """Fichiers csv de groupes présents dans ``effectif.xlsx`` pour Moodle.
 
     L'option ``--groups`` permet de sélectionner les colonnes de groupes à
     exporter sous Moodle. Par défaut, les colonnes exportées sont les colonnes
@@ -1267,7 +1267,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         - Inscrire dans les groupes : "Oui"
         - Créer les groupes: "Oui" s'il ne sont pas déjà créés
 
-        Ajouter les groupes au fichier `effectifs.xlsx` avec le code suivant dans le fichier `config.py` de l'UV :
+        Ajouter les groupes au fichier `effectif.xlsx` avec le code suivant dans le fichier `config.py` de l'UV :
 
         # Créé avec la commande : %(command_line)s
         DOCS.aggregate(

@@ -172,7 +172,7 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
     Cette tâche permet de générer un fichier Excel pour rentrer facilement des
     notes avec un barème détaillé. Le fichier Excel peut être divisé en
     plusieurs feuilles de calculs selon une colonne du fichier
-    ``effectifs.xlsx`` via l'argument ``--worksheets``. Dans chacune de ces
+    ``effectif.xlsx`` via l'argument ``--worksheets``. Dans chacune de ces
     feuilles, les étudiants peuvent être ordonnés suivant l'argument
     ``--order-by``. Le chemin vers un fichier de barème détaillé peut être
     fourni via l'argument ``--marking-scheme``. S'il n'est pas fourni le barème
@@ -242,8 +242,8 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
 
     - Fichier de notes pour une soutenance individuelle en divisant
       par jour de passage (colonne "Jour passage" dans
-      ``effectifs.xlsx``) et en ordonnant par ordre de passage
-      (colonne "Ordre passage" dans ``effectifs.xlsx``) :
+      ``effectif.xlsx``) et en ordonnant par ordre de passage
+      (colonne "Ordre passage" dans ``effectif.xlsx``) :
 
       .. code:: bash
 
@@ -709,7 +709,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
 
     Cette tâche permet de générer un fichier Excel pour la gestion d'un jury
     d'UV/UE. L'argument optionnel ``--name`` permet de spécifier un nom au
-    fichier (par défaut "jury"). Le chemin 
+    fichier (par défaut "jury"). 
 
     L'argument optionnel ``--config`` permet de spécifier un fichier pour
     configurer les données nécessaires au jury. S'il n'est pas fourni, une
@@ -805,7 +805,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
     def message(self, target):
         return textwrap.dedent("""\
 
-        Pour agréger les notes au fichier central `effectifs.xlsx`, ajouter :
+        Pour agréger les notes au fichier central `effectif.xlsx`, ajouter :
 
         DOCS.aggregate_jury("{filename}")
 

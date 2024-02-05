@@ -36,7 +36,7 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
         Il faut renvoyer une liste d'éléments de la forme (NOM, TYPE,
         PRIORITY). NOM est le nom d'une colonne qui sera utilisée. Il
         y a 4 types de colonnes :
-        - `raw` : la colonne est copiée du fichier `effectifs.xlsx` si
+        - `raw` : la colonne est copiée du fichier `effectif.xlsx` si
           elle existe ou alors juste créée et laissée vide.
         - `cell` : même chose que `raw`. Les cellules de la colonnes
           sont stockées de manière à pouvoir être réutilisée dans des
@@ -76,7 +76,7 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
         self.parse_args()
 
         # No targets to avoid circular deps in doit as we probably
-        # want to aggregate target in effectifs.xlsx
+        # want to aggregate target in effectif.xlsx
         self.targets = []
 
     def run(self):
@@ -97,7 +97,7 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
 
         return textwrap.dedent("""\
 
-        Pour agréger les notes au fichier central `effectifs.xlsx`, ajouter :
+        Pour agréger les notes au fichier central `effectif.xlsx`, ajouter :
 
         # Créé avec la commande : {command_line}
         DOCS.aggregate(
