@@ -263,7 +263,7 @@ class XlsStudentData(UVTask):
     def load_ENT_data(self):
         try:
             return self.load_ENT_data_old()
-        except pd.errors.ParserError as e:
+        except (pd.errors.ParserError, KeyError) as e:
             return self.load_ENT_data_new()
 
     def load_ENT_data_new(self):
