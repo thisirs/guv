@@ -68,7 +68,7 @@ class CsvInscrits(UVTask):
                 r"\s{3}"
                 r"(?P<branche>[A-Z]{2})"
                 r"(?P<semestre>[0-9]{2})"
-                r"$"
+                r"\s*$"
             )
 
         if "RX_UV" in self.settings:
