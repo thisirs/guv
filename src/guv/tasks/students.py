@@ -719,7 +719,7 @@ class SendEmail(UVTask, CliArgsMixin):
 
     avec ``documents/email_body`` qui contient :
 
-    .. code:: yaml
+    .. code:: text
 
        Subject: Note
 
