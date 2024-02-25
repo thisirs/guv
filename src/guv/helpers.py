@@ -1,3 +1,4 @@
+import copy
 import functools
 import os
 import re
@@ -871,7 +872,8 @@ class Aggregate(FileOperation):
             if self.left_on is not None or self.right_on is not None:
                 raise ImproperlyConfigured("On doit spécifier soit `on`, soit `left_on` et `right_on`.")
 
-            left_on = right_on = self.on
+            left_on = self.on
+            right_on = copy.copy(self.on) # Duplicate because left_on and right_on must be different
         else:
             left_on = self.left_on
             right_on = self.right_on
