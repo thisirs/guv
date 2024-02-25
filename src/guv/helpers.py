@@ -10,13 +10,14 @@ from typing import List, Optional, Union
 import numpy as np
 import pandas as pd
 
-from .exceptions import ImproperlyConfigured
-from .config import settings
-from .logger import logger
-from .utils import slugrot_string
-from .utils_config import rel_to_dir, check_if_present, check_if_absent, check_filename
 from .aggregator import Aggregator, ColumnsMerger
+from .config import settings
+from .exceptions import ImproperlyConfigured
+from .logger import logger
 from .operation import Operation
+from .utils import slugrot_string
+from .utils_config import (check_filename, check_if_absent, check_if_present,
+                           rel_to_dir)
 
 
 def slugrot(*columns):
