@@ -532,7 +532,7 @@ class HtmlTable(UVTask, CliArgsMixin):
             elif activity == "TD" or (activity == "TP" and not self.num_AB):
                 return ", ".join(df["num"].astype("string"))
             else:
-                return ", ".join(df.Semaine + df.numAB.str)
+                return ", ".join(df.Semaine + df.numAB.astype("string"))
 
         # Iterate on each week of semester
         rows = []
