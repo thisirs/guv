@@ -61,14 +61,14 @@ class CsvInscrits(UVTask):
         else:
             # 042   NOM PRENOM            GI02
             RX_STU = re.compile(
-                r"^\s*"
+                r"^"
                 r"\d{3}"
                 r"\s{3}"
                 r"(?P<name>.{23})"
                 r"\s{3}"
                 r"(?P<branche>[A-Z]{2})"
                 r"(?P<semestre>[0-9]{2})"
-                r"\s*$"
+                r"$"
             )
 
         if "RX_UV" in self.settings:
@@ -76,8 +76,7 @@ class CsvInscrits(UVTask):
         else:
             # SY19       C 1   ,PL.MAX= 73 ,LIBRES=  0 ,INSCRITS= 73  H=MERCREDI 08:00-10:00,F1,S=
             RX_UV = re.compile(
-                r"^\s*"
-                r"(?P<uv>\w+)"
+                r"^(?P<uv>\w+)"
                 r"\s+"
                 r"(?P<course>[CTD])"
                 r"\s*"
@@ -86,39 +85,49 @@ class CsvInscrits(UVTask):
                 r"(?P<week>[AB])?"
             )
 
+        if "RX_JUNK" in self.settings:
+            RX_JUNK = re.compile(self.settings.RX_JUNK)
+        else:
+            RX_JUNK = re.compile(r"\s*(\+-+|\d)\s*")
+
         with open(self.utc_listing, "r") as fd:
             course_name = course_type = None
             rows = []
             for line in fd:
-                m = RX_UV.match(line)
-                if m:
+                line = line.strip()
+                if not line:
+                    continue
+
+                if (m := RX_UV.match(line)) is not None:
                     number = m.group("number") or ""
                     week = m.group("week") or ""
                     course = m.group("course") or ""
                     course_name = course + number + week
                     course_type = {"C": "Cours", "D": "TD", "T": "TP"}[course]
+                    logger.info("Séance `%s` ajoutée", course_name)
+                elif (m := RX_STU.match(line)) is not None:
+                    name = m.group("name").strip()
+                    spe = m.group("branche")
+                    sem = int(m.group("semestre"))
+                    if spe == "HU":
+                        spe = "HuTech"
+                    elif spe == "MT":
+                        spe = "ISC"
+                    rows.append(
+                        {
+                            "Name": name,
+                            "course_type": course_type,
+                            "course_name": course_name,
+                            "Branche": spe,
+                            "Semestre": sem,
+                        }
+                    )
+                    logger.info("Étudiant `%s` ajouté dans `%s`", name, course_name)
+                elif (m := RX_JUNK.match(line)) is not None:
+                    logger.info("Line `%s` ignorée", line)
                 else:
-                    m = RX_STU.match(line)
-                    if m:
-                        name = m.group("name").strip()
-                        spe = m.group("branche")
-                        sem = int(m.group("semestre"))
-                        if spe == "HU":
-                            spe = "HuTech"
-                        elif spe == "MT":
-                            spe = "ISC"
-                        rows.append(
-                            {
-                                "Name": name,
-                                "course_type": course_type,
-                                "course_name": course_name,
-                                "Branche": spe,
-                                "Semestre": sem,
-                            }
-                        )
-                    elif line.strip():
-                        logger.warning("La ligne ci-après n'est pas reconnue :")
-                        logger.warning(line.strip())
+                    logger.warning("La ligne ci-après n'est pas reconnue :")
+                    logger.warning(line.strip())
 
         df = pd.DataFrame(rows)
         df = pd.pivot_table(
