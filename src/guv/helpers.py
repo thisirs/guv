@@ -1040,7 +1040,7 @@ class AggregateOrg(FileOperation):
             right_on = "header"
 
         agg = Aggregator(left_df, df_org, left_on, right_on, postprocessing=self.postprocessing)
-        return agg.aggregate()
+        return agg.left_aggregate()
 
 
 class FileStringOperation(FileOperation):
