@@ -185,7 +185,7 @@ class Aggregator:
                         logger.info(f"{processing_type} : %s", op.__desc__)
                     else:
                         logger.info(processing_type)
-                    df = op(df)
+                    df = op(self._right_df)
                 else:
                     raise Exception(f"Unsupported {processing_type} operation", op)
             self._right_df = df
