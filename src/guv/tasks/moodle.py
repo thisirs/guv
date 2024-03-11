@@ -30,7 +30,6 @@ from bs4 import BeautifulSoup
 
 import guv
 
-from ..exceptions import InvalidGroups
 from ..logger import logger
 from ..scripts.moodle_date import CondDate, CondGroup, CondOr, CondProfil
 from ..utils import (

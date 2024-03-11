@@ -4,8 +4,7 @@ from prompt_toolkit.application import Application
 from prompt_toolkit.key_binding.defaults import load_key_bindings
 from prompt_toolkit.key_binding.key_bindings import KeyBindings, merge_key_bindings
 from prompt_toolkit.layout import Layout
-from prompt_toolkit.widgets import RadioList, Label, CheckboxList
-from prompt_toolkit.keys import Keys
+from prompt_toolkit.widgets import Label, CheckboxList
 from prompt_toolkit.layout.containers import HSplit
 
 

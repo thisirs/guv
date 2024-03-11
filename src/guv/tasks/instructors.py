@@ -19,9 +19,8 @@ from openpyxl import Workbook
 from openpyxl.styles import PatternFill
 
 from ..logger import logger
-from ..config import settings
 from ..utils_config import Output, rel_to_dir
-from ..utils import score_codenames, convert_author, convert_to_time
+from ..utils import score_codenames, convert_to_time
 from ..openpyxl_utils import fill_row, get_range_from_cells, row_and_col, get_row_cells, Block, frame_range, get_segment
 from .base import TaskBase, UVTask
 from .utc import WeekSlots, PlanningSlots

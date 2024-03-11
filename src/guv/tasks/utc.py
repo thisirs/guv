@@ -21,10 +21,12 @@ from openpyxl import Workbook, load_workbook
 from ..config import settings
 from ..exceptions import ImproperlyConfigured
 from ..logger import logger
-from ..openpyxl_utils import fill_row, get_row_cells, get_range_from_cells, get_segment, frame_range, row_and_col, Block, get_range_cells
-from ..utils import convert_author, score_codenames, convert_to_time, plural, ps, px
-from ..utils_config import (Output, ask_choice, generate_row, rel_to_dir, selected_uv)
-from .base import TaskBase, UVTask
+from ..openpyxl_utils import (fill_row, frame_range, get_range_cells,
+                              get_range_from_cells, get_row_cells)
+from ..utils import argument, convert_author, convert_to_time, plural, ps, px
+from ..utils_config import (Output, ask_choice, generate_row, rel_to_dir,
+                            selected_uv)
+from .base import CliArgsMixin, TaskBase, UVTask
 
 
 class UtcUvListToCsv(TaskBase):
