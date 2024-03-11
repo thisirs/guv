@@ -709,7 +709,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
 
     Cette tâche permet de générer un fichier Excel pour la gestion d'un jury
     d'UV/UE. L'argument optionnel ``--name`` permet de spécifier un nom au
-    fichier (par défaut "jury"). 
+    fichier (par défaut "jury").
 
     L'argument optionnel ``--config`` permet de spécifier un fichier pour
     configurer les données nécessaires au jury. S'il n'est pas fourni, une
