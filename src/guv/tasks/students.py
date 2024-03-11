@@ -477,7 +477,7 @@ class XlsStudentData(UVTask):
                 dfr_clean = pd.concat((dfr_clean, row_merge.to_frame().T))
 
         for index, row in ro.iterrows():
-            logger.warning("`%s` présent dans `AFFECTATION_LISTING` est ignoré", row_ro["Name"])
+            logger.warning("`%s` présent dans `AFFECTATION_LISTING` est ignoré", row["Name"])
 
         dfr_clean = dfr_clean.drop(["_merge", "fullname_slug", "Name"], axis=1)
 
