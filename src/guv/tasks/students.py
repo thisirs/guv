@@ -101,7 +101,7 @@ class CsvInscrits(UVTask):
                     course = m.group("course") or ""
                     course_name = course + number + week
                     course_type = {"C": "Cours", "D": "TD", "T": "TP"}[course]
-                    logger.info("Séance `%s` ajoutée", course_name)
+                    logger.debug("Séance `%s` ajoutée", course_name)
                 elif (m := RX_STU.match(line)) is not None:
                     name = m.group("name").strip()
                     spe = m.group("branche")
@@ -119,9 +119,9 @@ class CsvInscrits(UVTask):
                             "Semestre": sem,
                         }
                     )
-                    logger.info("Étudiant `%s` ajouté dans `%s`", name, course_name)
+                    logger.debug("Étudiant `%s` ajouté dans `%s`", name, course_name)
                 elif (m := RX_JUNK.match(line)) is not None:
-                    logger.info("Line `%s` ignorée", line)
+                    logger.debug("Line `%s` ignorée", line)
                 else:
                     logger.warning("La ligne ci-après n'est pas reconnue :")
                     logger.warning(line.strip())
