@@ -4,14 +4,11 @@ sur l'effectif d'une UV.
 """
 
 import getpass
-import math
 import os
-import random
 import re
 import smtplib
 
 import jinja2
-import numpy as np
 import openpyxl
 import pandas as pd
 from unidecode import unidecode
