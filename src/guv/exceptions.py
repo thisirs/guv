@@ -10,9 +10,5 @@ class NotUVDirectory(Exception):
     pass
 
 
-class InvalidGroups(Exception):
-    pass
-
-
 class AbortWithBody(Exception):
     pass
