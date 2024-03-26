@@ -1083,6 +1083,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             "--other-groups",
             required=False,
             metavar="COL,[COL,...]",
+            default=[],
             type=lambda t: [s.strip() for s in t.split(",")],
             help="Liste de colonnes de groupes déjà formés qui ne doivent plus être reformés."
         ),
@@ -1090,6 +1091,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             "--affinity-groups",
             required=False,
             metavar="COL,[COL,...]",
+            default=[],
             type=lambda t: [s.strip() for s in t.split(",")],
             help="Liste de colonnes de groupes d'affinité."
         ),
