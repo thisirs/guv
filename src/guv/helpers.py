@@ -1384,20 +1384,17 @@ class AggregateMoodleGroups(FileOperation):
         if re.match(r"^\w+@", df.iloc[0]["Courriel"]) is not None:
             left_on = id_slug("Nom", "Prénom")
             right_on = id_slug("Nom", "Prénom")
+            drop=["Nom", "Prénom", "Numéro d'identification", "Choix", "Adresse de courriel"]
         else:
             left_on = "Courriel"
             right_on = "Adresse de courriel"
+            drop=["Nom", "Prénom", "Numéro d'identification", "Choix"]
 
         op = Aggregate(
             self.filename,
             left_on=left_on,
             right_on=right_on,
-            drop=[
-                "Nom",
-                "Prénom",
-                "Numéro d'identification",
-                "Choix"
-            ],
+            drop=drop,
             rename={"Groupe": self.colname}
         )
         return op.apply(df)
