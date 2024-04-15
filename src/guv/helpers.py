@@ -124,15 +124,19 @@ class FillnaColumn(Operation):
                     logger.warning("La colonne `%s` contient des entrées vides", self.group_column)
                     return g
 
-                idx_first = g[self.colname].first_valid_index()
-                idx_last = g[self.colname].last_valid_index()
-                if idx_first is not None:
-                    if idx_first == idx_last:
-                        g[self.colname] = g.loc[idx_first, self.colname]
-                    else:
-                        logger.warning("Plusieurs valeurs non-NA dans le groupe `%s`", g.name)
-                else:
+                valid = g[self.colname].dropna()
+
+                if len(valid) == 0:
                     logger.warning("Aucune valeur non-NA dans le groupe `%s`", g.name)
+                elif len(valid) == 1:
+                    g[self.colname] = valid.iloc[0]
+                else:
+                    all_equal = (valid == valid.iloc[0]).all()
+                    if all_equal:
+                        g[self.colname] = valid.iloc[0]
+                    else:
+                        logger.warning("Plusieurs valeurs non-NA et différentes dans le groupe `%s`", g.name)
+
                 return g
 
             check_if_present(df, [self.colname, self.group_column])
