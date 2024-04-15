@@ -80,8 +80,10 @@ class Merger(ABC):
         return [self.column]
 
     def transform(self, df):
-        df.index.name = self.index_column
-        df = df.reset_index()
+        # Reset any (possibly multi-indexed) index, use integer indexing. This
+        # makes sure that we have a column named `self.index_column`.
+        df = df.reset_index(drop=True)
+        df = df.reset_index(names=self.index_column)
 
         return df
 
