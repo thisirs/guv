@@ -141,6 +141,28 @@ class ColumnsMerger(Merger):
         return df
 
 
+def _apply_processing(df, processing_type, processing):
+    """Apply a processing a dataframe"""
+
+    if processing is not None:
+        if not isinstance(processing, (list, tuple)):
+            processing = [processing]
+
+        for op in processing:
+            if isinstance(op, Operation):
+                df = op.apply(df)
+                logger.info(f"{processing_type} : %s", op.message())
+            elif callable(op):
+                if hasattr(op, "__desc__"):
+                    logger.info(f"{processing_type} : %s", op.__desc__)
+                else:
+                    logger.info(processing_type)
+                df = op(df)
+            else:
+                raise Exception(f"Unsupported {processing_type} operation", op)
+    return df
+
+
 class Aggregator:
     def __init__(
         self,
@@ -171,26 +193,6 @@ class Aggregator:
     @property
     def outer_merged_df(self):
         return self._outer_merged_df
-
-    def _apply_processing(self, processing_type, processing):
-        """Apply a processing on _right_df"""
-        if processing is not None:
-            if not isinstance(processing, (list, tuple)):
-                processing = [processing]
-
-            for op in processing:
-                if isinstance(op, Operation):
-                    df = op.apply(self._right_df)
-                    logger.info(f"{processing_type} : %s", op.message())
-                elif callable(op):
-                    if hasattr(op, "__desc__"):
-                        logger.info(f"{processing_type} : %s", op.__desc__)
-                    else:
-                        logger.info(processing_type)
-                    df = op(self._right_df)
-                else:
-                    raise Exception(f"Unsupported {processing_type} operation", op)
-            self._right_df = df
 
     def _apply_transformations(self):
         # Select subset of columns. Add needed columns for the merge.
@@ -249,7 +251,8 @@ class Aggregator:
     def outer_aggregate(self):
         self._outer_aggregate()
 
-        return self.clean_merge(self._outer_merged_df)
+        clean_df = self.clean_merge(self._outer_merged_df)
+        return _apply_processing(clean_df, "Postprocessing", self.postprocessing)
 
     def _outer_aggregate(self):
         # Copy left and right dataframe before applying transformations
@@ -257,7 +260,7 @@ class Aggregator:
         self._right_df = self.right_df.copy()
 
         # Apply preprocessing on _right_df
-        self._apply_processing("Preprocessing", self.preprocessing)
+        self._right_df = _apply_processing(self._right_df, "Preprocessing", self.preprocessing)
 
         # Add required columns to be able to merge and display warnings
         self._right_df = self.right_merger.transform(self._right_df)
@@ -314,7 +317,8 @@ class Aggregator:
         df = self.outer_merged_df
         self._left_merge_df = df.loc[df["_merge"].isin(['left_only', 'both'])]
 
-        return self.clean_merge(self._left_merge_df)
+        clean_df = self.clean_merge(self._left_merge_df)
+        return _apply_processing(clean_df, "Postprocessing", self.postprocessing)
 
     def merge_columns(self, df, strategy="merge", columns=[]):
         "Try to merge columns that are duplicated after merge."
