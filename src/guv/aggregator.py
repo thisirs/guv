@@ -4,6 +4,7 @@ import pandas as pd
 from .logger import logger
 from .operation import Operation
 from .utils_config import check_if_present
+from .utils import ps, plural
 
 
 def merge_columns(df):
@@ -231,7 +232,13 @@ class Aggregator:
 
         n = len(errors.index)
         if n > 0:
-            logger.warning("%s enregistrements n'ont pas pu être incorporés au fichier central", n)
+            logger.warning(
+                "%s enregistrement%s n'%s pas pu être incorporé%s au fichier central",
+                n,
+                ps(n),
+                plural(n, "ont", "a"),
+                ps(n),
+            )
             with pd.option_context("display.max_rows", 10,
                                    "display.max_columns", None,
                                    "display.width", 1000,
