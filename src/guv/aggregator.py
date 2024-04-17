@@ -153,7 +153,7 @@ class Aggregator:
         subset=None,
         drop=None,
         rename=None,
-        right_suffix = "_y",
+        right_suffix="_y",
     ):
         self.left_merger = Merger.from_obj(left_on, type="left")
         self.right_merger = Merger.from_obj(right_on, type="right")
