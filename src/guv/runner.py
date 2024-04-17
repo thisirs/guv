@@ -271,7 +271,7 @@ def main(argv=sys.argv[1:]):
 
     ret = None
     try:
-        if "-h" in other:
+        if "-h" in other or "--help" in other:
             task_loader = get_task_loader()
             parser = get_parser(task_loader.tasks)
             parser.parse_args(argv)
@@ -321,3 +321,5 @@ def main(argv=sys.argv[1:]):
                 file.write(command_line)
 
     return ret
+
+
