@@ -175,12 +175,17 @@ def sort_values(df, columns):
     return df
 
 
-def generate_groupby(df, key):
+def generate_groupby(df, key, ascending=None):
     """Generate sub-dataframes by grouping by `key` in `df`."""
 
     if key is not None:
-        for title, group in df.groupby(key):
-            yield title, group
+        groups = dict(list(df.groupby(key)))
+        keys = groups.keys()
+        if ascending is not None:
+            keys = sorted(keys, reverse=not ascending)
+
+        for key in keys:
+            yield key, groups[key]
     else:
         yield None, df
 
