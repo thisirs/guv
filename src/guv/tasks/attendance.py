@@ -47,7 +47,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
 
     """
 
-    uptodate = True
+    uptodate = False
     target_dir = "generated"
     target_name = "{title}_{group}"
     template_file = "attendance.tex.jinja2"
