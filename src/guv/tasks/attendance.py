@@ -4,7 +4,7 @@ présence.
 """
 
 from ..utils import (LaTeXEnvironment, argument, make_groups, pformat,
-                     sort_values)
+                     sort_values, generate_groupby)
 from ..utils_config import check_if_present, render_from_contexts
 from .base import CliArgsMixin, UVTask
 from .students import XlsStudentDataMerge
@@ -121,9 +121,10 @@ class PdfAttendance(UVTask, CliArgsMixin):
     def generate_contexts(self):
         "Generate contexts to pass to Jinja2 templates."
 
-        if self.group and (self.count or self.names):
-            raise Exception("Les options --group et --count ou --names sont incompatibles")
+        if self.group and self.count:
+            raise Exception("Les options --group et --count sont incompatibles")
 
+        # Common context
         context = {
             "title": self.title,
             "extra": self.extra,
@@ -198,9 +199,16 @@ class PdfAttendance(UVTask, CliArgsMixin):
                     df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
                 )
 
-            for gn, group in df.groupby(self.group or (lambda x: "all")):
-                if gn == "all":
-                    gn = None
+            groups = list(generate_groupby(df, self.group, ascending=True))
+
+            if self.names and len(groups) != len(self.names):
+                raise Exception("Le nombres de noms spécifiés avec --names est différent du nombre de groupes")
+
+            for i, (gn, group) in enumerate(groups):
+                # Override group name if self.names
+                if self.names:
+                    gn = self.names[i]
+
                 context["group"] = gn
                 context["blank"] = self.blank
                 context["num"] = len(group)
