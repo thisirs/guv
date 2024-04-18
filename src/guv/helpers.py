@@ -6,6 +6,7 @@ import textwrap
 from collections.abc import Callable
 from datetime import timedelta
 from typing import List, Optional, Union
+import zipfile
 
 import numpy as np
 import pandas as pd
@@ -1047,6 +1048,72 @@ class AggregateOrg(FileOperation):
         return agg.left_aggregate()
 
 
+class AggregateAmenagements(FileOperation):
+    """Agrégation du fichier des aménagements pour les examens.
+
+    Le document à agréger est disponible
+    [ici](https://webapplis.utc.fr/amenagement/examens/enseignant/suivi-demandes.xhtml).
+
+    Il s'agit d'un fichier Excel dont le format est trop vieux pour être chargé
+    directement. Il faut au préalable l'enregistrer au format xlsx.
+
+    Parameters
+    ----------
+
+    filename : :obj:`str`
+        Le chemin du fichier Excel d'aménagements à agréger.
+
+    Examples
+    --------
+
+    .. code:: python
+
+       DOCS.aggregate_amenagements("documents/amenagements_examens_Printemps_2024_SY02.xlsx")
+
+    """
+
+    def __init__(self, filename: str):
+        super().__init__(filename)
+        self._filename = filename
+
+    def apply(self, left_df):
+        check_filename(self.filename, base_dir=settings.SEMESTER_DIR)
+
+        try:
+            right_df = pd.read_excel(self.filename, engine="openpyxl")
+        except zipfile.BadZipFile:
+            fn = rel_to_dir(self.filename, settings.CWD)
+            raise Exception(f"Le fichier `{fn}` n'est pas reconnu. Merci de le réenregistrer avec Excel au format xlsx.")
+
+        def is_tt(row):
+            s = str(row["Aménagements"])
+            if "Temps de composition majoré d'un tiers" in s and "pour les épreuves écrites" in s:
+                return "Oui"
+            else:
+                return "Non"
+
+        def is_dys(row):
+            s = str(row["Aménagements"])
+            if "Adaptation dans la présentation des sujets" in s:
+                return "Oui"
+            else:
+                return "Non"
+
+        agg = Aggregator(
+            left_df,
+            right_df,
+            id_slug("Nom", "Prénom"),
+            id_slug("Etudiant"),
+            subset="Aménagements",
+            postprocessing=[
+                compute_new_column("Aménagements", func=is_tt, colname="Salle dédiée"),
+                compute_new_column("Aménagements", func=is_dys, colname="Sujet spécifique")
+            ],
+        )
+
+        return agg.left_aggregate()
+
+
 class FileStringOperation(FileOperation):
     msg_file = "Agrégation du fichier `{filename}`"
     msg_string = "Agrégation directe de \"{string}\""
@@ -1640,6 +1707,7 @@ actions = [
     ("aggregate_moodle_groups", AggregateMoodleGroups),
     ("aggregate_jury", AggregateJury),
     ("aggregate_org", AggregateOrg),
+    ("aggregate_amenagements", AggregateAmenagements),
     ("flag", Flag),
     ("apply_cell", ApplyCell),
     ("switch", Switch),
