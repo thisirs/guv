@@ -14,11 +14,14 @@ spécifiques à un semestre :
 
 ## Configuration des créneaux
 
-Les créneaux officiels portant sur toutes les UV de l'UTC durant une
-semaine type sont renseignés dans un fichier pdf fourni par
-l'administration et disponible [ici](https://webapplis.utc.fr/ent/services/services.jsf?sid=578). Il
-faut le télécharger et renseigner son chemin relatif dans la variable
-`CRENEAU_UV` afin que **guv** ait connaissance des créneaux des UV.
+Pour que **guv** ait connaissance des créneaux des UV, il faut lui donner accès
+au fichier pdf fourni par l'administration. Si l'arborescence a été créée avec
+la tâche `createsemester` et un nom de semestre reconnu par **guv** (de type
+A2021, P2022,...) la variable `CRENEAU_UV` est automatiquement renseignée et
+pointe vers le fichier officiel des créneaux placé dans le sous-dossier
+`documents`. Sinon, il faut le télécharger
+[ici](https://webapplis.utc.fr/ent/services/services.jsf?sid=578) et renseigner
+la variable `CRENEAU_UV` pour qu'elle pointe vers ce fichier.
 
 ## Configuration des plannings avec `PLANNINGS`
 

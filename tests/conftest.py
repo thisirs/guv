@@ -95,12 +95,10 @@ class Guv:
         {
             "semester": "P2023",
             "uvs": ["SY09", "SY02"],
-            "creneaux_uv": "Creneaux-UV-P23-Def.pdf",
         },
         {
             "semester": "A2023",
             "uvs": ["SY19", "SY02"],
-            "creneaux_uv": "Creneaux-UV-A23-Def.pdf",
         }
     ],
     scope="session",
@@ -114,7 +112,6 @@ def guv_data_current(request):
     return {
         "semester": "P2024",
         "uvs": ["SY09", "SY02"],
-        "creneaux_uv": "Creneaux-UV-P24-Def.pdf",
     }
 
 

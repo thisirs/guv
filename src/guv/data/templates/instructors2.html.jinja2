@@ -1,0 +1,8 @@
+Enseignants :
+
+{% for instructor in instructors -%}
+- {{ instructor | display_name }}{% if instructor.is_manager %} (responsable){% endif %},
+{%- for slot in instructor.slots %}
+    - {{ slot.name }} ({{ slot.room }} – {{ slot.start }}){% if not loop.last %},{% endif %}
+{%- endfor %}{% if loop.last %}.{% else %};{% endif %}
+{% endfor %}

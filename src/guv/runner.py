@@ -5,6 +5,7 @@ import logging
 import os
 import re
 import shlex
+import shutil
 import sys
 
 import jinja2
@@ -94,33 +95,55 @@ def run_creastesemester(args):
     logger.info("Création du dossier %s", os.path.relpath(gen_dir, os.getcwd()))
     os.makedirs(gen_dir, exist_ok=True)
 
-    tmpl_dir = os.path.join(guv.__path__[0], "templates")
-    jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(tmpl_dir))
+    semester_name = args.semester or args.directory
 
-    semester_id = args.semester or args.directory
-    if (m := re.fullmatch("([aApP])([0-9]{2})", semester_id)) is not None:
-        semester_id = m.group(1).upper() + "20" + m.group(2)
-    elif re.fullmatch("([aApP])([0-9]{4})", semester_id) is not None:
-        semester_id = semester_id.upper()
+    # Get semester_id of the form "P24"
+    if (m := re.fullmatch("([aApP])([0-9]{2})", semester_name)) is not None:
+        semester_id = semester_name.upper()
+    elif (m := re.fullmatch("([aApP])([0-9]{4})", semester_name)) is not None:
+        semester_id = m.group(1).upper() + m.group(2)[-2:]
+    else:
+        semester_id = None
 
-    # Get template for config.py from semester_id
-    try:
-        tmpl = jinja_env.get_template(f"semester_config_{semester_id}.py.jinja2")
-        logger.info("Utilisation du fichier de configuration pour le semestre %s", semester_id)
-    except jinja2.exceptions.TemplateNotFound:
-        logger.info("Utilisation du fichier de configuration par défaut")
-        tmpl = jinja_env.get_template("semester_config.py.jinja2")
-
+    data_dir = os.path.join(guv.__path__[0], "data")
     context = {
         "UVS": ", ".join(f'"{e}"' for e in args.uv),
         "SEMESTER": args.directory,
     }
+
+    # Copy file if it exists
+    if semester_id is not None:
+        creneau_uv = os.path.join(data_dir, f"Creneaux-UV_{semester_id}.pdf")
+        if os.path.exists(creneau_uv):
+            logger.info("Copie du fichier des créneaux du semestre %s", semester_id)
+            new_path = os.path.join(doc_dir, "Creneaux-UV.pdf")
+            shutil.copy(creneau_uv, new_path)
+            context["CRENEAU_UV"] = '"documents/Creneaux-UV.pdf"'
+        else:
+            logger.info("Fichier des créneaux pour %s non trouvé, renseignez manuellement CRENEAU_UV", semester_name)
+    else:
+        logger.info("Semestre non reconnu, renseignez manuellement CRENEAU_UV")
+
+    # Get template for config.py from semester_id
+    tmpl_dir = os.path.join(data_dir, "templates")
+    jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(tmpl_dir))
+    try:
+        if semester_id is not None:
+            tmpl = jinja_env.get_template(f"semester_{semester_id}_config.py.jinja2")
+            logger.info("Utilisation du fichier de configuration pour le semestre %s", semester_name)
+        else:
+            raise FileNotFoundError
+
+    except (jinja2.exceptions.TemplateNotFound, FileNotFoundError):
+        logger.info("Utilisation du fichier de configuration par défaut")
+        tmpl = jinja_env.get_template("semester_default_config.py.jinja2")
+
     content = tmpl.render(context)
     new_path = os.path.join(base_dir, "config.py")
 
     logger.info("Création du fichier %s", os.path.relpath(new_path, os.getcwd()))
     if os.path.exists(new_path):
-        raise Exception("Le fichier `%s` existe déjà" % os.path.relpath(new_path, os.getcwd()))
+        raise Exception("Le fichier %s existe déjà" % os.path.relpath(new_path, os.getcwd()))
     with open(new_path, "w", encoding="utf-8") as new_file:
         new_file.write(content)
 
