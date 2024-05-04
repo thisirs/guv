@@ -24,7 +24,7 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 from ..exceptions import ImproperlyConfigured
 from ..helpers import Documents, id_slug, Aggregator
 from ..logger import logger
-from ..utils import argument, sort_values
+from ..utils import argument, sort_values, ps, plural
 from ..utils_config import Output, check_if_present, rel_to_dir, ask_choice
 from .base import CliArgsMixin, UVTask
 
@@ -316,10 +316,14 @@ class XlsStudentData(UVTask):
             raise Exception("Format de fichier non reconnu")
 
         nans = df["Nom"].isna() | df["Prénom"].isna()
-        if sum(nans) != 0:
+        n = sum(nans)
+        if n != 0:
             logger.warning(
-                "%d enregistrement(s) ont été ignorés dans le fichier `%s`",
-                sum(nans),
+                "%d enregistrement%s %s été ignoré%s dans le fichier `%s`",
+                n,
+                ps(n),
+                plural(n, "ont", "a"),
+                ps(n),
                 rel_to_dir(self.csv_moodle, self.settings.cwd)
             )
             df = df.drop(df[nans].index)
