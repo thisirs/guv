@@ -2,6 +2,10 @@ import re
 import pytest
 from pathlib import Path
 from shutil import copytree
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class SkipSuccess(Exception):
@@ -73,6 +77,8 @@ class _TestPath:
     def path(self):
         """Return a temporary path that is a copy of the one of another test."""
 
+        logger.debug("Compute a path for node %s ...", self.request.node)
+
         # Path to use
         path = self.tmp_path_factory.mktemp(self.request._pyfuncitem.name, numbered=False)
 
@@ -80,30 +86,39 @@ class _TestPath:
         # path.
         marker = self.request.node.get_closest_marker("path_dependency")
         if marker is None:
+            logger.debug("... no `path_dependency` marker, returning new path `%s`", path)
             return path
 
         # Get name of dependency if any from `path_dependency` marker.
         # Add corresponding suffix if test is parametrized
         if marker.args and marker.args[0]:
             dep = marker.args[0] + self.suffix
+            logger.debug("... dependence to test named %s", dep)
         else:
+            logger.debug("... no dependence")
             dep = None
 
         cache = marker.kwargs.get("cache", False)
 
         old_path = self.retrieve_path(self.name)
         if cache and old_path and Path(old_path).exists():
+            logger.debug(f"... found {self.name} in cache")
             self.copy_tree(old_path, str(path))
             self.save_path(path)
+            logger.debug("... copy %s to %s and update cache", old_path, str(path))
+
             raise SkipSuccess("`test_path` is copied")
 
         if dep is not None:
             dep_path = self.retrieve_path(dep)
+            logger.debug("... retrieve %s path associated to dependency %s", dep_path, dep)
             if not dep_path or not Path(dep_path).exists():
                 pytest.skip(f"Unable to copy dependent path named {dep} from {dep_path} to {str(path)}")
             self.copy_tree(dep_path, str(path))
+            logger.debug("... copy %s to %s and update cache", dep_path, str(path))
 
         self.save_path(path)
+        logger.debug("... save association: %s -> %s", self.name, str(path))
         return path
 
     def save_path(self, path):
