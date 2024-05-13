@@ -1563,9 +1563,9 @@ class AggregateMoodleGrades(FileOperation):
             raise Exception("Le fichier n'est pas reconnu comme une feuille de notes Moodle")
 
         moodle_short_email = (
-            re.match(f"^\w+@", right_df.iloc[0]["Adresse de courriel"]) is not None
+            re.match(r"^\w+@", right_df.iloc[0]["Adresse de courriel"]) is not None
         )
-        ent_short_email = re.match(f"^\w+@", left_df.iloc[0]["Courriel"]) is not None
+        ent_short_email = re.match(r"^\w+@", left_df.iloc[0]["Courriel"]) is not None
 
         def left_right():
             if not (moodle_short_email ^ ent_short_email):
@@ -1573,7 +1573,7 @@ class AggregateMoodleGrades(FileOperation):
 
             if "Adresse de courriel" in left_df.columns:
                 ent_short_email2 = (
-                    re.match(f"^\w+@", left_df.iloc[0]["Adresse de courriel"])
+                    re.match(r"^\w+@", left_df.iloc[0]["Adresse de courriel"])
                     is not None
                 )
                 if not (moodle_short_email ^ ent_short_email2):

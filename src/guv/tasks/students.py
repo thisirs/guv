@@ -342,8 +342,8 @@ class XlsStudentData(UVTask):
         if "Courriel" not in df.columns:
             raise Exception("La colonne `Courriel` n'est pas présente dans le fichier central")
 
-        moodle_short_email = re.match(f"^\w+@", df_moodle.iloc[0]["Adresse de courriel"]) is not None
-        ent_short_email = re.match(f"^\w+@", df.iloc[0]["Courriel"]) is not None
+        moodle_short_email = re.match(r"^\w+@", df_moodle.iloc[0]["Adresse de courriel"]) is not None
+        ent_short_email = re.match(r"^\w+@", df.iloc[0]["Courriel"]) is not None
 
         if moodle_short_email ^ ent_short_email:
             logger.warning("Les adresses courriels sont dans un format différent, agrégation avec les colonnes `Nom` et `Prénom`")
