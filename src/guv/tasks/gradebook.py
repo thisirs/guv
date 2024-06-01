@@ -29,7 +29,7 @@ from openpyxl.utils import get_column_letter
 from ..openpyxl_utils import (fit_cells_at_col, frame_range, generate_ranges,
                               get_address_of_cell, get_range_from_cells,
                               get_segment, row_and_col)
-from ..utils import sort_values
+from ..utils import sort_values, normalize_string, generate_groupby
 from ..utils_ask import checkboxlist_prompt, prompt_number
 from ..utils_config import rel_to_dir, ask_choice
 from . import base
@@ -92,7 +92,8 @@ def get_values(tree, prop, default=1):
 
 
 class MarkingScheme:
-    def __init__(self, tree):
+    def __init__(self, name, tree):
+        self.name = name
         self.tree = tree
         self.width = None
         self.height = None
@@ -166,7 +167,7 @@ class MarkingScheme:
         self.bottom_right = worksheet.cell(row + self.height, col + self.width)
 
 
-class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
+class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
     """Fichier Excel de notes individuelles.
 
     Cette tâche permet de générer un fichier Excel pour rentrer facilement des
@@ -262,14 +263,15 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
 
     """
 
-    config_argname = "--marking-scheme"
-    config_help = "Fichier contenant le barème détaillé"
+    config_argname = "--marking-schemes"
+    config_help = "Fichiers contenant le ou les barèmes détaillés"
     config_required = False
+    config_number = "Combien de barèmes ? "
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
 
-    def ask_config(self):
+    def ask_one_config(self):
         def ask_subitem(item_name=None):
             subitems = {}
             if item_name is not None:
@@ -354,9 +356,15 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
         if self.group_by is not None:
             columns.append((self.group_by, "raw", 6))
 
-        columns.append((self.name + " brut", "cell", 7))
+        for i, ms in enumerate(self.marking_schemes):
+            columns.append((ms.name + " brut", "cell", 100+i))
+            columns.append((ms.name, "cell", 200+i))
 
-        self.agg_colname = self.name
+        # Say which columns are to be aggregated
+        self.agg_colname = [ms.name for ms in self.marking_schemes]
+        if len(self.marking_schemes) > 1:
+            columns.append(("final grade", "cell", 1000))
+            self.agg_colname += ["final grade"]
 
         return columns
 
@@ -388,29 +396,40 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
             help="Colonnes supplémentaires à inclure dans la feuille de notes"
         )
 
+    @property
+    def marking_schemes(self):
+        ms = [
+            MarkingScheme(f"partie {i+1}", conf) for i, conf in enumerate(self.config)
+        ]
+        if len(ms) == 1:
+            ms[0].name = "grade"
+        return ms
+
     def create_other_worksheets(self):
-        """Create one or more worksheets based on `worksheets` argument."""
+        """Create one or more worksheets based on `worksheets` and `marking_scheme` arguments."""
+
+        order_by = self.order_by if self.order_by is not None else "Nom"
 
         if self.group_by is not None:
-            # On groupe avec group_by issu de l'option --worksheets
-            gb = self.first_df.sort_values(self.group_by).groupby(
-                self.group_by
-            )
-            for name, group in gb:
-                order_by = self.order_by if self.order_by is not None else "Nom"
-                group = sort_values(group, [order_by])
-
-                # Illegal character in sheet name
-                name = name.replace("/", " ")
-                self.create_worksheet(name, group)
+            gen_group = list(generate_groupby(self.first_df, self.group_by))
         else:
-            group = self.first_df
-            order_by = self.order_by if self.order_by is not None else "Nom"
-            group = sort_values(group, [order_by])
-            self.create_worksheet("grade", group)
+            gen_group = [("", self.first_df)]
 
-    def create_worksheet(self, name, group):
-        gradesheet = self.workbook.create_sheet(title=name)
+        for ms in self.marking_schemes:
+            for name, group in gen_group:
+                group = sort_values(group, [order_by])
+                self.create_worksheet(name, ms, group)
+
+    def create_worksheet(self, name, ms, group):
+        """Create one worksheet for group with marking scheme and name."""
+
+        if name:
+            worksheet_name = ms.name + " " + name
+        else:
+            worksheet_name = ms.name
+
+        worksheet_name = normalize_string(worksheet_name, type="excel")
+        gradesheet = self.workbook.create_sheet(title=worksheet_name)
 
         # Make current worksheet the default one, useful for get_address_of_cell
         self.workbook.active = gradesheet
@@ -424,12 +443,11 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
         ]
         ref_marking_scheme = ref_stats.right(len(stats))
 
-        ms = MarkingScheme(self.config)
         ms.write(gradesheet, ref_marking_scheme)
         ref = row_and_col(ref_marking_scheme, ms.bottom_right)
 
         # Freeze the structure
-        gradesheet.freeze_panes =  ref.top()
+        gradesheet.freeze_panes = ref.top()
 
         def insert_record(ref_cell, i, record):
             index = ref_cell.text(str(i) + ".")
@@ -464,13 +482,13 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
             )
 
             # Cell in first worksheet
-            cell = record[self.name]
+            cell = record[ms.name]
             cell.value = "=" + get_address_of_cell(
                 total_20, add_worksheet_name=True, absolute=True
             )
 
             # Total in first worksheet
-            cell = record[self.name + " brut"]
+            cell = record[ms.name + " brut"]
             cell.value = "=" + get_address_of_cell(
                 total, add_worksheet_name=True, absolute=True
             )
@@ -493,7 +511,6 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.ConfigOpt):
                 if i == 0:
                     ref_stats.right(j).below(-1).text(name).center()
                 ref_stats.right(j).below(i).text(formula.format(marks_range=marks_range))
-
 
         # Around grades
         frame_range(ref.above(3), last_cell.above(3))
@@ -591,12 +608,17 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
             help="Colonne de groupes utilisée pour noter des groupes d'étudiants"
         )
 
-    def create_worksheet(self, name, group):
-        gradesheet = self.workbook.create_sheet(title=name)
+    def create_worksheet(self, name, ms, group):
+        if name:
+            worksheet_name = ms.name + " " + name
+        else:
+            worksheet_name = ms.name
+
+        worksheet_name = normalize_string(worksheet_name, type="excel")
+        gradesheet = self.workbook.create_sheet(title=worksheet_name)
 
         # Write marking scheme
         ref = gradesheet.cell(4, 2)
-        ms = MarkingScheme(self.config)
         ms.write(gradesheet, ref)
 
         # Add room for name and total
@@ -693,10 +715,10 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
                 )
             )
 
-            record[self.name].value = "=" + get_address_of_cell(
+            record[ms.name].value = "=" + get_address_of_cell(
                 stu_total_20, add_worksheet_name=True
             )
-            record[self.name + " brut"].value = "=" + get_address_of_cell(
+            record[ms.name + " brut"].value = "=" + get_address_of_cell(
                 stu_total, add_worksheet_name=True
             )
 

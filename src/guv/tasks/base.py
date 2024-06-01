@@ -15,6 +15,7 @@ from ..exceptions import (DependentTaskParserError, ImproperlyConfigured,
                           NotUVDirectory)
 from ..logger import logger
 from ..utils import pformat
+from ..utils_ask import prompt_number
 from ..utils_config import get_unique_uv, selected_uv
 
 
@@ -396,17 +397,15 @@ class ConfigOpt(CliArgsInheritMixin):
         return self._config
 
     def build_config(self):
-        """Build config from cli argument"""
+        """Build config from cli argument or ask for it if required"""
+
         config_file = self.config_file
         if config_file is not None:
             return self.parse_config(config_file)
-
-        
-
-        if self.config_required:
+        elif self.config_required:
             return self.ask_config()
         else:
-            return self.ask_config()
+            return None
 
     def validate_config(self, config):
         """Return a valid configuration.
@@ -414,10 +413,12 @@ class ConfigOpt(CliArgsInheritMixin):
         Return a default configuration if `config` is None.
         """
 
-        return config
+        raise NotImplementedError()
 
     def ask_config(self):
-        raise Exception("Un fichier de configuration est requis")
+        """Return a configuration by asking user."""
+
+        raise NotImplementedError()
 
     def parse_config(self, config_file):
         if not os.path.exists(config_file):
@@ -427,6 +428,75 @@ class ConfigOpt(CliArgsInheritMixin):
             config = list(yaml.load_all(stream, Loader=yaml.SafeLoader))[0]
             config = self.validate_config(config)
             return config
+
+
+class MultipleConfigOpt(CliArgsInheritMixin):
+    """Add a config option"""
+
+    config_argname = "--config"
+    config_help = "Fichiers de configuration"
+    config_required = True
+    config_number = "Combien de fichiers de configuration ?"
+
+    def add_arguments(self):
+        super().add_arguments()
+        metavar = self.config_argname.strip("-").replace("-", "_").upper()
+        metavar = f"{metavar},[{metavar},...]"
+        self.add_argument(
+            self.config_argname,
+            metavar=metavar,
+            dest="config_files",
+            type=lambda t: [s.strip() for s in t.split(",")],
+            help=self.config_help,
+            required=self.config_required,
+        )
+
+    @property
+    def config(self):
+        """Call `build_config` and cache result."""
+
+        if not hasattr(self, "_config") or self._config is None:
+            self._config = self.build_config()
+        return self._config
+
+    def build_config(self):
+        """Build config from cli argument or ask for it if required"""
+
+        config_files = self.config_files
+        if config_files:
+            return self.parse_config(config_files)
+        elif not self.config_required:
+            return self.ask_config()
+        else:
+            return None
+
+    def parse_config(self, config_files):
+        configs = []
+
+        for config_file in config_files:
+            if not os.path.exists(config_file):
+                raise Exception(f"{self.config_help} `{config_file}` non trouvé")
+
+            with open(config_file, "r") as stream:
+                config = list(yaml.load_all(stream, Loader=yaml.SafeLoader))[0]
+                config = self.validate_config(config)
+                configs.append(config)
+
+        return configs
+
+    def ask_one_config(self):
+        raise NotImplementedError()
+
+    def ask_config(self):
+        configs = []
+        n_marking_schemes = prompt_number(self.config_number, default="1")
+
+        for i in range(n_marking_schemes):
+            config = self.ask_one_config()
+            validated_config = self.validate_config(config)
+            configs.append(validated_config)
+
+        return configs
 
 
 class GroupOpt(CliArgsInheritMixin):

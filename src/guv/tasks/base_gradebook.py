@@ -53,9 +53,6 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
         # Default columns
         columns = [("Nom", "raw", 0), ("Prénom", "raw", 0), ("Courriel", "raw", 0)]
 
-        # Add column for grades
-        columns.append((self.name, "cell", 100))
-
         return columns
 
     def get_column_range(self, colname):

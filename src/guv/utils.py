@@ -254,3 +254,9 @@ def compile_latex_file(tex_file):
 
     return pdf_file
 
+
+def normalize_string(name, type="excel"):
+    if type == "excel":
+        return name.replace("/", "")
+    else:
+        return RuntimeError("Unknown type", type)
