@@ -18,5 +18,5 @@ Il faut d'abord installer la bibliothèque `shtab` et exécuter la
 commande suivante dans le dossier du semestre.
 
 ```bash
-python -c "from guv.runner import print_completer; print_completer(shell='zsh')"
+python -c "from guv.runner import print_completer; print_completer(shell='zsh')" > ~/.zsh/completions/_guv
 ```
