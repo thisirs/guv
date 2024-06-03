@@ -263,7 +263,7 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
 
     """
 
-    config_argname = "--marking-schemes"
+    config_argname = "--marking-scheme"
     config_help = "Fichiers contenant le ou les barèmes détaillés"
     config_required = False
     config_number = "Combien de barèmes ? "
