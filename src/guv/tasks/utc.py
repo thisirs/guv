@@ -355,6 +355,19 @@ class Planning(TaskBase):
             skip_days_t = props["SKIP_DAYS_T"]
             turn = props["TURN"]
 
+            if any([d < pl_beg or d > pl_end for d in skip_days_c]):
+                print([d < pl_beg or d > pl_end for d in skip_days_c])
+                raise Exception("Un ou plusieurs jours présents dans `SKIP_DAYS_C` ne font pas partie du planning")
+
+            if any([d < pl_beg or d > pl_end for d in skip_days_d]):
+                raise Exception("Un ou plusieurs jours présents dans `SKIP_DAYS_D` ne font pas partie du planning")
+
+            if any([d < pl_beg or d > pl_end for d in skip_days_t]):
+                raise Exception("Un ou plusieurs jours présents dans `SKIP_DAYS_T` ne font pas partie du planning")
+
+            if any([d < pl_beg or d > pl_end for d, _ in turn.items()]):
+                raise Exception("Un ou plusieurs jours présents dans `TURN` ne font pas partie du planning")
+
             # DataFrame of days in planning
             planning_C = pd.DataFrame(
                 generate_row(pl_beg, pl_end, skip_days_c, turn),
