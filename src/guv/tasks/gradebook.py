@@ -544,17 +544,21 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
 
     Cette tâche permet de créer un fichier Excel pour attribuer des notes par
     groupes évitant ainsi de recopier la note pour chaque membre du groupe. Les
-    groupes d'étudiants sont spécifiés par l'argument ``--group-by``. Un barème
-    détaillé peut être fourni via l'argument ``--marking-scheme``. S'il n'est
-    pas fourni, un barème sera demandé interactivement. Le fichier peut être
-    divisé en plusieurs feuilles suivant l'argument ``--worksheets`` et chaque
-    feuille peut être ordonnée suivant l'argument ``--order-by``.
-
-    Le fichier spécifiant le barème est au format YAML. La structure
-    du devoir est spécifiée de manière arborescente avec une liste
-    finale pour les questions contenant les points accordés à cette
-    question et éventuellement le coefficient (par défaut 1) et des
-    détails (ne figurant pas dans le fichier Excel). Par exemple :
+    groupes d'étudiants sont spécifiés par l'argument ``--group-by``. Un ou
+    plusieurs barèmes détaillés peuvent être fournis via l'argument
+    ``--marking-scheme``. Le fichier Excel peut aussi être divisé en plusieurs
+    feuilles de calculs selon une colonne du fichier ``effectif.xlsx`` via
+    l'argument ``--worksheets``. Dans chacun des groupes, les étudiants peuvent
+    être ordonnés suivant l'argument ``--order-by``. On peut ajouter des
+    colonnes supplémentaires à faire figurer dans la première feuille avec
+    l'argument ``--extra-cols``. Le ou les chemins vers un fichier de barème
+    détaillé peut être fourni via l'argument ``--marking-scheme``. Si l'argument
+    n'est pas utilisé, les barèmes seront demandés interactivement. Le fichier
+    de barème doit être au format YAML. La structure du devoir est spécifiée de
+    manière arborescente avec une liste finale pour les questions contenant les
+    points accordés à cette question et éventuellement le coefficient (par
+    défaut 1) et des détails (ne figurant pas dans le fichier Excel). Par
+    exemple :
 
     .. code:: yaml
 
@@ -578,9 +582,9 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
            Question 2:
              - points: 2
 
+
     Les notes finales peuvent ensuite être facilement incorporées au
-    fichier central en renseignant la variable
-    ``DOCS``.
+    fichier central en renseignant la variable ``DOCS``.
 
     {options}
 
