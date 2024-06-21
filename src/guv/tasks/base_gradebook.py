@@ -7,7 +7,7 @@ import pandas as pd
 
 from ..logger import logger
 from ..openpyxl_patched import fixit
-from .utils import normalize_string
+from ..utils import normalize_string
 from ..utils_config import Output, rel_to_dir
 from .base import CliArgsInheritMixin, UVTask
 from .students import XlsStudentDataMerge
