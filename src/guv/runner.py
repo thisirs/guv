@@ -315,7 +315,12 @@ def main(argv=sys.argv[1:]):
             and sys.argv[1:]
         ):
             command_line = "guv " + " ".join(map(shlex.quote, sys.argv[1:])) + "\n"
-            fp = os.path.join(settings.SEMESTER_DIR, ".history")
+            if "UV_DIR" in settings._settings:
+                directory = settings._settings["UV_DIR"]
+            else:
+                directory = settings._settings["SEMESTER_DIR"]
+
+            fp = os.path.join(directory, ".history")
 
             with open(fp, "a") as file:
                 file.write(command_line)
