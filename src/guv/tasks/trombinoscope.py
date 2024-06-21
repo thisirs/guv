@@ -115,7 +115,7 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
         )
 
     def student_context(self, row):
-        """Retourne le contexte d'un édudiant pour Jinja2"""
+        """Retourne le contexte d'un étudiant pour Jinja2"""
 
         path = os.path.abspath(
             os.path.join(

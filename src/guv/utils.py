@@ -125,7 +125,7 @@ def make_groups(collection, proportions):
     La longueur de `proportions` fixe le nombre de groupes et la
     valeur correspondante est la taille du groupe en proportion. Par
     exemple, `[1, 1, 1]` correspond à trois groupes de même taille. Les
-    groupes sont constitués de manière contigue.
+    groupes sont constitués de manière contiguë.
 
     """
 

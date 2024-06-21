@@ -849,7 +849,7 @@ class JsonGroup(UVTask, CliArgsMixin):
         )
         dff = df[["Adresse de courriel", self.group]]
 
-        # Dictionnary of group in GROUP and corresponding Cond
+        # Dictionary of group in GROUP and corresponding Cond
         # object for that group.
         json_dict = {
             group_name: CondOr(
