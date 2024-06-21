@@ -284,8 +284,8 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
         self.file_dep = [self.xls_merge]
         self.parse_args()
         self.target = self.build_target(
-            title=normalize_string(self.title, type="file"),
-            group=normalize_string(self.group) if self.group else "all"
+            title=normalize_string(self.title, type="file_no_space"),
+            group=normalize_string(self.group, type="file_no_space") if self.group else "all"
         )
 
     def run(self):
