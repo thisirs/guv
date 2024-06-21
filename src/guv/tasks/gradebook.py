@@ -171,14 +171,16 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
     """Fichier Excel de notes individuelles.
 
     Cette tâche permet de générer un fichier Excel pour rentrer facilement des
-    notes avec un barème détaillé. Le fichier Excel peut être divisé en
-    plusieurs feuilles de calculs selon une colonne du fichier
+    notes avec un ou plusieurs barèmes détaillés. Le fichier Excel peut aussi
+    être divisé en plusieurs feuilles de calculs selon une colonne du fichier
     ``effectif.xlsx`` via l'argument ``--worksheets``. Dans chacune de ces
     feuilles, les étudiants peuvent être ordonnés suivant l'argument
-    ``--order-by``. Le chemin vers un fichier de barème détaillé peut être
-    fourni via l'argument ``--marking-scheme``. S'il n'est pas fourni le barème
-    sera demandé interactivement. Le fichier de barème doit être au format YAML.
-    La structure du devoir est spécifiée de manière arborescente avec une liste
+    ``--order-by``. On peut ajouter des colonnes supplémentaires à faire figurer
+    dans la première feuille avec l'argument ``--extra-cols``. Le ou les chemins
+    vers un fichier de barème détaillé peut être fourni via l'argument
+    ``--marking-scheme``. Si l'argument n'est pas utilisé, les barèmes seront
+    demandés interactivement. Le fichier de barème doit être au format YAML. La
+    structure du devoir est spécifiée de manière arborescente avec une liste
     finale pour les questions contenant les points accordés à cette question et
     éventuellement le coefficient (par défaut 1) et des détails (ne figurant pas
     dans le fichier Excel). Par exemple :
@@ -221,7 +223,8 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
 
          guv xls_grade_book_no_group --name Devoir1
 
-    - Fichier de notes pour un devoir en divisant par groupe de TD :
+    - Fichier de notes pour un devoir en fournissant un barème et en divisant
+      par groupe de TD :
 
       .. code:: bash
 
