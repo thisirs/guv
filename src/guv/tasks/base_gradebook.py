@@ -81,7 +81,7 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
         self.data_df = XlsStudentDataMerge.read_target(self.xls_merge)
         self.create_first_worksheet()
         self.create_other_worksheets()
-        target = self.build_target(normalize_string(name=self.name, type="file"))
+        target = self.build_target(name=normalize_string(self.name, type="file"))
         with Output(target, protected=True) as out:
             self.workbook.save(out.target)
 
