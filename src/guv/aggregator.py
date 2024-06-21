@@ -7,39 +7,6 @@ from .utils_config import check_if_present
 from .utils import ps, plural
 
 
-def merge_columns(df):
-    """Try to merge column that have the same name."""
-
-    duplicated_columns = [c for c in df.columns if c + "_y" in df.columns]
-
-    for c in duplicated_columns:
-        c_y = c + '_y'
-        logger.warning("Tentative de fusion des colonnes `%s` et `%s`", c, c_y)
-
-        if all(df[c_y] == df[c]):
-            logger.info("Colonnes `%s` et `%s` identiques, suppression de `%s`", c, c_y, c_y)
-            df = df.drop(c_y, axis=1)
-            continue
-
-        if any(df[c_y].notna() & df[c].notna()):
-            logger.warning("Fusion impossible car éléments non nuls en commun")
-            continue
-
-        dtype = df[c].dtype
-        df[c] = df[c].fillna(df[c_y])
-        new_dtype = df[c].dtype
-        if new_dtype != dtype:
-            logger.warning("Le type de la colonne a changé suite à la fusion: %s -> %s", dtype, new_dtype)
-            try:
-                logger.warning("Conversion de type")
-                df[c] = df[c].astype(dtype)
-            except ValueError:
-                logger.warning("Conversion impossible")
-        df = df.drop(c_y, axis=1)
-
-    return df
-
-
 class Merger(ABC):
     def __init__(self, type=None):
         self.type = type
@@ -320,25 +287,58 @@ class Aggregator:
         clean_df = self.clean_merge(self._left_merge_df)
         return _apply_processing(clean_df, "Postprocessing", self.postprocessing)
 
-    def merge_columns(self, df, strategy="merge", columns=[]):
-        "Try to merge columns that are duplicated after merge."
 
-        if strategy == "merge":
-            return merge_columns(df)
-        elif strategy == "keep_left":
-            return keep_left_columns(df, columns)
-        elif strategy == "keep_right":
-            return keep_right_columns(df, columns)
-        else:
-            raise ValueError("Unknown strategy", strategy)
+def merge_columns(df, strategy="merge", columns=[]):
+    if strategy == "merge":
+        return _merge_columns(df)
+    elif strategy == "keep_left":
+        return _keep_left_columns(df, columns)
+    elif strategy == "keep_right":
+        return _keep_right_columns(df, columns)
+    else:
+        raise ValueError("Unknown strategy", strategy)
 
 
-def keep_left_columns(df, columns):
+def _merge_columns(df):
+    """Try to merge column that have the same name."""
+
+    duplicated_columns = [c for c in df.columns if c + "_y" in df.columns]
+
+    for c in duplicated_columns:
+        c_y = c + '_y'
+        logger.warning("Tentative de fusion des colonnes `%s` et `%s`", c, c_y)
+
+        if all(df[c_y] == df[c]):
+            logger.info("Colonnes `%s` et `%s` identiques, suppression de `%s`", c, c_y, c_y)
+            df = df.drop(c_y, axis=1)
+            continue
+
+        if any(df[c_y].notna() & df[c].notna()):
+            logger.warning("Fusion impossible car éléments non nuls en commun")
+            continue
+
+        dtype = df[c].dtype
+        df[c] = df[c].fillna(df[c_y])
+        new_dtype = df[c].dtype
+        if new_dtype != dtype:
+            logger.warning("Le type de la colonne a changé suite à la fusion: %s -> %s", dtype, new_dtype)
+            try:
+                logger.warning("Conversion de type")
+                df[c] = df[c].astype(dtype)
+            except ValueError:
+                logger.warning("Conversion impossible")
+        df = df.drop(c_y, axis=1)
+
+    return df
+
+
+def _keep_left_columns(df, columns):
     duplicated_columns = [c + "_y" for c in df.columns if ((c + "_y" in df.columns) and (c in columns))]
     df = df.drop(duplicated_columns, axis=1)
     return df
 
-def keep_right_columns(df, columns):
+
+def _keep_right_columns(df, columns):
     duplicated_columns = [c for c in df.columns if ((c + "_y" in df.columns) and (c in columns))]
     df = df.drop(duplicated_columns, axis=1)
     df = df.rename(columns={c + "_y": c for c in duplicated_columns})

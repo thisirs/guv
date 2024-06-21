@@ -11,7 +11,7 @@ import zipfile
 import numpy as np
 import pandas as pd
 
-from .aggregator import Aggregator, ColumnsMerger
+from .aggregator import Aggregator, ColumnsMerger, merge_columns
 from .config import settings
 from .exceptions import ImproperlyConfigured
 from .logger import logger
@@ -896,7 +896,9 @@ class Aggregate(FileOperation):
             rename=self.rename,
         )
 
-        return agg.left_aggregate()
+        agg_df = agg.left_aggregate()
+
+        return merge_columns(agg_df)
 
 
 class AggregateSelf(Operation):
@@ -934,7 +936,7 @@ class AggregateSelf(Operation):
         )
 
         agg_df = agg.left_aggregate()
-        return agg.merge_columns(agg_df, strategy="keep_right", columns=self.columns)
+        return merge_columns(agg_df, strategy="keep_right", columns=self.columns)
 
     def message(self, ref_dir=None):
         msg = ", ".join(f"`{e}`" for e in self.columns)
