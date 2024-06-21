@@ -15,7 +15,7 @@ import numpy as np
 
 import guv
 
-from ..utils import argument, generate_groupby, sort_values
+from ..utils import argument, generate_groupby, sort_values, normalize_string
 from ..utils_config import check_if_present, render_from_contexts
 from ..logger import logger
 from .base import CliArgsMixin, UVTask
@@ -91,7 +91,7 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
             else:
                 target = "trombi_{groupby}"
 
-        self.target = self.build_target(target_name=target)
+        self.target = self.build_target(target_name=normalize_string(target, type="file_no_space"))
         self.width = 5
 
     def run(self):

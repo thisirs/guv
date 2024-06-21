@@ -37,6 +37,7 @@ from ..utils import (
     score_codenames,
     split_codename,
     make_groups,
+    normalize_string,
     pformat,
     sort_values,
 )
@@ -106,10 +107,11 @@ class CsvGroups(UVTask, CliArgsMixin):
         self.file_dep = [self.xls_merge]
         self.parse_args()
         if self.single:
-            self.targets = [self.build_target(ctype="_".join(self.groups))]
+            ctype = "_".join(normalize_string(s, type="file") for s in self.groups)
+            self.targets = [self.build_target(ctype=ctype)]
         else:
             self.targets = [
-                self.build_target(ctype=ctype)
+                self.build_target(ctype=normalize_string(ctype, type="file"))
                 for ctype in self.groups
             ]
 
@@ -839,7 +841,7 @@ class JsonGroup(UVTask, CliArgsMixin):
         self.file_dep = [self.xls_merge]
 
         self.parse_args()
-        self.target = self.build_target()
+        self.target = self.build_target(group=normalize_string(self.group, type="file"))
 
     def run(self):
         df = XlsStudentDataMerge.read_target(self.xls_merge)
@@ -1110,7 +1112,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         self.file_dep = [self.xls_merge]
 
         self.parse_args()
-        self.target = self.build_target()
+        self.target = self.build_target(title=normalize_string(self.title, type="file"))
 
     def create_name_gen(self, tmpl):
         "Générateur de noms pour les groupes"

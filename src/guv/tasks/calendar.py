@@ -11,7 +11,7 @@ import pandas as pd
 import guv
 
 from ..logger import logger
-from ..utils import argument, ps, px
+from ..utils import argument, ps, px, normalize_string
 from ..utils_config import render_from_contexts
 from .base import CliArgsMixin, TaskBase, UVTask
 from .utc import WeekSlots, WeekSlotsAll
@@ -218,7 +218,7 @@ class CalInst(CliArgsMixin, TaskBase):
             self.insts = [self.settings.DEFAULT_INSTRUCTOR]
 
         def build_prefix(inst):
-            return f'{inst.replace(" ", "_")}_{"_".join(self.plannings)}'
+            return f'{normalize_string(inst, type="file_no_space")}_{"_".join(self.plannings)}'
 
         self.targets = [
             self.build_target(name=build_prefix(inst))

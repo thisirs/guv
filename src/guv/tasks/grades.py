@@ -11,7 +11,7 @@ import pandas as pd
 import textwrap
 
 from ..logger import logger
-from ..utils import argument, sort_values
+from ..utils import argument, sort_values, normalize_string
 from ..utils_config import Output, check_if_present
 from .base import CliArgsMixin, UVTask
 from .instructors import WeekSlots
@@ -85,7 +85,7 @@ class CsvForUpload(UVTask, CliArgsMixin):
         self.file_dep = [self.xls_merge]
 
         self.parse_args()
-        self.target = self.build_target()
+        self.target = self.build_target(grade_colname=normalize_string(self.grade_colname, type="file"))
 
     def run(self):
         if self.ects and self.comment_colname:
@@ -180,7 +180,7 @@ class XlsMergeFinalGrade(UVTask, CliArgsMixin):
 
         self.xls_sheets = os.path.join(self.settings.SEMESTER_DIR, self.target_dir, f"{self.exam}.xlsx")
         self.file_dep = [self.xls_sheets]
-        self.target = self.build_target()
+        self.target = self.build_target(exam=normalize_string(self.exam, type="file"))
 
     def run(self):
         xls = pd.ExcelFile(self.xls_sheets)

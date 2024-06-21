@@ -24,7 +24,7 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 from ..exceptions import ImproperlyConfigured
 from ..helpers import Documents, id_slug, Aggregator
 from ..logger import logger
-from ..utils import argument, sort_values, ps, plural
+from ..utils import argument, sort_values, ps, plural, normalize_string
 from ..utils_config import Output, check_if_present, rel_to_dir, ask_choice
 from .base import CliArgsMixin, UVTask
 
@@ -650,7 +650,7 @@ class ZoomBreakoutRooms(UVTask, CliArgsMixin):
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
         self.file_dep = [self.xls_merge]
         self.parse_args()
-        self.target = self.build_target()
+        self.target = self.build_target(group=normalize_string(self.group, type="file"))
 
     def run(self):
         df = XlsStudentDataMerge.read_target(self.xls_merge)
@@ -684,7 +684,7 @@ class MaggleTeams(UVTask, CliArgsMixin):
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
         self.file_dep = [self.xls_merge]
         self.parse_args()
-        self.target = self.build_target()
+        self.target = self.build_target(group=normalize_string(self.group, type="file"))
 
     def run(self):
         df = XlsStudentDataMerge.read_target(self.xls_merge)

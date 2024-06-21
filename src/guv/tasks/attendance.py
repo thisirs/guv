@@ -4,7 +4,7 @@ présence.
 """
 
 from ..utils import (LaTeXEnvironment, argument, make_groups, pformat,
-                     sort_values, generate_groupby)
+                     sort_values, generate_groupby, normalize_string)
 from ..utils_config import check_if_present, render_from_contexts
 from .base import CliArgsMixin, UVTask
 from .students import XlsStudentDataMerge
@@ -112,8 +112,8 @@ class PdfAttendance(UVTask, CliArgsMixin):
 
         self.parse_args()
         self.target = self.build_target(
-            group=(self.group or "all"),
-            title=self.title.replace(" ", "_")
+            group=normalize_string(self.group, type="file_no_space") if self.group else "all",
+            title=normalize_string(self.title, type="file_no_space")
         )
         latex_env = LaTeXEnvironment()
         self.template = latex_env.get_template(self.template_file)
@@ -283,7 +283,10 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
         self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
         self.file_dep = [self.xls_merge]
         self.parse_args()
-        self.target = self.build_target(title=self.title.replace(" ", "_"), group=self.group or "all")
+        self.target = self.build_target(
+            title=normalize_string(self.title, type="file"),
+            group=normalize_string(self.group) if self.group else "all"
+        )
 
     def run(self):
         df = XlsStudentDataMerge.read_target(self.xls_merge)

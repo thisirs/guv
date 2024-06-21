@@ -258,5 +258,15 @@ def compile_latex_file(tex_file):
 def normalize_string(name, type="excel"):
     if type == "excel":
         return name.replace("/", "")
+    elif type == "file":
+        name = re.sub(r"(?u)[^-\w. ]", "", name)
+        if name in {"", ".", ".."}:
+            raise Exception("L'identifiant `{name}` ne permet pas d'avoir un nom de fichier valide")
+        return name
+    elif type == "file_no_space":
+        name = re.sub(r"(?u)[^-\w.]", "", name)
+        if name in {"", ".", ".."}:
+            raise Exception("L'identifiant `{name}` ne permet pas d'avoir un nom de fichier valide")
+        return name
     else:
         return RuntimeError("Unknown type", type)

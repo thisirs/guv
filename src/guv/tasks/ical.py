@@ -12,7 +12,7 @@ import zipfile
 import pytz
 from icalendar import Calendar, Event
 
-from ..utils import argument, ps
+from ..utils import argument, ps, normalize_string
 from ..utils_config import Output
 from .base import CliArgsMixin, TaskBase, UVTask
 from .utc import PlanningSlots, PlanningSlotsAll
@@ -87,7 +87,7 @@ class IcalUv(UVTask):
         key = df["Lib. créneau"] + df["Semaine"].fillna("")
         for name, group in df.groupby(key):
             events = ical_events(group, **settings)
-            output = f'{name}.ics'
+            output = f'{normalize_string(name, type="file")}.ics'
             with open(os.path.join(temp_dir, output), "wb") as fd:
                 fd.write(events)
 
@@ -159,7 +159,7 @@ class IcalInst(TaskBase, CliArgsMixin):
             inst = self.insts[0]
             df_inst = df.loc[df["Intervenants"].astype(str) == inst, :]
             target = self.build_target(
-                name=inst.replace(" ", "_"),
+                name=normalize_string(inst, type="file_no_space"),
                 target_name="{name}.ics"
             )
             events = ical_events(df_inst, **settings)
@@ -172,7 +172,7 @@ class IcalInst(TaskBase, CliArgsMixin):
                 df_inst = df.loc[df["Intervenants"].astype(str) == inst, :]
                 events = ical_events(df_inst, **settings)
 
-                output = f'{inst.replace(" ", "_")}.ics'
+                output = f'{normalize_string(inst, type="file_no_space")}.ics'
                 with open(os.path.join(temp_dir, output), "wb") as fd:
                     fd.write(events)
 

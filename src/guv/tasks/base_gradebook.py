@@ -7,6 +7,7 @@ import pandas as pd
 
 from ..logger import logger
 from ..openpyxl_patched import fixit
+from .utils import normalize_string
 from ..utils_config import Output, rel_to_dir
 from .base import CliArgsInheritMixin, UVTask
 from .students import XlsStudentDataMerge
@@ -80,7 +81,7 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
         self.data_df = XlsStudentDataMerge.read_target(self.xls_merge)
         self.create_first_worksheet()
         self.create_other_worksheets()
-        target = self.build_target()
+        target = self.build_target(normalize_string(name=self.name, type="file"))
         with Output(target, protected=True) as out:
             self.workbook.save(out.target)
 
