@@ -31,7 +31,7 @@ from ..openpyxl_utils import (fit_cells_at_col, frame_range, generate_ranges,
                               get_segment, row_and_col)
 from ..utils import sort_values, normalize_string, generate_groupby
 from ..utils_ask import checkboxlist_prompt, prompt_number
-from ..utils_config import rel_to_dir, ask_choice
+from ..utils_config import rel_to_dir, ask_choice, check_if_present
 from . import base
 from . import base_gradebook as baseg
 
@@ -408,6 +408,20 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
             ms[0].name = "grade"
         return ms
 
+    def create_first_worksheet(self):
+        # Check columns first before maybe asking interactively for a marking
+        # scheme
+        if self.group_by is not None:
+            check_if_present(self.data_df, self.group_by)
+
+        if self.order_by is not None:
+            check_if_present(self.data_df, self.order_by)
+
+        if self.extra_cols is not None:
+            check_if_present(self.data_df, self.extra_cols)
+
+        super().create_first_worksheet()
+
     def create_other_worksheets(self):
         """Create one or more worksheets based on `worksheets` and `marking_scheme` arguments."""
 
@@ -610,6 +624,14 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
             required=True,
             help="Colonne de groupes utilisée pour noter des groupes d'étudiants"
         )
+
+    def create_first_worksheet(self):
+        # Check columns first before maybe asking interactively for a marking
+        # scheme
+        if self.subgroup_by is not None:
+            check_if_present(self.data_df, self.subgroup_by)
+
+        super().create_first_worksheet()
 
     def create_worksheet(self, name, ms, group):
         if name:
