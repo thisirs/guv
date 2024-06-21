@@ -275,16 +275,19 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
         def ask_subitem(item_name=None):
             subitems = {}
             if item_name is not None:
-                prompt = f"Nom d'une sous-question de `{item_name}` ? "
+                prompt = f"Nom d'une sous-partie/question de `{item_name}` (rien si question)? "
+                name = input(prompt)
             else:
-                prompt = "Nom d'une sous-question ? "
+                prompt = "Nom d'une partie/question ? "
+                name = None
+                while not name:
+                    name = input(prompt)
 
-            name = input(prompt)
             if name:
                 if item_name is not None:
-                    prompt = f"Nom d'une autre sous-question de `{item_name}` ? "
+                    prompt = f"Nom d'une autre sous-partie/question de `{item_name}` ? "
                 else:
-                    prompt = "Nom d'une autre sous-question ? "
+                    prompt = "Nom d'une autre partie/question ? "
 
                 subitems[name] = ask_subitem(item_name=name)
                 while True:
@@ -294,8 +297,8 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
                     else:
                         break
             else:
-                points = prompt_number(f"Points pour la sous-question `{item_name}` : ", default="1")
-                coeff = prompt_number(f"Coefficient pour la sous-question `{item_name}` : ", default="1")
+                points = prompt_number(f"Points pour la question `{item_name}` : ", default="1")
+                coeff = prompt_number(f"Coefficient pour la question `{item_name}` : ", default="1")
                 subitems = [{"points": points, "coeff": coeff}]
 
             return subitems
