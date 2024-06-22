@@ -37,9 +37,6 @@ class Documents:
     def compute_new_column(self, *cols: str, func: Callable, colname: str, msg: Optional[str] = None):
         ...
 
-    def apply_cell(self, name_or_email: str, colname: str, value, msg: Optional[str] = None):
-        ...
-
     def add(self, filename: str, func: callable):
         ...
 
@@ -63,6 +60,21 @@ class Documents:
     ):
         ...
 
+    def aggregate_self(
+        self,
+        *columns: str,
+    ):
+        ...
+
+    def aggregate_moodle_grades(self, filename: str, rename: Optional[dict] = None,):
+        ...
+
+    def aggregate_moodle_groups(self, filename: str, colname: str):
+        ...
+
+    def aggregate_jury(self, filename: str):
+        ...
+
     def aggregate_org(
         self,
         filename: str,
@@ -72,7 +84,13 @@ class Documents:
     ):
         ...
 
+    def aggregate_amenagements(self, filename: str):
+        ...
+
     def flag(self, filename_or_string: str, *, colname: str, flags: Optional[List[str]] = ["Oui", ""]):
+        ...
+
+    def apply_cell(self, name_or_email: str, colname: str, value, msg: Optional[str] = None):
         ...
 
     def switch(
@@ -85,14 +103,3 @@ class Documents:
     ):
         ...
 
-    def aggregate_moodle_groups(self, filename: str, colname: str):
-        ...
-
-    def aggregate_moodle_grades(self, filename: str, rename: Optional[dict] = None,):
-        ...
-
-    def aggregate_jury(self, filename: str):
-        ...
-
-    def aggregate_amenagements(self, filename: str):
-        ...
