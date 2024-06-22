@@ -444,11 +444,7 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
     def create_worksheet(self, name, ms, group):
         """Create one worksheet for group with marking scheme and name."""
 
-        if name:
-            worksheet_name = ms.name + " " + name
-        else:
-            worksheet_name = ms.name
-
+        worksheet_name = name if name else ms.name
         worksheet_name = normalize_string(worksheet_name, type="excel")
         gradesheet = self.workbook.create_sheet(title=worksheet_name)
 
