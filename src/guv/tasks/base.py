@@ -437,6 +437,7 @@ class MultipleConfigOpt(CliArgsInheritMixin):
     config_help = "Fichiers de configuration"
     config_required = True
     config_number = "Combien de fichiers de configuration ?"
+    config_num = "Fichier de configuration {i}"
 
     def add_arguments(self):
         super().add_arguments()
@@ -492,6 +493,8 @@ class MultipleConfigOpt(CliArgsInheritMixin):
         n_marking_schemes = prompt_number(self.config_number, default="1")
 
         for i in range(n_marking_schemes):
+            if n_marking_schemes > 1:
+                print(self.config_num.format(i=i+1))
             config = self.ask_one_config()
             validated_config = self.validate_config(config)
             configs.append(validated_config)

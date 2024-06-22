@@ -270,6 +270,7 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
     config_help = "Fichiers contenant le ou les barèmes détaillés"
     config_required = False
     config_number = "Combien de barèmes ? "
+    config_num = "Barème {i}"
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
