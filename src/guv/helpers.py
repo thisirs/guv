@@ -825,7 +825,7 @@ class Aggregate(FileOperation):
 
       .. code:: python
 
-         from guv.helpers import slugrot
+         from guv.helpers import concat
          DOCS.aggregate(
              "documents/notes.csv",
              left_on=concat("Nom", "Prénom"),
