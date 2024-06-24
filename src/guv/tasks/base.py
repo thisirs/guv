@@ -402,10 +402,8 @@ class ConfigOpt(CliArgsInheritMixin):
         config_file = self.config_file
         if config_file is not None:
             return self.parse_config(config_file)
-        elif self.config_required:
-            return self.ask_config()
         else:
-            return None
+            return self.ask_config()
 
     def validate_config(self, config):
         """Return a valid configuration.
@@ -466,10 +464,8 @@ class MultipleConfigOpt(CliArgsInheritMixin):
         config_files = self.config_files
         if config_files:
             return self.parse_config(config_files)
-        elif not self.config_required:
-            return self.ask_config()
         else:
-            return None
+            return self.ask_config()
 
     def parse_config(self, config_files):
         configs = []
