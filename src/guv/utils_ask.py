@@ -1,3 +1,4 @@
+from fractions import Fraction
 from prompt_toolkit.validation import Validator
 from prompt_toolkit import prompt
 from prompt_toolkit.application import Application
@@ -55,7 +56,7 @@ def checkboxlist_prompt(
 
 def is_number(text):
     try:
-        float(text)
+        Fraction(text)
         return True
     except ValueError:
         return False
@@ -64,7 +65,7 @@ def is_number(text):
 def prompt_number(message, **kwargs):
     validator = Validator.from_callable(
         is_number,
-        error_message="Nombre pas reconnu",
+        error_message="Nombre ou fraction pas reconnu",
         move_cursor_to_end=True)
-    number = float(prompt(message, validator=validator, **kwargs))
+    number = float(Fraction(prompt(message, validator=validator, **kwargs)))
     return int(number) if number.is_integer() else number
