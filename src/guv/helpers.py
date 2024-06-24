@@ -1492,6 +1492,60 @@ class AggregateMoodleGroups(FileOperation):
         return op.apply(df)
 
 
+class AggregateWexamGrades(FileOperation):
+    """Agrège des feuilles de notes provenant de Wexam."""
+
+    def __init__(
+        self,
+        filename: str,
+        rename: Optional[dict] = None,
+    ):
+        super().__init__(filename)
+        self.rename = rename
+
+    def load_filename(self):
+        kw_read = {"na_values": "-"}
+        if self.filename.endswith(".csv"):
+            right_df = pd.read_csv(self.filename, **kw_read)
+        elif self.filename.endswith(".xlsx") or self.filename.endswith(".xls"):
+            right_df = pd.read_excel(self.filename, engine="openpyxl", **kw_read)
+        else:
+            raise Exception("Fichier Excel ou csv seulement")
+
+        return right_df
+
+    def apply(self, left_df):
+        right_df = self.load_filename()
+        columns = set(right_df.columns.values)
+        regular_columns = set("Nom", "Prénom", "Login", "Note")
+
+        if not regular_columns.issubset(columns):
+            raise Exception()
+
+        rest = list(columns - regular_columns)
+        if not all(e.endswith("_Somme") for e in rest):
+            raise Exception()
+
+        if self.rename is None:
+            rename = {v: v.strip("_Somme") for v in rest}
+        else:
+            rename = self.rename
+
+        agg = Aggregator(
+            left_df,
+            right_df,
+            on="Login",
+            rename=rename,
+            drop=["Nom", "Prénom", "Login", "Note"],
+            how="left"
+        )
+
+        df_merge = agg.merge()
+        agg.report()
+
+        return df_merge
+
+
 class AggregateMoodleGrades(FileOperation):
     """Agrège des feuilles de notes provenant de Moodle.
 
@@ -1726,6 +1780,7 @@ actions = [
     ("aggregate_self", AggregateSelf),
     ("aggregate_moodle_grades", AggregateMoodleGrades),
     ("aggregate_moodle_groups", AggregateMoodleGroups),
+    ("aggregate_wexam_grades", AggregateWexamGrades),
     ("aggregate_jury", AggregateJury),
     ("aggregate_org", AggregateOrg),
     ("aggregate_amenagements", AggregateAmenagements),

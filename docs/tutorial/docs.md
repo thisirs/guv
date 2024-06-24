@@ -64,6 +64,12 @@ les fonctions suivantes :
   .. automethod:: guv.helpers.Documents.aggregate_jury
   ```
 
+- Pour un fichier issu de Wexam
+
+  ```{eval-rst}
+  .. automethod:: guv.helpers.Documents.aggregate_wexam_grades
+  ```
+
 Pour incorporer des fichiers au format Org, on utilise
 `aggregate_org` :
 
