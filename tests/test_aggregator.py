@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from pandas import testing as tm
 import pytest
-from guv.aggregator import Aggregator, ColumnsMerger, merge_columns, merge, complete_left, complete_right, keep_left, keep_right
+from guv.aggregator import Aggregator, merge, fill_na, replace, keep, erase
 from guv.helpers import id_slug, concat
 
 
@@ -137,25 +137,25 @@ data = [
         [1, n, 1, 1]
     ),
     (
-        complete_left,
+        fill_na,
         [1, n, 1, n],
         [n, n, 2, 2],
         [1, n, 1, 2]
     ),
     (
-        complete_right,
+        replace,
         [1, n, 1, n],
         [n, n, 2, 2],
         [1, n, 2, 2]
     ),
     (
-        keep_left,
+        keep,
         [1, n, 1, n],
         [n, n, 2, 2],
         [1, n, 1, n]
     ),
     (
-        keep_right,
+        erase,
         [1, n, 1, n],
         [n, n, 2, 2],
         [n, n, 2, 2]
