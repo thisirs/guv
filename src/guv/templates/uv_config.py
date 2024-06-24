@@ -1,7 +1,7 @@
 """Fichier de configuration de l'UV"""
 
 
-# Mode déboguage
+# Mode débogage
 # DEBUG = "INFO"
 
 # Chemin relatif vers l'extraction de l'effectif issu de l'ENT
