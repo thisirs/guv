@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import pandas as pd
 
+from .exceptions import ImpossibleMerge
 from .logger import logger
 from .operation import Operation
 from .utils_config import check_if_present
@@ -288,58 +289,84 @@ class Aggregator:
         return _apply_processing(clean_df, "Postprocessing", self.postprocessing)
 
 
-def merge_columns(df, strategy="merge", columns=[]):
-    if strategy == "merge":
-        return _merge_columns(df)
-    elif strategy == "keep_left":
-        return _keep_left_columns(df, columns)
-    elif strategy == "keep_right":
-        return _keep_right_columns(df, columns)
-    else:
-        raise ValueError("Unknown strategy", strategy)
+def make_column_merger(policy):
+    def func(df, column):
+        assert column in df.columns
+        assert column + "_y" in df.columns
+
+        column_y = column + '_y'
+        column_not_na = df[column].notna()
+        column_y_not_na = df[column_y].notna()
+        mask_V_NA = column_not_na & ~column_y_not_na
+        mask_NA_V = ~column_not_na & column_y_not_na
+        mask_V_V = column_not_na & column_y_not_na & (df[column] != df[column_y])
+
+        policy_mask = {
+            ("NA", "V"): mask_NA_V,
+            ("V", "NA"): mask_V_NA,
+            ("V", "V"): mask_V_V
+        }
+
+        for k, v in policy.items():
+            if v == "error":
+                if any(mask_V_V):
+                    raise Exception("Fusion impossible")
+            elif v == "replace":
+                mask = policy_mask[k]
+                df.loc[mask, column] = df.loc[mask, column_y]
+            elif v == "noop":
+                pass
+            else:
+                raise ValueError
+
+        df = df.drop(column_y, axis=1)
+        return df
+
+    return func
 
 
-def _merge_columns(df):
-    """Try to merge column that have the same name."""
+merge = make_column_merger({
+    ("V", "V"): "error",
+    ("NA", "V"): "replace",
+    ("V", "NA"): "noop"
+})
 
+fill_na = make_column_merger({
+    ("V", "V"): "noop",
+    ("V", "NA"): "noop",
+    ("NA", "V"): "replace",
+})
+
+replace = make_column_merger({
+    ("V", "V"): "replace",
+    ("V", "NA"): "noop",
+    ("NA", "V"): "replace",
+})
+
+keep = make_column_merger({})
+
+erase = make_column_merger({
+    ("V", "V"): "replace",
+    ("V", "NA"): "replace",
+    ("NA", "V"): "replace",
+})
+
+
+def merge_columns(df, policy="merge"):
     duplicated_columns = [c for c in df.columns if c + "_y" in df.columns]
+    func = {
+        "merge": merge,
+        "erase": erase,
+        "keep": keep,
+        "replace": replace,
+        "fill_na": fill_na
+    }.get(policy)
 
     for c in duplicated_columns:
-        c_y = c + '_y'
-        logger.warning("Tentative de fusion des colonnes `%s` et `%s`", c, c_y)
+        logger.warning("Tentative de fusion des colonnes `%s` et `%s`", c, c + "_y")
+        try:
+            df = func(df, c)
+        except ImpossibleMerge:
+            logger.warning("Fusion impossible, on garde les colonnes `%s` et `%s`", c, c + "_y")
 
-        if all(df[c_y] == df[c]):
-            logger.info("Colonnes `%s` et `%s` identiques, suppression de `%s`", c, c_y, c_y)
-            df = df.drop(c_y, axis=1)
-            continue
-
-        if any(df[c_y].notna() & df[c].notna()):
-            logger.warning("Fusion impossible car éléments non nuls en commun")
-            continue
-
-        dtype = df[c].dtype
-        df[c] = df[c].fillna(df[c_y])
-        new_dtype = df[c].dtype
-        if new_dtype != dtype:
-            logger.warning("Le type de la colonne a changé suite à la fusion: %s -> %s", dtype, new_dtype)
-            try:
-                logger.warning("Conversion de type")
-                df[c] = df[c].astype(dtype)
-            except ValueError:
-                logger.warning("Conversion impossible")
-        df = df.drop(c_y, axis=1)
-
-    return df
-
-
-def _keep_left_columns(df, columns):
-    duplicated_columns = [c + "_y" for c in df.columns if ((c + "_y" in df.columns) and (c in columns))]
-    df = df.drop(duplicated_columns, axis=1)
-    return df
-
-
-def _keep_right_columns(df, columns):
-    duplicated_columns = [c for c in df.columns if ((c + "_y" in df.columns) and (c in columns))]
-    df = df.drop(duplicated_columns, axis=1)
-    df = df.rename(columns={c + "_y": c for c in duplicated_columns})
     return df

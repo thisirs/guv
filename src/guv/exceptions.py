@@ -12,3 +12,7 @@ class NotUVDirectory(Exception):
 
 class AbortWithBody(Exception):
     pass
+
+
+class ImpossibleMerge(Exception):
+    pass

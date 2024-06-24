@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
+from pandas import testing as tm
 import pytest
-from guv.aggregator import Aggregator, ColumnsMerger, merge_columns
+from guv.aggregator import Aggregator, ColumnsMerger, merge_columns, merge, complete_left, complete_right, keep_left, keep_right
 from guv.helpers import id_slug, concat
 
 
@@ -120,18 +121,54 @@ def test_outer_transformation(left_df, right_df, left_on, right_on, columns, num
     assert len(df.index) == num
 
 
+
+n = np.nan
 data = [
     (
-        pd.DataFrame({"K": [1., 2, 3], "K_y": [1., 2, 3]}),
-        ["K"],
+        merge,
+        [1],
+        [2],
+        "error"
     ),
     (
-        pd.DataFrame({"K": [1, 2, np.nan], "K_y": [np.nan, np.nan, 3]}),
-        ["K"],
+        merge,
+        [1, n, 1, n],
+        [n, n, 1, 1],
+        [1, n, 1, 1]
     ),
+    (
+        complete_left,
+        [1, n, 1, n],
+        [n, n, 2, 2],
+        [1, n, 1, 2]
+    ),
+    (
+        complete_right,
+        [1, n, 1, n],
+        [n, n, 2, 2],
+        [1, n, 2, 2]
+    ),
+    (
+        keep_left,
+        [1, n, 1, n],
+        [n, n, 2, 2],
+        [1, n, 1, n]
+    ),
+    (
+        keep_right,
+        [1, n, 1, n],
+        [n, n, 2, 2],
+        [n, n, 2, 2]
+    ),
+
 ]
-@pytest.mark.parametrize("df, columns", data)
-def test_merge_columns(df, columns):
-    df = merge_columns(df)
-    assert set(df.columns) == set(columns)
-    assert df.equals(pd.DataFrame({"K": [1., 2, 3]}))
+@pytest.mark.parametrize("merge_method, col1, col2, result", data)
+def test_merge_column(merge_method, col1, col2, result):
+    df = pd.DataFrame({"K": pd.Series(col1), "K_y": pd.Series(col2)})
+    if result == "error":
+        with pytest.raises(Exception):
+            df = merge_method(df, "K")
+    else:
+        df = merge_method(df, "K")
+        tm.assert_series_equal(df["K"], pd.Series(result), check_names=False)
+

@@ -5,7 +5,7 @@ import re
 import textwrap
 from collections.abc import Callable
 from datetime import timedelta
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Literal
 import zipfile
 
 import numpy as np
@@ -753,6 +753,20 @@ class Aggregate(FileOperation):
     postprocessing : :obj:`callable`, optional
         Post-traitement à appliquer au *DataFrame* après intégration du fichier.
 
+    merge_policy : :obj:`str`, optional
+        Stratégie de fusion de colonnes lorsqu'elles portent le même nom.
+
+        - ``merge``: On fusionne uniquement si les colonnes se complètent par
+          rapport au valeurs NA
+        - ``replace``: Toutes les valeurs non-NA provenant du fichier à agréger
+          sont utilisées.
+        - ``fill_na``: Seules les valeurs NA de la colonne ``effectif.xlsx``
+          sont remplacées
+        - ``keep``: On garde la colonne provenant de ``effectif.xlsx`` sans
+          aucun changement
+        - ``erase``: On écrase la colonne avec la colonne provenant du fichier à
+          agréger
+
     Examples
     --------
 
@@ -844,6 +858,7 @@ class Aggregate(FileOperation):
         subset: Union[None, str, List[str]] = None,
         drop: Union[None, str, List[str]] = None,
         rename: Optional[dict] = None,
+        merge_policy: Optional[Literal["merge", "keep", "erase", "replace", "fill_na"]] = "merge",
         preprocessing: Union[None, Callable, Operation] = None,
         postprocessing: Union[None, Callable, Operation] = None,
         read_method: Optional[Callable] = None,
@@ -857,6 +872,7 @@ class Aggregate(FileOperation):
         self.subset = subset
         self.drop = drop
         self.rename = rename
+        self.merge_policy = merge_policy
         self.preprocessing = preprocessing
         self.postprocessing = postprocessing
         self.read_method = read_method
@@ -898,7 +914,10 @@ class Aggregate(FileOperation):
 
         agg_df = agg.left_aggregate()
 
-        return merge_columns(agg_df)
+        merge_policy = self.merge_policy if self.merge_policy is not None else "merge"
+        df_merge = merge_columns(agg_df, policy=merge_policy)
+
+        return df_merge
 
 
 class AggregateSelf(Operation):
@@ -1727,6 +1746,7 @@ for method_name, klass in actions:
         return dummy
 
     globals()[method_name] = make_func(klass)
+
 
 def skip_range(d1, d2):
     return [d1 + timedelta(days=x) for x in range((d2 - d1).days + 1)]
