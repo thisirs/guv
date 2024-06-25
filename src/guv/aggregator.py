@@ -143,6 +143,8 @@ class Aggregator:
         subset=None,
         drop=None,
         rename=None,
+        how="outer",
+        merge_policy="merge",
         right_suffix="_y",
     ):
         self.left_merger = Merger.from_obj(left_on, type="left")
@@ -157,10 +159,65 @@ class Aggregator:
         self.subset = subset
         self.drop = drop
         self.rename = rename
+        self.how = how
+        self.merge_policy = merge_policy
+        self._df_outer = None
 
-    @property
-    def outer_merged_df(self):
-        return self._outer_merged_df
+    def merge(self, clean_exclude=None):
+        df_outer = self._df_outer = self._outer_merge()
+
+        if self.how == "outer_raw":
+            return merge_columns(df_outer, policy=self.merge_policy)
+
+        elif self.how == "outer":
+            columns = _drop_cols(self.left_merger, self.right_merger)
+            if clean_exclude is not None:
+                if isinstance(clean_exclude, str):
+                    clean_exclude = [clean_exclude]
+                columns = list(set(columns) - set(clean_exclude))
+            df_clean = df_outer.drop(columns, axis=1)
+            df_merge = merge_columns(df_clean, policy=self.merge_policy)
+            return _apply_processing(df_merge, "Postprocessing", self.postprocessing)
+
+        elif self.how == "left":
+            df_left = df_outer.loc[df_outer["_merge"].isin(['left_only', 'both'])]
+
+            columns = _drop_cols(self.left_merger, self.right_merger)
+            df_clean = df_left.drop(columns, axis=1)
+
+            df_merge = merge_columns(df_clean, policy=self.merge_policy)
+            df_postproc = _apply_processing(df_merge, "Postprocessing", self.postprocessing)
+            return df_postproc
+
+        else:
+            raise ValueError("Unknown `how` method: %s" % self.how)
+
+    def _outer_merge(self):
+        # Copy left and right dataframe before applying transformations
+        self._left_df = self.left_df.copy()
+        self._right_df = self.right_df.copy()
+
+        # Apply preprocessing on _right_df
+        self._right_df = _apply_processing(self._right_df, "Preprocessing", self.preprocessing)
+
+        # Add required columns to be able to merge and display warnings
+        self._right_df = self.right_merger.transform(self._right_df)
+        self._left_df = self.left_merger.transform(self._left_df)
+
+        # Rename, drop, select columns on _right_df
+        self._apply_transformations()
+
+        # Outer merge
+        outer_merge = self._left_df.merge(
+            self._right_df,
+            left_on=self.left_merger.on,
+            right_on=self.right_merger.on,
+            how="outer",
+            suffixes=("", self.right_suffix),
+            indicator=True,
+        )
+
+        return outer_merge
 
     def _apply_transformations(self):
         # Select subset of columns. Add needed columns for the merge.
@@ -189,104 +246,64 @@ class Aggregator:
 
             self._right_df = self._right_df.rename(columns=self.rename)
 
-    def report_merge(self):
-        df = self._outer_merged_df
+    def report(self):
+        if self._df_outer is None:
+            raise RuntimeError("Call .merge() first before reporting")
 
-        # Select right only and report
-        df_ro = df.loc[df["_merge"] == "right_only"]
+        df = self._df_outer
+        if self.how == "outer_raw":
+            pass
 
-        # Get records in original right_df that have not been merged
-        index_column = self.right_merger.index_column
+        elif self.how == "outer":
+            pass
 
-        errors = self.right_df.loc[df_ro[index_column], self.right_merger.descriptive_columns]
+        elif self.how == "left":
+            # Select right only and report
+            df_ro = df.loc[df["_merge"] == "right_only"]
 
-        n = len(errors.index)
-        if n > 0:
-            logger.warning(
-                "%s enregistrement%s n'%s pas pu être incorporé%s au fichier central",
-                n,
-                ps(n),
-                plural(n, "ont", "a"),
-                ps(n),
-            )
-            with pd.option_context("display.max_rows", 10,
-                                   "display.max_columns", None,
-                                   "display.width", 1000,
-                                   "display.precision", 3,
-                                   "display.colheader_justify", "left"):
-                print(errors)
+            # Get records in original right_df that have not been merged
+            index_column = self.right_merger.index_column
 
-    def outer_aggregate(self):
-        self._outer_aggregate()
+            errors = self.right_df.loc[df_ro[index_column], self.right_merger.descriptive_columns]
 
-        clean_df = self.clean_merge(self._outer_merged_df)
-        return _apply_processing(clean_df, "Postprocessing", self.postprocessing)
+            n = len(errors.index)
+            if n > 0:
+                logger.warning(
+                    "%s enregistrement%s n'%s pas pu être incorporé%s au fichier central",
+                    n,
+                    ps(n),
+                    plural(n, "ont", "a"),
+                    ps(n),
+                )
+                print(errors.to_string(index=False))
 
-    def _outer_aggregate(self):
-        # Copy left and right dataframe before applying transformations
-        self._left_df = self.left_df.copy()
-        self._right_df = self.right_df.copy()
 
-        # Apply preprocessing on _right_df
-        self._right_df = _apply_processing(self._right_df, "Preprocessing", self.preprocessing)
+def _drop_cols(left_merger, right_merger):
+    """Return list of columns added by left_merger and right_merger to be dropped"""
 
-        # Add required columns to be able to merge and display warnings
-        self._right_df = self.right_merger.transform(self._right_df)
-        self._left_df = self.left_merger.transform(self._left_df)
+    # Drop added columns
+    drop_cols = ["_merge"]
+    drop_cols.extend(left_merger.created_columns)
 
-        # Rename, drop, select columns on _right_df
-        self._apply_transformations()
+    # Common created columns
+    inter = list(set(left_merger.created_columns).intersection(set(right_merger.created_columns)))
 
-        # Outer merge
-        self._outer_merged_df = self._left_df.merge(
-            self._right_df,
-            left_on=self.left_merger.on,
-            right_on=self.right_merger.on,
-            how="outer",
-            suffixes=("", self.right_suffix),
-            indicator=True,
-        )
+    # Column that will receive a "_y" during merge
+    if left_merger.on in inter and right_merger.on == left_merger.on:
+        dups = [e + "_y" for e in inter if e != left_merger.on]
+    else:
+        dups = [e + "_y" for e in inter]
 
-    def clean_merge(self, df):
-        # Drop added columns
-        drop_cols = ["_merge"]
-        drop_cols.extend(self.left_merger.created_columns)
+    drop_cols.extend(inter + dups)
 
-        # Common created columns
-        inter = list(set(self.left_merger.created_columns).intersection(set(self.right_merger.created_columns)))
+    right_only = list(set(right_merger.created_columns) - set(left_merger.created_columns))
+    drop_cols.extend(right_only)
 
-        # Column that will receive a "_y" during merge
-        if self.left_merger.on in inter and self.right_merger.on == self.left_merger.on:
-            dups = [e + "_y" for e in inter if e != self.left_merger.on]
-        else:
-            dups = [e + "_y" for e in inter]
+    # Drop right primary key
+    if right_merger.on != left_merger.on and left_merger.on not in drop_cols:
+        drop_cols.append(right_merger.on)
 
-        drop_cols.extend(inter + dups)
-
-        right_only = list(set(self.right_merger.created_columns) - set(self.left_merger.created_columns))
-        drop_cols.extend(right_only)
-
-        # Drop right primary key
-        if self.right_merger.on != self.left_merger.on and self.left_merger.on not in drop_cols:
-            drop_cols.append(self.right_merger.on)
-
-        return df.drop(drop_cols, axis=1)
-
-    def left_aggregate(self, report=True):
-        """Return the aggregation."""
-
-        # First an outer aggregation to be able to report
-        self._outer_aggregate()
-
-        if report:
-            self.report_merge()
-
-        # Left aggregation
-        df = self.outer_merged_df
-        self._left_merge_df = df.loc[df["_merge"].isin(['left_only', 'both'])]
-
-        clean_df = self.clean_merge(self._left_merge_df)
-        return _apply_processing(clean_df, "Postprocessing", self.postprocessing)
+    return drop_cols
 
 
 def make_column_merger(policy):
@@ -310,7 +327,7 @@ def make_column_merger(policy):
         for k, v in policy.items():
             if v == "error":
                 if any(mask_V_V):
-                    raise Exception("Fusion impossible")
+                    raise ImpossibleMerge("Fusion impossible")
             elif v == "replace":
                 mask = policy_mask[k]
                 df.loc[mask, column] = df.loc[mask, column_y]

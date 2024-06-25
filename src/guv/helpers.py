@@ -910,12 +910,12 @@ class Aggregate(FileOperation):
             subset=self.subset,
             drop=self.drop,
             rename=self.rename,
+            how="left",
+            merge_policy=self.merge_policy
         )
 
-        agg_df = agg.left_aggregate()
-
-        merge_policy = self.merge_policy if self.merge_policy is not None else "merge"
-        df_merge = merge_columns(agg_df, policy=merge_policy)
+        df_merge = agg.merge()
+        agg.report()
 
         return df_merge
 
@@ -952,10 +952,11 @@ class AggregateSelf(Operation):
             left_on="Login",
             right_on="Login",
             subset=list(self.columns),
+            how="left",
+            merge_policy="erase"
         )
 
-        agg_df = agg.left_aggregate()
-        return merge_columns(agg_df, strategy="keep_right", columns=self.columns)
+        return agg.merge()
 
     def message(self, ref_dir=None):
         msg = ", ".join(f"`{e}`" for e in self.columns)
@@ -1065,8 +1066,19 @@ class AggregateOrg(FileOperation):
             left_on = self.on
             right_on = "header"
 
-        agg = Aggregator(left_df, df_org, left_on, right_on, postprocessing=self.postprocessing)
-        return agg.left_aggregate()
+        agg = Aggregator(
+            left_df,
+            df_org,
+            left_on=left_on,
+            right_on=right_on,
+            postprocessing=self.postprocessing,
+            how="left"
+        )
+
+        df_merge = agg.merge()
+        agg.report()
+
+        return df_merge
 
 
 class AggregateAmenagements(FileOperation):
@@ -1123,16 +1135,20 @@ class AggregateAmenagements(FileOperation):
         agg = Aggregator(
             left_df,
             right_df,
-            id_slug("Nom", "Prénom"),
-            id_slug("Etudiant"),
+            left_on=id_slug("Nom", "Prénom"),
+            right_on=id_slug("Etudiant"),
             subset="Aménagements",
+            how="left",
             postprocessing=[
                 compute_new_column("Aménagements", func=is_tt, colname="Salle dédiée"),
                 compute_new_column("Aménagements", func=is_dys, colname="Sujet spécifique")
             ],
         )
 
-        return agg.left_aggregate()
+        df_merge = agg.merge()
+        agg.report()
+
+        return df_merge
 
 
 class FileStringOperation(FileOperation):
@@ -1673,14 +1689,19 @@ class AggregateMoodleGrades(FileOperation):
             drop.remove(right_on)
 
         agg = Aggregator(
-            left_df=left_df,
-            right_df=right_df,
+            left_df,
+            right_df,
             left_on=left_on,
             right_on=right_on,
             rename=self.rename,
             drop=drop,
+            how="left"
         )
-        return agg.left_aggregate()
+
+        df_merge = agg.merge()
+        agg.report()
+
+        return df_merge
 
 
 class AggregateJury(FileOperation):

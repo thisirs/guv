@@ -359,23 +359,24 @@ class XlsStudentData(UVTask):
             right_df=df_moodle,
             left_on=left_on,
             right_on=right_on,
-            right_suffix="_moodle"
+            right_suffix="_moodle",
+            how="outer"
         )
-        agg.outer_aggregate()
+        df_outer = agg.merge(clean_exclude="_merge")
 
         # Warn of any mismatch
-        lo = agg.outer_merged_df.loc[agg.outer_merged_df["_merge"] == "left_only"]
+        lo = df_outer.loc[df_outer["_merge"] == "left_only"]
         for index, row in lo.iterrows():
             fullname = row["Nom"] + " " + row["Prénom"]
             logger.warning("`%s` n'est pas présent dans les données Moodle", fullname)
 
-        ro = agg.outer_merged_df.loc[agg.outer_merged_df["_merge"] == "right_only"]
+        ro = df_outer.loc[df_outer["_merge"] == "right_only"]
         for index, row in ro.iterrows():
             fullname = row["Nom_moodle"] + " " + row["Prénom_moodle"]
             logger.warning("`%s` n'est pas présent dans le fichier central", fullname)
 
         # Base dataframe to add row to
-        df_both = agg.outer_merged_df.loc[agg.outer_merged_df["_merge"] == "both"]
+        df_both = df_outer.loc[df_outer["_merge"] == "both"]
 
         # Ask user to do the matching
         for index, row in lo.iterrows():
@@ -405,7 +406,7 @@ class XlsStudentData(UVTask):
                 row_merge["_merge"] = "both"
                 df_both = pd.concat((df_both, row_merge.to_frame().T))
 
-        return agg.clean_merge(df_both)
+        return df_both.drop(["_merge"], axis=1)
 
     def add_UTC_data(self, df, fn):
         "Incorpore les données Cours/TD/TP des inscrits UTC"
