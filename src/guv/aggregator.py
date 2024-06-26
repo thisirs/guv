@@ -164,6 +164,9 @@ class Aggregator:
         self._df_outer = None
 
     def merge(self, clean_exclude=None):
+        check_if_present(self.left_df, self.left_merger.descriptive_columns)
+        check_if_present(self.right_df, self.right_merger.descriptive_columns)
+
         df_outer = self._df_outer = self._outer_merge()
 
         if self.how == "outer_raw":
