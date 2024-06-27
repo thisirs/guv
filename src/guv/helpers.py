@@ -696,7 +696,9 @@ class Aggregate(FileOperation):
     *DataFrame* à agréger. ``preprocessing`` et ``postprocessing`` sont des
     *callable* qui prennent en argument un *DataFrame* et en renvoie un et qui
     réalise respectivement un pré-traitement sur le fichier à agréger ou un
-    post-traitement sur l'agrégation.
+    post-traitement sur l'agrégation. ``merge_policy`` indique si on doit tenter
+    de fusionner des colonnes qui portent le même nom dans ``effectif.xlsx`` et
+    le fichier à agréger.
 
     Parameters
     ----------
