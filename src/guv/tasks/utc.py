@@ -172,10 +172,10 @@ class UtcUvListToCsv(TaskBase):
         df.reset_index(drop=True, inplace=True)
 
         # T1 instead of T 1
-        df['Lib. créneau'].replace(' +', '', regex=True, inplace=True)
+        df['Lib. créneau'] = df['Lib. créneau'].replace(' +', '', regex=True)
 
         # A ou B au lieu de semaine A et semaine B
-        df['Semaine'].replace("^semaine ([AB])$", "\\1", regex=True, inplace=True)
+        df['Semaine'] = df['Semaine'].replace("^semaine ([AB])$", "\\1", regex=True)
 
         # Semaine ni A ni B pour les TP: demander
         uvs = self.settings.UVS
