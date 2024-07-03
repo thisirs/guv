@@ -1535,26 +1535,30 @@ class AggregateWexamGrades(FileOperation):
     def apply(self, left_df):
         right_df = self.load_filename()
         columns = set(right_df.columns.values)
-        regular_columns = set("Nom", "Prénom", "Login", "Note")
 
-        if not regular_columns.issubset(columns):
-            raise Exception()
-
-        rest = list(columns - regular_columns)
-        if not all(e.endswith("_Somme") for e in rest):
-            raise Exception()
-
-        if self.rename is None:
-            rename = {v: v.strip("_Somme") for v in rest}
-        else:
+        if {"Nom", "Prénom", "Login", "Somme"} == columns:
+            drop = ["Nom", "Prénom", "Note"]
             rename = self.rename
+        elif (regular_columns := {"Nom", "Prénom", "Login", "Note"}).issubset(columns):
+            rest = list(columns - regular_columns)
+            if not all(e.endswith("_Somme") for e in rest):
+                raise Exception("Fichier de notes Wexam non reconnu")
+
+            drop = ["Nom", "Prénom", "Note"]
+            if self.rename is None:
+                rename = {v: v.strip("_Somme") for v in rest}
+            else:
+                rename = self.rename
+        else:
+            raise Exception("Fichier de notes Wexam non reconnu")
 
         agg = Aggregator(
             left_df,
             right_df,
-            on="Login",
+            left_on="Login",
+            right_on="Login",
             rename=rename,
-            drop=["Nom", "Prénom", "Login", "Note"],
+            drop=drop,
             how="left"
         )
 
