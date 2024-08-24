@@ -898,6 +898,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
     def ask_config(self):
         cols = self.data_df.columns.values.tolist()
 
+        # Remove some columns, keep it ordered
         grade_cols = cols.copy()
         for c in [
             "Nom",
@@ -922,9 +923,23 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
                 grade_cols.remove(c)
 
         grades = checkboxlist_prompt(
-            "Indiquer les colonnes contenants des notes (SPACE: sélectionner, ENTER: valider):",
+            "Indiquer les colonnes contenant des notes à utiliser directement pour la note finale (SPACE: sélectionner, ENTER: valider):",
             [(c, c) for c in grade_cols]
         )
+        result = ask_choice(
+            f"Ajouter des notes intermédiaires à utiliser directement pour la note finale et non présentes dans le fichier ``effectif.xlsx`` ? (y/n) ",
+            {"y": True, "n": False},
+        )
+        if result:
+            while True:
+                choice = input("Nom de la note intermédiaire ? (laisser vide pour terminer) ")
+                if not choice:
+                    break
+                if choice not in grades:
+                    grades.append(choice)
+                else:
+                    print("Colonne déjà présente")
+
         grades_props = []
         for grade in grades:
             props = {"name": grade}
@@ -937,10 +952,11 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
             if c in other_cols:
                 other_cols.remove(c)
         for c in grades:
-            other_cols.remove(c)
+            if c in other_cols:
+                other_cols.remove(c)
 
         others = checkboxlist_prompt(
-            "Indiquer d'autres colonnes :",
+            "Indiquer d'autres colonnes pour information (groupe de projet, groupe de TD,...):",
             [(c, c) for c in other_cols]
         )
 
