@@ -355,18 +355,21 @@ class Planning(TaskBase):
             skip_days_t = props["SKIP_DAYS_T"]
             turn = props["TURN"]
 
-            if any([d < pl_beg or d > pl_end for d in skip_days_c]):
-                print([d < pl_beg or d > pl_end for d in skip_days_c])
-                raise Exception("Un ou plusieurs jours présents dans `SKIP_DAYS_C` ne font pas partie du planning")
+            for d in skip_days_c:
+                if d < pl_beg or d > pl_end:
+                    logger.warning("Le jour %s renseigné dans `SKIP_DAYS_C` ne fait pas partie du planning", d)
 
-            if any([d < pl_beg or d > pl_end for d in skip_days_d]):
-                raise Exception("Un ou plusieurs jours présents dans `SKIP_DAYS_D` ne font pas partie du planning")
+            for d in skip_days_d:
+                if d < pl_beg or d > pl_end:
+                    logger.warning("Le jour %s renseigné dans `SKIP_DAYS_D` ne fait pas partie du planning", d)
 
-            if any([d < pl_beg or d > pl_end for d in skip_days_t]):
-                raise Exception("Un ou plusieurs jours présents dans `SKIP_DAYS_T` ne font pas partie du planning")
+            for d in skip_days_t:
+                if d < pl_beg or d > pl_end:
+                    logger.warning("Le jour %s renseigné dans `SKIP_DAYS_T` ne fait pas partie du planning", d)
 
-            if any([d < pl_beg or d > pl_end for d, _ in turn.items()]):
-                raise Exception("Un ou plusieurs jours présents dans `TURN` ne font pas partie du planning")
+            for d in turn:
+                if d < pl_beg or d > pl_end:
+                    logger.warning("Le jour %s renseigné dans `TURN` ne fait pas partie du planning", d)
 
             # DataFrame of days in planning
             planning_C = pd.DataFrame(
