@@ -343,7 +343,7 @@ class Planning(TaskBase):
             for name in ["PL_BEG", "PL_END", "TURN", "SKIP_DAYS_C", "SKIP_DAYS_D", "SKIP_DAYS_T"]:
                 if name not in props:
                     logger.warning(
-                        f"La clé `{name}` est absente du planning `{self.planning}` dans la "
+                        f"La clé `{name}` est absente du planning `{planning}` dans la "
                         f"variable `PLANNINGS`, utilisation de la variable globale `{name}`."
                     )
                     props[name] = self.settings[name]
