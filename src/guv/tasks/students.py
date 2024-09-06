@@ -233,6 +233,13 @@ class XlsStudentData(UVTask):
 
             df = self.load_ENT_data()
 
+            df_nodup = df.drop_duplicates()
+
+            n = len(df) - len(df_nodup)
+            if n > 0:
+                df = df_nodup
+                logger.warning("Présence de %d enregistrement%s dupliqué%s", n, ps(n), ps(n))
+
             if self.csv_moodle is not None:
                 logger.info(
                     "Ajout des données issues de Moodle: `%s`",
