@@ -59,7 +59,7 @@ def build_block(row, template, location="full"):
     if isinstance(room, str):
         room = room.replace(' ', '').replace('BF', 'F')
     else:
-        room = ""
+        room = "N/A"
 
     text = template.format(room=room, name=name, author=author, uv=uv)
 
