@@ -391,9 +391,9 @@ class Planning(TaskBase):
                 unique = counts.unique()
                 if len(unique) != 1:
                     serie = ", ".join(f"{index} : {value}" for index, value in counts.items())
-                    logger.warning("Le nombre de créneaux de %s n'est pas le même pour tous les jours : %s", text, serie)
+                    logger.warning("Le nombre de semaines de %s n'est pas le même pour tous les jours : %s", text, serie)
                 elif unique.item() != number:
-                    logger.warning("Le nombre de créneaux de %s est différent de %d : %d", text, number, unique.item())
+                    logger.warning("Le nombre de semaines de %s est différent de %d : %d", text, number, unique.item())
 
             planning_C["Activité"] = "Cours"
             planning_D["Activité"] = "TD"
