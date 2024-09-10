@@ -147,7 +147,7 @@ class CalUv(UVTask, CliArgsMixin):
         super().setup()
         self.week_slots = WeekSlots.target_from(**self.info)
         self.target = self.build_target()
-        tmpl_dir = os.path.join(guv.__path__[0], "templates")
+        tmpl_dir = os.path.join(guv.__path__[0], "data", "templates")
         template = os.path.join(tmpl_dir, "calendar_template.tex.jinja2")
         self.file_dep = [self.week_slots, template]
         self.parse_args()
@@ -207,7 +207,7 @@ class CalInst(CliArgsMixin, TaskBase):
     def setup(self):
         super().setup()
         self.week_slots_all = WeekSlotsAll.target_from()
-        tmpl_dir = os.path.join(guv.__path__[0], "templates")
+        tmpl_dir = os.path.join(guv.__path__[0], "data", "templates")
         template = os.path.join(tmpl_dir, "calendar_template.tex.jinja2")
         self.file_dep = [self.week_slots_all, template]
 

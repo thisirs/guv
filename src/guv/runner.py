@@ -66,7 +66,7 @@ def create_uv_dirs(base_dir, uvs):
         logger.info("Création du dossier %s", os.path.relpath(gen_dir, os.getcwd()))
         os.makedirs(gen_dir, exist_ok=True)
 
-        tmpl_dir = os.path.join(guv.__path__[0], "templates")
+        tmpl_dir = os.path.join(guv.__path__[0], "data", "templates")
         jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(tmpl_dir))
         tmpl = jinja_env.get_template("uv_config.py")
 
