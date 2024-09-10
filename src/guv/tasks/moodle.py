@@ -367,7 +367,7 @@ class HtmlInst(UVTask):
             ]
         }
 
-        tmpl_dir = os.path.join(guv.__path__[0], "templates")
+        tmpl_dir = os.path.join(guv.__path__[0], "data", "templates")
         env = jinja2.Environment(loader=jinja2.FileSystemLoader(tmpl_dir))
         def display_name(instructor):
             if instructor.get("email", None):
