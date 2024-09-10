@@ -210,7 +210,7 @@ def escape_tex(value):
 
 class LaTeXEnvironment(jinja2.Environment):
     def __init__(self):
-        tmpl_dir = os.path.join(guv.__path__[0], "templates")
+        tmpl_dir = os.path.join(guv.__path__[0], "data", "templates")
         super().__init__(
             loader=jinja2.FileSystemLoader(tmpl_dir),
             block_start_string="((*",
