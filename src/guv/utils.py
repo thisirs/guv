@@ -226,7 +226,7 @@ class LaTeXEnvironment(jinja2.Environment):
 def render_latex_template(template, context):
     """Render template with context.
 
-    Dictionnary `context` must contain `filename_no_ext`. Return path
+    Dictionary `context` must contain `filename_no_ext`. Return path
     to pdf file and rendered template.
 
     """
