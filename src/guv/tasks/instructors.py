@@ -22,11 +22,11 @@ from ..logger import logger
 from ..utils_config import Output, rel_to_dir
 from ..utils import score_codenames, convert_to_time
 from ..openpyxl_utils import fill_row, get_range_from_cells, row_and_col, get_row_cells, Block, frame_range, get_segment
-from .base import TaskBase, UVTask
+from .base import SemesterTask, UVTask
 from .utc import WeekSlots, PlanningSlots
 
 
-class XlsInstructors(TaskBase):
+class XlsInstructors(SemesterTask):
     """Fichier de détails global des intervenants toutes UV confondues.
 
     Il sert à la tâche :class:`~guv.tasks.moodle.HtmlInst` pour

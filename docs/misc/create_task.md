@@ -11,7 +11,7 @@ On peut distinguer deux types de tâches différentes qui doivent hériter
 de deux classes différentes :
 
 - les tâches non spécifiques à une UV ou un groupe d'UV qui doivent
-  hériter de la classe `TaskBase`. On trouve par exemple :
+  hériter de la classe `SemesterTask`. On trouve par exemple :
 
   - les tâches "par intervenants": calendrier hebdomadaire
   - la tâche de création de tous les créneaux de Cours/TP/TD à l'UTC
@@ -34,7 +34,7 @@ de deux classes différentes :
 ## Tâche non spécifique à une UV
 
 Pour créer une tâche non spécifique à une UV, il faut hériter de la
-classe `TaskBase`. Les attributs de classe utiles sont :
+classe `SemesterTask`. Les attributs de classe utiles sont :
 
 - `target_dir`: le dossier relatif au semestre où le fichier cible
   sera placé.
@@ -45,9 +45,9 @@ classe `TaskBase`. Les attributs de classe utiles sont :
   même si les dépendances n'ont pas changé
 
   ```python
-  from guv.tasks.base import TaskBase
+  from guv.tasks.base import SemesterTask
 
-  class MaTache(TaskBase):
+  class MaTache(SemesterTask):
       def setup(self):
           super().setup()
           self.target = "result"

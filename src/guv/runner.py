@@ -19,7 +19,7 @@ from .config import settings
 # Load settings from configuration files
 from .logger import logger
 from .parser import get_parser
-from .tasks.base import CliArgsMixin, TaskBase, UVTask
+from .tasks.base import CliArgsMixin, SemesterTask, TaskBase, UVTask
 
 
 class ModuleTaskLoader(NamespaceTaskLoader):
@@ -40,7 +40,7 @@ class ModuleTaskLoader(NamespaceTaskLoader):
                 module,
                 lambda v: inspect.isclass(v)
                 and issubclass(v, TaskBase)
-                and v not in [TaskBase, UVTask, CliArgsMixin],
+                and v not in [TaskBase, SemesterTask, UVTask],
             )
             logger.debug("%s tasks loaded from module `%s`", len(m), module)
             self.tasks.update(dict(m))

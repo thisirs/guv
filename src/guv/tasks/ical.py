@@ -14,7 +14,7 @@ from icalendar import Calendar, Event
 
 from ..utils import argument, ps, normalize_string
 from ..utils_config import Output
-from .base import CliArgsMixin, TaskBase, UVTask
+from .base import CliArgsMixin, SemesterTask, UVTask
 from .utc import PlanningSlots, PlanningSlotsAll
 
 
@@ -97,7 +97,7 @@ class IcalUv(UVTask):
                     z.write(filepath, os.path.basename(filepath))
 
 
-class IcalInst(TaskBase, CliArgsMixin):
+class IcalInst(SemesterTask, CliArgsMixin):
     """Fichier iCal de tous les créneaux par intervenant.
 
     Crée un fichier iCal de tous les créneaux de Cours/TP/TD du ou des

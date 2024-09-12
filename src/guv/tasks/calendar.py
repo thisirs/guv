@@ -13,7 +13,7 @@ import guv
 from ..logger import logger
 from ..utils import argument, ps, px, normalize_string
 from ..utils_config import render_from_contexts
-from .base import CliArgsMixin, TaskBase, UVTask
+from .base import CliArgsMixin, SemesterTask, UVTask
 from .utc import WeekSlots, WeekSlotsAll
 
 
@@ -164,7 +164,7 @@ class CalUv(UVTask, CliArgsMixin):
         create_cal_from_dataframe(df, text, self.target, save_tex=self.save_tex)
 
 
-class CalInst(CliArgsMixin, TaskBase):
+class CalInst(CliArgsMixin, SemesterTask):
     """Calendrier hebdomadaire par intervenant.
 
     {options}

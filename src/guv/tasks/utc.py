@@ -26,10 +26,10 @@ from ..openpyxl_utils import (fill_row, frame_range, get_range_cells,
 from ..utils import argument, convert_author, convert_to_time, plural, ps, px
 from ..utils_config import (Output, ask_choice, generate_row, rel_to_dir,
                             selected_uv)
-from .base import CliArgsMixin, TaskBase, UVTask
+from .base import CliArgsMixin, SemesterTask, UVTask
 
 
-class UtcUvListToCsv(TaskBase):
+class UtcUvListToCsv(SemesterTask):
     """Crée un fichier CSV des créneaux de toutes les UVs à partir du PDF"""
 
     hidden = True
@@ -203,7 +203,7 @@ class UtcUvListToCsv(TaskBase):
             df.to_csv(out.target, index=False)
 
 
-class WeekSlotsAll(TaskBase):
+class WeekSlotsAll(SemesterTask):
     """Rassemble les fichiers ``planning_hebdomadaire.xlsx`` de chaque UV/UE.
 
     Les colonnes sont :
@@ -259,7 +259,7 @@ class WeekSlotsAll(TaskBase):
         return df
 
 
-class PlanningSlotsAll(TaskBase):
+class PlanningSlotsAll(SemesterTask):
     """Rassemble les fichiers `plannings.xlsx` de chaque UE/UV."""
 
     hidden = True
@@ -305,7 +305,7 @@ class PlanningSlotsAll(TaskBase):
         return df
 
 
-class Planning(TaskBase):
+class Planning(SemesterTask):
     """Fichier csv de tous les jours composant le ou les plannings du semestre."""
 
     hidden = True
@@ -743,7 +743,7 @@ class WeekSlots(UVTask):
         workbook.save(self.target)
 
 
-class XlsUTP(TaskBase):
+class XlsUTP(SemesterTask):
     """Crée un fichier Excel de prévisions des UTP globales."""
 
     target_dir = "."

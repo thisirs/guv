@@ -49,44 +49,6 @@ class TaskBase:
         """
         pass
 
-    @property
-    def settings(self):
-        logger.debug("Get settings for TaskBase `%s`", self.task_name())
-
-        return settings
-
-    @classmethod
-    def target_from(cls, **kwargs):
-        """Return a target from the class of the task and keywords arguments
-
-        The class attributes `target_dir` and `target_name` are used.
-        They might contain variables in braces that are expanded by
-        keyword arguments. Mainly used by other classes to refer to
-        target of that class as a dependency.
-        """
-
-        target = os.path.join(settings.SEMESTER_DIR, cls.target_dir, cls.target_name)
-        return pformat(target, **kwargs)
-
-    def build_target(self, **kwargs):
-        """Return a target from current task and keywords arguments
-
-        The class attributes `target_dir` and `target_name` are used.
-        They might contain variables in braces that are expanded by
-        keyword arguments.
-        """
-
-        kw = self.__dict__
-        kw["target_dir"] = self.target_dir
-        kw["target_name"] = self.target_name
-        kw.update(kwargs)
-        target = os.path.join(
-            settings.SEMESTER_DIR,
-            kw["target_dir"],
-            kw["target_name"],
-        )
-        return pformat(target, **kw)
-
     def to_doit_task(self, **kwargs):
         """Build a doit task from current instance"""
 
@@ -165,19 +127,10 @@ class TaskBase:
         return cls.__doc__
 
     @classmethod
-    def create_doit_tasks_aux(cls):
-        # La tâche n'est pas liée à une UV. On vérifie qu'on
-        # est dans un dossier d'UV ou de semestre.
-        if "SEMESTER_DIR" not in settings:
-            raise NotUVDirectory("Pas dans un dossier d'UV/semestre")
-        instance = cls()
-        return instance.to_doit_task()
-
-    @classmethod
     def create_doit_tasks(cls):
         """Called by doit to retrieve a task or a generator"""
 
-        if cls in [TaskBase, UVTask]:
+        if cls in [TaskBase, SemesterTask, UVTask]:
             return  # avoid create tasks from base classes
 
         try:
@@ -192,7 +145,7 @@ class TaskBase:
             }
         except Exception as e:
             # Exception inexpliquée, la construction de la tâche
-            # échoue. Progager l'exception si DEBUG.
+            # échoue. Propager l'exception si DEBUG.
             if settings.DEBUG < logging.WARNING:
                 raise e from e
             tf = TaskFailed(str(e.args))
@@ -201,6 +154,55 @@ class TaskBase:
                 "actions": [lambda: tf],
                 "doc": cls.doc(),
             }
+
+class SemesterTask(TaskBase):
+    @classmethod
+    def create_doit_tasks_aux(cls):
+        # La tâche n'est pas liée à une UV. On vérifie qu'on
+        # est dans un dossier d'UV ou de semestre.
+        if "SEMESTER_DIR" not in settings:
+            raise NotUVDirectory("Pas dans un dossier d'UV/semestre")
+        instance = cls()
+        return instance.to_doit_task()
+
+    @property
+    def settings(self):
+        logger.debug("Get settings for SemesterTask `%s`", self.task_name())
+
+        return settings
+
+    @classmethod
+    def target_from(cls, **kwargs):
+        """Return a target from the class of the task and keywords arguments
+
+        The class attributes `target_dir` and `target_name` are used.
+        They might contain variables in braces that are expanded by
+        keyword arguments. Mainly used by other classes to refer to
+        target of that class as a dependency.
+        """
+
+        target = os.path.join(settings.SEMESTER_DIR, cls.target_dir, cls.target_name)
+        return pformat(target, **kwargs)
+
+    def build_target(self, **kwargs):
+        """Return a target from current task and keywords arguments
+
+        The class attributes `target_dir` and `target_name` are used.
+        They might contain variables in braces that are expanded by
+        keyword arguments.
+        """
+
+        kw = self.__dict__
+        kw["target_dir"] = self.target_dir
+        kw["target_name"] = self.target_name
+        kw.update(kwargs)
+        target = os.path.join(
+            settings.SEMESTER_DIR,
+            kw["target_dir"],
+            kw["target_name"],
+        )
+        return pformat(target, **kw)
+
 
 
 class UVTask(TaskBase):

@@ -42,7 +42,7 @@ from ..utils import (
     sort_values,
 )
 from ..utils_config import Output, check_if_present, rel_to_dir
-from .base import CliArgsMixin, TaskBase, UVTask
+from .base import CliArgsMixin, SemesterTask, UVTask
 from .instructors import WeekSlotsDetails
 from .students import XlsStudentDataMerge
 from .utc import PlanningSlots
@@ -1472,7 +1472,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         return series_list
 
 
-class FetchGroupId(TaskBase, CliArgsMixin):
+class FetchGroupId(SemesterTask, CliArgsMixin):
     """Crée un fichier de correspondance entre le nom et l'id des groupes Moodle.
 
     Pour utiliser certaines fonctionnalités de **guv** (notamment
