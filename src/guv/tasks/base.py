@@ -16,7 +16,7 @@ from ..exceptions import (DependentTaskParserError, ImproperlyConfigured,
 from ..logger import logger
 from ..utils import pformat
 from ..utils_ask import prompt_number
-from ..utils_config import get_unique_uv, selected_uv
+from ..utils_config import get_unique_uv, selected_uv, configured_uv
 
 
 class TaskBase:
@@ -183,6 +183,12 @@ class SemesterTask(TaskBase):
 
         target = os.path.join(settings.SEMESTER_DIR, cls.target_dir, cls.target_name)
         return pformat(target, **kwargs)
+
+    def selected_uv(self):
+        """Generate configured UVs for the semester"""
+
+        uvs = settings.UVS
+        yield from configured_uv(uvs)
 
     def build_target(self, **kwargs):
         """Return a target from current task and keywords arguments

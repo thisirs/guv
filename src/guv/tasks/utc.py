@@ -231,7 +231,7 @@ class WeekSlotsAll(SemesterTask):
         self.target = self.build_target()
         self.affectations = [
             (planning, uv, WeekSlots.target_from(**info))
-            for planning, uv, info in selected_uv()
+            for planning, uv, info in self.selected_uv()
         ]
         self.file_dep = [f for _, _, f in self.affectations]
 
@@ -272,7 +272,7 @@ class PlanningSlotsAll(SemesterTask):
         self.target = self.build_target()
         self.planning_slots_files = [
             (planning, uv, PlanningSlots.target_from(**info))
-            for planning, uv, info in selected_uv()
+            for planning, uv, info in self.selected_uv()
         ]
         self.file_dep = [f for _, _, f in self.planning_slots_files]
 
