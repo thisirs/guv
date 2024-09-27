@@ -322,6 +322,10 @@ class XlsStudentData(UVTask):
         else:
             raise Exception("Format de fichier non reconnu")
 
+        # For some reason "Nom" changed to "Nom de famille" in recent Moodle.
+        # This breaks the intended clash with "Nom" for effectif.xlsx.
+        df = df.rename(columns={"Nom de famille": "Nom"})
+
         nans = df["Nom"].isna() | df["Prénom"].isna()
         n = sum(nans)
         if n != 0:
