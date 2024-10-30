@@ -234,7 +234,7 @@ def print_completer(shell="zsh"):
             "column": ["--group"]
         },
         "pdf_trombinoscope": {
-            "column": ["--group"]
+            "column": ["--group", "--subgroup"]
         },
         "xls_grade_book_group": {
             "column": ["--order-by", "--worksheets", "--group-by"],
