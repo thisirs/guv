@@ -3,25 +3,79 @@ Ce module rassemble les tâches de création de trombinoscopes en
 fonction de groupes de Cours/TD/TP ou de projet.
 """
 
-import asyncio
-import hashlib
+import base64
+import getpass
+import json
 import os
+import random
 import re
 import shutil
-
-import aiohttp
-import browser_cookie3
-import numpy as np
+from urllib.parse import parse_qs, urlparse
 
 import guv
+import mechanicalsoup
+import numpy as np
 
-from ..utils import argument, generate_groupby, sort_values, normalize_string
-from ..utils_config import check_if_present, render_from_contexts
 from ..logger import logger
+from ..utils import argument, generate_groupby, normalize_string, sort_values
+from ..utils_config import check_if_present, render_from_contexts
 from .base import CliArgsMixin, UVTask
 from .students import XlsStudentDataMerge
 
-URL = 'https://demeter.utc.fr/portal/pls/portal30/portal30.get_photo_utilisateur?username='
+
+def get_random():
+    # Generate 7 random numbers between 0 and 255
+    random_numbers = [random.randint(0, 255) for _ in range(17)]
+
+    # Convert each number to its hexadecimal representation and remove the '0x' prefix
+    hex_string = ''.join([hex(num)[2:].zfill(2) for num in random_numbers])
+
+    # Generate a random string of length 17 from the string of characters
+    char_string = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+    random_string = ''.join(random.choices(char_string, k=7))
+
+    return hex_string + random_string
+
+
+class NgApplisBrowser():
+    def __init__(self):
+        self.browser = mechanicalsoup.Browser(soup_config={'features': 'lxml'})
+        self.is_authenticated = False
+
+    def _authenticate(self):
+        nonce = get_random()
+        state = get_random()
+        login_page = self.browser.get(f"https://cas.utc.fr/cas/oidc/oidcAuthorize?client_id=piaPROD&redirect_uri=https://ngapplis.utc.fr/trombiuv&response_type=id_token&scope=openid+profile&nonce={nonce}&state={state}")
+
+        # Ask for the username
+        username = input("Enter your username: ")
+
+        # Safely ask for the password without showing it in the console
+        password = getpass.getpass("Enter your password: ")
+
+        login_form = mechanicalsoup.Form(login_page.soup.select_one("#fm1"))
+        login_form.input({"username": username, "password": password})
+
+        # Submit form, redirected to https://ngapplis.utc.fr/trombiuv/
+        self.browser.submit(login_form, login_page.url)
+
+        nonce = get_random()
+        page = self.browser.get(f"https://cas.utc.fr/cas/oidc/oidcAuthorize?client_id=piaPROD&redirect_uri=https://ngapplis.utc.fr/trombiuv&response_type=id_token&scope=openid+profile&nonce={nonce}&state={state}")
+
+        parsed_url = urlparse(page.url)
+        fragment = parsed_url.fragment  # This gets everything after '#'
+
+        # Parse the fragment into key-value pairs if it's & separated
+        parameters = parse_qs(fragment)
+
+        access_token = parameters["access_token"][0]
+        self.browser.session.headers.update({"Authorization": "Bearer " + access_token})
+        self.is_authenticated = True
+
+    def get(self, url):
+        if not self.is_authenticated:
+            self._authenticate()
+        return self.browser.get(url)
 
 
 class PdfTrombinoscope(UVTask, CliArgsMixin):
@@ -108,18 +162,41 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
                 df, self.subgroupby, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
             )
 
-        self.download_images(df)
+        self.download_photo(df)
         contexts = self.generate_contexts(df)
         render_from_contexts(
             self.template_file, contexts, save_tex=self.save_tex, target=self.target
         )
+
+    def download_photo(self, df):
+        browser = NgApplisBrowser()
+
+        os.makedirs(os.path.join(self.settings.SEMESTER_DIR, "documents/images/"), exist_ok=True)
+        URL = "https://webservices.utc.fr/api/v1/trombi/onebylogin/{login}"
+        for login in df["Login"]:
+            fp = os.path.join(self.settings.SEMESTER_DIR, f"documents/images/{login}.png")
+
+            if not os.path.exists(fp):
+                logger.debug("Photo pour `%s` inexistante, téléchargement", login)
+
+                page = browser.get(URL.format(login=login))
+                json_string = page.content.decode('utf-8')
+                json_data = json.loads(json_string)
+                base64_string = json_data["photo"]
+                if base64_string is None:
+                    logger.debug("Photo inexistante pour `%s`", login)
+                    shutil.copyfile(os.path.join(guv.__path__[0], "images", "inconnu.jpg"), fp)
+                else:
+                    image_data = base64.b64decode(base64_string)
+                    with open(fp, "wb") as file:
+                        file.write(image_data)
 
     def student_context(self, row):
         """Retourne le contexte d'un étudiant pour Jinja2"""
 
         path = os.path.abspath(
             os.path.join(
-                self.settings.SEMESTER_DIR, "documents", "images", f'{row["Login"]}.jpg'
+                self.settings.SEMESTER_DIR, "documents", "images", f'{row["Login"]}.png'
             )
         )
 
@@ -138,75 +215,6 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
             )
 
         return context
-
-    def download_images(self, df):
-        async def download_image(session, login):
-            url = URL + login
-            async with session.get(url) as response:
-                content = await response.content.read()
-                fp = os.path.join(
-                    self.settings.SEMESTER_DIR, f"documents/images/{login}.jpg"
-                )
-                if len(content) < 3000:
-                    logger.debug("Échec du téléchargement pour `%s`", login)
-                    shutil.copyfile(
-                        os.path.join(guv.__path__[0], "images", "inconnu.jpg"),
-                        fp
-                    )
-                    return False
-                else:
-                    logger.debug("Téléchargement pour `%s` réussi", login)
-                    with open(fp, "wb") as handler:
-                        handler.write(content)
-                    return True
-
-        def md5(fname):
-            hash_md5 = hashlib.md5()
-            with open(fname, "rb") as f:
-                for chunk in iter(lambda: f.read(4096), b""):
-                    hash_md5.update(chunk)
-            return hash_md5.hexdigest()
-
-        async def download_session(loop):
-            os.makedirs(os.path.join(self.settings.SEMESTER_DIR, "documents", "images"), exist_ok=True)
-            cookies = {
-                c.name: c.value
-                for c in browser_cookie3.load() if "demeter.utc.fr" in c.domain
-            }
-            if not cookies:
-                raise Exception("Pas de cookie trouvé pour s'authentifier. Connectez-vous d'abord sur l'ENT avec Firefox/Chrome/Chromium/Edge.")
-
-            async with aiohttp.ClientSession(loop=loop, cookies=cookies) as session:
-                md5_inconnu = md5(
-                    os.path.join(guv.__path__[0], "images", "inconnu.jpg")
-                )
-                failures = 0
-                for login in df.Login:
-                    fp = os.path.join(
-                        self.settings.SEMESTER_DIR,
-                        "documents",
-                        "images",
-                        f"{login}.jpg"
-                    )
-                    if not os.path.exists(fp):
-                        logger.debug("Image pour `%s` inexistante, téléchargement", login)
-                        res = await download_image(session, login)
-                    else:
-                        md5_curr = md5(fp)
-                        if md5_curr == md5_inconnu:
-                            logger.debug("Échec précédent pour `%s`, réessaie", login)
-                            res = await download_image(session, login)
-                        else:
-                            logger.debug("Image déjà présente pour `%s`, annulation", login)
-                            res = True
-
-                    if not res:
-                        failures += 1
-                logger.info("Échec de téléchargement pour %d étudiants", failures)
-
-        # Getting images
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(download_session(loop))
 
     def generate_contexts(self, df):
         # Diviser par groupe de TD/TP

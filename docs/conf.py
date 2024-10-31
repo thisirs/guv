@@ -86,7 +86,6 @@ autodoc_mock_imports = [
     "tabula",
     "unidecode",
     "oyaml",
-    "aiohttp",
     "browser_cookie3",
     "xlrd",
     "yapf",
