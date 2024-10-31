@@ -11,7 +11,7 @@ import zipfile
 import numpy as np
 import pandas as pd
 
-from .aggregator import Aggregator, ColumnsMerger, merge_columns
+from .aggregator import Aggregator, ColumnsMerger
 from .config import settings
 from .exceptions import ImproperlyConfigured
 from .logger import logger
