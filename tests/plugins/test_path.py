@@ -21,8 +21,8 @@ def pytest_configure(config):
     config.option.order_dependencies = True
 
 
-def path_dependency(dep=None, /, cache=False, name=None):
-    """Decorator that add two pytest marks."""
+def path_dependency(dep=None, /, cache=False, name=None, propagate_suffix=False):
+    """Mark that current test will reuse a path from another test."""
 
     def make_decorator(dep, cache):
         def decorator(func):
@@ -31,7 +31,7 @@ def path_dependency(dep=None, /, cache=False, name=None):
             marker1 = pytest.mark.dependency(
                 name=name2, depends=depends, scope="session"
             )
-            marker2 = pytest.mark.path_dependency(dep, cache=cache, name=name2)
+            marker2 = pytest.mark.path_dependency(dep, cache=cache, name=name2, propagate_suffix=propagate_suffix)
             return marker1(marker2(func))
 
         return decorator
@@ -92,7 +92,10 @@ class _TestPath:
         # Get name of dependency if any from `path_dependency` marker.
         # Add corresponding suffix if test is parametrized
         if marker.args and marker.args[0]:
-            dep = marker.args[0] + self.suffix
+            if marker.kwargs.get("propagate_suffix", False):
+                dep = marker.args[0] + self.suffix
+            else:
+                dep = marker.args[0]
             logger.debug("... dependence to test named %s", dep)
         else:
             logger.debug("... no dependence")

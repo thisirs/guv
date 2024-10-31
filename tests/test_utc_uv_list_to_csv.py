@@ -2,7 +2,7 @@ import pytest
 from tests.plugins.test_path import path_dependency
 
 
-@path_dependency("test_createsemester_old", cache=True)
+@path_dependency("test_createsemester_old", cache=True, propagate_suffix=True)
 def test_utc_uv_list_to_csv_old(guv_old, guvcapfd):
     "Test de traitement du fichier pdf des créneaux"
 
