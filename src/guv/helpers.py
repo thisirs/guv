@@ -1575,6 +1575,73 @@ class AggregateWexamGrades(FileOperation):
         return df_merge
 
 
+def keep_drop_moodle_grades(columns):
+    try:
+        keep, drop = keep_drop_quiz(columns)
+        return "quiz", keep, drop
+    except ValueError:
+        pass
+
+    try:
+        keep, drop = keep_drop_gradesheet(columns)
+        return "gradesheet", keep, drop
+    except ValueError:
+        pass
+
+    try:
+        keep, drop = keep_drop_assignment(columns)
+        return "assignment", keep, drop
+    except ValueError:
+        pass
+
+    raise ValueError
+
+
+def keep_drop_quiz(columns):
+    try_list = [
+        ["Nom de famille", "Prénom", "Adresse de courriel", "État", "Commencé le", "Terminé", "Temps utilisé"],
+        ["Nom", "Prénom", "Adresse de courriel", "État", "Commencé le", "Terminé", "Temps utilisé"],
+
+    ]
+
+    for base_columns in try_list:
+        if set(base_columns).issubset(set(columns)):
+            keep = set(columns) - set(base_columns)
+            drop = set(base_columns)
+            return keep, drop
+
+    raise ValueError
+
+
+def keep_drop_gradesheet(columns):
+    try_list = [
+        ["Prénom", "Nom", "Numéro d'identification", "Institution", "Département", "Adresse de courriel", "Dernier téléchargement depuis ce cours"],
+        ["Prénom", "Nom", "Numéro d'identification", "Institution", "Département", "Adresse de courriel", "Suspendu", "Dernier téléchargement depuis ce cours"]
+    ]
+
+    for base_columns in try_list:
+        if set(base_columns).issubset(set(columns)):
+            keep = set(columns) - set(base_columns)
+            drop = set(base_columns)
+            return keep, drop
+
+    raise ValueError
+
+
+def keep_drop_assignment(columns):
+    try_list = [
+        ["Identifiant", "Nom complet", "Adresse de courriel", "Statut", "Groupe", "Note maximale", "La note peut être modifiée", "Dernière modification (travail remis)", "Dernière modification (note)", "Feedback par commentaires"],
+    ]
+
+    for base_columns in try_list:
+        if set(base_columns).issubset(set(columns)):
+            keep = set(columns) - set(base_columns)
+            drop = set(base_columns)
+            return keep, drop
+
+    raise ValueError
+
+
 class AggregateMoodleGrades(FileOperation):
     """Agrège des feuilles de notes provenant de Moodle.
 
@@ -1594,39 +1661,6 @@ class AggregateMoodleGrades(FileOperation):
 
     """
 
-    gradesheet_columns = [
-        "Prénom",
-        "Nom",
-        "Numéro d'identification",
-        "Institution",
-        "Département",
-        "Adresse de courriel",
-        "Dernier téléchargement depuis ce cours",
-    ]
-
-    quiz_columns = [
-        "Nom",
-        "Prénom",
-        "Adresse de courriel",
-        "État",
-        "Commencé le",
-        "Terminé",
-        "Temps utilisé",
-    ]
-
-    assignment_columns = [
-        "Identifiant",
-        "Nom complet",
-        "Adresse de courriel",
-        "Statut",
-        "Groupe",
-        "Note maximale",
-        "La note peut être modifiée",
-        "Dernière modification (travail remis)",
-        "Dernière modification (note)",
-        "Feedback par commentaires",
-    ]
-
     def __init__(
         self,
         filename: str,
@@ -1640,21 +1674,19 @@ class AggregateMoodleGrades(FileOperation):
         right_df = read_dataframe(self.filename, kw_read=kw_read)
         columns = set(right_df.columns.values)
 
-        is_gradesheet = set(self.gradesheet_columns).issubset(set(columns))
-        is_quiz = set(self.quiz_columns).issubset(set(columns))
-        is_assignment = set(self.assignment_columns).issubset(set(columns))
-
-        if is_gradesheet:
-            drop = self.gradesheet_columns
-            logger.debug("Feuille de notes reconnue")
-        elif is_quiz:
-            drop = self.quiz_columns
-            logger.debug("Feuille de notes de quiz reconnue")
-        elif is_assignment:
-            drop = self.assignment_columns
-            logger.debug("Feuille de notes de devoir reconnue")
-        else:
+        try:
+            type, keep_columns, drop_columns = keep_drop_moodle_grades(columns)
+        except ValueError:
             raise Exception("Le fichier n'est pas reconnu comme une feuille de notes Moodle")
+        else:
+            logger.info("Fichier de notes Moodle de type `%s` reconnu", type)
+
+        # Convert columns into numeric if possible
+        for c in keep_columns:
+            try:
+                right_df[c] = convert_to_numeric(right_df[c])
+            except ValueError:
+                pass
 
         moodle_short_email = (
             re.match(r"^\w+@", right_df.iloc[0]["Adresse de courriel"]) is not None
@@ -1673,7 +1705,7 @@ class AggregateMoodleGrades(FileOperation):
                 if not (moodle_short_email ^ ent_short_email2):
                     return "Adresse de courriel", "Adresse de courriel"
 
-            if is_assignment:
+            if type == "assignment":
                 right_on = id_slug("Nom complet")
             else:
                 right_on = id_slug("Nom", "Prénom")
@@ -1688,8 +1720,8 @@ class AggregateMoodleGrades(FileOperation):
         left_on, right_on = left_right()
 
         # Don't try to drop a required column
-        if right_on in drop:
-            drop.remove(right_on)
+        if right_on in drop_columns:
+            drop_columns.remove(right_on)
 
         agg = Aggregator(
             left_df,
@@ -1697,7 +1729,7 @@ class AggregateMoodleGrades(FileOperation):
             left_on=left_on,
             right_on=right_on,
             rename=self.rename,
-            drop=drop,
+            drop=drop_columns,
             how="left"
         )
 

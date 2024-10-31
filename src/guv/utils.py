@@ -9,6 +9,7 @@ from types import SimpleNamespace
 import jinja2
 import latex
 import numpy as np
+import pandas as pd
 import unidecode
 
 import guv
@@ -91,6 +92,19 @@ def convert_to_time(value):
             return datetime.datetime.strptime(value, "%H:%M").time()
         except ValueError:
             return datetime.datetime.strptime(value, "%H:%M:%S").time()
+
+
+def convert_to_numeric(series):
+    try:
+        return pd.to_numeric(series)
+    except ValueError:
+        pass
+    try:
+        return pd.to_numeric(series.str.replace(",", "."))
+    except ValueError:
+        pass
+
+    raise ValueError
 
 
 def plural(num, plural, singular):
