@@ -16,7 +16,7 @@ from .config import settings
 from .exceptions import ImproperlyConfigured
 from .logger import logger
 from .operation import Operation
-from .utils import slugrot_string, read_dataframe
+from .utils import slugrot_string, convert_to_numeric, read_dataframe
 from .utils_config import (check_filename, check_if_absent, check_if_present,
                            rel_to_dir)
 
@@ -1482,23 +1482,49 @@ class AggregateMoodleGroups(FileOperation):
         self.colname = colname
 
     def apply(self, df):
+        right_df = read_dataframe(self.filename)
+
+        ver1 = check_if_present(right_df, ["Nom", "Prénom", "Numéro d’identification", "Choix", "Adresse de courriel"], errors="silent")
+        ver2 = check_if_present(right_df, ["Nom de famille", "Prénom", "Numéro d’identification", "Choix", "Adresse de courriel"], errors="silent")
+
+        if not ver1 and not ver2:
+            raise Exception("Le fichier n'est pas reconnu comme un fichier issu d'une activité groupe de Moodle")
+
         if re.match(r"^\w+@", df.iloc[0]["Courriel"]) is not None:
             left_on = id_slug("Nom", "Prénom")
-            right_on = id_slug("Nom", "Prénom")
-            drop=["Nom", "Prénom", "Numéro d'identification", "Choix", "Adresse de courriel"]
+            if ver1:
+                right_on = id_slug("Nom", "Prénom")
+                drop = ["Nom", "Prénom", "Numéro d’identification", "Choix", "Adresse de courriel"]
+            elif ver2:
+                right_on = id_slug("Nom de famille", "Prénom")
+                drop = ["Nom de famille", "Prénom", "Numéro d’identification", "Choix", "Adresse de courriel"]
+            else:
+                raise RuntimeError("Erreur logique")
         else:
             left_on = "Courriel"
             right_on = "Adresse de courriel"
-            drop=["Nom", "Prénom", "Numéro d'identification", "Choix"]
+            if ver1:
+                drop = ["Numéro d’identification", "Choix"]
+            elif ver2:
+                drop = ["Nom de famille", "Numéro d’identification", "Choix"]
+            else:
+                raise RuntimeError("Erreur logique")
 
-        op = Aggregate(
-            self.filename,
+        agg = Aggregator(
+            df,
+            right_df,
             left_on=left_on,
             right_on=right_on,
             drop=drop,
-            rename={"Groupe": self.colname}
+            rename={"Groupe": self.colname},
+            how="left",
+            merge_policy="keep"
         )
-        return op.apply(df)
+
+        df_merge = agg.merge()
+        agg.report()
+
+        return df_merge
 
 
 class AggregateWexamGrades(FileOperation):
