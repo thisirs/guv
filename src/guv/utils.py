@@ -271,3 +271,22 @@ def normalize_string(name, type="excel"):
         return name
     else:
         return RuntimeError("Unknown type", type)
+
+
+def read_dataframe(filename, read_method=None, kw_read=None):
+    """Read `filename` as a Pandas dataframe."""
+
+    kw_read = kw_read or {}
+    if read_method is None:
+        if filename.endswith('.csv'):
+            df = pd.read_csv(filename, **kw_read)
+        elif filename.endswith('.xlsx') or filename.endswith('.xls'):
+            df = pd.read_excel(filename, engine="openpyxl", **kw_read)
+        else:
+            raise Exception("Fichier Excel ou csv seulement")
+    else:
+        df = read_method(filename, **kw_read)
+
+    return df
+
+

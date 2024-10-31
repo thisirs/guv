@@ -16,7 +16,7 @@ from .config import settings
 from .exceptions import ImproperlyConfigured
 from .logger import logger
 from .operation import Operation
-from .utils import slugrot_string
+from .utils import slugrot_string, read_dataframe
 from .utils_config import (check_filename, check_if_absent, check_if_present,
                            rel_to_dir)
 
@@ -881,16 +881,7 @@ class Aggregate(FileOperation):
         self.kw_read = kw_read
 
     def apply(self, left_df):
-        # Infer a read method if not provided
-        if self.read_method is None:
-            if self.filename.endswith('.csv'):
-                right_df = pd.read_csv(self.filename, **self.kw_read)
-            elif self.filename.endswith('.xlsx') or self.filename.endswith('.xls'):
-                right_df = pd.read_excel(self.filename, engine="openpyxl", **self.kw_read)
-            else:
-                raise Exception('No read method and unsupported file extension')
-        else:
-            right_df = self.read_method(self.filename, **self.kw_read)
+        right_df = read_dataframe(self.filename, kw_read=self.kw_read)
 
         if self.on is not None:
             if self.left_on is not None or self.right_on is not None:
@@ -1521,19 +1512,9 @@ class AggregateWexamGrades(FileOperation):
         super().__init__(filename)
         self.rename = rename
 
-    def load_filename(self):
-        kw_read = {"na_values": "-"}
-        if self.filename.endswith(".csv"):
-            right_df = pd.read_csv(self.filename, **kw_read)
-        elif self.filename.endswith(".xlsx") or self.filename.endswith(".xls"):
-            right_df = pd.read_excel(self.filename, engine="openpyxl", **kw_read)
-        else:
-            raise Exception("Fichier Excel ou csv seulement")
-
-        return right_df
-
     def apply(self, left_df):
-        right_df = self.load_filename()
+        kw_read = {"na_values": "-"}
+        right_df = read_dataframe(self.filename, kw_read=kw_read)
         columns = set(right_df.columns.values)
 
         if {"Nom", "Prénom", "Login", "Somme"} == columns:
@@ -1628,19 +1609,9 @@ class AggregateMoodleGrades(FileOperation):
         super().__init__(filename)
         self.rename = rename
 
-    def load_filename(self):
-        kw_read = {"na_values": "-"}
-        if self.filename.endswith(".csv"):
-            right_df = pd.read_csv(self.filename, **kw_read)
-        elif self.filename.endswith(".xlsx") or self.filename.endswith(".xls"):
-            right_df = pd.read_excel(self.filename, engine="openpyxl", **kw_read)
-        else:
-            raise Exception("Fichier Excel ou csv seulement")
-
-        return right_df
-
     def apply(self, left_df):
-        right_df = self.load_filename()
+        kw_read = {"na_values": "-"}
+        right_df = read_dataframe(self.filename, kw_read=kw_read)
         columns = set(right_df.columns.values)
 
         is_gradesheet = set(self.gradesheet_columns).issubset(set(columns))
