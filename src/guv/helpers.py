@@ -187,7 +187,7 @@ class ReplaceRegex(Operation):
 
     .. code:: python
 
-       DOCS.replace_regex("group", (r"group([0-9])", r"G\1"), (r"g([0-9])", r"G\1"))
+       DOCS.replace_regex("group", (r"group([0-9])", r"G\\1"), (r"g([0-9])", r"G\\1"))
 
     """
 
