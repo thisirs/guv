@@ -1615,8 +1615,8 @@ def keep_drop_quiz(columns):
 
 def keep_drop_gradesheet(columns):
     try_list = [
+        ["Prénom", "Nom", "Numéro d'identification", "Institution", "Département", "Adresse de courriel", "Suspendu", "Dernier téléchargement depuis ce cours"],
         ["Prénom", "Nom", "Numéro d'identification", "Institution", "Département", "Adresse de courriel", "Dernier téléchargement depuis ce cours"],
-        ["Prénom", "Nom", "Numéro d'identification", "Institution", "Département", "Adresse de courriel", "Suspendu", "Dernier téléchargement depuis ce cours"]
     ]
 
     for base_columns in try_list:
