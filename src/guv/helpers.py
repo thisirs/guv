@@ -1621,6 +1621,8 @@ def keep_drop_gradesheet(columns):
 
     for base_columns in try_list:
         if set(base_columns).issubset(set(columns)):
+            # Don't keep feedback
+            base_columns += [c for c in columns if c.endswith("(Feedback)")]
             keep = set(columns) - set(base_columns)
             drop = set(base_columns)
             return keep, drop
