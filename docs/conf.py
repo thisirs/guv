@@ -90,7 +90,8 @@ autodoc_mock_imports = [
     "xlrd",
     "yapf",
     "yaml",
-    "bs4"
+    "bs4",
+    "mechanicalsoup"
 ]
 
 

@@ -22,6 +22,7 @@ dependencies = [
   "jsonschema",
   "latex",
   "markdown",
+  "mechanicalsoup",
   "numpy",
   "openpyxl",
   "oyaml",
