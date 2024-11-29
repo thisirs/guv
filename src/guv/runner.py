@@ -121,8 +121,10 @@ def run_creastesemester(args):
             context["CRENEAU_UV"] = '"documents/Creneaux-UV.pdf"'
         else:
             logger.info("Fichier des créneaux pour %s non trouvé, renseignez manuellement CRENEAU_UV", semester_name)
+            context["CRENEAU_UV"] = None
     else:
         logger.info("Semestre non reconnu, renseignez manuellement CRENEAU_UV")
+        context["CRENEAU_UV"] = None
 
     # Get template for config.py from semester_id
     tmpl_dir = os.path.join(data_dir, "templates")
