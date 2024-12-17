@@ -467,7 +467,7 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
         gradesheet.freeze_panes = ref.top()
 
         def insert_record(ref_cell, i, record):
-            index = ref_cell.text(str(i) + ".")
+            index = ref_cell.text(f"Étudiant {i}")
             last_name = index.below().text(record["Nom"])
             first_name = last_name.below().text(record["Prénom"])
             first_grade = first_name.below()
@@ -682,7 +682,7 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
         group_range = list(get_segment(ref_cell, ref_cell.below(height - 1)))
 
         # Number
-        group_range[0].text(str(i+1) + ".")
+        group_range[0].text(f"Groupe {i+1}")
 
         # Group name
         group_range[1].text(name).merge(group_range[2]).center()
