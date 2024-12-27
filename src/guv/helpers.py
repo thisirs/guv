@@ -1504,9 +1504,9 @@ class AggregateMoodleGroups(FileOperation):
             left_on = "Courriel"
             right_on = "Adresse de courriel"
             if ver1:
-                drop = ["Numéro d’identification", "Choix"]
+                drop = ["Nom", "Prénom", "Numéro d’identification", "Choix"]
             elif ver2:
-                drop = ["Nom de famille", "Numéro d’identification", "Choix"]
+                drop = ["Nom de famille", "Prénom", "Numéro d’identification", "Choix"]
             else:
                 raise RuntimeError("Erreur logique")
 
