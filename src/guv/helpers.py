@@ -1526,6 +1526,9 @@ class AggregateMoodleGroups(FileOperation):
 
         return df_merge
 
+    def message(self, ref_dir=""):
+        return f"Agrégation du fichier de groupes `{rel_to_dir(self.filename, ref_dir)}`"
+
 
 class AggregateWexamGrades(FileOperation):
     """Agrège des feuilles de notes provenant de Wexam."""
@@ -1573,6 +1576,9 @@ class AggregateWexamGrades(FileOperation):
         agg.report()
 
         return df_merge
+
+    def message(self, ref_dir=""):
+        return f"Agrégation du fichier de notes Wexam `{rel_to_dir(self.filename, ref_dir)}`"
 
 
 def keep_drop_moodle_grades(columns):
