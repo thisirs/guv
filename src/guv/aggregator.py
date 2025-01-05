@@ -382,7 +382,8 @@ def merge_columns(df, policy="merge"):
     }.get(policy)
 
     for c in duplicated_columns:
-        logger.warning("Tentative de fusion des colonnes `%s` et `%s`", c, c + "_y")
+        if policy == "merge":
+            logger.warning("Tentative de fusion des colonnes `%s` et `%s`", c, c + "_y")
         try:
             df = func(df, c)
         except ImpossibleMerge:
