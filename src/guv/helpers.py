@@ -1079,9 +1079,8 @@ class AggregateAmenagements(FileOperation):
 
     Le document à agréger est disponible
     [ici](https://webapplis.utc.fr/amenagement/examens/enseignant/suivi-demandes.xhtml).
-
-    Il s'agit d'un fichier Excel dont le format est trop vieux pour être chargé
-    directement. Il faut au préalable l'enregistrer au format xlsx.
+    Les colonnes ``Aménagements``, ``Salle dédiée`` et ``Sujet spécifique`` sont
+    créées.
 
     Parameters
     ----------
@@ -1094,7 +1093,7 @@ class AggregateAmenagements(FileOperation):
 
     .. code:: python
 
-       DOCS.aggregate_amenagements("documents/amenagements_examens_Printemps_2024_SY02.xlsx")
+       DOCS.aggregate_amenagements("documents/amenagements_examens_Printemps_2024_SY02.xls")
 
     """
 
@@ -1105,11 +1104,7 @@ class AggregateAmenagements(FileOperation):
     def apply(self, left_df):
         check_filename(self.filename, base_dir=settings.SEMESTER_DIR)
 
-        try:
-            right_df = pd.read_excel(self.filename, engine="openpyxl")
-        except zipfile.BadZipFile:
-            fn = rel_to_dir(self.filename, settings.CWD)
-            raise Exception(f"Le fichier `{fn}` n'est pas reconnu. Merci de le réenregistrer avec Excel au format xlsx.")
+        right_df = pd.read_excel(self.filename)
 
         def is_tt(row):
             s = str(row["Aménagements"])
