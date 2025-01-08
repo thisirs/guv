@@ -1756,7 +1756,7 @@ class AggregateJury(FileOperation):
     .. code:: python
 
        DOCS.aggregate(
-           "generated/Jury_gradebook.xlsx",
+           "generated/jury_gradebook.xlsx",
            on="Courriel",
            subset=["Note agrégée", "Note ECTS"]
        )
@@ -1766,7 +1766,7 @@ class AggregateJury(FileOperation):
 
     .. code:: python
 
-       DOCS.aggregate_jury("generated/Jury_gradebook.xlsx")
+       DOCS.aggregate_jury("generated/jury_gradebook.xlsx")
 
     """
 

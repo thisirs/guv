@@ -289,7 +289,7 @@ class XlsStudentData(UVTask):
         )
         df["Semestre"] = pd.to_numeric(df['Semestre'])
 
-        # Drop unrelevant columns
+        # Drop irrelevant columns
         df = df.drop(['Réussite', 'Résultat ECTS', 'Mention'], axis=1)
 
         return df
