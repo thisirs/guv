@@ -48,7 +48,13 @@ doc = [
   "tox",
   "sphinx",
   "furo",
-  "schema"
+  "schema",
+  "myst_parser"
+]
+test = [
+  "pytest >= 5.0.0",
+  "pytest-dependency",
+  "pytest-order"
 ]
 
 [tool.setuptools.packages.find]
@@ -59,23 +65,3 @@ guv = ["schemas/*", "data/*", "images/*", "data/templates/*"]
 
 [tool.setuptools.dynamic]
 version = {attr = "guv.__version__"}
-
-[tool.tox]
-legacy_tox_ini = """
-[tox]
-skipsdist = true
-
-[testenv:tests]
-deps = pytest
-       pytest-dependency
-       pytest-order
-commands = pip install .
-           pytest {posargs}
-
-[testenv:docs]
-deps = sphinx
-       myst_parser
-       furo
-       schema
-commands = sphinx-build -b html docs public {posargs}
-"""

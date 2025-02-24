@@ -10,20 +10,20 @@ stages:
 
 cache:
   paths:
-    - .tox
+    - .venv
 
 before_script:
-  - pip install tox
+  - pip install uv
 
 test:
   stage: test
   script:
-    - tox -e tests -- --basetemp=.tox/tests/tmp -v -rA --cache-clear
+    - uv run --with '.[test]' pytest -v -rA --cache-clear
 
 pages:
   stage: deploy
   script:
-    - tox -e docs -- -W
+    - uv run --with '.[doc]' sphinx-build --builder html --fail-on-warning docs public
   artifacts:
     paths:
       - public
@@ -33,6 +33,5 @@ pages:
 package:
   stage: publish
   script:
-    - pip install build twine
-    - python -m build
-    - TWINE_PASSWORD=${CI_JOB_TOKEN} TWINE_USERNAME=gitlab-ci-token python -m twine upload --verbose --repository-url ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi dist/*
+    - uv build
+    - uv publish --index ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi --username gitlab-ci-token --password ${CI_JOB_TOKEN}
