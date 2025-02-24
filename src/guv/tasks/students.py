@@ -277,7 +277,10 @@ class XlsStudentData(UVTask):
         try:
             return self.load_ENT_data_old()
         except (pd.errors.ParserError, KeyError) as e:
-            return self.load_ENT_data_new()
+            try:
+                return self.load_ENT_data_new()
+            except KeyError:
+                return self.load_ENT_data_basic()
 
     def load_ENT_data_new(self):
         df = pd.read_excel(self.extraction_ENT)
@@ -311,6 +314,9 @@ class XlsStudentData(UVTask):
         df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
 
         return df
+
+    def load_ENT_data_basic(self):
+        return pd.read_excel(self.extraction_ENT)
 
     def load_moodle_data(self):
         fn = self.csv_moodle
