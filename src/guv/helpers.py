@@ -939,11 +939,19 @@ class AggregateSelf(Operation):
         from .tasks.students import XlsStudentDataMerge # Circular deps
         right_df = XlsStudentDataMerge.read_target(XlsStudentDataMerge.target_from(**self.info))
 
+        if "Login" in left_df and "Login" in right_df:
+            left_on = right_on = "Login"
+        elif {"Nom", "Prénom"}.issubset(set(left_df.columns)) and {"Nom", "Prénom"}.issubset(set(right_df.columns)):
+            left_on=id_slug("Nom", "Prénom"),
+            right_on=id_slug("Nom", "Prénom"),
+        else:
+            raise Exception("La colonne `Login` ou les colonnes `Nom` et `Prénom` sont requises")
+
         agg = Aggregator(
             left_df,
             right_df,
-            left_on="Login",
-            right_on="Login",
+            left_on=left_on,
+            right_on=right_on,
             subset=list(self.columns),
             how="left",
             merge_policy="erase"
@@ -1557,11 +1565,20 @@ class AggregateWexamGrades(FileOperation):
         else:
             raise Exception("Fichier de notes Wexam non reconnu")
 
+        if "Login" in left_df and "Login" in right_df:
+            right_on = left_on = "Login"
+
+        elif {"Nom", "Prénom"}.issubset(set(left_df.columns)) and {"Nom", "Prénom"}.issubset(set(right_df.columns)):
+            left_on=id_slug("Nom", "Prénom"),
+            right_on=id_slug("Nom", "Prénom"),
+        else:
+            raise Exception("La colonne `Login` ou les colonnes `Nom` et `Prénom` sont requises")
+
         agg = Aggregator(
             left_df,
             right_df,
-            left_on="Login",
-            right_on="Login",
+            left_on=left_on,
+            right_on=right_on,
             rename=rename,
             drop=drop,
             how="left"
