@@ -187,12 +187,8 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
                 if type in ["grade", "cell"]:
                     self.first_df[name] = cells
                 elif type in ["hide", "raw"]:
-                    avail_cols = ", ".join(f"`{e}`" for e in self.data_df.columns)
-                    raise Exception(
-                        f"La colonne `{name}` n'existe pas dans le fichier central mais "
-                        "son type est `raw` ou `hide` dans le fichier de configuration. "
-                        f"Colonnes disponibles: {avail_cols}",
-                    )
+                    logger.warning("La colonne `%s` n'existe pas dans le fichier central, elle sera vide dans le fichier créé", name)
+                    self.first_df[name] = pd.Series(dtype=str)
                 else:
                     raise Exception("Unknown type of column ", type)
 
