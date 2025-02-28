@@ -126,7 +126,7 @@ class CsvInscrits(UVTask):
                     logger.warning("La ligne ci-après n'est pas reconnue :")
                     logger.warning(line.strip())
 
-        df = pd.DataFrame(rows)
+        df = pd.DataFrame(rows, columns=["Name", "course_type", "course_name", "Branche", "Semestre"])
         df = pd.pivot_table(
             df,
             columns=["course_type"],
