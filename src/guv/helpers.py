@@ -38,6 +38,15 @@ def slugrot(*columns):
     return func
 
 
+class SlugRotMerger(ColumnsMerger):
+    def __init__(self, *columns, type=None):
+        super().__init__(*columns, type=type, func=slugrot(*columns))
+
+
+def id_slug(*columns):
+    return SlugRotMerger(*columns)
+
+
 def make_concat(*columns):
     def func(df):
         check_if_present(df, columns)
@@ -54,10 +63,6 @@ def make_concat(*columns):
 
 def concat(*columns):
     return ColumnsMerger(*columns, func=make_concat(*columns))
-
-
-def id_slug(*columns):
-    return ColumnsMerger(*columns, func=slugrot(*columns))
 
 
 class FillnaColumn(Operation):
@@ -892,6 +897,10 @@ class Aggregate(FileOperation):
         else:
             left_on = self.left_on
             right_on = self.right_on
+
+        # Warn if only one of left_on right_on is id_slug
+        if isinstance(left_on, SlugRotMerger) ^ isinstance(right_on, SlugRotMerger):
+            logger.warning("`left_on` et `right_on` doivent être simultanément issus de `id_slug`")
 
         agg = Aggregator(
             left_df,
