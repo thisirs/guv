@@ -69,7 +69,7 @@ class Documents:
     def aggregate_moodle_grades(self, filename: str, rename: Optional[dict] = None,):
         ...
 
-    def aggregate_moodle_groups(self, filename: str, colname: str):
+    def aggregate_moodle_groups(self, filename: str, colname: str, backup: Optional[bool] = False,):
         ...
 
     def aggregate_wexam_grades(self, filename: str, rename: Optional[dict] = None,):

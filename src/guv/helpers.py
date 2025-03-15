@@ -1478,7 +1478,9 @@ class AggregateMoodleGroups(FileOperation):
     """Agrège des données de groupes issue de l'activité "Choix de Groupe".
 
     Le nom de la colonne des groupes étant toujours "Groupe", l'argument
-    ``colname`` permet d'en spécifier un nouveau.
+    ``colname`` permet d'en spécifier un nouveau. Si la colonne existe déjà dans
+    le fichier central, il est possible de la sauvegarder avec l'option
+    ``backup``.
 
     Examples
     --------
@@ -1489,12 +1491,23 @@ class AggregateMoodleGroups(FileOperation):
 
     """
 
-    def __init__(self, filename: str, colname: str):
+    def __init__(self, filename: str, colname: str, backup: Optional[bool] = False):
         super().__init__(filename)
         self.colname = colname
+        self.backup = backup
 
     def apply(self, df):
         right_df = read_dataframe(self.filename)
+
+        # Backup column
+        if self.backup:
+            suffixes = ("_orig", "")
+            merge_policy = "keep"
+            if not self.colname in df.columns:
+                logger.warning("Le backup de la colonne `%s` est activé mais elle n'est pas présente dans le fichier central", self.colname)
+        else:
+            suffixes = ("_orig", "")
+            merge_policy = "erase"
 
         ver1 = check_if_present(right_df, ["Nom", "Prénom", "Numéro d’identification", "Choix", "Adresse de courriel"], errors="silent")
         ver2 = check_if_present(right_df, ["Nom de famille", "Prénom", "Numéro d’identification", "Choix", "Adresse de courriel"], errors="silent")
@@ -1530,7 +1543,8 @@ class AggregateMoodleGroups(FileOperation):
             drop=drop,
             rename={"Groupe": self.colname},
             how="left",
-            merge_policy="keep"
+            merge_policy=merge_policy,
+            suffixes=suffixes
         )
 
         df_merge = agg.merge()

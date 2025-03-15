@@ -376,7 +376,7 @@ class XlsStudentData(UVTask):
             right_df=df_moodle,
             left_on=left_on,
             right_on=right_on,
-            right_suffix="_moodle",
+            suffixes=("", "_moodle"),
             how="outer"
         )
         df_outer = agg.merge(clean_exclude="_merge")

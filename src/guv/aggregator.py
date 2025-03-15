@@ -144,7 +144,7 @@ class Aggregator:
         rename=None,
         how="outer",
         merge_policy="merge",
-        right_suffix="_y",
+        suffixes=("", "_y")
     ):
         self.left_merger = Merger.from_obj(left_on, type="left")
         self.right_merger = Merger.from_obj(right_on, type="right")
@@ -152,7 +152,7 @@ class Aggregator:
         self._left_df = None
         self.right_df = right_df
         self._right_df = None
-        self.right_suffix = right_suffix
+        self.suffixes = suffixes
         self.preprocessing = preprocessing
         self.postprocessing = postprocessing
         self.subset = subset
@@ -215,7 +215,7 @@ class Aggregator:
             left_on=self.left_merger.on,
             right_on=self.right_merger.on,
             how="outer",
-            suffixes=("", self.right_suffix),
+            suffixes=self.suffixes,
             indicator=True,
         )
 
