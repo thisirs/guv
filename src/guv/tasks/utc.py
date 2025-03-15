@@ -548,7 +548,18 @@ class WeekSlots(UVTask):
 
     @staticmethod
     def read_target(week_slots):
-        df = pd.read_excel(week_slots, engine="openpyxl")
+        df = pd.read_excel(week_slots, engine="openpyxl", dtype={
+            "Activité": str,
+            "Jour": str,
+            "Heure début": str,
+            "Heure fin": str,
+            "Semaine": str,
+            "Locaux": str,
+            "Lib. créneau": str,
+            "Intervenants": str,
+            "Abbrev": str,
+            "Responsable": str
+        })
         if len(df.index) == 0:
             fn = rel_to_dir(week_slots, settings.CWD)
             logger.warning(f"Le fichier `{fn}` est vide")
