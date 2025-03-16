@@ -10,6 +10,7 @@ class TestPlanningSlots:
         guvcapfd.stdout_search(
             ".  planning_slots"
         )
+        guvcapfd.no_warning()
         for uv in guv.uvs:
             assert (guv.cwd / uv / "generated" / "planning.xlsx").is_file()
 

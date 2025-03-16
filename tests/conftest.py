@@ -137,11 +137,24 @@ def guv_old(request, tmp_path_factory, guv_data_old):
 class Guvcapfd:
     def __init__(self, capfd):
         self.capfd = capfd
+        self._outerr = None
+
+    def reset(self):
+        self._outerr = None
+
+    @property
+    def outerr(self):
+        if self._outerr is None:
+            out, err = self.capfd.readouterr()
+            self._outerr = out + err
+        return self._outerr
 
     def stdout_search(self, *regexes):
-        out = self.capfd.readouterr().out
         for regex in regexes:
-            assert re.search(regex, out)
+            assert re.search(regex, self.outerr)
+
+    def no_warning(self):
+        assert not re.search("Warning:", self.outerr)
 
 
 @pytest.fixture(scope="function")

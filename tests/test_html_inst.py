@@ -8,3 +8,4 @@ def test_html_inst(guv, guvcapfd):
     guv("html_inst").succeed()
     assert (guv.cwd / "generated" / "intervenants.html").is_file()
     guvcapfd.stdout_search(".  html_inst")
+    guvcapfd.no_warning()

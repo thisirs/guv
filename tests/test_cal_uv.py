@@ -9,6 +9,7 @@ def test_cal_uv(guv, guvcapfd):
     guv("cal_uv").succeed()
     assert (guv.cwd / "documents" / "calendrier_hebdomadaire.pdf").is_file()
     guvcapfd.stdout_search(".  cal_uv")
+    guvcapfd.no_warning()
 
 
 @path_dependency("test_week_slots")
@@ -18,3 +19,4 @@ def test_cal_uv0(guv, guvcapfd):
     for uv in guv.uvs:
         assert (guv.cwd / uv / "documents" / "calendrier_hebdomadaire.pdf").is_file()
     guvcapfd.stdout_search(".  cal_uv")
+    guvcapfd.no_warning()

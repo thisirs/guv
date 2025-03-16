@@ -8,11 +8,13 @@ class TestCalInst:
         guv.cd(guv.semester)
         guv("cal_inst").failed()
         guvcapfd.stdout_search("La variable 'DEFAULT_INSTRUCTOR' est incorrecte")
+        guvcapfd.no_warning()
 
     def test_cal_inst1(self, guv, guvcapfd):
         guv.change_config(DEFAULT_INSTRUCTOR="Bob Marley")
         guv("cal_inst")
         guvcapfd.stdout_search("0 créneau pour `Bob Marley`")
+        guvcapfd.no_warning()
 
     def test_cal_inst2(self, guv, xlsx, guvcapfd):
         uv = guv.uvs[0]
@@ -22,6 +24,7 @@ class TestCalInst:
 
         guv("cal_inst").succeed()
         guvcapfd.stdout_search(f"du fichier `generated/{inst}_{guv.semester}_calendrier.pdf`")
+        guvcapfd.no_warning()
 
     def test_cal_inst3(self, guv, xlsx, guvcapfd):
         uv = guv.uvs[0]
@@ -29,3 +32,4 @@ class TestCalInst:
 
         guv(f"cal_inst -i {inst}").succeed()
         guvcapfd.stdout_search(f"du fichier `generated/{inst}_{guv.semester}_calendrier.pdf`")
+        guvcapfd.no_warning()

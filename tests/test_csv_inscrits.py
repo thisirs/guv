@@ -14,6 +14,9 @@ def test_csv_inscrits(guv, guvcapfd):
 
     assert (guv.cwd / "generated" / "inscrits.csv").is_file()
     guvcapfd.stdout_search(". csv_inscrits")
+    guvcapfd.no_warning()
+    guvcapfd.reset()
 
     guv("csv_inscrits").succeed()
     guvcapfd.stdout_search("-- csv_inscrits")
+    guvcapfd.no_warning()

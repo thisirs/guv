@@ -18,10 +18,14 @@ def test_xls_student_data_v1(guv, guvcapfd):
 
     guv("xls_student_data").succeed()
     guvcapfd.stdout_search(".  xls_student_data")
+    guvcapfd.no_warning()
+    guvcapfd.reset()
     assert (guv.cwd / "generated" / "student_data.xlsx").is_file()
 
     guv("xls_student_data_merge").succeed()
     guvcapfd.stdout_search(".  xls_student_data_merge")
+    guvcapfd.no_warning()
+    guvcapfd.reset()
     assert (guv.cwd / "effectif.xlsx").is_file()
 
     guv.change_config("""
@@ -31,6 +35,7 @@ def test_xls_student_data_v1(guv, guvcapfd):
 
     guv().succeed()
     guvcapfd.stdout_search(".  xls_student_data_merge")
+    guvcapfd.no_warning()
 
 
 @path_dependency("test_csv_inscrits", name="test_xls_student_data", cache=True)
@@ -49,10 +54,14 @@ def test_xls_student_data_v2(guv, guvcapfd):
 
     guv("xls_student_data").succeed()
     guvcapfd.stdout_search(".  xls_student_data")
+    guvcapfd.no_warning()
+    guvcapfd.reset()
     assert (guv.cwd / "generated" / "student_data.xlsx").is_file()
 
     guv("xls_student_data_merge").succeed()
     guvcapfd.stdout_search(".  xls_student_data_merge")
+    guvcapfd.no_warning()
+    guvcapfd.reset()
     assert (guv.cwd / "effectif.xlsx").is_file()
 
     guv.change_config("""
@@ -62,3 +71,4 @@ def test_xls_student_data_v2(guv, guvcapfd):
 
     guv().succeed()
     guvcapfd.stdout_search(".  xls_student_data_merge")
+    guvcapfd.no_warning()

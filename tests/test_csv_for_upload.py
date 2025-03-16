@@ -18,6 +18,7 @@ def test_csv_for_upload(guv, csv, guvcapfd):
         "Commentaire",
     )
     guvcapfd.stdout_search(".  csv_for_upload")
+    guvcapfd.no_warning()
 
 
 @path_dependency("test_xls_student_data")
@@ -35,3 +36,4 @@ def test_csv_for_upload2(guv, csv, guvcapfd):
         "Note",
     )
     guvcapfd.stdout_search(".  csv_for_upload")
+    guvcapfd.no_warning()

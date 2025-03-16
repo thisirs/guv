@@ -9,6 +9,7 @@ def test_pdf_attendance(guv, guvcapfd):
     guv("pdf_attendance").succeed()
     assert (guv.cwd / "generated" / "Feuille_de_présence_all.pdf").is_file()
     guvcapfd.stdout_search(".  pdf_attendance")
+    guvcapfd.no_warning()
 
 @path_dependency("test_xls_student_data")
 def test_pdf_attendance2(guv, guvcapfd):
@@ -17,7 +18,7 @@ def test_pdf_attendance2(guv, guvcapfd):
     guv("pdf_attendance -t foo").succeed()
     assert (guv.cwd / "generated" / "foo_all.pdf").is_file()
     guvcapfd.stdout_search(".  pdf_attendance")
-
+    guvcapfd.no_warning()
 
 @path_dependency("test_xls_student_data")
 def test_pdf_attendance3(guv, guvcapfd):
@@ -26,7 +27,7 @@ def test_pdf_attendance3(guv, guvcapfd):
     guv("pdf_attendance -g TD").succeed()
     assert (guv.cwd / "generated" / "Feuille_de_présence_TD.zip").is_file()
     guvcapfd.stdout_search(".  pdf_attendance")
-
+    guvcapfd.no_warning()
 
 @path_dependency("test_xls_student_data")
 def test_pdf_attendance4(guv, guvcapfd):
@@ -35,3 +36,4 @@ def test_pdf_attendance4(guv, guvcapfd):
     guv("pdf_attendance -t foo -g TD").succeed()
     assert (guv.cwd / "generated" / "foo_TD.zip").is_file()
     guvcapfd.stdout_search(".  pdf_attendance")
+    guvcapfd.no_warning()

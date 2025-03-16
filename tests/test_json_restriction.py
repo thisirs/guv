@@ -10,3 +10,4 @@ def test_json_restriction(guv, guvcapfd):
 
     assert (guv.cwd / "generated" / "moodle_restrictions_Cours.json").is_file()
     guvcapfd.stdout_search(".  json_restriction")
+    guvcapfd.no_warning()

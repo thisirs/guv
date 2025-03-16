@@ -8,6 +8,8 @@ def test_week_slots_all(guv, guvcapfd, xlsx):
     guv("week_slots_all").succeed()
     assert (guv.cwd / "generated" / "planning_hebdomadaire.xlsx").is_file()
     guvcapfd.stdout_search(".  week_slots_all")
+    guvcapfd.no_warning()
+    guvcapfd.reset()
 
     doc = xlsx.tabular(guv.cwd / "generated" / "planning_hebdomadaire.xlsx")
     doc.check_columns(
@@ -27,3 +29,4 @@ def test_week_slots_all(guv, guvcapfd, xlsx):
 
     guv("week_slots_all").succeed()
     guvcapfd.stdout_search("-- week_slots_all")
+    guvcapfd.no_warning()
