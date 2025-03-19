@@ -189,14 +189,14 @@ class CsvGroupsGroupings(UVTask, CliArgsMixin):
     l'argument ``-g`` et le nombre de groupements dans
     ``-G``.
 
-    Le nom des groupements est controlé par un modèle spécifié par
+    Le nom des groupements est contrôlé par un modèle spécifié par
     l'argument ``-F`` (par défaut "D##_P1"). Les remplacements
     disponibles sont :
 
     - ## : remplacé par des nombres
     - @@ : remplacé par des lettres
 
-    Le nom des groupes est controlé par un modèle spécifié par
+    Le nom des groupes est contrôlé par un modèle spécifié par
     l'argument ``-f`` (par défaut "D##_P1_@"). Les remplacements
     disponibles sont :
 
@@ -1477,7 +1477,7 @@ class FetchGroupId(SemesterTask, CliArgsMixin):
 
     Pour utiliser certaines fonctionnalités de **guv** (notamment
     :class:`~guv.tasks.moodle.JsonRestriction` et
-    :class:`~guv.tasks.moodle.JsonGroup`), il faut connaitre la
+    :class:`~guv.tasks.moodle.JsonGroup`), il faut connaître la
     correspondance entre le nom des groupes et leur identifiant dans
     Moodle. Cette tâche permet de télécharger la correspondance en
     indiquant l'identifiant de l'UV/UE sous Moodle. Par exemple, l'id
