@@ -463,7 +463,7 @@ class HtmlTable(UVTask, CliArgsMixin):
     def run(self):
         if self.names is not None and len(self.names) == 1:
             if not os.path.exists(self.names[0]):
-                raise Exception("Le fichier `{self.names[0]}` n'existe pas")
+                raise Exception(f"Le fichier `{self.names[0]}` n'existe pas")
             with open(self.names[0], "r") as fd:
                 self.names = [l.strip() for l in fd.readlines()]
 
