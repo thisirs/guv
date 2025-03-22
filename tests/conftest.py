@@ -155,6 +155,7 @@ class Guvcapfd:
 
     def no_warning(self):
         assert not re.search("Warning:", self.outerr)
+        assert not re.search("WARNING", self.outerr)
 
 
 @pytest.fixture(scope="function")
