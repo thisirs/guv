@@ -24,6 +24,7 @@ from .moodle import (
     HtmlTable,
     JsonGroup,
     JsonRestriction,
+    JsonTiming
 )
 from .students import (
     CsvInscrits,

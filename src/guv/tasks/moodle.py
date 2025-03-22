@@ -906,6 +906,159 @@ class JsonGroup(UVTask, CliArgsMixin):
                 print(s, file=fd)
 
 
+class JsonTiming(UVTask, CliArgsMixin):
+    """Fichier json de restrictions d'accès aux activités Début/Fin basées sur le début/fin des séances
+
+    Le fichier json contient des restrictions d'accès pour les
+    créneaux de Cours/TD/TP basé sur l'appartenance aux groupes de
+    Cours/TD/TP, sur les début/fin de séance, début/fin de semaine.
+
+    Le fragment json peut être transféré sous Moodle en tant que
+    restriction d'accès grâce au script Greasemonkey disponible
+    :download:`ici <../../resources/moodle_availability_conditions.js>`.
+
+    Pour les contraintes par créneaux qui s'appuie sur l'appartenance
+    à un groupe, il est nécessaire de renseigner la variable
+    ``MOODLE_GROUPS`` dans le fichier ``config.py`` qui relie le nom
+    des groupes de Cours/TD/TP dans le fichier ``effectif.xlsx`` aux
+    identifiants Moodle correspondant (voir la tâche
+    :class:`~guv.tasks.moodle.FetchGroupId` pour récupérer la correspondance).
+
+    L'argument ``-c`` permet de spécifier les activités considérées, à
+    choisir parmi Cours, TD ou TP.
+
+    Le drapeau ``-a`` permet de grouper les séances par deux semaines
+    dans le cas où il y a des semaines A et B. La fin d'une activité
+    est alors identifiée à la fin de la semaine B.
+
+    Les restrictions globales implémentées sont les suivantes :
+
+    - antérieur à la date du premier créneau
+    - postérieur à la date du premier créneau
+    - postérieur à la date du premier créneau moins 3 jours
+    - postérieur à la date du dernier créneau
+    - antérieur à la date du dernier créneau
+    - postérieur au lundi précédant immédiatement le premier créneau
+    - postérieur au vendredi suivant immédiatement le dernier créneau
+    - postérieur à minuit juste avant le premier créneau
+    - postérieur à minuit juste après le dernier créneau
+
+    Les restrictions dépendant de l'appartenance à un groupe sont les
+    suivantes :
+
+    - antérieur à la date de début de créneau de l'étudiant
+    - postérieur à la date de début de créneau de l'étudiant
+    - postérieur à la date de fin de créneau de l'étudiant
+    - antérieur à la date de fin de créneau de l'étudiant
+    - restreint à la séance de l'étudiant
+    - restreint à la séance de l'étudiant plus 15 minutes après
+    - restreint au début de la séance, 3 minutes avant, 5 minutes après
+
+    {options}
+
+    """
+
+    target_dir = "generated"
+    target_name = "moodle_timing_{course}{AB}.json"
+    uptodate = False
+
+    cli_args = (
+        argument(
+            "-c",
+            "--course",
+            required=True,
+            help="Type de séances considérées parmi ``Cours``, ``TD`` ou ``TP``.",
+        ),
+        argument(
+            "-a",
+            "--num-AB",
+            action="store_true",
+            help="Permet de prendre en compte les semaines A/B. Ainsi, la fin d'une séance est à la fin de la semaine B.",
+        ),
+    )
+
+    def setup(self):
+        super().setup()
+        self.planning_slots = PlanningSlots.target_from(**self.info)
+        self.file_dep = [self.planning_slots]
+
+        self.parse_args()
+        AB = "_AB" if self.num_AB else ""
+        self.target = self.build_target(AB=AB)
+
+    def run(self):
+        df = PlanningSlots.read_target(self.planning_slots)
+        available_courses = df["Activité alt"].unique()
+
+        if self.course not in available_courses:
+            raise Exception(
+                "Aucun créneau de type `%s`. Choisir parmi %s"
+                % (self.course, ", ".join(f"`{c}`" for c in available_courses))
+            )
+
+        df_c = df.loc[df["Activité alt"] == self.course]
+
+        key = "numAB" if self.num_AB else "num"
+        gb = df_c.groupby(key)
+
+        def get_beg_end_date_each(num, df):
+            def group_beg_end(row):
+                if self.num_AB:
+                    group = row["Lib. créneau"] + row["Semaine"]
+                else:
+                    group = row["Lib. créneau"]
+
+                hd = dt.datetime.combine(row["date"], row["Heure début"])
+                hf = dt.datetime.combine(row["date"], row["Heure fin"])
+
+                return group, hd, hf
+
+            gbe = [group_beg_end(row) for index, row in df.iterrows()]
+            dt_min = min(b for g, b, e in gbe)
+            dt_min3 = dt_min - dt.timedelta(days=3)
+            dt_max = max(e for g, b, e in gbe)
+
+            dt_min_monday = dt_min - dt.timedelta(days=dt_min.weekday())
+            dt_min_monday = dt.datetime.combine(dt_min_monday, dt.time.min)
+            dt_min_midnight = dt.datetime.combine(dt_min, dt.time.min)
+
+            dt_max_friday = dt_max + dt.timedelta(days=6 - dt_max.weekday())
+            dt_max_friday = dt.datetime.combine(dt_max_friday, dt.time.max)
+            dt_max_midnight = dt.datetime.combine(dt_max, dt.time.max)
+
+            no_group = {
+                "accessible si: ": {"start": dt_min.timestamp(), "end": dt_max.timestamp()}
+            }
+
+            session = f"Séance {num} : {dt_min_monday.strftime('%d-%m-%Y')} -- {dt_max_friday.strftime('%d-%m-%Y')}"
+
+            return session, no_group
+
+        moodle_date = dict(get_beg_end_date_each(name, g) for name, g in gb)
+        max_len = max(len(s) for s in list(moodle_date.values())[0])
+        with Output(self.target, protected=True) as out:
+            with open(out.target, "w") as fd:
+                s = (
+                    "{\n"
+                    + ",\n".join(
+                        (
+                            f'  "{slot}": {"{"}\n'
+                            + ",\n".join(
+                                (
+                                    f'    "{name}": {" " * (max_len - len(name))}'
+                                    + json.dumps(moodle_json, ensure_ascii=False)
+                                )
+                                for name, moodle_json in dates.items()
+                            )
+                            + "\n  }"
+                            for slot, dates in moodle_date.items()
+                        )
+                    )
+                    + "\n}"
+                )
+                print(s, file=fd)
+
+
 def get_coocurrence_matrix_from_partition(series, nan_policy="same"):
     """Return co-occurrence matrix of vector."""
 
