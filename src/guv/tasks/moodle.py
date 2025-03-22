@@ -9,6 +9,7 @@ de l'appartenance à un groupe.
 """
 
 import datetime as dt
+import getpass
 import json
 import math
 import os
@@ -18,15 +19,13 @@ import shlex
 import sys
 import textwrap
 
-import browser_cookie3
 import jinja2
+import mechanicalsoup
 import markdown
 import numpy as np
 import pandas as pd
 import pynliner
-import requests
 import yapf.yapflib.yapf_api as yapf
-from bs4 import BeautifulSoup
 
 import guv
 
@@ -49,6 +48,32 @@ from .utc import PlanningSlots
 
 DATE_FORMAT = "%Y-%m-%d"
 TIME_FORMAT = "%H:%M"
+
+
+class MoodleBrowser():
+    def __init__(self):
+        self.browser = mechanicalsoup.Browser(soup_config={'features': 'lxml'})
+        self.is_authenticated = False
+
+    def _authenticate(self):
+        login_page = self.browser.get("https://moodle.utc.fr/login/index.php?authCAS=CAS")
+
+        # Ask for the username
+        username = input("Entrer votre login Moodle : ")
+
+        # Safely ask for the password without showing it in the console
+        password = getpass.getpass("Entrer votre mot de passe : ")
+
+        login_form = mechanicalsoup.Form(login_page.soup.select_one("#fm1"))
+        login_form.input({"username": username, "password": password})
+
+        self.browser.submit(login_form, login_page.url)
+        self.is_authenticated = True
+
+    def get(self, url):
+        if not self.is_authenticated:
+            self._authenticate()
+        return self.browser.get(url)
 
 
 class CsvGroups(UVTask, CliArgsMixin):
@@ -1499,10 +1524,6 @@ class FetchGroupId(SemesterTask, CliArgsMixin):
     son contenu dans le fichier ``config.py`` de l'UV/UE
     correspondante.
 
-    Pour avoir accès à Moodle, les cookies de Firefox sont utilisés.
-    Il faut donc préalablement s'être identifié dans Moodle avec
-    Firefox.
-
     {options}
 
     """
@@ -1522,21 +1543,9 @@ class FetchGroupId(SemesterTask, CliArgsMixin):
         super().setup()
         self.parse_args()
 
-    def cookies(self):
-        cj = browser_cookie3.firefox()
-        c = {c.name: c.value for c in cj if "moodle.utc.fr" in c.domain}
-        if not c:
-            raise Exception(
-                "Le cookie pour accéder à Moodle n'a pas été trouvé. "
-                "Identifiez-vous avec Firefox sur Moodle et recommencez."
-            )
-        return c
-
-    def groups(self, html_page):
-        soup = BeautifulSoup(html_page, "html.parser")
-
+    def groups(self, page):
         groups = {}
-        for select in soup.find_all("select"):
+        for select in page.soup.find_all("select"):
             if select["name"] in ["group", "grouping"]:
                 for option in select.find_all("option"):
                     value = option["value"]
@@ -1549,10 +1558,11 @@ class FetchGroupId(SemesterTask, CliArgsMixin):
         return groups
 
     def run(self):
-        cookies = self.cookies()
+        browser = MoodleBrowser()
+
         for id in self.ident_list:
-            req = requests.post(pformat(self.url, id=id), cookies=cookies)
-            groups = self.groups(req.text)
+            page = browser.get(self.url.format(id=id))
+            groups = self.groups(page)
 
             with Output(self.build_target(id=id)) as out:
                 with open(out.target, "w") as f:

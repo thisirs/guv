@@ -15,7 +15,6 @@ license = {text = "MIT"}
 scripts = {guv = "guv.runner:main"}
 dependencies = [
   "PyPDF2>=3.0.0",
-  "browser_cookie3",
   "doit",
   "icalendar",
   "jinja2",
