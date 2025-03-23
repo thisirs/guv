@@ -796,8 +796,6 @@ class SendEmail(UVTask, CliArgsMixin):
         with open(self.template, "r") as file_:
             if not file_.readline().startswith("Subject:"):
                 raise Exception("Le message doit commencer par \"Subject:\"")
-            if not file_.readline() == "\n":
-                raise Exception("Le message doit ")
 
         jinja_env = jinja2.Environment(
             loader=jinja2.FileSystemLoader("./"), undefined=jinja2.StrictUndefined
