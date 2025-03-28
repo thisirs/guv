@@ -924,7 +924,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
     de chaque sous-groupe (de TP ou TD par exemple).
 
     Le nombre de groupes créés (au total ou par sous-groupes suivant
-    ``--grouping``) est controlé par une des options mutuellement
+    ``--grouping``) est contrôlé par une des options mutuellement
     exclusives ``--proportions``, ``--group-size`` et
     ``--num-groups``. L'option ``--proportions`` permet de spécifier
     un nombre de groupes via une liste de proportions. L'option
