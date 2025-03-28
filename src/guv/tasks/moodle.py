@@ -33,6 +33,7 @@ from ..logger import logger
 from ..scripts.moodle_date import CondDate, CondGroup, CondOr, CondProfil
 from ..utils import (
     argument,
+    generate_groupby,
     score_codenames,
     split_codename,
     make_groups,
@@ -42,6 +43,7 @@ from ..utils import (
 )
 from ..utils_config import Output, check_if_present, rel_to_dir
 from .base import CliArgsMixin, SemesterTask, UVTask
+from .evolutionary_algorithm import evolutionary_algorithm
 from .instructors import WeekSlotsDetails
 from .students import XlsStudentDataMerge
 from .utc import PlanningSlots
@@ -904,8 +906,8 @@ class JsonGroup(UVTask, CliArgsMixin):
                 print(s, file=fd)
 
 
-def get_coocurrence_matrix_from_array(series, nan_policy="same"):
-    """Return co-occurrence matrix of a series as a Pandas dataframe."""
+def get_coocurrence_matrix_from_partition(series, nan_policy="same"):
+    """Return co-occurrence matrix of vector."""
 
     if nan_policy == "same":
         s_filled = series.fillna("unique_value_1")
@@ -915,24 +917,20 @@ def get_coocurrence_matrix_from_array(series, nan_policy="same"):
     else:
         raise RuntimeError("Wrong nan_policy")
 
-    one_hot = pd.get_dummies(s_filled.astype(str), dtype=float)
-    return one_hot @ one_hot.T
+    arr = s_filled.to_numpy()
+    return get_coocurrence_matrix_from_array(arr)
 
-def get_coocurrence_matrix_from_partition(groups, index):
-    """Return co-occurence matrix from a partition of index."""
-    N = sum(len(p) for p in groups)
-    assert(N == len(index))
 
-    A = pd.DataFrame(np.zeros((N, N), dtype=int), index=index, columns=index)
-    for p in groups:
-        A.loc[p, p] = 1
-    return A
+def get_coocurrence_matrix_from_array(arr):
+    return (arr[:, None] == arr[None, :]).astype(int)
+
 
 def get_coocurrence_dict(df, columns, nan_policy="same"):
-    """Return a dictionary mapping column with their coocurrence matrix."""
+    """Return a dictionary mapping column with their co-occurrence matrix."""
     cooc_dict = {}
     for column in columns:
-        cooc = get_coocurrence_matrix_from_array(df[column], nan_policy=nan_policy)
+        series = df[column]
+        cooc = get_coocurrence_matrix_from_partition(series, nan_policy=nan_policy)
         if column in cooc_dict:
             cooc_dict[column] = cooc_dict[column] + cooc
         else:
@@ -1080,6 +1078,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         argument(
             "-t",
             "--template",
+            dest="_template",
             required=False,
             help="Modèle pour donner des noms aux groupes avec `{title}`, `{grouping_name}` ou `{group_name}`",
         ),
@@ -1178,7 +1177,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                 for l in lines:
                     yield pformat(tmpl, group_name=l.strip())
             else:
-                raise Exception("Le fichier de noms n'existe pas")
+                raise Exception(f"Le fichier de noms `{self.names[0]}` n'existe pas")
         else:
             names = self.names.copy()
             if self.random:
@@ -1186,22 +1185,26 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             for n in names:
                 yield pformat(tmpl, group_name=n)
 
-    def run(self):
+    @property
+    def template(self):
         # Set template used to generate group names
-        if self.template is None:
+        if self._template is None:
             if self.names is None:
                 if self.grouping is None:
-                    self.template = "{title}_group_#"
+                    self._template = "{title}_group_#"
                 else:
-                    self.template = "{title}_{grouping_name}_group_#"
+                    self._template = "{title}_{grouping_name}_group_#"
             else:
                 if self.grouping is None:
-                    self.template = "{title}_{group_name}"
+                    self._template = "{title}_{group_name}"
                 else:
-                    self.template = "{title}_{grouping_name}_{group_name}"
+                    self._template = "{title}_{grouping_name}_{group_name}"
 
-            logger.info("Pas de template spécifiée. La template par défaut est `%s`", self.template)
+            logger.info("Pas de template spécifiée. La template par défaut est `%s`", self._template)
 
+        return self._template
+
+    def run(self):
         if (self.proportions is not None) + (self.group_size is not None) + (
             self.num_groups is not None
         ) != 1:
@@ -1220,6 +1223,12 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
 
         if "{grouping_name}" in self.template and self.grouping is None:
             raise self.parser.error("La template contient '{grouping_name}' mais aucun groupement n'est spécifié avec l'option --grouping")
+
+        if "{grouping_name}" not in self.template and self.grouping is not None and not self.global_:
+            raise self.parser.error("La template ne contient pas '{grouping_name}' mais l'option --grouping est active avec remise à zéro des noms de groupes")
+
+        if self.ordered is not None and (self.affinity_groups or self.other_groups):
+            raise self.parser.error("L'option ``ordered`` est incompatible avec les contraintes ``other-groups`` et ``affinity_groups``.")
 
         df = XlsStudentDataMerge.read_target(self.xls_merge)
 
@@ -1250,21 +1259,15 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             )
             df = sort_values(df, self.ordered)
 
-        if self.ordered is not None and (self.affinity_groups or self.other_groups):
-            raise self.parser.error("L'option ``ordered`` est incompatible avec les contraintes ``other-groups`` et ``affinity_groups``.")
-
         # Add title to template
         tmpl = self.template
         tmpl = pformat(tmpl, title=self.title)
-
-        # Set grouping key from grouping cli argument
-        key = (lambda x: True) if self.grouping is None else self.grouping
 
         # Diviser le dataframe en morceaux d'après `key` et faire des
         # groupes dans chaque morceau
         def df_gen():
             name_gen = self.create_name_gen(tmpl)
-            for name, df_group in df.groupby(key):
+            for name, df_group in generate_groupby(df, self.grouping):
                 # Reset name generation for a new group
                 if not self.global_:
                     name_gen = self.create_name_gen(tmpl)
@@ -1319,6 +1322,136 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             "command_line": "guv " + " ".join(map(shlex.quote, sys.argv[1:]))
         }))
 
+    def make_groups(self, name, df, name_gen):
+        """Try to make subgroups in dataframe `df`.
+
+        Returns a Pandas series whose index is the one of `df` and
+        value is the group name generated from `name` and `name_gen`.
+
+        """
+
+        n = len(df.index)
+        partition = self.make_partition(n)
+
+        if self.affinity_groups or self.other_groups:
+            partition = self.optimize_partition(name, df, partition)
+
+        names = self.add_names_to_grouping(partition, name, name_gen)
+        series = pd.Series(names, index=df.index)
+
+        # Print first and last element when groups are in alphabetical order
+        if self.ordered is not None and len(self.ordered) == 0 and self.grouping is None:
+            n_groups = max(partition) + 1
+            for i in range(n_groups):
+                index_i = df.index[partition == i]
+                first = df.loc[index_i[0]]
+                last = df.loc[index_i[-1]]
+                print(f'{series.loc[index_i[0]]} : {first["Nom"]} {first["Prénom"]} -- {last["Nom"]} {last["Prénom"]} ({len(index_i)})')
+
+        return series
+
+    def add_names_to_grouping(self, partition, name, name_gen):
+        """Give names to `groups`"""
+
+        # Number of groups in partition
+        num_groups = np.max(partition) + 1
+
+        # Use generator to get templates
+        try:
+            templates = [next(name_gen) for _ in range(num_groups)]
+        except StopIteration as e:
+            raise Exception("Les noms de groupes disponibles sont épuisés, utiliser # ou @ dans le modèle ou rajouter des noms dans `--names`.") from e
+
+        names = np.array([pformat(tmpl, group_name=name) for tmpl in templates])
+        return names[partition]
+
+    def make_partition(self, n):
+        """Return a contiguous partition as an array of integers"""
+
+        if self.proportions is not None:
+            proportions = self.proportions
+        elif self.group_size is not None:
+            size = self.group_size
+            if size > 2:
+                # When size is > 2, prefer groups of size size-1 rather
+                # than groups of size size+1
+                n_groups = math.ceil(n / size)
+                proportions = np.ones(n_groups)
+            else:
+                # When size is 2, prefer groups of size 3 rather
+                # than groups of size 1
+                n_groups = math.floor(n / size)
+                proportions = np.ones(n_groups)
+        elif self.num_groups is not None:
+            proportions = np.ones(self.num_groups)
+
+        return make_groups(n, proportions)
+
+    def optimize_partition(self, name, df, initial_partition):
+        """Return an optimized partition given constraints and report"""
+
+        N = len(df.index)
+
+        cooc_data = self.get_cooc_data(df)
+        num_permutations = math.ceil(0.4 * N)
+        num_variants, best_score, best_partition = evolutionary_algorithm(
+            initial_partition,
+            cooc_data["cooc_cost"],
+            cooc_data["min_cost"],
+            max_variants=self.max_iter,
+            num_variants=10,
+            num_permutations=num_permutations,
+            top_k=20
+        )
+
+        if best_score == cooc_data["min_cost"]:
+            if name is not None:
+                logger.info(f"Partition optimale pour le groupe `{name}` trouvée en {num_variants} essais.")
+            else:
+                logger.info(f"Partition optimale trouvée en {num_variants} essais.")
+        else:
+            if name is not None:
+                logger.warning(f"Pas de solution optimale trouvée pour le groupe `{name}` en {self.max_iter} essais, meilleure solution :")
+            else:
+                logger.warning(f"Pas de solution optimale trouvée en {self.max_iter} essais, meilleure solution :")
+
+            best_coocurrence = get_coocurrence_matrix_from_array(best_partition)
+
+            for column, weight_coocurrence in cooc_data["cooc_repulse_dict"].items():
+                scores = weight_coocurrence * best_coocurrence
+                n_errors = (np.sum(scores) - N) // 2
+                if n_errors > 0:
+                    logger.warning(f"- contrainte de non-appartenance par la colonne `{column}` violée {n_errors} fois :")
+
+                    for i, j in np.column_stack(np.where(scores > 0)):
+                        if i >= j:
+                            continue
+
+                        stu1 = " ".join(df[["Nom", "Prénom"]].iloc[i])
+                        stu2 = " ".join(df[["Nom", "Prénom"]].iloc[j])
+                        logger.warning(f"  - {stu1} -- {stu2}")
+                else:
+                    logger.warning(f"- contrainte de non-appartenance par la colonne `{column}` vérifiée")
+
+            for column, weight_coocurrence in cooc_data["cooc_affinity_dict"].items():
+                scores = (1 - weight_coocurrence) * best_coocurrence
+                n_errors = np.sum(scores) // 2
+
+                if n_errors > 0:
+                    logger.warning(f"- contrainte d'affinité par la colonne `{column}` violée {n_errors} fois :")
+
+                    for i, j in np.column_stack(np.where(scores > 0)):
+                        if i >= j:
+                            continue
+
+                        stu1 = " ".join(df[["Nom", "Prénom"]].iloc[i])
+                        stu2 = " ".join(df[["Nom", "Prénom"]].iloc[j])
+                        logger.warning(f"  - {stu1} -- {stu2}")
+                else:
+                    logger.warning(f"- contrainte d'affinité par la colonne `{column}` vérifiée")
+
+        return best_partition
+
     def get_cooc_data(self, df):
         """Return various data to handle group constraints"""
 
@@ -1345,165 +1478,6 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             "cooc_repulse_dict": cooc_repulse_dict,
             "cooc_affinity_dict": cooc_affinity_dict
         }
-
-    def search_groups(self, df, cooc_data):
-        """Random search of groups that meet constraints"""
-
-        old_cost = np.inf
-        niter = 0
-
-        while niter < self.max_iter:
-            # New contiguous partition of df.index
-            groups = self.make_groups_index(df)
-
-            # Get its coocurrence pandas dataframe
-            cooccurence_matrix = get_coocurrence_matrix_from_partition(groups, df.index)
-
-            # Compute cost wrt to constraints
-            cost = (cooccurence_matrix * cooc_data["cooc_cost"]).to_numpy().sum()
-
-            # Check if cost is minimal
-            if cost == cooc_data["min_cost"]:
-                best_groups = groups
-                break
-
-            if old_cost > cost:
-                old_cost = cost
-                best_groups = groups
-
-            # Shuffle to test a different partition
-            df = df.sample(frac=1)
-            niter += 1
-
-        return best_groups, niter
-
-    def make_groups_aux(self, name, df):
-        """Make groups and report"""
-
-        if not self.affinity_groups and not self.other_groups:
-            return self.make_groups_index(df)
-
-        cooc_data = self.get_cooc_data(df)
-        groups, niter = self.search_groups(df, cooc_data)
-        if niter < self.max_iter:
-            logger.info(f"Partition optimale pour le groupe `{name}` trouvée en {niter+1} essais.")
-        else:
-            logger.warning(f"Pas de solution optimale trouvée pour le groupe `{name}` en {self.max_iter} essais, meilleure solution :")
-
-            N = len(df.index)
-            best_cm = get_coocurrence_matrix_from_partition(groups, df.index)
-            for column, cm in cooc_data["cooc_repulse_dict"].items():
-                # Non-zero off-diagonal element of prod signals a common
-                # cooccurence.
-                prod = cm * best_cm
-                if prod.to_numpy(dtype=int).sum() > N:
-                    logger.warning(f"- contrainte de non-appartenance par la colonne `{column}` violée {(prod.to_numpy(dtype=int).sum() - N)//2} fois :")
-
-                    # Compute locations as a dataframe of (index, index) where
-                    # there is a common cooccurence.
-                    df0 = pd.melt(prod.reset_index(), id_vars="index")
-                    df0.variable = df0.variable.astype(int)
-                    df0 = df0.loc[(df0.value > 0) & (df0["index"] < df0["variable"]), ["index", "variable"]]
-
-                    for index, row in df0.iterrows():
-                        i, j = row[["index", "variable"]]
-                        stu1 = " ".join(df.loc[i, ["Nom", "Prénom"]])
-                        stu2 = " ".join(df.loc[j, ["Nom", "Prénom"]])
-                        logger.warning(f"  - {stu1} -- {stu2}")
-                else:
-                    logger.warning(f"- contrainte de non-appartenance par la colonne `{column}` vérifiée")
-
-            for column, cm in cooc_data["cooc_affinity_dict"].items():
-                # Non-zero off-diagonal element of prod signals a common
-                # cooccurence.
-                prod = (1 - cm) * best_cm
-                if prod.to_numpy(dtype=int).sum() > 0:
-                    logger.warning(f"- contrainte d'affinité par la colonne `{column}` violée {(prod.to_numpy(dtype=int).sum())//2} fois :")
-
-                    # Compute locations as a dataframe of (index, index) where
-                    # there is a common cooccurence.
-                    df0 = pd.melt(prod.reset_index(), id_vars="index")
-                    df0.variable = df0.variable.astype(int)
-                    df0 = df0.loc[(df0.value > 0) & (df0["index"] < df0["variable"]), ["index", "variable"]]
-
-                    for index, row in df0.iterrows():
-                        i, j = row[["index", "variable"]]
-                        stu1 = " ".join(df.loc[i, ["Nom", "Prénom"]])
-                        stu2 = " ".join(df.loc[j, ["Nom", "Prénom"]])
-                        logger.warning(f"  - {stu1} -- {stu2}")
-                else:
-                    logger.warning(f"- contrainte d'affinité par la colonne `{column}` vérifiée")
-
-        return groups
-
-    def make_groups(self, name, df, name_gen):
-        """Try to make subgroups in dataframe `df`.
-
-        Returns a Pandas series whose index is the one of `df` and
-        value is the group name generated from `name` and `name_gen`.
-
-        """
-        groups = self.make_groups_aux(name, df)
-
-        series_list = self.add_names_to_grouping(groups, name, name_gen)
-
-        # Print when groups are in alphabetical order
-        if self.ordered is not None and len(self.ordered) == 0:
-            for series in series_list:
-                first = df.loc[series.index].iloc[0]
-                last = df.loc[series.index].iloc[-1]
-                print(series.name, ":", first["Nom"], first["Prénom"], "--", last["Nom"], last["Prénom"])
-
-        return pd.concat(series_list)
-
-    def make_groups_index(self, df):
-        """Return a partition of the index of dataframe `df`.
-
-        Partition is encoded as a list of lists of elements of the
-        index.
-
-        """
-
-        index = df.index
-
-        if self.proportions is not None:
-            return make_groups(index, self.proportions)
-
-        elif self.group_size is not None:
-            size = self.group_size
-            if size > 2:
-                # When size is > 2, prefer groups of size size-1 rather
-                # than groups of size size+1
-                n = len(index)
-                n_groups = math.ceil(n / size)
-                proportions = np.ones(n_groups)
-                return make_groups(index, proportions)
-            else:
-                # When size is 2, prefer groups of size 3 rather
-                # than groups of size 1
-                n = len(index)
-                n_groups = math.floor(n / size)
-                proportions = np.ones(n_groups)
-                return make_groups(index, proportions)
-
-        elif self.num_groups is not None:
-            proportions = np.ones(self.num_groups)
-            return make_groups(index, proportions)
-
-    def add_names_to_grouping(self, groups, name, name_gen):
-        """Give names to `groups`"""
-
-        series_list = []
-        for group in groups:
-            try:
-                name_tmpl = next(name_gen)
-            except StopIteration as e:
-                raise Exception("Les noms de groupes disponibles sont épuisés, utiliser # ou @ dans le modèle ou rajouter des noms dans `--names`.") from e
-            group_name = pformat(name_tmpl, grouping_name=name)
-            series = pd.Series([group_name]*len(group), index=group, name=group_name)
-            series_list.append(series)
-
-        return series_list
 
 
 class FetchGroupId(SemesterTask, CliArgsMixin):

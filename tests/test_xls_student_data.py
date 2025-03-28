@@ -72,3 +72,21 @@ def test_xls_student_data_v2(guv, guvcapfd):
     guv().succeed()
     guvcapfd.stdout_search(".  xls_student_data_merge")
     guvcapfd.no_warning()
+
+    guv.change_config("""\
+    import numpy as np
+
+    def add_groups(df):
+        g = np.tile(["g1", "g2"], len(df))[: len(df)]
+        np.random.shuffle(g)
+        df = df.assign(group_1=g)
+
+        g = np.repeat(["g3", "g4"], (len(df) // 2, len(df) // 2 + 1))[: len(df)]
+        np.random.shuffle(g)
+        df = df.assign(group_2=g)
+
+        return df
+
+    DOCS.apply_df(add_groups)
+    """)
+    guv().succeed()

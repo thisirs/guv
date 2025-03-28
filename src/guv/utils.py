@@ -133,7 +133,7 @@ def pformat(s, **kwargs):
     return formatter.vformat(s, (), mapping)
 
 
-def make_groups(collection, proportions):
+def make_groups(n, proportions):
     """Renvoie une partition en groupes de `collection` guidées par `proportions`.
 
     La longueur de `proportions` fixe le nombre de groupes et la
@@ -143,7 +143,6 @@ def make_groups(collection, proportions):
 
     """
 
-    n = len(collection)
     n_groups = len(proportions)
 
     # Array that sum to one
@@ -161,12 +160,7 @@ def make_groups(collection, proportions):
     assert(sum(frequency) == n)
     assert(len(frequency) == n_groups)
 
-    groups = []
-    cs = np.concatenate(([0], np.cumsum(frequency)))
-    for i in range(len(cs)-1):
-        groups.append(collection[cs[i]:cs[i+1]])
-
-    return groups
+    return np.repeat(np.arange(n_groups), frequency)
 
 
 def sort_values(df, columns):
