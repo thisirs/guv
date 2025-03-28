@@ -879,9 +879,18 @@ class JsonGroup(UVTask, CliArgsMixin):
                 print(s, file=fd)
 
 
-def get_coocurrence_matrix_from_array(series):
+def get_coocurrence_matrix_from_array(series, nan_policy="same"):
     """Return co-occurence matrix of a series as a Pandas dataframe."""
-    one_hot = pd.get_dummies(series)
+
+    if nan_policy == "same":
+        s_filled = series.fillna("unique_value_1")
+    elif nan_policy == "different":
+        unique_values = pd.Series([f"unique_value_{i}" for i in range(len(series))], index=series.index)
+        s_filled = series.fillna(unique_values)
+    else:
+        raise RuntimeError("Wrong nan_policy")
+
+    one_hot = pd.get_dummies(s_filled.astype(str), dtype=float)
     return one_hot @ one_hot.T
 
 def get_coocurrence_matrix_from_partition(groups, index):
@@ -894,11 +903,11 @@ def get_coocurrence_matrix_from_partition(groups, index):
         A.loc[p, p] = 1
     return A
 
-def get_coocurrence_dict(df, columns):
+def get_coocurrence_dict(df, columns, nan_policy="same"):
     """Return a dictionary mapping column with their coocurrence matrix."""
     cooc_dict = {}
     for column in columns:
-        cooc = get_coocurrence_matrix_from_array(df[column])
+        cooc = get_coocurrence_matrix_from_array(df[column], nan_policy=nan_policy)
         if column in cooc_dict:
             cooc_dict[column] = cooc_dict[column] + cooc
         else:
@@ -1288,11 +1297,11 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
     def get_cooc_data(self, df):
         """Return various data to handle group constraints"""
 
-        cooc_repulse_dict = get_coocurrence_dict(df, self.other_groups)
+        cooc_repulse_dict = get_coocurrence_dict(df, self.other_groups, nan_policy="different")
         cooc_repulse = sum(cooc for _, cooc in cooc_repulse_dict.items())
         n_repulse = len(self.other_groups)
 
-        cooc_affinity_dict = get_coocurrence_dict(df, self.affinity_groups)
+        cooc_affinity_dict = get_coocurrence_dict(df, self.affinity_groups, nan_policy="same")
         cooc_affinity = sum(cooc for _, cooc in cooc_affinity_dict.items())
         n_affinity = len(self.affinity_groups)
 
