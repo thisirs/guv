@@ -1,5 +1,6 @@
 import re
 import shutil
+import shlex
 import subprocess
 import textwrap
 from pathlib import Path
@@ -27,7 +28,7 @@ class Guv:
         return self.data[name]
 
     def __call__(self, cli_args="", input=None):
-        cmdargs = ["guv"] + cli_args.split()
+        cmdargs = ["guv"] + shlex.split(cli_args)
         p = subprocess.run(cmdargs, cwd=self.cwd, input=input, encoding="utf-8")
         ret = p.returncode
 
