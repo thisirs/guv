@@ -11,25 +11,36 @@ class TestCalInst:
         guvcapfd.no_warning()
 
     def test_cal_inst1(self, guv, guvcapfd):
+        uv = guv.uvs[0]
+        inst = f"Inst {uv} A"
+
         guv.change_config(DEFAULT_INSTRUCTOR="Bob Marley")
         guv("cal_inst")
         guvcapfd.stdout_search("0 créneau pour `Bob Marley`")
+        guvcapfd.reset()
+
+        guv.change_config(DEFAULT_INSTRUCTOR=inst)
+        guv("cal_inst")
+        guvcapfd.stdout_search(f"1 créneau pour `{inst}`")
         guvcapfd.no_warning()
+
 
     def test_cal_inst2(self, guv, xlsx, guvcapfd):
         uv = guv.uvs[0]
-        inst = f"Inst_{uv}_0"
+        inst = f"Inst {uv} A"
+        inst_alt = f"Inst_{uv}_A"
 
         guv.change_config(DEFAULT_INSTRUCTOR=inst)
 
         guv("cal_inst").succeed()
-        guvcapfd.stdout_search(f"du fichier `generated/{inst}_{guv.semester}_calendrier.pdf`")
+        guvcapfd.stdout_search(f"du fichier `generated/{inst_alt}_{guv.semester}_calendrier.pdf`")
         guvcapfd.no_warning()
 
     def test_cal_inst3(self, guv, xlsx, guvcapfd):
         uv = guv.uvs[0]
-        inst = f"Inst_{uv}_0"
+        inst = f"Inst {uv} A"
+        inst_alt = f"Inst_{uv}_A"
 
-        guv(f"cal_inst -i {inst}").succeed()
-        guvcapfd.stdout_search(f"du fichier `generated/{inst}_{guv.semester}_calendrier.pdf`")
+        guv(f'cal_inst -i "{inst}"').succeed()
+        guvcapfd.stdout_search(f"du fichier `generated/{inst_alt}_{guv.semester}_calendrier.pdf`")
         guvcapfd.no_warning()

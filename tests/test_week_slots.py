@@ -1,3 +1,4 @@
+import string
 import pytest
 from tests.plugins.test_path import path_dependency
 
@@ -31,6 +32,6 @@ class TestWeekSlots:
                     "Responsable",
                 )
 
-                insts = [f"Inst {uv} {i}" for i in range(len(doc.df))]
+                insts = [f"Inst {uv} {letter}" for letter in string.ascii_uppercase[:len(doc.df)]]
 
                 doc.df["Intervenants"] = pd.Series(insts)
