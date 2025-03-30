@@ -356,7 +356,7 @@ class XlsStudentData(UVTask):
         ent_short_email = re.match(r"^\w+@", df.iloc[0]["Courriel"]) is not None
 
         if moodle_short_email ^ ent_short_email:
-            logger.warning("Les adresses courriels sont dans un format différent, agrégation avec les colonnes `Nom` et `Prénom`")
+            logger.info("Les adresses courriels sont dans un format différent, agrégation avec les colonnes `Nom` et `Prénom`")
             left_on = id_slug("Nom", "Prénom")
             right_on = id_slug("Nom", "Prénom")
         else:
