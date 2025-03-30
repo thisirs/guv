@@ -145,18 +145,11 @@ class CsvInscrits(UVTask):
                 gr = [i for i in df.TP.unique() if re.match("^T[0-9]{,2}$", i)]
                 rep = {}
                 for g in gr:
-                    while True:
-                        try:
-                            choice = input(f"Semaine pour le créneau {g} (A ou B) ? ")
-                            if choice.upper() in ["A", "B"]:
-                                rep[g] = g + choice.upper()
-                            else:
-                                raise ValueError
-                        except ValueError:
-                            continue
-                        else:
-                            break
-
+                    choice = ask_choice(
+                        f"Semaine pour le créneau {g} (A ou B) ? ",
+                        choices={"A": "A", "a": "A", "B": "B", "b": "B"},
+                    )
+                    rep[g] = g + choice
                 df = df.replace({"TP": rep})
         return df
 
