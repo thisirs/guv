@@ -6,7 +6,7 @@ from pathlib import Path
 
 from schema import And, Or, Schema, SchemaError, Use
 
-from .exceptions import ImproperlyConfigured
+from .exceptions import ImproperlyConfigured, NotUVDirectory
 from .logger import logger
 from .utils import pformat
 
@@ -280,7 +280,7 @@ class Settings:
                 Path(self.conf_dir) / "config.py"
             ]
         else:
-            raise Exception("Pas dans un dossier d'UV/semestre")
+            raise NotUVDirectory("Pas dans un dossier d'UV/semestre")
 
         for config_file in to_load:
             try:
