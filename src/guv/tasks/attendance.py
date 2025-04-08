@@ -93,9 +93,10 @@ class PdfAttendance(UVTask, CliArgsMixin):
         ),
         argument(
             "--tiers-temps",
-            action="store_true",
-            default=False,
-            help="Permet de dédier une feuille de présence spécifique pour les étudiants marqués comme tiers-temps dans le fichier central ``effectif.xlsx``."
+            nargs="?",
+            const="Tiers-temps",
+            default=None,
+            help="Spécifie la colonne pour les étudiants placés dans une salle dédiée. Si colonne non spécifiée, ``%(default)s``."
         ),
         argument(
             "--save-tex",
@@ -150,13 +151,16 @@ class PdfAttendance(UVTask, CliArgsMixin):
                 df = sort_values(df, ["Nom", "Prénom"])
                 context["blank"] = False
 
-                if self.tiers_temps:
+                if self.tiers_temps is not None:
                     check_if_present(
-                        df, "Tiers-temps", file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
+                        df, self.tiers_temps, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
                     )
-                    df_tt = df[df["Tiers-temps"] == "Oui"]
-                    df = df[df["Tiers-temps"] != "Oui"]
-                    context["group"] = "Tiers-temps"
+                    if not df[self.tiers_temps].isin(["Oui", "Non"]).all():
+                        raise Exception(f"La colonne `{self.tiers_temps}` doit contenir uniquement Oui/Non")
+
+                    df_tt = df[df[self.tiers_temps] == "Oui"]
+                    df = df[df[self.tiers_temps] != "Oui"]
+                    context["group"] = "Salle dédiée"
                     context["filename_no_ext"] = "Tiers_temps"
                     students = [{"name": f'{row["Nom"]} {row["Prénom"]}'} for _, row in df_tt.iterrows()]
                     context["students"] = students
@@ -182,11 +186,15 @@ class PdfAttendance(UVTask, CliArgsMixin):
 
             if self.tiers_temps:
                 check_if_present(
-                    df, "Tiers-temps", file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
+                    df, self.tiers_temps, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
                 )
-                df_tt = df[df["Tiers-temps"] == 1]
-                df = df[df["Tiers-temps"] != 1]
-                context["group"] = "Tiers-temps"
+                if not df[self.tiers_temps].isin(["Oui", "Non"]).all():
+                    raise Exception(f"La colonne `{self.tiers_temps}` doit contenir uniquement Oui/Non")
+
+                df_tt = df[df[self.tiers_temps] == "Oui"]
+                df = df[df[self.tiers_temps] != "Oui"]
+
+                context["group"] = "Salle dédiée"
                 context["blank"] = self.blank
                 context["num"] = len(df_tt)
                 context["filename_no_ext"] = "Tiers_temps"

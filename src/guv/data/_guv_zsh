@@ -9,9 +9,10 @@ _shtab_guv_commands() {
     "cal_uv:Calendrier PDF de la semaine par UV."
     "createsemester:Crée un dossier de semestre"
     "createuv:Crée des dossiers d\'UV"
+    "csv_amc_list:Crée un fichier csv à réutiliser directement dans AMC"
     "csv_create_groups:Création aléatoire de groupes d\'étudiants prêt à charger sous Moodle."
     "csv_for_upload:Fichier csv de notes prêtes à être chargées sur l\'ENT."
-    "csv_groups:Fichiers csv de groupes présents dans \`\`effectifs.xlsx\`\` pour Moodle."
+    "csv_groups:Fichiers csv de groupes présents dans \`\`effectif.xlsx\`\` pour Moodle."
     "csv_groups_groupings:Fichier csv de groupes et groupements à charger sur Moodle pour les créer."
     "doit:Permet d\'avoir accès aux commandes doit sous-jacentes"
     "fetch_group_id:Crée un fichier de correspondance entre le nom et l\'id des groupes Moodle."
@@ -67,6 +68,10 @@ _shtab_guv_createuv_options=(
   "(*):uv:"
 )
 
+_shtab_guv_csv_amc_list_options=(
+  "(- : *)"{-h,--help}"[show this help message and exit]"
+)
+
 _shtab_guv_csv_create_groups_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
   {-G,--grouping}"[Pré-groupes dans lesquels faire des sous-groupes]:grouping:_guv_column"
@@ -80,7 +85,7 @@ _shtab_guv_csv_create_groups_options=(
   {-r,--random}"[Permuter aléatoirement les noms de groupes]"
   "--other-groups[Liste de colonnes de groupes déjà formés qui ne doivent plus être reformés.]:other_groups:_guv_columns"
   "--affinity-groups[Liste de colonnes de groupes d\'affinité.]:affinity_groups:_guv_columns"
-  "--max-iter[Nombre maximum d\'essais pour trouver des groupes avec contraintes (par défaut \%(default)s).]:max_iter:"
+  "--max-iter[Nombre maximum d\'essais pour trouver des groupes avec contraintes (par défaut 1000).]:max_iter:"
   ":Nom associé à l\'ensemble des groupes créés. Repris dans le nom du fichier créé et dans le nom des groupes créés suivant la \*template\* utilisée.:"
 )
 
@@ -89,7 +94,7 @@ _shtab_guv_csv_for_upload_options=(
   {-g,--grade-colname}"[Nom de la colonne contenant la note à exporter.]:grade_colname:_guv_column"
   "--ects[Précise si la note à exporter est une note ECTS. D\'après l\'ENT, il ne faut alors pas de colonne de commentaires et la note n\'est pas arrondie (l\'ENT n\'aime pas quand il y a trop de décimales).]"
   {-c,--comment-colname}"[Nom de la colonne contenant un commentaire à ajouter dans le fichier exporté.]:comment_colname:_guv_column"
-  {-f,--format}"[Modèle permettant de formatter plus précisément le commentaire. Le mot-clé \`\`msg\`\` représente la donnée présente dans la colonne \`\`--comment-colname\`\`. Par défaut, on a \`\`\%(default)s\`\`.]:format:"
+  {-f,--format}"[Modèle permettant de formatter plus précisément le commentaire. Le mot-clé \`\`msg\`\` représente la donnée présente dans la colonne \`\`--comment-colname\`\`. Par défaut, on a \`\`\{msg\}\`\`.]:format:"
 )
 
 _shtab_guv_csv_groups_options=(
@@ -102,9 +107,9 @@ _shtab_guv_csv_groups_options=(
 _shtab_guv_csv_groups_groupings_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
   "-g[Nombre de groupes dans chaque groupement]:ngroups:"
-  "-f[Format du nom de groupe (par défaut\: \%(default)s)]:ngroupsf:"
+  "-f[Format du nom de groupe (par défaut\: D\#\#_P1_\@)]:ngroupsf:"
   "-G[Nombre de groupements différents]:ngroupings:"
-  "-F[Format du nom de groupement (par défaut\: \%(default)s)]:ngroupingsf:"
+  "-F[Format du nom de groupement (par défaut\: D\#\#_P1)]:ngroupingsf:"
 )
 
 _shtab_guv_doit_options=(
@@ -158,29 +163,29 @@ _shtab_guv_maggle_teams_options=(
 
 _shtab_guv_pdf_attendance_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
-  {-t,--title}"[Spécifie un titre qui sera utilisé dans les feuilles de présence et le nom du fichier généré. Par défaut, on a \`\`\%(default)s\`\`.]:title:"
+  {-t,--title}"[Spécifie un titre qui sera utilisé dans les feuilles de présence et le nom du fichier généré. Par défaut, on a \`\`Feuille de présence\`\`.]:title:"
   {-g,--group}"[Permet de créer des groupes pour faire autant de feuilles de présence. Il faut spécifier une colonne du fichier central \`\`effectif.xlsx\`\`.]:group:_guv_column"
-  {-b,--blank}"[Ne pas faire apparaitre le nom des étudiants (utile seulement avec --group).]"
+  {-b,--blank}"[Ne pas faire apparaître le nom des étudiants (utile seulement avec --group).]"
   {-c,--count}"[Utilise une liste d\'effectifs au lieu de \`\`--group\`\`. Le nom des groupes peut être spécifié par \`\`--names\`\`. Sinon, les noms de groupe sont de la forme \`\`Groupe 1\`\`, \`\`Groupe 2\`\`,...]:count:"
   {-n,--names}"[Spécifie le nom des groupes correspondants à \`\`--count\`\`. La liste doit être de même taille que \`\`--count\`\`.]:names:"
   {-e,--extra}"[Permet de rajouter des lignes supplémentaires vides en plus de celles déjà présentes induites par \`\`--group\`\` ou fixées par \`\`--count\`\`.]:extra:"
-  "--tiers-temps[Permet de dédier une feuille de présence spécifique pour les étudiants marqués comme tiers-temps dans le fichier central \`\`effectifs.xlsx\`\`.]"
+  "--tiers-temps[Spécifie la colonne pour les étudiants placés dans une salle dédiée. Si colonne non spécifiée, \`\`None\`\`.]:tiers_temps:_guv_column"
   "--save-tex[Permet de laisser les fichiers .tex générés pour modification éventuelle.]"
 )
 
 _shtab_guv_pdf_attendance_full_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
-  "--title[Spécifie un titre qui sera utilisé dans les feuilles de présence et le nom du fichier généré. Par défaut, on a \`\`\%(default)s\`\`.]:title:"
+  "--title[Spécifie un titre qui sera utilisé dans les feuilles de présence et le nom du fichier généré. Par défaut, on a \`\`Feuille de présence\`\`.]:title:"
   {-g,--group}"[Permet de spécifier une colonne de groupes pour faire des feuilles de présence par groupes.]:group:_guv_column"
   {-n,--slots}"[Permet de spécifier le nombre de séances pour le semestre c\'est à dire le nombre de colonne dans la feuille de présence.]:slots:"
-  {-t,--template}"[Modèle permettant de fixer le nom des séances successives dans la feuille de présence. Par défaut on a \`\`\%(default)s\`\`. Le seul mot-clé supporté est \`\`number\`\` qui commence à 1.]:template:"
+  {-t,--template}"[Modèle permettant de fixer le nom des séances successives dans la feuille de présence. Par défaut on a \`\`S\{number\}\`\`. Le seul mot-clé supporté est \`\`number\`\` qui commence à 1.]:template:"
   "--save-tex[Permet de laisser les fichiers .tex générés pour modification éventuelle.]"
 )
 
 _shtab_guv_pdf_trombinoscope_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
   {-g,--group}"[Nom de colonne utilisée pour réaliser le groupement. Un fichier pdf est généré pour chaque groupe. Lorsque le nom de groupe est \`\`all\`\`, il y a un seul groupe (donc un seul fichier pdf) comportant la totalité des étudiants.]:groupby:_guv_column"
-  {-s,--subgroup}"[Nom de colonne utilisée pour faire des sous-groupes (binômes, trinômes) parmi le groupement déjà existant.]:subgroupby:"
+  {-s,--subgroup}"[Nom de colonne utilisée pour faire des sous-groupes (binômes, trinômes) parmi le groupement déjà existant.]:subgroupby:_guv_column"
   "--save-tex[Permet de laisser les fichiers .tex générés pour modification éventuelle.]"
 )
 
@@ -197,7 +202,7 @@ _shtab_guv_xls_assignment_grade_options=(
 _shtab_guv_xls_grade_book_group_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
   "--name[Nom de la feuille de notes]:name:"
-  "--marking-scheme[Fichier contenant le barème détaillé]:config_file:_files"
+  "--marking-scheme[Fichiers contenant le ou les barèmes détaillés]:config_files:_files"
   {-o,--order-by}"[Colonne utilisée pour ordonner les noms dans chaque feuille]:order_by:_guv_column"
   {-w,--worksheets}"[Colonne utilisée pour grouper en plusieurs feuilles]:group_by:_guv_column"
   {-e,--extra-cols}"[Colonnes supplémentaires à inclure dans la feuille de notes]:extra_cols:_guv_columns"
@@ -213,7 +218,7 @@ _shtab_guv_xls_grade_book_jury_options=(
 _shtab_guv_xls_grade_book_no_group_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
   "--name[Nom de la feuille de notes]:name:"
-  "--marking-scheme[Fichier contenant le barème détaillé]:config_file:_files"
+  "--marking-scheme[Fichiers contenant le ou les barèmes détaillés]:config_files:_files"
   {-o,--order-by}"[Colonne utilisée pour ordonner les noms dans chaque feuille]:order_by:_guv_column"
   {-w,--worksheets}"[Colonne utilisée pour grouper en plusieurs feuilles]:group_by:_guv_column"
   {-e,--extra-cols}"[Colonnes supplémentaires à inclure dans la feuille de notes]:extra_cols:_guv_columns"
@@ -260,6 +265,7 @@ _shtab_guv() {
         cal_uv) _arguments -C -s $_shtab_guv_cal_uv_options ;;
         createsemester) _arguments -C -s $_shtab_guv_createsemester_options ;;
         createuv) _arguments -C -s $_shtab_guv_createuv_options ;;
+        csv_amc_list) _arguments -C -s $_shtab_guv_csv_amc_list_options ;;
         csv_create_groups) _arguments -C -s $_shtab_guv_csv_create_groups_options ;;
         csv_for_upload) _arguments -C -s $_shtab_guv_csv_for_upload_options ;;
         csv_groups) _arguments -C -s $_shtab_guv_csv_groups_options ;;
@@ -311,4 +317,12 @@ _guv_columns() {
 
 
 typeset -A opt_args
-_shtab_guv "$@"
+
+if [[ $zsh_eval_context[-1] == eval ]]; then
+  # eval/source/. command, register function for later
+  compdef _shtab_guv -N guv
+else
+  # autoload from fpath, call function directly
+  _shtab_guv "$@"
+fi
+

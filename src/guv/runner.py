@@ -230,7 +230,7 @@ def print_completer(shell="zsh"):
             "column": ["group"]
         },
         "pdf_attendance": {
-            "column": ["--group"]
+            "column": ["--group", "--tiers-temps"]
         },
         "pdf_attendance_full": {
             "column": ["--group"]
