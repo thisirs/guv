@@ -482,10 +482,10 @@ class MultipleConfigOpt(CliArgsInheritMixin):
             if not os.path.exists(config_file):
                 raise Exception(f"{self.config_help} `{config_file}` non trouvé")
 
+            configs = []
             with open(config_file, "r") as stream:
-                config = list(yaml.load_all(stream, Loader=yaml.SafeLoader))[0]
-                config = self.validate_config(config)
-                configs.append(config)
+                loaded_yaml = yaml.load_all(stream, Loader=yaml.SafeLoader)
+                configs.extend([self.validate_config(c) for c in loaded_yaml])
 
         return configs
 
