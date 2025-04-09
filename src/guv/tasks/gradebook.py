@@ -26,7 +26,7 @@ from openpyxl.formatting.rule import CellIsRule
 from openpyxl.styles import Alignment, PatternFill
 from openpyxl.utils import get_column_letter
 
-from ..openpyxl_utils import (fit_cells_at_col, frame_range, generate_ranges,
+from ..openpyxl_utils import (fit_columns_dimension, frame_range, generate_ranges,
                               get_address_of_cell, get_range_from_cells,
                               get_segment, row_and_col)
 from ..utils import sort_values, normalize_string, generate_groupby
@@ -510,12 +510,12 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
                 total, add_worksheet_name=True, absolute=True
             )
 
-            fit_cells_at_col(last_name, first_name)
-
             return total_20
 
+        ref_cells = []
         for j, (index, record) in enumerate(group.iterrows()):
             ref_cell = ref.right(j).above(3)
+            ref_cells.append(ref_cell)
             last_cell = insert_record(ref_cell, j + 1, record)
 
         # Add statistics of grades
@@ -528,6 +528,9 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
                 if i == 0:
                     ref_stats.right(j).below(-1).text(name).center()
                 ref_stats.right(j).below(i).text(formula.format(marks_range=marks_range))
+
+        # Set column dimensions
+        fit_columns_dimension(*[c for ref in ref_cells for c in [ref.below(1), ref.below(2)]])
 
         # Around grades
         frame_range(ref.above(3), last_cell.above(3))

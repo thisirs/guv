@@ -1,3 +1,4 @@
+import math
 from itertools import groupby
 from operator import attrgetter
 from types import SimpleNamespace
@@ -121,9 +122,39 @@ def if_empty_formula(formula, blank_value=""):
     )
 
 
-def fit_cells_at_col(*cells):
+def fit_columns_dimension(*cells):
+    """Make dimensions of columns containing cells the same."""
+
+    # Same worksheet for all cells
     worksheet = cells[0].parent
     assert all(c.parent == worksheet for c in cells)
+
+    # Get maximum length by column
+    column_lengths = {}
+    cells = list(cells)
+    cells.sort(key=attrgetter("column"))
+    for k, g in groupby(cells, key=attrgetter("column")):
+        column_lengths[k] = [len(l) for c in g if c.value is not None for l in str(c.value).splitlines()]
+
+    # Quantile to avoid problematic cells
+    lengths = sorted([max(v) if v else 0 for k, v in column_lengths.items()])
+    idx = math.ceil(len(lengths) * 0.9) - 1
+    final_length = lengths[idx]
+
+    # Set all columns to final length
+    for k, v in column_lengths.items():
+        worksheet.column_dimensions[utils.get_column_letter(k)].width = (
+            1.3 * final_length
+        )
+
+
+def fit_cells_at_col(*cells):
+    """Adjust dimension of each column independently."""
+
+    # Same worksheet for all cells
+    worksheet = cells[0].parent
+    assert all(c.parent == worksheet for c in cells)
+
     cells = list(cells)
     cells.sort(key=attrgetter("column"))
     for k, g in groupby(cells, key=attrgetter("column")):
