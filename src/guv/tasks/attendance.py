@@ -220,7 +220,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
                 context["group"] = gn
                 context["blank"] = self.blank
                 context["num"] = len(group)
-                context["filename_no_ext"] = f"{gn}"
+                context["filename_no_ext"] = f"{gn}" or normalize_string(self.title, type="filename_no_ext")
                 students = [{"name": f'{row["Nom"]} {row["Prénom"]}'} for _, row in group.iterrows()]
                 context["students"] = students
                 yield context
