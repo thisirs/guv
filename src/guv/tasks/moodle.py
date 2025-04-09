@@ -880,7 +880,7 @@ class JsonGroup(UVTask, CliArgsMixin):
 
 
 def get_coocurrence_matrix_from_array(series, nan_policy="same"):
-    """Return co-occurence matrix of a series as a Pandas dataframe."""
+    """Return co-occurrence matrix of a series as a Pandas dataframe."""
 
     if nan_policy == "same":
         s_filled = series.fillna("unique_value_1")
