@@ -94,7 +94,7 @@ class Guv:
 @pytest.fixture(
     params=[
         {
-            "semester": "A2023",
+            "semester": "A2024",
             "uvs": ["SY19", "SY02"],
         },
         {
@@ -111,8 +111,8 @@ def guv_data_old(request):
 @pytest.fixture(scope="session")
 def guv_data_current(request):
     return {
-        "semester": "A2024",
-        "uvs": ["SY19", "SY02"],
+        "semester": "P2025",
+        "uvs": ["SY09", "SY02"],
     }
 
 
