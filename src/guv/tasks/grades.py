@@ -161,54 +161,6 @@ class CsvForUpload(UVTask, CliArgsMixin):
         """))
 
 
-class XlsMergeFinalGrade(UVTask, CliArgsMixin):
-    """Fichier Excel des notes finales attribuées
-
-    Transforme un classeur Excel avec une feuille par correcteur en une
-    seule feuille où les notes sont concaténées pour fusion/révision
-    manuelle.
-    """
-
-    target_dir = "documents"
-    target_name = "{exam}_notes.xlsx"
-    cli_args = (argument("-e", "--exam", required=True, help="Nom de l'examen"),)
-    unique_uv = True
-
-    def setup(self):
-        super().setup()
-        self.parse_args()
-
-        self.xls_sheets = os.path.join(self.settings.SEMESTER_DIR, self.target_dir, f"{self.exam}.xlsx")
-        self.file_dep = [self.xls_sheets]
-        self.target = self.build_target(exam=normalize_string(self.exam, type="file"))
-
-    def run(self):
-        xls = pd.ExcelFile(self.xls_sheets)
-        dfall = xls.parse(xls.sheet_names[0])
-        dfall = dfall[["Nom", "Prénom", "Courriel"]]
-
-        dfs = []
-        for sheet in xls.sheet_names:
-            df = xls.parse(sheet)
-            df = df.loc[~df.Note.isnull()]
-            df["Correcteur"] = sheet
-            dfs.append(df)
-
-        # Concaténation de tous les devoirs qui ont une note
-        df = pd.concat(dfs, axis=0)
-
-        # On rattrape les absents
-        df = pd.merge(dfall, df, how="left", on=["Nom", "Prénom", "Courriel"])
-        df = sort_values(df, ["Nom", "Prénom"])
-
-        csv_grades = os.path.splitext(self.target)[0] + ".csv"
-        with Output(csv_grades, protected=True) as out:
-            df.to_csv(out.target, index=False)
-
-        with Output(self.target, protected=True) as out:
-            df.to_excel(out.target, index=False)
-
-
 class YamlQCM(UVTask):
     """Génère un fichier yaml prérempli pour noter un QCM"""
 
@@ -239,45 +191,6 @@ class YamlQCM(UVTask):
         with Output(self.target, protected=True) as out:
             with open(out.target, "w") as fd:
                 yaml.dump(rec, fd, default_flow_style=False)
-
-
-class XlsAssignmentGrade(UVTask, CliArgsMixin):
-    """Création d'un fichier Excel pour remplissage des notes par les intervenants"""
-
-    target_dir = "generated"
-    target_name = "{exam}.xlsx"
-    cli_args = (argument("-e", "--exam", required=True, help="Nom de l'examen"),)
-    uptodate = True
-
-    def setup(self):
-        super().setup()
-        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
-        self.week_slots = WeekSlots.target_from(**self.info)
-        self.file_dep = [self.week_slots, self.xls_merge]
-
-        self.parse_args()
-        self.target = self.build_target()
-
-    def run(self):
-        week_slots = WeekSlots.read_target(self.week_slots)
-
-        if week_slots["Intervenants"].isnull().any():
-            logger.warning("Certains créneaux n'ont pas d'intervenant renseigné")
-
-        TD = week_slots['Lib. créneau'].str.contains('^D')
-        week_slots_TD = week_slots.loc[TD]
-        insts = week_slots_TD['Intervenants'].dropna().unique()
-
-        df = XlsStudentDataMerge.read_target(self.xls_merge)
-        df = df[['Nom', 'Prénom', 'Courriel']]
-        df = sort_values(df, ['Nom', 'Prénom'])
-        df = df.assign(Note=np.nan)
-
-        with Output(self.target, protected=True) as out:
-            writer = pd.ExcelWriter(out.target)
-            for inst in insts:
-                df.to_excel(writer, sheet_name=inst, index=False)
-            writer.save()
 
 
 class CsvAmcList(UVTask):

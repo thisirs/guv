@@ -11,8 +11,7 @@ la classe. Par exemple
 from .attendance import PdfAttendance, PdfAttendanceFull
 from .calendar import CalInst, CalUv
 from .gradebook import XlsGradeBookGroup, XlsGradeBookJury, XlsGradeBookNoGroup
-from .grades import (CsvForUpload, XlsAssignmentGrade, XlsMergeFinalGrade,
-                     YamlQCM, CsvAmcList)
+from .grades import CsvForUpload, YamlQCM, CsvAmcList
 from .ical import IcalInst, IcalUv, IcalSlots
 from .instructors import WeekSlotsDetails, XlsInstructors, XlsRemplacements
 from .moodle import (
