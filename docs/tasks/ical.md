@@ -22,3 +22,12 @@
 
    - :class:`guv.tasks.utc.PlanningSlots`
 ```
+
+```{eval-rst}
+.. autoclass:: guv.tasks.ical.IcalSlots
+   :exclude-members:
+
+   Cette tâche dépend de :
+
+   - :class:`guv.tasks.utc.Planning`
+```

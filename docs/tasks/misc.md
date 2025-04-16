@@ -13,12 +13,22 @@ besoin d'exécuter car elles sont des dépendances des tâches usuelles.
 ```
 
 ```{eval-rst}
+.. autoclass:: guv.tasks.utc.Planning
+   :exclude-members:
+
+   Cette tâche est une dépendance pour les tâches suivantes :
+
+   - :class:`guv.tasks.ical.IcalSlots`
+```
+
+```{eval-rst}
 .. autoclass:: guv.tasks.utc.PlanningSlots
    :exclude-members:
 
    Cette tâche dépend de :
 
    - :class:`guv.tasks.utc.WeekSlots`
+   - :class:``guv.tasks.utc.Planning`
 
    Cette tâche est une dépendance pour les tâches suivantes :
 
@@ -77,7 +87,6 @@ besoin d'exécuter car elles sont des dépendances des tâches usuelles.
    - :class:`guv.tasks.attendance.PdfAttendanceFull`
    - :class:`guv.tasks.attendance.PdfAttendance`
    - :class:`guv.tasks.grades.CsvForUpload`
-   - :class:`guv.tasks.grades.XlsAssignmentGrade`
    - :class:`guv.tasks.gradebook.XlsGradeBookJury`
    - :class:`guv.tasks.gradebook.XlsGradeBookGroup`
    - :class:`guv.tasks.gradebook.XlsGradeBookNoGroup`
@@ -141,5 +150,4 @@ besoin d'exécuter car elles sont des dépendances des tâches usuelles.
    - :class:`guv.tasks.calendar.CalUv`
    - :class:`guv.tasks.moodle.HtmlInst`
    - :class:`guv.tasks.instructors.WeekSlotsDetails`
-   - :class:`guv.tasks.grades.XlsAssignmentGrade`
 ```
