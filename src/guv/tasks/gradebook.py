@@ -1259,7 +1259,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
             rule = CellIsRule(operator="equal", formula=[f'"{ects}"'], fill=fill)
             self.first_ws.conditional_formatting.add(range, rule)
 
-        # Formattage conditionnel pour les notes éliminatoires
+        # Formatage conditionnel pour les notes éliminatoires
         red_fill = PatternFill(
             start_color="EE1111", end_color="EE1111", fill_type="solid"
         )

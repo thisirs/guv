@@ -17,7 +17,7 @@ from icalendar import Calendar, Event
 from ..utils import argument, convert_to_time, normalize_string, ps
 from ..utils_config import Output
 from .base import CliArgsMixin, SemesterTask, UVTask
-from .utc import Planning, PlanningSlots, PlanningSlotsAll
+from .internal import Planning, PlanningSlots, PlanningSlotsAll
 
 
 def ical_events(dataframe, **settings):

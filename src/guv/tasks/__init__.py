@@ -11,35 +11,15 @@ la classe. Par exemple
 from .attendance import PdfAttendance, PdfAttendanceFull
 from .calendar import CalInst, CalUv
 from .gradebook import XlsGradeBookGroup, XlsGradeBookJury, XlsGradeBookNoGroup
-from .grades import CsvForUpload, YamlQCM, CsvAmcList
-from .ical import IcalInst, IcalUv, IcalSlots
-from .instructors import WeekSlotsDetails, XlsInstructors, XlsRemplacements
-from .moodle import (
-    CsvCreateGroups,
-    CsvGroups,
-    CsvGroupsGroupings,
-    FetchGroupId,
-    HtmlInst,
-    HtmlTable,
-    JsonGroup,
-    JsonRestriction,
-)
-from .students import (
-    CsvInscrits,
-    XlsStudentData,
-    XlsStudentDataMerge,
-    ZoomBreakoutRooms,
-    MaggleTeams,
-    SendEmail,
-)
+from .grades import CsvAmcList, CsvForUpload, YamlQCM
+from .ical import IcalInst, IcalSlots, IcalUv
+from .instructors import (WeekSlotsDetails, XlsInstructors, XlsRemplacements,
+                          XlsUTP)
+from .internal import (CsvInscrits, Planning, PlanningSlots, PlanningSlotsAll,
+                       UtcUvListToCsv, WeekSlots, WeekSlotsAll, XlsStudentData,
+                       XlsStudentDataMerge)
+from .moodle import (CsvCreateGroups, CsvGroups, CsvGroupsGroupings,
+                     FetchGroupId, HtmlInst, HtmlTable, JsonGroup,
+                     JsonRestriction)
+from .students import MaggleTeams, PasswordFile, SendEmail, ZoomBreakoutRooms
 from .trombinoscope import PdfTrombinoscope
-from .utc import (
-    XlsUTP,
-    Planning,
-    PlanningSlots,
-    PlanningSlotsAll,
-    UtcUvListToCsv,
-    WeekSlots,
-    WeekSlotsAll,
-    PasswordFile
-)

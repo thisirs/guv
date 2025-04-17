@@ -7,9 +7,9 @@ heures remplacées.
 import os
 
 import numpy as np
+import openpyxl
 import pandas as pd
 from pandas.api.types import CategoricalDtype
-import openpyxl
 
 from ..openpyxl_patched import fixit
 
@@ -19,11 +19,13 @@ from openpyxl import Workbook
 from openpyxl.styles import PatternFill
 
 from ..logger import logger
+from ..openpyxl_utils import (Block, fill_row, frame_range,
+                              get_range_from_cells, get_row_cells, get_segment,
+                              row_and_col)
+from ..utils import convert_to_time, score_codenames
 from ..utils_config import Output, rel_to_dir
-from ..utils import score_codenames, convert_to_time
-from ..openpyxl_utils import fill_row, get_range_from_cells, row_and_col, get_row_cells, Block, frame_range, get_segment
 from .base import SemesterTask, UVTask
-from .utc import WeekSlots, PlanningSlots
+from .internal import PlanningSlots, WeekSlots
 
 
 class XlsInstructors(SemesterTask):
@@ -355,3 +357,141 @@ class XlsRemplacements(UVTask):
 
         frame_range(ref, row_cells[header[-1]])
 
+
+class XlsUTP(SemesterTask):
+    """Crée un fichier Excel de prévisions des UTP globales."""
+
+    target_dir = "."
+    target_name = "UTP.xlsx"
+
+    def setup(self):
+        super().setup()
+        self.target = self.build_target()
+
+    def write_UV_block(self, ref_cell):
+        """Write table at `ref_cell`."""
+
+        header = [
+            "Libellé",
+            "Type (CM/TD/TP)",
+            "Nombre de créneaux de 2h par semaine",
+            "Heures",
+            "UTP",
+            "Heures éq. TD",
+            "",
+            "CM",
+            "TD",
+            "TP",
+            "",
+            "Heures éq. TD CM",
+            "Heures éq. TD TD",
+            "Heures éq. TD TP",
+        ]
+
+        def switch(ifs, default):
+            """Nested if conditionals with a default value."""
+
+            if ifs:
+                cond, then = ifs[0]
+                return "IF({cond}, {then}, {else_})".format(
+                    cond=cond,
+                    then=then,
+                    else_=switch(ifs[1:], default),
+                )
+            else:
+                return default
+
+        formula = switch(
+            (
+                ("{type_cell} <> {type}", '""'),
+                ("NOT(ISBLANK({utp}))", "{utp_result}"),
+                ("NOT(ISBLANK({h_eq_tp}))", "{h_eq_tp_result}"),
+                ("NOT(ISBLANK({heures}))", "{mult} * {heures}"),
+                ("NOT(ISBLANK({slots_2h}))", "2*16*{slots_2h}*{mult}"),
+            ),
+            ""
+        )
+
+        def get_formula(formula, metric, ctype, mult):
+            def inner(row):
+                return "=" + formula.format(
+                    slots_2h=row["Nombre de créneaux de 2h par semaine"].coordinate,
+                    heures=row["Heures"].coordinate,
+                    utp=row["UTP"].coordinate,
+                    h_eq_tp=row["Heures éq. TD"].coordinate,
+                    utp_result=row["UTP"].coordinate if metric == "UTP" else "2/3*{}".format(row["UTP"].coordinate),
+                    h_eq_tp_result=row["Heures éq. TD"].coordinate if metric == "eqTD" else "3/2*{}".format(row["Heures éq. TD"].coordinate),
+                    type=f'"{ctype}"',
+                    type_cell=row["Type (CM/TD/TP)"].coordinate,
+                    mult=mult
+                )
+            return inner
+
+        elts = {
+            colname: get_formula(formula, metric, ctype, mult)
+            for metric, colname, ctype, mult, in (
+                    ("UTP", "CM", "CM", 2.25),
+                    ("UTP", "TD", "TD", 1.5),
+                    ("UTP", "TP", "TP", 1.5),
+                    ("eqTD", "Heures éq. TD CM", "CM", 1.5),
+                    ("eqTD", "Heures éq. TD TD", "TD", 1),
+                    ("eqTD", "Heures éq. TD TP", "TP", 1),
+            )
+        }
+
+        # Write header at `ref_cell`
+        row_cells = get_row_cells(ref_cell, 0, *header)
+        fill_row(row_cells, **{e: e for e in header})
+
+        # Write header above
+        row_cells2 = get_row_cells(ref_cell, -1, *header)
+
+        row_cells2["Nombre de créneaux de 2h par semaine"].merge(row_cells2["Heures éq. TD"]).center().value = "Charge effectuée"
+        frame_range(row_cells2["Nombre de créneaux de 2h par semaine"], row_cells["Heures éq. TD"])
+
+        row_cells2["CM"].merge(row_cells2["TP"]).center().value = "UTP"
+        frame_range(row_cells2["CM"], row_cells["TP"])
+
+        row_cells2["Heures éq. TD CM"].merge(row_cells2["Heures éq. TD TP"]).center().value = "Heures"
+        frame_range(row_cells2["Heures éq. TD CM"], row_cells["Heures éq. TD TP"])
+
+        # Write formulas in rows
+        n_row = 30
+        for i in range(n_row):
+            row_cells = get_row_cells(ref_cell, i + 1, *header)
+            fill_row(row_cells, **elts)
+
+        # Columns on which to make a total
+        kw_totals = [
+            "CM",
+            "TD",
+            "TP",
+            "Heures éq. TD CM",
+            "Heures éq. TD TD",
+            "Heures éq. TD TP",
+        ]
+        first_row = get_row_cells(ref_cell, 1, *header)
+        last_row = get_row_cells(ref_cell, n_row, *header)
+
+        # Subtotals
+        for kw in kw_totals:
+            range_cells = get_range_from_cells(first_row[kw], last_row[kw])
+            total_cell = last_row[kw].below()
+            total_cell.value = "=SUM({})".format(range_cells)
+
+        # Overall totals
+        range_cells = get_range_from_cells(last_row["CM"].below(), last_row["TP"].below())
+        last_row["TP"].below().right().value = "=SUM({})".format(range_cells)
+
+        range_cells = get_range_from_cells(last_row["Heures éq. TD CM"].below(), last_row["Heures éq. TD TP"].below())
+        last_row["Heures éq. TD TP"].below().right().value = "=SUM({})".format(range_cells)
+
+    def run(self):
+        wb = Workbook()
+        ws = wb.active
+
+        ref_cell = ws.cell(3, 2)
+        self.write_UV_block(ref_cell)
+
+        with Output(self.target, protected=True) as out:
+            wb.save(out.target)

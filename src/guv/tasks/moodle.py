@@ -45,8 +45,7 @@ from ..utils_config import Output, check_if_present, rel_to_dir
 from .base import CliArgsMixin, SemesterTask, UVTask
 from .evolutionary_algorithm import evolutionary_algorithm
 from .instructors import WeekSlotsDetails
-from .students import XlsStudentDataMerge
-from .utc import PlanningSlots
+from .internal import PlanningSlots, XlsStudentDataMerge
 
 DATE_FORMAT = "%Y-%m-%d"
 TIME_FORMAT = "%H:%M"

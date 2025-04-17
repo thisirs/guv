@@ -14,7 +14,7 @@ from ..logger import logger
 from ..utils import argument, ps, px, normalize_string
 from ..utils_config import render_from_contexts
 from .base import CliArgsMixin, SemesterTask, UVTask
-from .utc import WeekSlots, WeekSlotsAll
+from .internal import WeekSlots, WeekSlotsAll
 
 
 class InvalidBlock(Exception):
