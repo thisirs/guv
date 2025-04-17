@@ -1,23 +1,12 @@
-# Étudiants
+# Feuilles de notes
 
 ```{eval-rst}
-.. automodule:: guv.tasks.students
+.. automodule:: guv.tasks.gradebook
    :exclude-members:
 ```
 
 ```{eval-rst}
-.. autoclass:: guv.tasks.students.MaggleTeams
-   :exclude-members:
-
-   Cette tâche dépend de :
-
-   - :class:`guv.tasks.internal.XlsStudentDataMerge`
-
-   Aucune tâche ne dépend de celle-ci.
-```
-
-```{eval-rst}
-.. autoclass:: guv.tasks.students.PasswordFile
+.. autoclass:: guv.tasks.gradebook.XlsGradeBookGroup
    :exclude-members:
 
    Cette tâche dépend de :
@@ -28,7 +17,7 @@
 ```
 
 ```{eval-rst}
-.. autoclass:: guv.tasks.students.SendEmail
+.. autoclass:: guv.tasks.gradebook.XlsGradeBookJury
    :exclude-members:
 
    Cette tâche dépend de :
@@ -39,7 +28,7 @@
 ```
 
 ```{eval-rst}
-.. autoclass:: guv.tasks.students.ZoomBreakoutRooms
+.. autoclass:: guv.tasks.gradebook.XlsGradeBookNoGroup
    :exclude-members:
 
    Cette tâche dépend de :

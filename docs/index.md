@@ -87,14 +87,15 @@ tutorial/docs.md
 :hidden:
 :caption: Tâches
 tasks/attendance.md
-tasks/ical.md
-tasks/trombi.md
 tasks/calendar.md
-tasks/students.md
+tasks/gradebook.md
 tasks/grades.md
-tasks/instructors.md
+tasks/ical.md
 tasks/moodle.md
-tasks/misc.md
+tasks/students.md
+tasks/trombinoscope.md
+tasks/instructors.md
+tasks/internal.md
 ```
 
 ```{toctree}

@@ -6,39 +6,25 @@
 ```
 
 ```{eval-rst}
+.. autoclass:: guv.tasks.grades.CsvAmcList
+   :exclude-members:
+
+   Cette tâche dépend de :
+
+   - :class:`guv.tasks.internal.XlsStudentDataMerge`
+
+   Aucune tâche ne dépend de celle-ci.
+```
+
+```{eval-rst}
 .. autoclass:: guv.tasks.grades.CsvForUpload
    :exclude-members:
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.students.XlsStudentDataMerge`
-```
+   - :class:`guv.tasks.internal.XlsStudentDataMerge`
 
-```{eval-rst}
-.. autoclass:: guv.tasks.gradebook.XlsGradeBookJury
-   :exclude-members:
-
-   Cette tâche dépend de :
-
-   - :class:`guv.tasks.students.XlsStudentDataMerge`
-```
-
-```{eval-rst}
-.. autoclass:: guv.tasks.gradebook.XlsGradeBookNoGroup
-   :exclude-members:
-
-   Cette tâche dépend de :
-
-   - :class:`guv.tasks.students.XlsStudentDataMerge`
-```
-
-```{eval-rst}
-.. autoclass:: guv.tasks.gradebook.XlsGradeBookGroup
-   :exclude-members:
-
-   Cette tâche dépend de :
-
-   - :class:`guv.tasks.students.XlsStudentDataMerge`
+   Aucune tâche ne dépend de celle-ci.
 ```
 
 ```{eval-rst}
@@ -47,14 +33,7 @@
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.students.XlsStudentDataMerge`
-```
+   - :class:`guv.tasks.internal.XlsStudentDataMerge`
 
-```{eval-rst}
-.. autoclass:: guv.tasks.grades.CsvAmcList
-   :exclude-members:
-
-   Cette tâche dépend de :
-
-   - :class:`guv.tasks.students.XlsStudentDataMerge`
+   Aucune tâche ne dépend de celle-ci.
 ```

@@ -6,17 +6,43 @@
 ```
 
 ```{eval-rst}
+.. autoclass:: guv.tasks.moodle.CsvCreateGroups
+   :exclude-members:
+
+   Cette tâche dépend de :
+
+   - :class:`guv.tasks.internal.XlsStudentDataMerge`
+
+   Aucune tâche ne dépend de celle-ci.
+```
+
+```{eval-rst}
 .. autoclass:: guv.tasks.moodle.CsvGroups
    :exclude-members:
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.students.XlsStudentDataMerge`
+   - :class:`guv.tasks.internal.XlsStudentDataMerge`
+
+   Aucune tâche ne dépend de celle-ci.
 ```
 
 ```{eval-rst}
 .. autoclass:: guv.tasks.moodle.CsvGroupsGroupings
    :exclude-members:
+
+   Cette tâche ne dépend d'aucune autre classe.
+
+   Aucune tâche ne dépend de celle-ci.
+```
+
+```{eval-rst}
+.. autoclass:: guv.tasks.moodle.FetchGroupId
+   :exclude-members:
+
+   Cette tâche ne dépend d'aucune autre classe.
+
+   Aucune tâche ne dépend de celle-ci.
 ```
 
 ```{eval-rst}
@@ -26,6 +52,8 @@
    Cette tâche dépend de :
 
    - :class:`guv.tasks.instructors.WeekSlotsDetails`
+
+   Aucune tâche ne dépend de celle-ci.
 ```
 
 ```{eval-rst}
@@ -34,16 +62,9 @@
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.utc.PlanningSlots`
-```
+   - :class:`guv.tasks.internal.PlanningSlots`
 
-```{eval-rst}
-.. autoclass:: guv.tasks.moodle.JsonRestriction
-   :exclude-members:
-
-   Cette tâche dépend de :
-
-   - :class:`guv.tasks.utc.PlanningSlots`
+   Aucune tâche ne dépend de celle-ci.
 ```
 
 ```{eval-rst}
@@ -52,19 +73,18 @@
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.students.XlsStudentDataMerge`
+   - :class:`guv.tasks.internal.XlsStudentDataMerge`
+
+   Aucune tâche ne dépend de celle-ci.
 ```
 
 ```{eval-rst}
-.. autoclass:: guv.tasks.moodle.CsvCreateGroups
+.. autoclass:: guv.tasks.moodle.JsonRestriction
    :exclude-members:
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.students.XlsStudentDataMerge`
-```
+   - :class:`guv.tasks.internal.PlanningSlots`
 
-```{eval-rst}
-.. autoclass:: guv.tasks.moodle.FetchGroupId
-   :exclude-members:
+   Aucune tâche ne dépend de celle-ci.
 ```

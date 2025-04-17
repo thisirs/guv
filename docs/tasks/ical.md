@@ -11,16 +11,9 @@
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.utc.PlanningSlotsAll`
-```
+   - :class:`guv.tasks.internal.PlanningSlotsAll`
 
-```{eval-rst}
-.. autoclass:: guv.tasks.ical.IcalUv
-   :exclude-members:
-
-   Cette tâche dépend de :
-
-   - :class:`guv.tasks.utc.PlanningSlots`
+   Aucune tâche ne dépend de celle-ci.
 ```
 
 ```{eval-rst}
@@ -29,5 +22,18 @@
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.utc.Planning`
+   - :class:`guv.tasks.internal.Planning`
+
+   Aucune tâche ne dépend de celle-ci.
+```
+
+```{eval-rst}
+.. autoclass:: guv.tasks.ical.IcalUv
+   :exclude-members:
+
+   Cette tâche dépend de :
+
+   - :class:`guv.tasks.internal.PlanningSlots`
+
+   Aucune tâche ne dépend de celle-ci.
 ```

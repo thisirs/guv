@@ -814,7 +814,7 @@ class JsonRestriction(UVTask, CliArgsMixin):
     Le premier fichier contient des restrictions d'accès pour les activités
     Moodle (voir section "Restrictions d'accès" dans les paramètres d'une
     activité) qu'on peut transférer sur Moodle avec le script disponible
-    :download:`ici <../resources/moodle_availability_conditions.js>`. Le script
+    :download:`ici <../../resources/moodle_availability_conditions.js>`. Le script
     fournit une boite de texte dans laquelle on peut coller le fragment json
     correspondant à la restriction qu'on souhaite paramétrer. Pour les
     contraintes par créneaux qui s'appuient sur l'appartenance à un groupe, il
@@ -826,7 +826,7 @@ class JsonRestriction(UVTask, CliArgsMixin):
     Le deuxième fichier contient des restrictions d'accès sur des dates de début
     et de fin d'activité qui sont présentes dans plusieurs activités (quiz,
     sondage,...). Il faut installer le script disponible :download:`ici
-    <../resources/moodle_set_datetimes.js>`.
+    <../../resources/moodle_set_datetimes.js>`.
 
     L'argument ``-c`` permet de spécifier les activités considérées, à
     choisir parmi Cours, TD ou TP.
