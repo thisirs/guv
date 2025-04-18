@@ -81,7 +81,7 @@ def test_xls_student_data_v2(guv, guvcapfd):
         np.random.shuffle(g)
         df = df.assign(group_1=g)
 
-        g = np.repeat(["g3", "g4"], (len(df) // 2, len(df) // 2 + 1))[: len(df)]
+        g = np.repeat(["g1", "g2", "g3", "g4"], len(df) // 4 + 1)[: len(df)]
         np.random.shuffle(g)
         df = df.assign(group_2=g)
 
