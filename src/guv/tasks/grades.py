@@ -87,7 +87,7 @@ class CsvForUpload(UVTask, CliArgsMixin):
 
     def run(self):
         if self.ects and self.comment_colname:
-            raise Exception("No comment column required when uploading ECTS")
+            raise self.parser.error("Option `--comment-colname` inutile pour charger des notes ECTS")
 
         df = XlsStudentDataMerge.read_target(self.xls_merge)
 

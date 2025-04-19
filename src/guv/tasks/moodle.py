@@ -1272,7 +1272,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
 
         if self.names is None:
             if "@" in tmpl and "#" in tmpl:
-                raise Exception(
+                raise self.parser.error(
                     "La template doit contenir soit '@' soit '#' pour générer des noms de groupes différents"
                 )
             if "@" in tmpl:
@@ -1284,7 +1284,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                     yield tmpl.replace("#", str(i))
                     i += 1
             else:
-                raise Exception(
+                raise self.parser.error(
                     "Pas de # ou de @ dans la template pour générer des noms différents"
                 )
         elif len(self.names) == 1:

@@ -180,13 +180,13 @@ class IcalSlots(SemesterTask, CliArgsMixin):
                 time = m.group(2)
                 parsed_slots.append((day, time))
             else:
-                raise Exception(f"Créneau `{slot}` non reconnu, utiliser le format \"Lundi 10:15\"")
+                raise self.parser.error(f"Créneau `{slot}` non reconnu, utiliser le format \"Lundi 10:15\"")
         return parsed_slots
 
     def run(self):
         if self.planning not in self.settings.PLANNINGS:
             msg = ", ".join(f"`{p}`" for p in self.settings.PLANNINGS)
-            raise Exception(f"Planning `{self.planning}` inconnu, plannings reconnus : {msg}")
+            raise self.parser.error(f"Planning `{self.planning}` inconnu, plannings reconnus : {msg}")
 
         planning = pd.read_csv(self.planning_file)
 
@@ -281,7 +281,7 @@ class IcalInst(SemesterTask, CliArgsMixin):
             unknown = set(self.insts).difference(all_insts)
             plural = ps(len(unknown))
             all_insts = "Aucun" if len(all_insts) == 0 else ', '.join(all_insts)
-            raise Exception(f"Intervenant{plural} inconnu{plural}: {', '.join(unknown)}, intervenant(s) enregistré(s): {all_insts}")
+            raise self.parser.error(f"Intervenant{plural} inconnu{plural}: {', '.join(unknown)}, intervenant(s) enregistré(s): {all_insts}")
 
         settings = {
             "SEMESTER": self.settings.SEMESTER

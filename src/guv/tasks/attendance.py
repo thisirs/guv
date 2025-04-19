@@ -123,7 +123,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
         "Generate contexts to pass to Jinja2 templates."
 
         if self.group and self.count:
-            raise Exception("Les options --group et --count sont incompatibles")
+            self.parser.error("Les options --group et --count sont incompatibles")
 
         # Common context
         context = {
@@ -135,7 +135,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
         if self.count:
             if self.names:
                 if len(self.count) != len(self.names):
-                    raise Exception("Les options --count et --names doivent être de même longueur")
+                    self.parser.error("Les options --count et --names doivent être de même longueur")
             else:
                 self.names = [f"Groupe_{i+1}" for i in range(len(self.count))]
 
