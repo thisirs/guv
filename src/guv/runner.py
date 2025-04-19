@@ -76,7 +76,7 @@ def create_uv_dirs(base_dir, uvs):
 
         logger.info("Création du fichier %s", os.path.relpath(new_path, os.getcwd()))
         if os.path.exists(new_path):
-            raise Exception("Le fichier `%s` existe déjà" % os.path.relpath(new_path, os.getcwd()))
+            raise FileExistsError("Le fichier `%s` existe déjà" % os.path.relpath(new_path, os.getcwd()))
         with open(new_path, "w", encoding="utf-8") as new_file:
             new_file.write(content)
 
@@ -145,7 +145,7 @@ def run_creastesemester(args):
 
     logger.info("Création du fichier %s", os.path.relpath(new_path, os.getcwd()))
     if os.path.exists(new_path):
-        raise Exception("Le fichier %s existe déjà" % os.path.relpath(new_path, os.getcwd()))
+        raise FileExistsError("Le fichier %s existe déjà" % os.path.relpath(new_path, os.getcwd()))
     with open(new_path, "w", encoding="utf-8") as new_file:
         new_file.write(content)
 
