@@ -179,7 +179,7 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
                     self.first_df[name] = self.data_df[name]
                 elif type in ["grade", "cell"]:
                     if cells is None:
-                        raise ValueError("Logical error")
+                        raise RuntimeError("Logical error")
                     self.first_df[name] = cells
                 else:
                     raise Exception("Unknown type of column ", type)

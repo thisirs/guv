@@ -98,7 +98,7 @@ def get_segment(cell1, cell2):
         for i in range(cell1.row, cell2.row+1):
             yield cell1.parent.cell(column=cell1.column, row=i)
     else:
-        raise Exception(f'Must have same row or column: {cell1.coordinate} -- {cell2.coordinate}')
+        raise RuntimeError(f'Must have same row or column: {cell1.coordinate} -- {cell2.coordinate}')
 
 
 def row_and_col(cell1, cell2):
@@ -176,7 +176,7 @@ def generate_ranges(ref_cell, by="col", length=None, nranges=None):
                 get_segment(ref_cell.below(i), ref_cell.below(i).right(length - 1))
             )
     else:
-        raise Exception("Wrong 'by' argument")
+        raise RuntimeError("Wrong 'by' argument")
 
 
 def get_row_cells(ref_cell, i, *keywords):
