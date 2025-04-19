@@ -116,7 +116,7 @@ class FillnaColumn(Operation):
 
     def apply(self, df):
         if not((self.na_value is None) ^ (self.group_column is None)):
-            raise Exception("Une seule des options `na_value` et `group_column` doit être spécifiée")
+            raise ImproperlyConfigured("Une seule des options `na_value` et `group_column` doit être spécifiée")
 
         if self.na_value is not None:
             check_if_present(df, self.colname)

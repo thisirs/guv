@@ -766,7 +766,7 @@ class UtcUvListToCsv(SemesterTask):
 
     def run(self):
         if self.uv_list_filename is None:
-            raise Exception("La variable `CRENEAU_UV` doit être définie")
+            raise ImproperlyConfigured("La variable `CRENEAU_UV` doit être définie")
 
         # Lire tous les créneaux par semaine de toutes les UVs
         if not os.path.exists(self.uv_list_filename):
