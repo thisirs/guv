@@ -14,7 +14,7 @@ from ..helpers import Aggregator, Documents, id_slug
 from ..logger import logger
 from ..openpyxl_patched import fixit
 from ..utils import (convert_author, convert_to_time, plural, ps, px,
-                     sort_values)
+                     read_dataframe, sort_values)
 from ..utils_config import Output, ask_choice, generate_row, rel_to_dir
 from .base import SemesterTask, UVTask
 
@@ -311,14 +311,7 @@ class XlsStudentData(UVTask):
         return pd.read_excel(self.extraction_ENT)
 
     def load_moodle_data(self):
-        fn = self.csv_moodle
-
-        if fn.endswith(".csv"):
-            df = pd.read_csv(fn)
-        elif fn.endswith(".xlsx") or fn.endswith(".xls"):
-            df = pd.read_excel(fn, engine="openpyxl")
-        else:
-            raise Exception("Format de fichier non reconnu")
+        df = read_dataframe(self.csv_moodle)
 
         # For some reason "Nom" changed to "Nom de famille" in recent Moodle.
         # This breaks the intended clash with "Nom" for effectif.xlsx.
