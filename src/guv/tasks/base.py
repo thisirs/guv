@@ -472,7 +472,7 @@ class ConfigOpt(CliArgsInheritMixin):
 
     def parse_config(self, config_file):
         if not os.path.exists(config_file):
-            raise Exception(f"{self.config_help} `{config_file}` non trouvé")
+            raise FileNotFoundError(f"{self.config_help} `{config_file}` non trouvé")
 
         with open(config_file, "r") as stream:
             config = list(yaml.load_all(stream, Loader=yaml.SafeLoader))[0]
@@ -524,7 +524,7 @@ class MultipleConfigOpt(CliArgsInheritMixin):
 
         for config_file in config_files:
             if not os.path.exists(config_file):
-                raise Exception(f"{self.config_help} `{config_file}` non trouvé")
+                raise FileNotFoundError(f"{self.config_help} `{config_file}` non trouvé")
 
             configs = []
             with open(config_file, "r") as stream:

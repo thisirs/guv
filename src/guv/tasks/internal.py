@@ -158,7 +158,7 @@ class CsvInscrits(UVTask):
                 "La variable 'AFFECTATION_LISTING' n'est pas renseignée"
             )
         if not os.path.exists(self.utc_listing):
-            raise Exception("Le fichier '{0}' n'existe pas".format(
+            raise FileNotFoundError("Le fichier '{0}' n'existe pas".format(
                 rel_to_dir(self.utc_listing, self.settings.SEMESTER_DIR)
             ))
         df = self.parse_UTC_listing()
@@ -217,7 +217,7 @@ class XlsStudentData(UVTask):
                 rel_to_dir(self.extraction_ENT),
             )
             if not os.path.isfile(self.extraction_ENT):
-                raise Exception(
+                raise FileNotFoundError(
                     "Le chemin `{}` n'existe pas ou n'est pas un fichier".format(
                         rel_to_dir(self.extraction_ENT)
                     )
@@ -771,7 +771,7 @@ class UtcUvListToCsv(SemesterTask):
         # Lire tous les créneaux par semaine de toutes les UVs
         if not os.path.exists(self.uv_list_filename):
             uv_fn = rel_to_dir(self.uv_list_filename, self.settings.SEMESTER_DIR)
-            raise Exception(f"Le fichier n'existe pas: {uv_fn}")
+            raise FileNotFoundError(f"Le fichier n'existe pas: {uv_fn}")
 
         df = self.read_pdf()
 

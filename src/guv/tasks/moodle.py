@@ -490,7 +490,7 @@ class HtmlTable(UVTask, CliArgsMixin):
     def run(self):
         if self.names is not None and len(self.names) == 1:
             if not os.path.exists(self.names[0]):
-                raise Exception(f"Le fichier `{self.names[0]}` n'existe pas")
+                raise FileNotFoundError(f"Le fichier `{self.names[0]}` n'existe pas")
             with open(self.names[0], "r") as fd:
                 self.names = [l.strip() for l in fd.readlines()]
 
@@ -1298,7 +1298,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                 for l in lines:
                     yield pformat(tmpl, group_name=l.strip())
             else:
-                raise Exception(f"Le fichier de noms `{self.names[0]}` n'existe pas")
+                raise FileNotFoundError(f"Le fichier de noms `{self.names[0]}` n'existe pas")
         else:
             names = self.names.copy()
             if self.random:

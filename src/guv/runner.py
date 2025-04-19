@@ -169,7 +169,7 @@ def load_custom_tasks(filenames):
             sys.modules[spec.name] = module
             modules.append(module)
         else:
-            raise Exception("Le fichier de tâches n'existe pas :", fp)
+            raise FileNotFoundError("Le fichier de tâches n'existe pas :", fp)
 
     return modules
 
