@@ -12,7 +12,7 @@ import pandas as pd
 
 from .aggregator import Aggregator, ColumnsMerger
 from .config import settings
-from .exceptions import ImproperlyConfigured
+from .exceptions import GuvUserError, ImproperlyConfigured
 from .logger import logger
 from .operation import Operation
 from .utils import slugrot_string, convert_to_numeric, read_dataframe, check_if_absent, check_if_present
@@ -591,16 +591,16 @@ class ApplyCell(Operation):
         if '@etu' in self.name_or_email:
             sturow = df.loc[df['Courriel'] == self.name_or_email]
             if len(sturow) > 1:
-                raise Exception(f'Adresse courriel `{self.name_or_email}` présente plusieurs fois')
+                raise GuvUserError(f'Adresse courriel `{self.name_or_email}` présente plusieurs fois')
             if len(sturow) == 0:
-                raise Exception(f'Adresse courriel `{self.name_or_email}` non présente dans le fichier central')
+                raise GuvUserError(f'Adresse courriel `{self.name_or_email}` non présente dans le fichier central')
             stuidx = sturow.index[0]
         else:
             sturow = df.loc[df.fullname_slug == slugrot_string(self.name_or_email)]
             if len(sturow) > 1:
-                raise Exception(f'Étudiant de nom `{self.name_or_email}` présent plusieurs fois')
+                raise GuvUserError(f'Étudiant de nom `{self.name_or_email}` présent plusieurs fois')
             if len(sturow) == 0:
-                raise Exception(f'Étudiant de nom `{self.name_or_email}` non présent dans le fichier central')
+                raise GuvUserError(f'Étudiant de nom `{self.name_or_email}` non présent dans le fichier central')
             stuidx = sturow.index[0]
 
         df.loc[stuidx, self.colname] = self.value
@@ -952,7 +952,7 @@ class AggregateSelf(Operation):
             left_on=id_slug("Nom", "Prénom"),
             right_on=id_slug("Nom", "Prénom"),
         else:
-            raise Exception("La colonne `Login` ou les colonnes `Nom` et `Prénom` sont requises")
+            raise GuvUserError("La colonne `Login` ou les colonnes `Nom` et `Prénom` sont requises")
 
         agg = Aggregator(
             left_df,
@@ -1273,9 +1273,9 @@ class Flag(FileStringOperation):
 
             res = df.loc[df.fullname_slug == slugname]
             if len(res) == 0:
-                raise Exception('Pas de correspondance pour `{:s}`'.format(line))
+                raise GuvUserError('Pas de correspondance pour `{:s}`'.format(line))
             if len(res) > 1:
-                raise Exception('Plusieurs correspondances pour `{:s}`'.format(line))
+                raise GuvUserError('Plusieurs correspondances pour `{:s}`'.format(line))
             df.loc[res.index[0], self.colname] = self.flags[0]
 
         df = df.drop('fullname_slug', axis=1)
@@ -1393,10 +1393,10 @@ def read_pairs(lines):
             parts = [e.strip() for e in line.split("---")]
             stu1, stu2 = parts
             if not stu1 or not stu2:
-                raise Exception(f"Ligne incorrecte: `{line.strip()}`. Format `etu1 --- etu2` attendu.")
+                raise GuvUserError(f"Ligne incorrecte: `{line.strip()}`. Format `etu1 --- etu2` attendu.")
             yield stu1, stu2
         except ValueError:
-            raise Exception(f"Ligne incorrecte: `{line.strip()}`. Format `etu1 --- etu2` attendu.")
+            raise GuvUserError(f"Ligne incorrecte: `{line.strip()}`. Format `etu1 --- etu2` attendu.")
 
 
 def validate_pair(df, colname, part1, part2):
@@ -1408,14 +1408,14 @@ def validate_pair(df, colname, part1, part2):
     if "@etu" in part1:
         stu1row = df.loc[df["Courriel"] == part1]
         if len(stu1row) != 1:
-            raise Exception(
+            raise GuvUserError(
                 f"Adresse courriel `{part1}` non présente dans le fichier central"
             )
         stu1idx = stu1row.index[0]
     else:
         stu1row = df.loc[df.fullname_slug == slugrot_string(part1)]
         if len(stu1row) != 1:
-            raise Exception(
+            raise GuvUserError(
                 f"Étudiant de nom `{part1}` non présent ou reconnu dans le fichier central"
             )
         stu1idx = stu1row.index[0]
@@ -1427,7 +1427,7 @@ def validate_pair(df, colname, part1, part2):
     elif "@etu" in part2:  # Le deuxième élément est une adresse email
         stu2row = df.loc[df["Courriel"] == part2]
         if len(stu2row) != 1:
-            raise Exception(
+            raise GuvUserError(
                 f"Adresse courriel `{part2}` non présente dans le fichier central"
             )
         stu2idx = stu2row.index[0]
@@ -1435,7 +1435,7 @@ def validate_pair(df, colname, part1, part2):
     else:
         stu2row = df.loc[df.fullname_slug == slugrot_string(part2)]
         if len(stu2row) != 1:
-            raise Exception(
+            raise GuvUserError(
                 f"Étudiant ou nom de séance `{part2}` non reconnu dans le fichier central"
             )
         stu2idx = stu2row.index[0]
@@ -1511,7 +1511,7 @@ class AggregateMoodleGroups(FileOperation):
         ver2 = set(["Nom de famille", "Prénom", "Numéro d’identification", "Choix", "Adresse de courriel"]).issubset(set(right_df.columns))
 
         if not ver1 and not ver2:
-            raise Exception("Le fichier n'est pas reconnu comme un fichier issu d'une activité groupe de Moodle")
+            raise GuvUserError("Le fichier n'est pas reconnu comme un fichier issu d'une activité groupe de Moodle")
 
         if re.match(r"^\w+@", df.iloc[0]["Courriel"]) is not None:
             left_on = id_slug("Nom", "Prénom")
@@ -1576,7 +1576,7 @@ class AggregateWexamGrades(FileOperation):
         elif (regular_columns := {"Nom", "Prénom", "Login", "Note"}).issubset(columns):
             rest = list(columns - regular_columns)
             if not all(e.endswith("_Somme") for e in rest):
-                raise Exception("Fichier de notes Wexam non reconnu")
+                raise GuvUserError("Fichier de notes Wexam non reconnu")
 
             drop = ["Nom", "Prénom", "Note"]
             if self.rename is None:
@@ -1584,7 +1584,7 @@ class AggregateWexamGrades(FileOperation):
             else:
                 rename = self.rename
         else:
-            raise Exception("Fichier de notes Wexam non reconnu")
+            raise GuvUserError("Fichier de notes Wexam non reconnu")
 
         if "Login" in left_df and "Login" in right_df:
             right_on = left_on = "Login"
@@ -1593,7 +1593,7 @@ class AggregateWexamGrades(FileOperation):
             left_on=id_slug("Nom", "Prénom"),
             right_on=id_slug("Nom", "Prénom"),
         else:
-            raise Exception("La colonne `Login` ou les colonnes `Nom` et `Prénom` sont requises")
+            raise GuvUserError("La colonne `Login` ou les colonnes `Nom` et `Prénom` sont requises")
 
         agg = Aggregator(
             left_df,
@@ -1723,7 +1723,7 @@ class AggregateMoodleGrades(FileOperation):
         try:
             type, keep_columns, drop_columns = keep_drop_moodle_grades(columns)
         except ValueError:
-            raise Exception("Le fichier n'est pas reconnu comme une feuille de notes Moodle")
+            raise GuvUserError("Le fichier n'est pas reconnu comme une feuille de notes Moodle")
         else:
             logger.info("Fichier de notes Moodle de type `%s` reconnu", type)
 

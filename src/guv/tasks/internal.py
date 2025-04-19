@@ -9,7 +9,7 @@ from tabula import read_pdf
 from unidecode import unidecode
 
 from ..config import settings
-from ..exceptions import ImproperlyConfigured
+from ..exceptions import GuvUserError, ImproperlyConfigured
 from ..helpers import Aggregator, Documents, id_slug
 from ..logger import logger
 from ..openpyxl_patched import fixit
@@ -249,7 +249,7 @@ class XlsStudentData(UVTask):
                 df = self.add_moodle_data(df, df_moodle)
         else:
             if self.csv_moodle is None:
-                raise Exception("Pas de fichier `ENT_LISTING` ni `MOODLE_LISTING`")
+                raise GuvUserError("Pas de fichier `ENT_LISTING` ni `MOODLE_LISTING`")
             logger.info("Chargement des données issues de Moodle")
             df = self.load_moodle_data()
 
@@ -342,7 +342,7 @@ class XlsStudentData(UVTask):
         """Incorpore les données du fichier extrait de Moodle"""
 
         if "Courriel" not in df.columns:
-            raise Exception("La colonne `Courriel` n'est pas présente dans le fichier central")
+            raise GuvUserError("La colonne `Courriel` n'est pas présente dans le fichier central")
 
         moodle_short_email = re.match(r"^\w+@", df_moodle.iloc[0]["Adresse de courriel"]) is not None
         ent_short_email = re.match(r"^\w+@", df.iloc[0]["Courriel"]) is not None
@@ -414,9 +414,9 @@ class XlsStudentData(UVTask):
         "Incorpore les données Cours/TD/TP des inscrits UTC"
 
         if "Nom" not in df.columns:
-            raise Exception("Pas de colonne 'Nom' pour agréger les données")
+            raise GuvUserError("Pas de colonne 'Nom' pour agréger les données")
         if "Prénom" not in df.columns:
-            raise Exception("Pas de colonne 'Prénom' pour agréger les données")
+            raise GuvUserError("Pas de colonne 'Prénom' pour agréger les données")
 
         # Données issues du fichier des affectations au Cours/TD/TP
         dfu = pd.read_csv(fn)
@@ -683,7 +683,7 @@ class UtcUvListToCsv(SemesterTask):
                 header_height = ((re.match('[A-Z]{,3}[0-9]+', str(df.iloc[0, 0])) is None) +
                                  (re.match('[A-Z]{,3}[0-9]+', str(df.iloc[1, 0])) is None))
                 if header_height == 0:
-                    raise Exception("No header detected")
+                    raise GuvUserError("No header detected")
                 logger.info("Detected header has %d lines", header_height)
 
                 # Compute single line/multiline header
@@ -714,7 +714,7 @@ class UtcUvListToCsv(SemesterTask):
 
                 unknown_cols = list(set(df.columns) - set(possible_cols))
                 if unknown_cols:
-                    raise Exception("Colonnes inconnues détectées:", ", ".join(unknown_cols))
+                    raise GuvUserError("Colonnes inconnues détectées:", ", ".join(unknown_cols))
 
                 # Get list of detected columns
                 cols = df.columns.to_list()
@@ -738,7 +738,7 @@ class UtcUvListToCsv(SemesterTask):
                 elif len(df.columns) == len(cols) - 1:
                     df.insert(week_idx, 'Semaine', np.nan)
                 else:
-                    raise Exception("Mauvais nombre de colonnes détectées")
+                    raise GuvUserError("Mauvais nombre de colonnes détectées")
                 df.columns = cols
 
                 # Detect possible multiline header
@@ -1173,7 +1173,7 @@ class WeekSlots(UVTask):
 
         if df["Activité"].isnull().any():
             fn = rel_to_dir(week_slots)
-            raise Exception(f"La colonne `Activité` du fichier `{fn}` ne doit pas contenir d'élément vide.")
+            raise GuvUserError(f"La colonne `Activité` du fichier `{fn}` ne doit pas contenir d'élément vide.")
 
         rest = set(df["Activité"]) - set(["Cours", "TD", "TP"])
         if rest:
@@ -1183,17 +1183,17 @@ class WeekSlots(UVTask):
 
         if df["Jour"].isnull().any():
             fn = rel_to_dir(week_slots)
-            raise Exception(f"La colonne `Jour` du fichier `{fn}` ne doit pas contenir d'élément vide.")
+            raise GuvUserError(f"La colonne `Jour` du fichier `{fn}` ne doit pas contenir d'élément vide.")
 
         rest = set(df["Jour"]) - set(["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"])
         if rest:
             rest_msg = ", ".join(f"`{e}`" for e in rest)
             fn = rel_to_dir(week_slots)
-            raise Exception(f"La colonne `Jour` du fichier `{fn}` ne doit contenir que des jours de la semaine, elle contient {rest_msg}")
+            raise GuvUserError(f"La colonne `Jour` du fichier `{fn}` ne doit contenir que des jours de la semaine, elle contient {rest_msg}")
 
         if df["Lib. créneau"].isnull().any():
             fn = rel_to_dir(week_slots)
-            raise Exception(f"La colonne `Lib. créneau` du fichier `{fn}` ne doit pas contenir d'élément vide.")
+            raise GuvUserError(f"La colonne `Lib. créneau` du fichier `{fn}` ne doit pas contenir d'élément vide.")
 
         df["Heure début"] = df["Heure début"].apply(convert_to_time)
         df["Heure fin"] = df["Heure fin"].apply(convert_to_time)

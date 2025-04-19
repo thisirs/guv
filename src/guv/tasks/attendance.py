@@ -3,8 +3,9 @@ Ce module rassemble les tâches liées à la création de fiches de
 présence.
 """
 
-from ..utils import (LaTeXEnvironment, argument, make_groups, pformat,
-                     sort_values, generate_groupby, normalize_string)
+from ..exceptions import GuvUserError
+from ..utils import (LaTeXEnvironment, argument, generate_groupby, make_groups,
+                     normalize_string, pformat, sort_values)
 from ..utils_config import render_from_contexts
 from .base import CliArgsMixin, UVTask
 from .students import XlsStudentDataMerge
@@ -156,7 +157,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
                         df, self.tiers_temps, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
                     )
                     if not df[self.tiers_temps].isin(["Oui", "Non"]).all():
-                        raise Exception(f"La colonne `{self.tiers_temps}` doit contenir uniquement Oui/Non")
+                        raise GuvUserError(f"La colonne `{self.tiers_temps}` doit contenir uniquement Oui/Non")
 
                     df_tt = df[df[self.tiers_temps] == "Oui"]
                     df = df[df[self.tiers_temps] != "Oui"]
@@ -167,7 +168,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
                     yield context
 
                 if sum(self.count) < len(df.index):
-                    raise Exception("Les effectifs cumulés ne suffisent pas")
+                    raise GuvUserError("Les effectifs cumulés ne suffisent pas")
 
                 groups = make_groups(df.index, self.count)
                 for name, idxs in zip(self.names, groups):
@@ -189,7 +190,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
                     df, self.tiers_temps, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
                 )
                 if not df[self.tiers_temps].isin(["Oui", "Non"]).all():
-                    raise Exception(f"La colonne `{self.tiers_temps}` doit contenir uniquement Oui/Non")
+                    raise GuvUserError(f"La colonne `{self.tiers_temps}` doit contenir uniquement Oui/Non")
 
                 df_tt = df[df[self.tiers_temps] == "Oui"]
                 df = df[df[self.tiers_temps] != "Oui"]
@@ -210,7 +211,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
             groups = list(generate_groupby(df, self.group, ascending=True))
 
             if self.names and len(groups) != len(self.names):
-                raise Exception("Le nombres de noms spécifiés avec --names est différent du nombre de groupes")
+                raise GuvUserError("Le nombres de noms spécifiés avec --names est différent du nombre de groupes")
 
             for i, (gn, group) in enumerate(groups):
                 # Override group name if self.names

@@ -19,6 +19,7 @@ from ..openpyxl_patched import fixit
 
 fixit(openpyxl)
 
+from ..exceptions import GuvUserError
 from ..logger import logger
 from ..utils import argument, normalize_string
 from ..utils_config import Output, ask_choice, rel_to_dir
@@ -170,7 +171,7 @@ class SendEmail(UVTask, CliArgsMixin):
 
         with open(self.template, "r") as file_:
             if not file_.readline().startswith("Subject:"):
-                raise Exception("Le message doit commencer par \"Subject:\"")
+                raise GuvUserError("Le message doit commencer par \"Subject:\"")
 
         jinja_env = jinja2.Environment(
             loader=jinja2.FileSystemLoader("./"), undefined=jinja2.StrictUndefined
@@ -186,7 +187,7 @@ class SendEmail(UVTask, CliArgsMixin):
             raise e
 
         if len(email_and_message) == 0:
-            raise Exception("Pas de message à envoyer")
+            raise GuvUserError("Pas de message à envoyer")
 
         email, message = email_and_message[0]
         logger.info("Premier message à %s : \n%s", email, message)

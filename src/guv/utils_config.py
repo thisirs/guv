@@ -7,7 +7,8 @@ from datetime import timedelta
 import logging
 
 from .config import settings
-from .exceptions import AbortWithBody, ImproperlyConfigured, NotUVDirectory
+from .exceptions import (AbortWithBody, GuvUserError, ImproperlyConfigured,
+                         NotUVDirectory)
 from .logger import logger
 from .utils import render_latex_template, compile_latex_file, rel_to_dir_aux
 
@@ -139,7 +140,7 @@ class Output:
 
     def _prepare(self):
         if self.action == "abort":
-            raise Exception("Annulation")
+            raise GuvUserError("Annulation")
         if self.action == "keep":
             raise AbortWithBody
         if self.action == "backup":
@@ -166,7 +167,7 @@ class Output:
             return
         if type is AbortWithBody:
             return True
-        if issubclass(type, Exception):
+        if issubclass(type, GuvUserError):
             return False
 
 

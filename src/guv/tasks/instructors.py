@@ -18,6 +18,7 @@ fixit(openpyxl)
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill
 
+from ..exceptions import GuvUserError
 from ..logger import logger
 from ..openpyxl_utils import (Block, fill_row, frame_range,
                               get_range_from_cells, get_row_cells, get_segment,
@@ -149,7 +150,7 @@ class XlsRemplacements(UVTask):
         if self.df_week_slots["Intervenants"].isnull().any():
             week_slots = WeekSlots.target_from(**self.info)
             fn = rel_to_dir(week_slots)
-            raise Exception(
+            raise GuvUserError(
                 f"La colonne `Intervenants` du fichier `{fn}` n'est pas "
                 "totalement remplie."
             )

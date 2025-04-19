@@ -29,6 +29,7 @@ import yapf.yapflib.yapf_api as yapf
 
 import guv
 
+from ..exceptions import GuvUserError
 from ..logger import logger
 from ..scripts.moodle_date import CondDate, CondGroup, CondOr, CondProfil
 from ..utils import (
@@ -537,7 +538,7 @@ class HtmlTable(UVTask, CliArgsMixin):
         slots = slots[slots["Activité"].isin(courses)]
 
         if len(slots) == 0:
-            raise Exception("Pas de créneaux pour ", courses)
+            raise GuvUserError("Pas de créneaux pour ", courses)
 
         def mondays(beg, end):
             while beg <= end:
@@ -910,7 +911,7 @@ class JsonRestriction(UVTask, CliArgsMixin):
         available_courses = df["Activité"].unique()
 
         if self.course not in available_courses:
-            raise Exception(
+            raise GuvUserError(
                 "Aucun créneau de type `%s`. Choisir parmi %s"
                 % (self.course, ", ".join(f"`{c}`" for c in available_courses))
             )
@@ -1480,7 +1481,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         try:
             templates = [next(name_gen) for _ in range(num_groups)]
         except StopIteration as e:
-            raise Exception("Les noms de groupes disponibles sont épuisés, utiliser # ou @ dans le modèle ou rajouter des noms dans `--names`.") from e
+            raise GuvUserError("Les noms de groupes disponibles sont épuisés, utiliser # ou @ dans le modèle ou rajouter des noms dans `--names`.") from e
 
         names = np.array([pformat(tmpl, group_name=name) for tmpl in templates])
         return names[partition]

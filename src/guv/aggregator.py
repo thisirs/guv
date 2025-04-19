@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from .exceptions import ImpossibleMerge
+from .exceptions import ImpossibleMerge, GuvUserError
 from .logger import logger
 from .operation import Operation
 from .utils import ps, plural, check_if_present
@@ -235,7 +235,7 @@ class Aggregator:
             inter = list(set(drop).intersection(set(self.right_merger.required_columns)))
             if inter:
                 msg = ", ".join(f"`{c}`" for c in inter)
-                raise Exception(f"Les colonnes {msg} sont nécessaires et ne peuvent pas être supprimées")
+                raise GuvUserError(f"Les colonnes {msg} sont nécessaires et ne peuvent pas être supprimées")
 
             self._right_df = self._right_df.drop(drop, axis=1, errors="ignore")
 
@@ -243,7 +243,7 @@ class Aggregator:
             check_if_present(self._right_df, self.rename.keys())
             if (inter := set(self.rename.keys()).intersection(self.right_merger.required_columns)):
                 inter_msg = ", ".join(f"`{c}`" for c in inter)
-                raise Exception(f"Les clés {inter_msg} sont requises et ne peuvent pas être renommées")
+                raise GuvUserError(f"Les clés {inter_msg} sont requises et ne peuvent pas être renommées")
 
             self._right_df = self._right_df.rename(columns=self.rename)
 
