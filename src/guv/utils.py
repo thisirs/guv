@@ -272,13 +272,13 @@ def normalize_string(name, type="excel"):
     elif type == "file":
         name = re.sub(r"(?u)[^-\w. ]", "", name)
         if name in {"", ".", ".."}:
-            raise Exception(f"L'identifiant `{name}` ne permet pas d'avoir un nom de fichier valide")
+            raise ValueError(f"L'identifiant `{name}` ne permet pas d'avoir un nom de fichier valide")
         return name
     elif type == "file_no_space":
         name = re.sub(r"(?u)[^-_\w. ]", "", name)
         name = name.replace(" ", "_")
         if name in {"", ".", ".."}:
-            raise Exception(f"L'identifiant `{name}` ne permet pas d'avoir un nom de fichier valide")
+            raise ValueError(f"L'identifiant `{name}` ne permet pas d'avoir un nom de fichier valide")
         return name
     else:
         return TypeError("Unknown type", type)
@@ -294,7 +294,7 @@ def read_dataframe(filename, read_method=None, kw_read=None):
         elif filename.endswith('.xlsx') or filename.endswith('.xls'):
             df = pd.read_excel(filename, engine="openpyxl", **kw_read)
         else:
-            raise Exception("Fichier Excel ou csv seulement")
+            raise ValueError("Fichier Excel ou csv seulement")
     else:
         df = read_method(filename, **kw_read)
 

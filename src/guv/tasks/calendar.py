@@ -88,7 +88,7 @@ def build_block(row, template, location="full"):
     elif location == "full":
         return rf"\node[draw, {ctype}, fit={{({day}-{bh}) ({day}-{eh}-end)}}] {{{text}}};"
     else:
-        raise RuntimeError("`location` must be `left`, `right` or `full`")
+        raise ValueError("`location` must be `left`, `right` or `full`")
 
 
 def create_cal_from_dataframe(df, template, target, save_tex=False):

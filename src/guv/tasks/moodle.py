@@ -1035,7 +1035,7 @@ def get_coocurrence_matrix_from_partition(series, nan_policy="same"):
         unique_values = pd.Series([f"unique_value_{i}" for i in range(len(series))], index=series.index)
         s_filled = series.fillna(unique_values)
     else:
-        raise RuntimeError("Wrong nan_policy")
+        raise ValueError("Wrong nan_policy")
 
     arr = s_filled.to_numpy()
     return get_coocurrence_matrix_from_array(arr)

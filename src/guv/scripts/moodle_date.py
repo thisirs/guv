@@ -82,7 +82,7 @@ class CondGroup(Cond):
 
     def group_id(self, **info):
         if self.grp not in info["groups"]:
-            raise Exception(f"Le groupe nommé {self.grp} n'a pas de correspondance Moodle dans la variable MOODLE_GROUPS")
+            raise ValueError(f"Le groupe nommé {self.grp} n'a pas de correspondance Moodle dans la variable MOODLE_GROUPS")
         return info["groups"][self.grp]["moodle_id"]
 
     def to_PHP_inner(self, **info):

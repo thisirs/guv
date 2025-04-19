@@ -60,7 +60,7 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
         "Renvoie la plage de cellule de la colonne COLNAME sans l'en-tête."
 
         if colname not in self.first_df.columns:
-            raise Exception("Unknown column name: {}".format(colname))
+            raise ValueError("Unknown column name: {}".format(colname))
 
         cells = self.first_df[colname]
         first, last = cells.iloc[0], cells.iloc[-1]
@@ -182,7 +182,7 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
                         raise RuntimeError("Logical error")
                     self.first_df[name] = cells
                 else:
-                    raise Exception("Unknown type of column ", type)
+                    raise ValueError("Unknown type of column ", type)
             else:
                 if type in ["grade", "cell"]:
                     self.first_df[name] = cells
@@ -190,7 +190,7 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
                     logger.warning("La colonne `%s` n'existe pas dans le fichier central, elle sera vide dans le fichier créé", name)
                     self.first_df[name] = pd.Series(dtype=str)
                 else:
-                    raise Exception("Unknown type of column ", type)
+                    raise ValueError("Unknown type of column ", type)
 
         # Sort all columns
         self.first_ws.auto_filter.ref = "A1:{}{}".format(
