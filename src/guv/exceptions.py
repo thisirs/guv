@@ -2,10 +2,6 @@ class DependentTaskParserError(Exception):
     pass
 
 
-class ImproperlyConfigured(Exception):
-    pass
-
-
 class NotUVDirectory(Exception):
     pass
 
@@ -46,3 +42,19 @@ class MissingColumns(Exception):
             return f"Colonne{s} manquante{s}: {missing_cols}. Colonnes disponibles: {avail_cols}"
         else:
             return f"Colonne{s} manquante{s}: {missing_cols} dans le dataframe issu du fichier `{self.origin}`. Colonnes disponibles: {avail_cols}"
+
+
+class GuvUserError(Exception):
+    pass
+
+
+class CliArgumentError(GuvUserError):
+    pass
+
+
+class ImproperlyConfigured(GuvUserError):
+    pass
+
+
+class FileNotFoundError(GuvUserError):
+    pass
