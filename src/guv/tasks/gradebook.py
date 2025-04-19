@@ -342,7 +342,7 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
                 if all("coeff" not in d for d in elt):
                     elt.append({"coeff": 1})
             else:
-                raise RuntimeError
+                raise TypeError
 
         set_default(config)
 

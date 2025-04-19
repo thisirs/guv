@@ -145,7 +145,7 @@ class TaskBase:
                 props = {k: serialize(v) for k, v in uptodate.items()}
                 doit_task["uptodate"] = [config_changed(props)]
             else:
-                raise RuntimeError("Unsupported value for uptodate", uptodate)
+                raise TypeError("Unsupported value for uptodate", uptodate)
 
         # Allow targets attr specified as single
         # target in target attr

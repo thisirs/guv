@@ -51,13 +51,13 @@ class CondDate(Cond):
         if isinstance(other, (datetime, date)):
             return CondDate(sign='>=', dt=other, visible=self.visible)
         else:
-            raise Exception()
+            raise TypeError
 
     def __lt__(self, other):
         if isinstance(other, (datetime, date)):
             return CondDate(sign='<', dt=other, visible=self.visible)
         else:
-            raise Exception()
+            raise TypeError
 
     def to_PHP_inner(self, **info):
         if type(self.dt) == date:
@@ -78,7 +78,7 @@ class CondGroup(Cond):
         if isinstance(other, str):
             return CondGroup(grp=other, visible=self.visible)
         else:
-            raise Exception()
+            raise TypeError
 
     def group_id(self, **info):
         if self.grp not in info["groups"]:
@@ -102,7 +102,7 @@ class CondProfil(Cond):
             self.rel = "isequalto"
             return self
         else:
-            raise Exception
+            raise TypeError
 
     def to_PHP_inner(self, **info):
         return {

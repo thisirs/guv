@@ -281,7 +281,7 @@ def normalize_string(name, type="excel"):
             raise Exception(f"L'identifiant `{name}` ne permet pas d'avoir un nom de fichier valide")
         return name
     else:
-        return RuntimeError("Unknown type", type)
+        return TypeError("Unknown type", type)
 
 
 def read_dataframe(filename, read_method=None, kw_read=None):

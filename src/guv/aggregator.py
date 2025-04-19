@@ -18,7 +18,7 @@ class Merger(ABC):
             obj.type = type
             return obj
         else:
-            raise Exception("Unknown merger")
+            raise TypeError("Unknown merger")
 
     @property
     def index_column(self):
@@ -125,7 +125,7 @@ def _apply_processing(df, processing_type, processing):
                     logger.info(processing_type)
                 df = op(df)
             else:
-                raise Exception(f"Unsupported {processing_type} operation", op)
+                raise TypeError(f"Unsupported {processing_type} operation", op)
     return df
 
 
