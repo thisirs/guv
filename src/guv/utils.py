@@ -269,13 +269,13 @@ def normalize_string(name, type="excel"):
     elif type == "file":
         name = re.sub(r"(?u)[^-\w. ]", "", name)
         if name in {"", ".", ".."}:
-            raise Exception("L'identifiant `{name}` ne permet pas d'avoir un nom de fichier valide")
+            raise Exception(f"L'identifiant `{name}` ne permet pas d'avoir un nom de fichier valide")
         return name
     elif type == "file_no_space":
         name = re.sub(r"(?u)[^-_\w. ]", "", name)
         name = name.replace(" ", "_")
         if name in {"", ".", ".."}:
-            raise Exception("L'identifiant `{name}` ne permet pas d'avoir un nom de fichier valide")
+            raise Exception(f"L'identifiant `{name}` ne permet pas d'avoir un nom de fichier valide")
         return name
     else:
         return RuntimeError("Unknown type", type)
