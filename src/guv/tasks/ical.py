@@ -9,9 +9,9 @@ import os
 import re
 import tempfile
 import zipfile
+import zoneinfo
 
 import pandas as pd
-import pytz
 from icalendar import Calendar, Event
 
 from ..utils import argument, convert_to_time, normalize_string, ps
@@ -20,12 +20,17 @@ from .base import CliArgsMixin, SemesterTask, UVTask
 from .internal import Planning, PlanningSlots, PlanningSlotsAll
 
 
+def datetime_paris_to_UTC(dt):
+    dt = dt.replace(tzinfo=zoneinfo.ZoneInfo("Europe/Paris"))
+    return dt.astimezone(zoneinfo.ZoneInfo("UTC"))
+
+
 def ical_events(dataframe, **settings):
     """Retourne les évènements iCal de tous les cours trouvés dans `dataframe`."""
 
     def timestamp(row):
-        local_tz = pytz.timezone("Europe/Paris")
-        return datetime.datetime.combine(row["date"], row["Heure début"]).astimezone(local_tz).astimezone(pytz.utc)
+        naive_dt = datetime.datetime.combine(row["date"], row["Heure début"])
+        return datetime_paris_to_UTC(naive_dt)
 
     ts = dataframe.apply(timestamp, axis=1)
     dataframe = dataframe.assign(timestamp=ts)
@@ -209,11 +214,9 @@ class IcalSlots(SemesterTask, CliArgsMixin):
                 )
                 event.add("summary", summary)
 
-                local_tz = pytz.timezone("Europe/Paris")
                 date = pd.to_datetime(row["date"]).date()
                 time = convert_to_time(time)
-
-                dt = datetime.datetime.combine(date, time).astimezone(local_tz).astimezone(pytz.utc)
+                dt = datetime_paris_to_UTC(datetime.datetime.combine(date, time))
                 event.add("dtstart", dt)
                 event.add("dtend", dt + datetime.timedelta(hours=2))
 
