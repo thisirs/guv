@@ -14,6 +14,8 @@ import unidecode
 
 import guv
 
+from .exceptions import CommonColumns
+
 
 def argument(*args, **kwargs):
     return SimpleNamespace(args=args, kwargs=kwargs)
@@ -298,3 +300,10 @@ def read_dataframe(filename, read_method=None, kw_read=None):
     return df
 
 
+def check_if_absent(dataframe, columns):
+    if isinstance(columns, str):
+        columns = [columns]
+
+    common_cols = [c for c in columns if c in dataframe.columns]
+    if common_cols:
+        raise CommonColumns(common_cols)

@@ -12,11 +12,11 @@ from doit.tools import config_changed
 
 from ..config import Settings, settings
 from ..exceptions import (DependentTaskParserError, ImproperlyConfigured,
-                          NotUVDirectory)
+                          NotUVDirectory, CommonColumns)
 from ..logger import logger
-from ..utils import pformat
+from ..utils import pformat, check_if_absent
 from ..utils_ask import prompt_number
-from ..utils_config import get_unique_uv, selected_uv, configured_uv
+from ..utils_config import get_unique_uv, selected_uv, configured_uv, rel_to_dir
 
 
 class TaskBase:
@@ -48,6 +48,25 @@ class TaskBase:
 
         """
         pass
+
+    def check_if_absent(self, df, columns, errors="raise", file=None, base_dir=None):
+        if errors not in ("raise", "warning", "silent"):
+            raise ValueError("Unknown `errors`", errors)
+
+        try:
+            check_if_absent(df, columns)
+        except CommonColumns as e:
+            if file is None:
+                raise e from e
+            fn = rel_to_dir(file, base_dir or self.settings.CWD_DIR)
+            if errors == "raise":
+                raise CommonColumns(e.common_columns, origin=fn)
+            elif errors == "warning":
+                logger.warning(str(CommonColumns(e.common_columns, origin=fn)))
+            elif errors == "silent":
+                pass
+            else:
+                raise ValueError("Unknown `errors`", errors)
 
     def to_doit_task(self, **kwargs):
         """Build a doit task from current instance"""

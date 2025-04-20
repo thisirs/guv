@@ -15,9 +15,8 @@ from .config import settings
 from .exceptions import ImproperlyConfigured
 from .logger import logger
 from .operation import Operation
-from .utils import slugrot_string, convert_to_numeric, read_dataframe
-from .utils_config import (check_filename, check_if_absent, check_if_present,
-                           rel_to_dir)
+from .utils import slugrot_string, convert_to_numeric, read_dataframe, check_if_absent
+from .utils_config import check_filename, check_if_present, rel_to_dir
 
 
 def slugrot(*columns):
