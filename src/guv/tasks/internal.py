@@ -214,12 +214,12 @@ class XlsStudentData(UVTask):
         if self.extraction_ENT is not None:
             logger.info(
                 "Chargement des données issues de l'ENT: `%s`",
-                rel_to_dir(self.extraction_ENT, self.settings.cwd),
+                rel_to_dir(self.extraction_ENT),
             )
             if not os.path.isfile(self.extraction_ENT):
                 raise Exception(
                     "Le chemin `{}` n'existe pas ou n'est pas un fichier".format(
-                        rel_to_dir(self.extraction_ENT, self.settings.cwd)
+                        rel_to_dir(self.extraction_ENT)
                     )
                 )
 
@@ -235,13 +235,13 @@ class XlsStudentData(UVTask):
             if self.csv_moodle is not None:
                 logger.info(
                     "Ajout des données issues de Moodle: `%s`",
-                    rel_to_dir(self.csv_moodle, self.settings.cwd),
+                    rel_to_dir(self.csv_moodle),
                 )
 
                 if not os.path.isfile(self.csv_moodle):
                     raise Exception(
                         "Le chemin `{}` n'existe pas ou n'est pas un fichier".format(
-                            rel_to_dir(self.csv_moodle, self.settings.cwd)
+                            rel_to_dir(self.csv_moodle)
                         )
                     )
 
@@ -256,7 +256,7 @@ class XlsStudentData(UVTask):
         if self.csv_UTC is not None:
             logger.info(
                 "Ajout des affectations aux Cours/TD/TP : `%s`",
-                rel_to_dir(self.csv_UTC, self.settings.cwd),
+                rel_to_dir(self.csv_UTC),
             )
             df = self.add_UTC_data(df, self.csv_UTC)
 
@@ -326,7 +326,7 @@ class XlsStudentData(UVTask):
                 ps(n),
                 plural(n, "ont", "a"),
                 ps(n),
-                rel_to_dir(self.csv_moodle, self.settings.cwd)
+                rel_to_dir(self.csv_moodle)
             )
             df = df.drop(df[nans].index)
 
@@ -1168,31 +1168,31 @@ class WeekSlots(UVTask):
             "Responsable": str
         })
         if len(df.index) == 0:
-            fn = rel_to_dir(week_slots, settings.CWD)
+            fn = rel_to_dir(week_slots)
             logger.warning(f"Le fichier `{fn}` est vide")
 
         if df["Activité"].isnull().any():
-            fn = rel_to_dir(week_slots, settings.CWD)
+            fn = rel_to_dir(week_slots)
             raise Exception(f"La colonne `Activité` du fichier `{fn}` ne doit pas contenir d'élément vide.")
 
         rest = set(df["Activité"]) - set(["Cours", "TD", "TP"])
         if rest:
             rest_msg = ", ".join(f"`{e}`" for e in rest)
-            fn = rel_to_dir(week_slots, settings.CWD)
+            fn = rel_to_dir(week_slots)
             logger.warning("La colonne `Activité` du fichier `%s` contient des libellés non standards (`Cours`, `TD` et `TP`) : %s", fn, rest_msg)
 
         if df["Jour"].isnull().any():
-            fn = rel_to_dir(week_slots, settings.CWD)
+            fn = rel_to_dir(week_slots)
             raise Exception(f"La colonne `Jour` du fichier `{fn}` ne doit pas contenir d'élément vide.")
 
         rest = set(df["Jour"]) - set(["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"])
         if rest:
             rest_msg = ", ".join(f"`{e}`" for e in rest)
-            fn = rel_to_dir(week_slots, settings.CWD)
+            fn = rel_to_dir(week_slots)
             raise Exception(f"La colonne `Jour` du fichier `{fn}` ne doit contenir que des jours de la semaine, elle contient {rest_msg}")
 
         if df["Lib. créneau"].isnull().any():
-            fn = rel_to_dir(week_slots, settings.CWD)
+            fn = rel_to_dir(week_slots)
             raise Exception(f"La colonne `Lib. créneau` du fichier `{fn}` ne doit pas contenir d'élément vide.")
 
         df["Heure début"] = df["Heure début"].apply(convert_to_time)
@@ -1207,7 +1207,7 @@ class WeekSlots(UVTask):
             insts = group["Intervenants"].dropna().unique()
             if len(insts) > 1:
                 insts_list = ", ".join(insts)
-                fn = rel_to_dir(week_slots, settings.CWD)
+                fn = rel_to_dir(week_slots)
                 logger.warning(f"Les intervenants suivants ont les mêmes initiales : {insts_list}. "
                                f"Modifier la colonne `Abbrev` dans le fichier `{fn}`.")
 
@@ -1219,7 +1219,7 @@ class WeekSlots(UVTask):
 
         # Test if UV/UE is in listing from UtcUvListToCsv
         if len(self.df_uv) == 0:
-            creneau_uv = rel_to_dir(self.settings.CRENEAU_UV, self.settings.CWD)
+            creneau_uv = rel_to_dir(self.settings.CRENEAU_UV)
             logger.warning(
                 "L'UV/UE `%s` n'existe pas dans le fichier `%s`, "
                 "un fichier Excel sans créneau est créé.",

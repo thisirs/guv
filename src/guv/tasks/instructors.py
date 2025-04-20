@@ -47,7 +47,7 @@ class XlsInstructors(SemesterTask):
         if not os.path.exists(self.target):
             logger.warning(
                 "Le fichier `%s` n'existe pas, création d'un fichier vide",
-                rel_to_dir(self.target, self.settings.CWD),
+                rel_to_dir(self.target),
             )
             columns = ["Intervenants", "Statut", "Email", "Website"]
             with Output(self.target) as out:
@@ -148,7 +148,7 @@ class XlsRemplacements(UVTask):
         self.df_week_slots = WeekSlotsDetails.read_target(self.week_slots_details)
         if self.df_week_slots["Intervenants"].isnull().any():
             week_slots = WeekSlots.target_from(**self.info)
-            fn = rel_to_dir(week_slots, self.settings.CWD)
+            fn = rel_to_dir(week_slots)
             raise Exception(
                 f"La colonne `Intervenants` du fichier `{fn}` n'est pas "
                 "totalement remplie."

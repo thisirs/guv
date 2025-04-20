@@ -12,8 +12,10 @@ from .logger import logger
 from .utils import render_latex_template, compile_latex_file, rel_to_dir_aux
 
 
-def rel_to_dir(path, ref_dir):
+def rel_to_dir(path, ref_dir=None):
     """Make `path` relative to `root` if inside guv managed directory"""
+    if ref_dir is None:
+        ref_dir = settings.CWD
     return rel_to_dir_aux(path, ref_dir, settings.SEMESTER_DIR)
 
 
@@ -145,14 +147,14 @@ class Output:
             timestr = time.strftime("_%Y%m%d-%H%M%S")
             target0 = parts[0] + timestr + parts[1]
             os.rename(self._target, target0)
-            logger.info("Sauvegarde vers `%s`", rel_to_dir(target0, settings.CWD))
+            logger.info("Sauvegarde vers `%s`", rel_to_dir(target0))
         elif self.action == "overwrite":
-            logger.info("Écrasement du fichier `%s`", rel_to_dir(self._target, settings.CWD))
+            logger.info("Écrasement du fichier `%s`", rel_to_dir(self._target))
         elif self.action == "write":
             dirname = os.path.dirname(self._target)
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
-            logger.info("Écriture du fichier `%s`", rel_to_dir(self._target, settings.CWD))
+            logger.info("Écriture du fichier `%s`", rel_to_dir(self._target))
 
     @property
     def target(self):
