@@ -6,7 +6,6 @@ import textwrap
 from collections.abc import Callable
 from datetime import timedelta
 from typing import List, Optional, Union, Literal
-import zipfile
 
 import numpy as np
 import pandas as pd
