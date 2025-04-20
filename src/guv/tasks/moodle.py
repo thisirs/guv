@@ -41,7 +41,7 @@ from ..utils import (
     pformat,
     sort_values,
 )
-from ..utils_config import Output, check_if_present, rel_to_dir
+from ..utils_config import Output, rel_to_dir
 from .base import CliArgsMixin, SemesterTask, UVTask
 from .evolutionary_algorithm import evolutionary_algorithm
 from .instructors import WeekSlotsDetails
@@ -144,7 +144,7 @@ class CsvGroups(UVTask, CliArgsMixin):
     def build_dataframes(self, df):
         dfs = []
         for column_name in self.groups:
-            if check_if_present(
+            if self.check_if_present(
                 df,
                 column_name,
                 file=self.xls_merge,
@@ -993,7 +993,7 @@ class JsonGroup(UVTask, CliArgsMixin):
     def run(self):
         df = XlsStudentDataMerge.read_target(self.xls_merge)
 
-        check_if_present(
+        self.check_if_present(
             df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
         )
         dff = df[["Adresse de courriel", self.group]]
@@ -1353,18 +1353,18 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         df = XlsStudentDataMerge.read_target(self.xls_merge)
 
         if self.grouping is not None:
-            check_if_present(
+            self.check_if_present(
                 df, self.grouping, file=self.xls_merge, base_dir=self.settings.CWD
             )
             df = df.loc[~df[self.grouping].isnull()]
 
         if self.other_groups is not None:
-            check_if_present(
+            self.check_if_present(
                 df, self.other_groups, file=self.xls_merge, base_dir=self.settings.CWD
             )
 
         if self.affinity_groups is not None:
-            check_if_present(
+            self.check_if_present(
                 df, self.affinity_groups, file=self.xls_merge, base_dir=self.settings.CWD
             )
 
@@ -1374,7 +1374,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         elif len(self.ordered) == 0:
             df = sort_values(df, ["Nom", "Prénom"])
         else:
-            check_if_present(
+            self.check_if_present(
                 df, self.ordered, file=self.xls_merge, base_dir=self.settings.CWD
             )
             df = sort_values(df, self.ordered)

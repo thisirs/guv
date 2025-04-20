@@ -37,63 +37,6 @@ def check_filename(filename, errors="raise", **kwargs):
         raise ValueError("invalid error value specified")
 
 
-def check_if_absent(dataframe, columns, errors="raise", file=None, base_dir=None):
-    """Check that all columns are absent from dataframe."""
-
-    if errors not in ("raise", "warning", "silent"):
-        raise ValueError("invalid error value specified")
-
-    if isinstance(columns, str):
-        columns = [columns]
-
-    common_cols = [c for c in columns if c in dataframe.columns]
-
-    if common_cols:
-        s = "s" if len(common_cols) > 1 else ""
-        common_cols = ", ".join(f"`{e}`" for e in common_cols)
-        if file is not None and base_dir is not None:
-            fn = rel_to_dir(file, base_dir)
-            msg = f"Colonne{s} déjà existante{s}: {common_cols} dans le dataframe issu du fichier `{fn}`."
-        else:
-            msg = f"Colonne{s} déjà existante{s}: {common_cols}"
-
-        if errors == "raise":
-            raise Exception(msg)
-        if errors == "warning":
-            logger.warning(msg)
-
-    return not common_cols
-
-
-def check_if_present(dataframe, columns, errors="raise", file=None, base_dir=None):
-    """Check that all columns are present in dataframe."""
-
-    if errors not in ("raise", "warning", "silent"):
-        raise ValueError("invalid error value specified")
-
-    if isinstance(columns, str):
-        columns = [columns]
-
-    missing_cols = [c for c in columns if c not in dataframe.columns]
-
-    if missing_cols:
-        s = "s" if len(missing_cols) > 1 else ""
-        missing_cols = ", ".join(f"`{e}`" for e in missing_cols)
-        avail_cols = ", ".join(f"`{e}`" for e in dataframe.columns)
-        if file is not None and base_dir is not None:
-            fn = rel_to_dir(file, base_dir)
-            msg = f"Colonne{s} manquante{s}: {missing_cols} dans le dataframe issu du fichier `{fn}`. Colonnes disponibles: {avail_cols}"
-        else:
-            msg = f"Colonne{s} manquante{s}: {missing_cols}. Colonnes disponibles: {avail_cols}"
-
-        if errors == "raise":
-            raise Exception(msg)
-        if errors == "warning":
-            logger.warning(msg)
-
-    return not missing_cols
-
-
 def configured_uv(uvs):
     # Collect uv to plannings in PLANNINGS
     uv2plannings = defaultdict(list)

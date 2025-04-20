@@ -15,8 +15,8 @@ from .config import settings
 from .exceptions import ImproperlyConfigured
 from .logger import logger
 from .operation import Operation
-from .utils import slugrot_string, convert_to_numeric, read_dataframe, check_if_absent
-from .utils_config import check_filename, check_if_present, rel_to_dir
+from .utils import slugrot_string, convert_to_numeric, read_dataframe, check_if_absent, check_if_present
+from .utils_config import check_filename, rel_to_dir
 
 
 def slugrot(*columns):
@@ -1507,8 +1507,8 @@ class AggregateMoodleGroups(FileOperation):
             suffixes = ("_orig", "")
             merge_policy = "erase"
 
-        ver1 = check_if_present(right_df, ["Nom", "Prénom", "Numéro d’identification", "Choix", "Adresse de courriel"], errors="silent")
-        ver2 = check_if_present(right_df, ["Nom de famille", "Prénom", "Numéro d’identification", "Choix", "Adresse de courriel"], errors="silent")
+        ver1 = set(["Nom", "Prénom", "Numéro d’identification", "Choix", "Adresse de courriel"]).issubset(set(right_df.columns))
+        ver2 = set(["Nom de famille", "Prénom", "Numéro d’identification", "Choix", "Adresse de courriel"]).issubset(set(right_df.columns))
 
         if not ver1 and not ver2:
             raise Exception("Le fichier n'est pas reconnu comme un fichier issu d'une activité groupe de Moodle")

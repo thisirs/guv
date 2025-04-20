@@ -21,7 +21,7 @@ fixit(openpyxl)
 
 from ..logger import logger
 from ..utils import argument, normalize_string
-from ..utils_config import Output, ask_choice, check_if_present, rel_to_dir
+from ..utils_config import Output, ask_choice, rel_to_dir
 from .base import CliArgsMixin, UVTask
 from .internal import XlsStudentDataMerge
 
@@ -47,7 +47,7 @@ class ZoomBreakoutRooms(UVTask, CliArgsMixin):
 
     def run(self):
         df = XlsStudentDataMerge.read_target(self.xls_merge)
-        check_if_present(
+        self.check_if_present(
             df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
         )
 
@@ -81,7 +81,7 @@ class MaggleTeams(UVTask, CliArgsMixin):
 
     def run(self):
         df = XlsStudentDataMerge.read_target(self.xls_merge)
-        check_if_present(
+        self.check_if_present(
             df,
             [
                 "Login",

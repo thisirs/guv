@@ -5,7 +5,7 @@ présence.
 
 from ..utils import (LaTeXEnvironment, argument, make_groups, pformat,
                      sort_values, generate_groupby, normalize_string)
-from ..utils_config import check_if_present, render_from_contexts
+from ..utils_config import render_from_contexts
 from .base import CliArgsMixin, UVTask
 from .students import XlsStudentDataMerge
 
@@ -152,7 +152,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
                 context["blank"] = False
 
                 if self.tiers_temps is not None:
-                    check_if_present(
+                    self.check_if_present(
                         df, self.tiers_temps, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
                     )
                     if not df[self.tiers_temps].isin(["Oui", "Non"]).all():
@@ -185,7 +185,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
             df = sort_values(df, ["Nom", "Prénom"])
 
             if self.tiers_temps:
-                check_if_present(
+                self.check_if_present(
                     df, self.tiers_temps, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
                 )
                 if not df[self.tiers_temps].isin(["Oui", "Non"]).all():
@@ -203,7 +203,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
                 yield context
 
             if self.group is not None:
-                check_if_present(
+                self.check_if_present(
                     df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
                 )
 
@@ -299,7 +299,7 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
     def run(self):
         df = XlsStudentDataMerge.read_target(self.xls_merge)
         if self.group is not None:
-            check_if_present(
+            self.check_if_present(
                 df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
             )
 

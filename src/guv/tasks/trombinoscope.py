@@ -18,7 +18,7 @@ import numpy as np
 
 from ..logger import logger
 from ..utils import argument, generate_groupby, normalize_string, sort_values
-from ..utils_config import check_if_present, render_from_contexts
+from ..utils_config import render_from_contexts
 from .base import CliArgsMixin, UVTask
 from .students import XlsStudentDataMerge
 
@@ -153,12 +153,12 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
         df = XlsStudentDataMerge.read_target(self.xls_merge)
 
         if self.groupby is not None:
-            check_if_present(
+            self.check_if_present(
                 df, self.groupby, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
             )
 
         if self.subgroupby is not None:
-            check_if_present(
+            self.check_if_present(
                 df, self.subgroupby, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
             )
 

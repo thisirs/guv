@@ -3,8 +3,7 @@ from abc import ABC, abstractmethod
 from .exceptions import ImpossibleMerge
 from .logger import logger
 from .operation import Operation
-from .utils_config import check_if_present
-from .utils import ps, plural
+from .utils import ps, plural, check_if_present
 
 
 class Merger(ABC):

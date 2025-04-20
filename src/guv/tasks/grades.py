@@ -11,7 +11,7 @@ import pandas as pd
 
 from ..logger import logger
 from ..utils import argument, normalize_string, sort_values
-from ..utils_config import Output, check_if_present
+from ..utils_config import Output
 from .base import CliArgsMixin, UVTask
 from .internal import XlsStudentDataMerge
 
@@ -91,7 +91,7 @@ class CsvForUpload(UVTask, CliArgsMixin):
 
         df = XlsStudentDataMerge.read_target(self.xls_merge)
 
-        check_if_present(
+        self.check_if_present(
             df, self.grade_colname, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
         )
 
@@ -130,7 +130,7 @@ class CsvForUpload(UVTask, CliArgsMixin):
                 col_names.append("Commentaire")
                 cols["Commentaire"] = ""
             else:
-                check_if_present(
+                self.check_if_present(
                     df, self.comment_colname, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
                 )
                 col_names.append("Commentaire")

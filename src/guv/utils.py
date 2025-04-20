@@ -14,7 +14,7 @@ import unidecode
 
 import guv
 
-from .exceptions import CommonColumns
+from .exceptions import CommonColumns, MissingColumns
 
 
 def argument(*args, **kwargs):
@@ -307,3 +307,12 @@ def check_if_absent(dataframe, columns):
     common_cols = [c for c in columns if c in dataframe.columns]
     if common_cols:
         raise CommonColumns(common_cols)
+
+
+def check_if_present(dataframe, columns):
+    if isinstance(columns, str):
+        columns = [columns]
+
+    missing_cols = [c for c in columns if c not in dataframe.columns]
+    if missing_cols:
+        raise MissingColumns(missing_cols, dataframe.columns)
