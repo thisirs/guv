@@ -15,6 +15,7 @@ import unidecode
 import guv
 
 from .exceptions import CommonColumns, MissingColumns
+from .logger import logger
 
 
 def argument(*args, **kwargs):
@@ -300,22 +301,48 @@ def read_dataframe(filename, read_method=None, kw_read=None):
     return df
 
 
-def check_if_absent(dataframe, columns):
+def check_if_absent(dataframe, columns, errors="raise"):
+    if errors not in ("raise", "warning", "silent"):
+        raise ValueError("Unknown `errors`", errors)
+
     if isinstance(columns, str):
         columns = [columns]
 
     common_cols = [c for c in columns if c in dataframe.columns]
     if common_cols:
-        raise CommonColumns(common_cols)
+        e = CommonColumns(common_cols)
+        if errors == "raise":
+            raise e
+        elif errors == "warning":
+            logger.warning(str(e))
+        elif errors == "silent":
+            pass
+        else:
+            raise ValueError("Unknown `errors`", errors)
+
+    return not common_cols
 
 
-def check_if_present(dataframe, columns):
+def check_if_present(dataframe, columns, errors="raise"):
+    if errors not in ("raise", "warning", "silent"):
+        raise ValueError("Unknown `errors`", errors)
+
     if isinstance(columns, str):
         columns = [columns]
 
     missing_cols = [c for c in columns if c not in dataframe.columns]
     if missing_cols:
-        raise MissingColumns(missing_cols, dataframe.columns)
+        e = MissingColumns(missing_cols, dataframe.columns)
+        if errors == "raise":
+            raise e
+        elif errors == "warning":
+            logger.warning(str(e))
+        elif errors == "silent":
+            pass
+        else:
+            raise ValueError("Unknown `errors`", errors)
+
+    return not missing_cols
 
 
 def rel_to_dir_aux(path, ref_dir, root_dir):
