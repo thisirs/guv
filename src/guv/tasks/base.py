@@ -58,7 +58,7 @@ class TaskBase:
         except CommonColumns as e:
             if file is None:
                 raise e from e
-            fn = rel_to_dir(file, base_dir or self.settings.CWD_DIR)
+            fn = rel_to_dir(file, base_dir or self.settings.CWD)
             if errors == "raise":
                 raise CommonColumns(e.common_columns, origin=fn)
             elif errors == "warning":
@@ -80,7 +80,7 @@ class TaskBase:
         except MissingColumns as e:
             if file is None:
                 raise e from e
-            fn = rel_to_dir(file, base_dir or self.settings.CWD_DIR)
+            fn = rel_to_dir(file, base_dir or self.settings.CWD)
             if errors == "raise":
                 raise MissingColumns(e.missing_columns, origin=fn)
             elif errors == "warning":
