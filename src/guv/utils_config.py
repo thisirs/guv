@@ -6,22 +6,15 @@ import zipfile
 from datetime import timedelta
 import logging
 
-from .config import settings
+from .config import settings, rel_to_dir_aux
 from .exceptions import AbortWithBody, ImproperlyConfigured, NotUVDirectory
 from .logger import logger
 from .utils import render_latex_template, compile_latex_file
 
 
-def rel_to_dir(path, root):
-    if not os.path.isabs(path):
-        return path
-
-    if os.path.commonpath([settings.SEMESTER_DIR]) == os.path.commonpath(
-        [settings.SEMESTER_DIR, path]
-    ):
-        return os.path.relpath(path, root)
-
-    return path
+def rel_to_dir(path, ref_dir):
+    """Make `path` relative to `root` if inside guv managed directory"""
+    return rel_to_dir_aux(path, ref_dir, settings.SEMESTER_DIR)
 
 
 def check_filename(filename, errors="raise", **kwargs):

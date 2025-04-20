@@ -160,13 +160,14 @@ VALIDATION_SCHEMES = {
 }
 
 
-def rel_to_dir_aux(path, root, semester_dir):
-    """Maybe shorten `path` if absolute and child of `root`"""
+def rel_to_dir_aux(path, ref_dir, root_dir):
+    """Maybe make `path` relative to `ref_dir` if absolute and child of `root_dir`"""
+
     if not os.path.isabs(path):
         return path
 
-    if os.path.commonpath([semester_dir]) == os.path.commonpath([semester_dir, path]):
-        return os.path.relpath(path, root)
+    if os.path.commonpath([root_dir]) == os.path.commonpath([root_dir, path]):
+        return os.path.relpath(path, ref_dir)
 
     return path
 
