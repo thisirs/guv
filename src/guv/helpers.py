@@ -1501,7 +1501,7 @@ class AggregateMoodleGroups(FileOperation):
         if self.backup:
             suffixes = ("_orig", "")
             merge_policy = "keep"
-            if not self.colname in df.columns:
+            if self.colname not in df.columns:
                 logger.warning("Le backup de la colonne `%s` est activé mais elle n'est pas présente dans le fichier central", self.colname)
         else:
             suffixes = ("_orig", "")
