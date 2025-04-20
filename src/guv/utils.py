@@ -316,3 +316,15 @@ def check_if_present(dataframe, columns):
     missing_cols = [c for c in columns if c not in dataframe.columns]
     if missing_cols:
         raise MissingColumns(missing_cols, dataframe.columns)
+
+
+def rel_to_dir_aux(path, ref_dir, root_dir):
+    """Maybe make `path` relative to `ref_dir` if absolute and child of `root_dir`"""
+
+    if not os.path.isabs(path):
+        return path
+
+    if os.path.commonpath([root_dir]) == os.path.commonpath([root_dir, path]):
+        return os.path.relpath(path, ref_dir)
+
+    return path

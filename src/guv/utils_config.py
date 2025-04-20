@@ -6,10 +6,10 @@ import zipfile
 from datetime import timedelta
 import logging
 
-from .config import settings, rel_to_dir_aux
+from .config import settings
 from .exceptions import AbortWithBody, ImproperlyConfigured, NotUVDirectory
 from .logger import logger
-from .utils import render_latex_template, compile_latex_file
+from .utils import render_latex_template, compile_latex_file, rel_to_dir_aux
 
 
 def rel_to_dir(path, ref_dir):
