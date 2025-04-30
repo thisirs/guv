@@ -15,6 +15,7 @@ from doit.doit_cmd import DoitMain
 import guv
 
 from . import tasks
+from .tasks.internal import XlsStudentData
 from .config import settings
 # Load settings from configuration files
 from .logger import logger

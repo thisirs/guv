@@ -9,17 +9,6 @@ besoin d'exécuter car elles sont des dépendances des tâches usuelles.
 ```
 
 ```{eval-rst}
-.. autoclass:: guv.tasks.internal.CsvInscrits
-   :exclude-members:
-
-   Cette tâche ne dépend d'aucune autre classe.
-
-   Cette tâche est une dépendance pour les tâches suivantes :
-
-   - :class:`guv.tasks.internal.XlsStudentData`
-```
-
-```{eval-rst}
 .. autoclass:: guv.tasks.internal.Planning
    :exclude-members:
 
@@ -104,19 +93,6 @@ besoin d'exécuter car elles sont des dépendances des tâches usuelles.
 
 ```{eval-rst}
 .. autoclass:: guv.tasks.internal.XlsStudentData
-   :exclude-members:
-
-   Cette tâche dépend de :
-
-   - :class:`guv.tasks.internal.CsvInscrits`
-
-   Cette tâche est une dépendance pour les tâches suivantes :
-
-   - :class:`guv.tasks.internal.XlsStudentDataMerge`
-```
-
-```{eval-rst}
-.. autoclass:: guv.tasks.internal.XlsStudentDataMerge
    :exclude-members:
 
    Cette tâche dépend de :

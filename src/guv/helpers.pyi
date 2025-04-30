@@ -1,99 +1,98 @@
+from collections.abc import Callable
+from typing import Any
+
+from .operation import Operation
+
+
 class Documents:
     def fillna_column(
         self,
         colname: str,
         *,
-        na_value: Optional[str] = None,
-        group_column: Optional[str] = None
-    ):
+        na_value: str | None = None,
+        group_column: str | None = None
+    ) -> None:
         ...
 
     def replace_regex(
         self,
         colname: str,
         *reps: str,
-        new_colname: Optional[str] = None,
-        backup: Optional[bool] = False,
-        msg: Optional[str] = None,
-    ):
+        new_colname: str | None = None,
+        backup: bool | None = False,
+        msg: str | None = None,
+    ) -> None:
         ...
 
     def replace_column(
         self,
         colname: str,
         rep_dict: dict,
-        new_colname: Optional[str] = None,
-        backup: Optional[bool] = False,
-        msg: Optional[str] = None,
-    ):
+        new_colname: str | None = None,
+        backup: bool | None = False,
+        msg: str | None = None,
+    ) -> None:
         ...
 
-    def apply_df(self, func: Callable, msg: Optional[str] = None):
+    def apply_df(self, func: Callable, msg: str | None = None) -> None:
         ...
 
-    def apply_column(self, colname: str, func: Callable, msg: Optional[str] = None):
+    def apply_column(self, colname: str, func: Callable, msg: str | None = None) -> None:
         ...
 
-    def compute_new_column(self, *cols: str, func: Callable, colname: str, msg: Optional[str] = None):
+    def compute_new_column(self, *cols: str, func: Callable, colname: str, msg: str | None = None) -> None:
         ...
 
-    def add(self, filename: str, func: callable):
+    def add(self, filename: str, func: callable) -> None:
         ...
 
-    def aggregate_self(self, *columns: str):
+    def aggregate_self(self, *columns: str) -> None:
         ...
 
     def aggregate(
         self,
         filename: str,
         *,
-        left_on: Union[None, str, callable] = None,
-        right_on: Union[None, str, callable] = None,
-        on: Optional[str] = None,
-        subset: Union[None, str, List[str]] = None,
-        drop: Union[None, str, List[str]] = None,
-        rename: Optional[dict] = None,
-        preprocessing: Union[None, Callable, Operation] = None,
-        postprocessing: Union[None, Callable, Operation] = None,
-        read_method: Optional[Callable] = None,
-        kw_read: Optional[dict] = {}
-    ):
+        left_on: str | Callable[..., Any] | None = None,
+        right_on: str | Callable[..., Any] | None = None,
+        on: str | None = None,
+        subset: str | list[str] | None = None,
+        drop: str | list[str] | None = None,
+        rename: dict[str, str] | None = None,
+        preprocessing: Callable[..., Any] | Operation | None = None,
+        postprocessing: Callable[..., Any] | Operation | None = None,
+        read_method: Callable[..., Any] | None = None,
+        kw_read: dict[str, Any] | None = None,
+    ) -> None: ...
+
+    def aggregate_moodle_grades(self, filename: str, rename: dict | None = None,) -> None:
         ...
 
-    def aggregate_self(
-        self,
-        *columns: str,
-    ):
+    def aggregate_moodle_groups(self, filename: str, colname: str, backup: bool | None = False,) -> None:
         ...
 
-    def aggregate_moodle_grades(self, filename: str, rename: Optional[dict] = None,):
+    def aggregate_wexam_grades(self, filename: str, rename: dict | None = None,) -> None:
         ...
 
-    def aggregate_moodle_groups(self, filename: str, colname: str, backup: Optional[bool] = False,):
-        ...
-
-    def aggregate_wexam_grades(self, filename: str, rename: Optional[dict] = None,):
-        ...
-
-    def aggregate_jury(self, filename: str):
+    def aggregate_jury(self, filename: str) -> None:
         ...
 
     def aggregate_org(
         self,
         filename: str,
         colname: str,
-        on: Optional[str] = None,
-        postprocessing: Union[None, Callable, Operation] = None,
-    ):
+        on: str | None = None,
+        postprocessing: Callable | Operation | None = None,
+    ) -> None:
         ...
 
-    def aggregate_amenagements(self, filename: str):
+    def aggregate_amenagements(self, filename: str) -> None:
         ...
 
-    def flag(self, filename_or_string: str, *, colname: str, flags: Optional[List[str]] = ["Oui", ""]):
+    def flag(self, filename_or_string: str, *, colname: str, flags: list[str] | None = ["Oui", ""]) -> None:
         ...
 
-    def apply_cell(self, name_or_email: str, colname: str, value, msg: Optional[str] = None):
+    def apply_cell(self, name_or_email: str, colname: str, value, msg: str | None = None) -> None:
         ...
 
     def switch(
@@ -102,7 +101,15 @@ class Documents:
         *,
         colname: str,
         backup: bool = False,
-        new_colname: Optional[str] = None,
-    ):
+        new_colname: str | None = None,
+    ) -> None:
         ...
 
+    def add_moodle_listing(self, filename: str) -> None:
+        ...
+
+    def add_affectation(self, filename: str) -> None:
+        ...
+
+    def add_utc_ent_listing(self, filename: str) -> None:
+        ...

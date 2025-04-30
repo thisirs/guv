@@ -46,7 +46,7 @@ from ..utils_config import Output, rel_to_dir
 from .base import CliArgsMixin, SemesterTask, UVTask
 from .evolutionary_algorithm import evolutionary_algorithm
 from .instructors import WeekSlotsDetails
-from .internal import PlanningSlots, XlsStudentDataMerge
+from .internal import PlanningSlots, XlsStudentData
 
 DATE_FORMAT = "%Y-%m-%d"
 TIME_FORMAT = "%H:%M"
@@ -130,7 +130,7 @@ class CsvGroups(UVTask, CliArgsMixin):
 
     def setup(self):
         super().setup()
-        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.xls_merge = XlsStudentData.target_from(**self.info)
         self.file_dep = [self.xls_merge]
         self.parse_args()
         if self.single:
@@ -177,7 +177,7 @@ class CsvGroups(UVTask, CliArgsMixin):
         return dfs
 
     def run(self):
-        df = XlsStudentDataMerge.read_target(self.xls_merge)
+        df = XlsStudentData.read_target(self.xls_merge)
 
         dfs = self.build_dataframes(df)
 
@@ -985,14 +985,14 @@ class JsonGroup(UVTask, CliArgsMixin):
 
     def setup(self):
         super().setup()
-        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.xls_merge = XlsStudentData.target_from(**self.info)
         self.file_dep = [self.xls_merge]
 
         self.parse_args()
         self.target = self.build_target(group=normalize_string(self.group, type="file"))
 
     def run(self):
-        df = XlsStudentDataMerge.read_target(self.xls_merge)
+        df = XlsStudentData.read_target(self.xls_merge)
 
         self.check_if_present(
             df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
@@ -1262,7 +1262,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
     def setup(self):
         super().setup()
 
-        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.xls_merge = XlsStudentData.target_from(**self.info)
         self.file_dep = [self.xls_merge]
 
         self.parse_args()
@@ -1351,7 +1351,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         if self.ordered is not None and (self.affinity_groups or self.other_groups):
             raise self.parser.error("L'option ``ordered`` est incompatible avec les contraintes ``other-groups`` et ``affinity_groups``.")
 
-        df = XlsStudentDataMerge.read_target(self.xls_merge)
+        df = XlsStudentData.read_target(self.xls_merge)
 
         if self.grouping is not None:
             self.check_if_present(

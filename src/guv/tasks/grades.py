@@ -13,7 +13,7 @@ from ..logger import logger
 from ..utils import argument, normalize_string, sort_values
 from ..utils_config import Output
 from .base import CliArgsMixin, UVTask
-from .internal import XlsStudentDataMerge
+from .internal import XlsStudentData
 
 
 class CsvForUpload(UVTask, CliArgsMixin):
@@ -79,7 +79,7 @@ class CsvForUpload(UVTask, CliArgsMixin):
     def setup(self):
         super().setup()
 
-        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.xls_merge = XlsStudentData.target_from(**self.info)
         self.file_dep = [self.xls_merge]
 
         self.parse_args()
@@ -89,7 +89,7 @@ class CsvForUpload(UVTask, CliArgsMixin):
         if self.ects and self.comment_colname:
             raise self.parser.error("Option `--comment-colname` inutile pour charger des notes ECTS")
 
-        df = XlsStudentDataMerge.read_target(self.xls_merge)
+        df = XlsStudentData.read_target(self.xls_merge)
 
         self.check_if_present(
             df, self.grade_colname, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
@@ -167,12 +167,12 @@ class YamlQCM(UVTask):
 
     def setup(self):
         super().setup()
-        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.xls_merge = XlsStudentData.target_from(**self.info)
         self.target = self.build_target()
         self.file_dep = [self.xls_merge]
 
     def run(self):
-        df = XlsStudentDataMerge.read_target(self.xls_merge)
+        df = XlsStudentData.read_target(self.xls_merge)
         dff = df[["Nom", "Prénom", "Courriel"]]
         d = dff.to_dict(orient="index")
         rec = [
@@ -200,7 +200,7 @@ class CsvAmcList(UVTask):
 
     def setup(self):
         super().setup()
-        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.xls_merge = XlsStudentData.target_from(**self.info)
         self.file_dep = [self.xls_merge]
         self.target = self.build_target()
 

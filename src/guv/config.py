@@ -8,7 +8,7 @@ from schema import And, Or, Schema, SchemaError, Use
 
 from .exceptions import ImproperlyConfigured, NotUVDirectory
 from .logger import logger
-from .utils import pformat
+from .utils import pformat, rel_to_dir_aux
 
 SEMESTER_VARIABLE = "GUV_SEMESTER_PATH"
 
@@ -54,21 +54,6 @@ _SETTING_LIST = [
         "CRENEAU_UV",
         schema=Schema(str),
         help="La variable 'CRENEAU_UV' est incorrecte : un chemin relatif vers le fichier pdf des créneaux ingénieur est attendu",
-    ),
-    Setting(
-        "ENT_LISTING",
-        schema=Schema(Or(None, str)),
-        help="La variable 'ENT_LISTING' est incorrecte : un chemin relatif vers l'effectif de l'UV disponible sur l'ENT est attendu",
-    ),
-    Setting(
-        "AFFECTATION_LISTING",
-        schema=Schema(Or(None, str)),
-        help="La variable 'AFFECTATION_LISTING' est incorrecte : un chemin relatif vers les affectations aux Cours/TD/TP fourni par l'administration est attendu",
-    ),
-    Setting(
-        "MOODLE_LISTING",
-        schema=Schema(Or(None, str)),
-        help="La variable 'MOODLE_LISTING' est incorrecte : un chemin relatif vers l'effectif fourni par Moodle est attendu",
     ),
     Setting(
         "DEFAULT_INSTRUCTOR",
@@ -261,7 +246,7 @@ class Settings:
                 "dep_file": os.path.join(self.semester_directory, ".guv.db"),
                 # "check_file_uptodate": "timestamp",
                 "verbosity": 2,
-                "default_tasks": ["utc_uv_list_to_csv", "xls_student_data_merge"],
+                "default_tasks": ["utc_uv_list_to_csv", "xls_student_data"],
             }
 
             to_load = [

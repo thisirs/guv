@@ -20,7 +20,7 @@ from ..logger import logger
 from ..utils import argument, generate_groupby, normalize_string, sort_values
 from ..utils_config import render_from_contexts
 from .base import CliArgsMixin, UVTask
-from .students import XlsStudentDataMerge
+from .internal import XlsStudentData
 
 
 def get_random():
@@ -130,7 +130,7 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
     def setup(self):
         super().setup()
 
-        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.xls_merge = XlsStudentData.target_from(**self.info)
         self.file_dep = [self.xls_merge]
 
         self.parse_args()
@@ -150,7 +150,7 @@ class PdfTrombinoscope(UVTask, CliArgsMixin):
 
     def run(self):
         # On vérifie que GROUPBY et SUBGROUPBY sont licites
-        df = XlsStudentDataMerge.read_target(self.xls_merge)
+        df = XlsStudentData.read_target(self.xls_merge)
 
         if self.groupby is not None:
             self.check_if_present(

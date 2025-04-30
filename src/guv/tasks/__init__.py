@@ -15,9 +15,8 @@ from .grades import CsvAmcList, CsvForUpload, YamlQCM
 from .ical import IcalInst, IcalSlots, IcalUv
 from .instructors import (WeekSlotsDetails, XlsInstructors, XlsRemplacements,
                           XlsUTP)
-from .internal import (CsvInscrits, Planning, PlanningSlots, PlanningSlotsAll,
-                       UtcUvListToCsv, WeekSlots, WeekSlotsAll, XlsStudentData,
-                       XlsStudentDataMerge)
+from .internal import (Planning, PlanningSlots, PlanningSlotsAll,
+                       UtcUvListToCsv, WeekSlots, WeekSlotsAll, XlsStudentData)
 from .moodle import (CsvCreateGroups, CsvGroups, CsvGroupsGroupings,
                      FetchGroupId, HtmlInst, HtmlTable, JsonGroup,
                      JsonRestriction)

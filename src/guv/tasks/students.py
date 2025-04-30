@@ -24,7 +24,7 @@ from ..logger import logger
 from ..utils import argument, normalize_string
 from ..utils_config import Output, ask_choice, rel_to_dir
 from .base import CliArgsMixin, UVTask
-from .internal import XlsStudentDataMerge
+from .internal import XlsStudentData
 
 
 class ZoomBreakoutRooms(UVTask, CliArgsMixin):
@@ -41,13 +41,13 @@ class ZoomBreakoutRooms(UVTask, CliArgsMixin):
 
     def setup(self):
         super().setup()
-        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.xls_merge = XlsStudentData.target_from(**self.info)
         self.file_dep = [self.xls_merge]
         self.parse_args()
         self.target = self.build_target(group=normalize_string(self.group, type="file"))
 
     def run(self):
-        df = XlsStudentDataMerge.read_target(self.xls_merge)
+        df = XlsStudentData.read_target(self.xls_merge)
         self.check_if_present(
             df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
         )
@@ -75,13 +75,13 @@ class MaggleTeams(UVTask, CliArgsMixin):
 
     def setup(self):
         super().setup()
-        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.xls_merge = XlsStudentData.target_from(**self.info)
         self.file_dep = [self.xls_merge]
         self.parse_args()
         self.target = self.build_target(group=normalize_string(self.group, type="file"))
 
     def run(self):
-        df = XlsStudentDataMerge.read_target(self.xls_merge)
+        df = XlsStudentData.read_target(self.xls_merge)
         self.check_if_present(
             df,
             [
@@ -147,7 +147,7 @@ class SendEmail(UVTask, CliArgsMixin):
 
     def setup(self):
         super().setup()
-        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.xls_merge = XlsStudentData.target_from(**self.info)
         self.file_dep = [self.xls_merge]
         self.parse_args()
 
@@ -167,7 +167,7 @@ class SendEmail(UVTask, CliArgsMixin):
                 file_.write("Subject: le sujet\n\nle corps")
 
     def send_emails(self):
-        df = XlsStudentDataMerge.read_target(self.xls_merge)
+        df = XlsStudentData.read_target(self.xls_merge)
 
         with open(self.template, "r") as file_:
             if not file_.readline().startswith("Subject:"):
@@ -224,7 +224,7 @@ class PasswordFile(UVTask, CliArgsMixin):
 
     def setup(self):
         super().setup()
-        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.xls_merge = XlsStudentData.target_from(**self.info)
         self.file_dep = [self.xls_merge]
 
         # No targets to avoid circular deps in doit as we probably
@@ -234,7 +234,7 @@ class PasswordFile(UVTask, CliArgsMixin):
         self.parse_args()
 
     def run(self):
-        df = XlsStudentDataMerge.read_target(self.xls_merge)
+        df = XlsStudentData.read_target(self.xls_merge)
         df = df[["Nom", "Prénom", "Courriel"]]
 
         df_passwd = self.parse_passwd_file()

@@ -11,7 +11,7 @@
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.internal.XlsStudentDataMerge`
+   - :class:`guv.tasks.internal.XlsStudentData`
 
    Aucune tâche ne dépend de celle-ci.
 ```
@@ -22,7 +22,7 @@
 
    Cette tâche dépend de :
 
-   - :class:`guv.tasks.internal.XlsStudentDataMerge`
+   - :class:`guv.tasks.internal.XlsStudentData`
 
    Aucune tâche ne dépend de celle-ci.
 ```

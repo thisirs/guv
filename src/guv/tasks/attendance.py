@@ -8,7 +8,7 @@ from ..utils import (LaTeXEnvironment, argument, generate_groupby, make_groups,
                      normalize_string, pformat, sort_values)
 from ..utils_config import render_from_contexts
 from .base import CliArgsMixin, UVTask
-from .students import XlsStudentDataMerge
+from .internal import XlsStudentData
 
 
 class PdfAttendance(UVTask, CliArgsMixin):
@@ -109,7 +109,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
 
     def setup(self):
         super().setup()
-        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.xls_merge = XlsStudentData.target_from(**self.info)
         self.file_dep = [self.xls_merge]
 
         self.parse_args()
@@ -148,7 +148,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
                     context["filename_no_ext"] = f"{name}"
                     yield context
             else:
-                df = XlsStudentDataMerge.read_target(self.xls_merge)
+                df = XlsStudentData.read_target(self.xls_merge)
                 df = sort_values(df, ["Nom", "Prénom"])
                 context["blank"] = False
 
@@ -182,7 +182,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
                     yield context
 
         else:
-            df = XlsStudentDataMerge.read_target(self.xls_merge)
+            df = XlsStudentData.read_target(self.xls_merge)
             df = sort_values(df, ["Nom", "Prénom"])
 
             if self.tiers_temps:
@@ -289,7 +289,7 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
 
     def setup(self):
         super().setup()
-        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.xls_merge = XlsStudentData.target_from(**self.info)
         self.file_dep = [self.xls_merge]
         self.parse_args()
         self.target = self.build_target(
@@ -298,7 +298,7 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
         )
 
     def run(self):
-        df = XlsStudentDataMerge.read_target(self.xls_merge)
+        df = XlsStudentData.read_target(self.xls_merge)
         if self.group is not None:
             self.check_if_present(
                 df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR

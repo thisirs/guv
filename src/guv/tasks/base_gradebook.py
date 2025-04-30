@@ -10,7 +10,7 @@ from ..openpyxl_patched import fixit
 from ..utils import normalize_string
 from ..utils_config import Output, rel_to_dir
 from .base import CliArgsInheritMixin, UVTask
-from .students import XlsStudentDataMerge
+from .internal import XlsStudentData
 
 fixit(openpyxl)
 
@@ -69,7 +69,7 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
 
     def setup(self):
         super().setup()
-        self.xls_merge = XlsStudentDataMerge.target_from(**self.info)
+        self.xls_merge = XlsStudentData.target_from(**self.info)
         self.file_dep = [self.xls_merge]
         self.parse_args()
 
@@ -78,7 +78,7 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
         self.targets = []
 
     def run(self):
-        self.data_df = XlsStudentDataMerge.read_target(self.xls_merge)
+        self.data_df = XlsStudentData.read_target(self.xls_merge)
         self.create_first_worksheet()
         self.create_other_worksheets()
         target = self.build_target(name=normalize_string(self.name, type="file"))

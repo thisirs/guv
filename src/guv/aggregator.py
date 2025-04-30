@@ -62,6 +62,9 @@ class SimpleMerger(Merger):
         super().__init__(type=type)
         self.column = column
 
+    def fingerprint(self):
+        return self.column
+
     @property
     def on(self):
         return self.column
@@ -83,6 +86,9 @@ class ColumnsMerger(Merger):
         self.columns = columns
         self.slug_column = "guv_" + "_".join(columns)
         self.func = func
+
+    def fingerprint(self):
+        return self.columns
 
     @property
     def on(self):
@@ -207,6 +213,22 @@ class Aggregator:
         # Add required columns to be able to merge and display warnings
         self._right_df = self.right_merger.transform(self._right_df)
         self._left_df = self.left_merger.transform(self._left_df)
+
+        dup_right = self._right_df.duplicated(subset=self.right_merger.on)
+        if dup_right.any():
+            errors = self._right_df.loc[dup_right, self.right_merger.descriptive_columns]
+
+            n = len(errors.index)
+            logger.error(
+                "L%senregistrement%s suivant%s n%s pas unique%s",
+                plural(n, "es ", "'"),
+                ps(n),
+                ps(n),
+                plural(n, "e sont", "'est"),
+                ps(n),
+            )
+            print(errors.to_string(index=False))
+            raise GuvUserError
 
         # Rename, drop, select columns on _right_df
         self._apply_transformations()

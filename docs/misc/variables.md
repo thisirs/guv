@@ -32,14 +32,5 @@
 
 ## Variables reconnues dans les fichiers `config.py` d'UV
 
-- `ENT_LISTING` : Chemin relatif vers le fichier de l'UV tel que
-  fourni par l'ENT, voir {ref}`ent-listing`.
-- `AFFECTATION_LISTING` : Chemin relatif vers le fichier des
-  créneaux de Cours/TD/TP, voir {ref}`affectation`.
-- `MOODLE_LISTING` : Chemin relatif vers le fichier Moodle qu'on
-  peut télécharger en allant dans `Configuration du carnet de notes`
-  et en sélectionnant `Feuille de calcul Excel` dans le menu
-  déroulant et ensuite `Télécharger`, voir {ref}`moodle-listing`.
-- `DOCS` : Variable sur laquelle appeler des méthodes pour agréger
-  d'autres documents en plus des documents usuels, voir
-  {ref}`incorporation`.
+- `DOCS` : Variable sur laquelle appeler des méthodes pour agréger d'autres
+  documents, voir {ref}`incorporation`.

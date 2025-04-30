@@ -6,16 +6,17 @@ import openpyxl
 import pandas as pd
 from PyPDF2 import PdfReader
 from tabula import read_pdf
-from unidecode import unidecode
+from doit.tools import config_changed
+from doit.exceptions import TaskFailed
+import logging
 
 from ..config import settings
 from ..exceptions import GuvUserError, ImproperlyConfigured
-from ..helpers import Aggregator, Documents, id_slug
 from ..logger import logger
 from ..openpyxl_patched import fixit
 from ..utils import (convert_author, convert_to_time, plural, ps, px,
-                     read_dataframe, sort_values)
-from ..utils_config import Output, ask_choice, generate_row, rel_to_dir
+                     read_dataframe, sort_values, pformat)
+from ..utils_config import Output, ask_choice, generate_row, rel_to_dir, selected_uv
 from .base import SemesterTask, UVTask
 
 fixit(openpyxl)
@@ -28,534 +29,137 @@ from ..openpyxl_utils import (fill_row, frame_range, get_range_cells,
                               get_row_cells)
 
 
-class CsvInscrits(UVTask):
-    """Construit un fichier CSV à partir des données brutes de la promo fournies par l'UTC"""
+def split_list_by_token_inclusive(lst):
+    result = []
+    current = []
+    for item in lst:
+        current.append(item)
+        if item.cache:
+            result.append(current)
+            current = []
+    if current:
+        result.append(current)
+    return result
 
-    hidden = True
-    target_name = "inscrits.csv"
+
+class Documents:
     target_dir = "generated"
-    unique_uv = False
+    target_name = "student_data_{step}.csv"
 
-    def setup(self):
-        super().setup()
-        self.target = self.build_target()
-        utc_listing_fn = self.settings.AFFECTATION_LISTING
-        if utc_listing_fn is not None:
-            self.utc_listing = os.path.join(
-                self.settings.SEMESTER_DIR, self.uv, utc_listing_fn
-            )
-            self.file_dep = [self.utc_listing]
-        else:
-            self.utc_listing = None
-            self.file_dep = []
+    def __init__(self):
+        self.uv = None
+        self._actions = []
 
-    def parse_UTC_listing(self):
-        """Parse `utc_listing` into DataFrame"""
-
-        if "RX_STU" in self.settings:
-            RX_STU = re.compile(self.settings.RX_STU)
-        else:
-            # 042   NOM PRENOM            GI02
-            RX_STU = re.compile(
-                r"^"
-                r"\d{3}"
-                r"\s{3}"
-                r"(?P<name>.{23})"
-                r"\s{3}"
-                r"(?P<branche>[A-Z]{2})"
-                r"(?P<semestre>[0-9]{2})"
-                r"$"
-            )
-
-        if "RX_UV" in self.settings:
-            RX_UV = re.compile(self.settings.RX_UV)
-        else:
-            # SY19       C 1   ,PL.MAX= 73 ,LIBRES=  0 ,INSCRITS= 73  H=MERCREDI 08:00-10:00,F1,S=
-            RX_UV = re.compile(
-                r"^(?P<uv>\w+)"
-                r"\s+"
-                r"(?P<course>[CTD])"
-                r"\s*"
-                r"(?P<number>[0-9]+)"
-                r"\s*"
-                r"(?P<week>[AB])?"
-            )
-
-        if "RX_JUNK" in self.settings:
-            RX_JUNK = re.compile(self.settings.RX_JUNK)
-        else:
-            RX_JUNK = re.compile(r"\s*(\+-+|\d)\s*")
-
-        with open(self.utc_listing, "r") as fd:
-            course_name = course_type = None
-            rows = []
-            for line in fd:
-                line = line.strip()
-                if not line:
-                    continue
-
-                if (m := RX_UV.match(line)) is not None:
-                    number = m.group("number") or ""
-                    week = m.group("week") or ""
-                    course = m.group("course") or ""
-                    course_name = course + number + week
-                    course_type = {"C": "Cours", "D": "TD", "T": "TP"}[course]
-                    logger.debug("Séance `%s` ajoutée", course_name)
-                elif (m := RX_STU.match(line)) is not None:
-                    name = m.group("name").strip()
-                    spe = m.group("branche")
-                    sem = int(m.group("semestre"))
-                    if spe == "HU":
-                        spe = "HuTech"
-                    elif spe == "MT":
-                        spe = "ISC"
-                    rows.append(
-                        {
-                            "Name": name,
-                            "course_type": course_type,
-                            "course_name": course_name,
-                            "Branche": spe,
-                            "Semestre": sem,
-                        }
-                    )
-                    logger.debug("Étudiant `%s` ajouté dans `%s`", name, course_name)
-                elif (m := RX_JUNK.match(line)) is not None:
-                    logger.debug("Line `%s` ignorée", line)
-                else:
-                    logger.warning("La ligne ci-après n'est pas reconnue :")
-                    logger.warning(line.strip())
-
-        df = pd.DataFrame(rows, columns=["Name", "course_type", "course_name", "Branche", "Semestre"])
-        df = pd.pivot_table(
-            df,
-            columns=["course_type"],
-            index=["Name", "Branche", "Semestre"],
-            values="course_name",
-            aggfunc="first",
+    @classmethod
+    def target_from(cls, **kwargs):
+        target = os.path.join(
+            settings.SEMESTER_DIR,
+            kwargs["uv"],
+            cls.target_dir,
+            cls.target_name
         )
-        df = df.reset_index()
+        return pformat(target, step=kwargs["step"])
 
-        # Il peut arriver qu'un créneau A/B ne soit pas marqué comme tel
-        # car il n'a pas de pendant pour l'autre semaine. On le fixe donc
-        # manuellement à A ou B.
-        if "TP" in df.columns:
-            semAB = [i for i in df.TP.unique() if re.match("T[0-9]{,2}[AB]", i)]
-            if semAB:
-                gr = [i for i in df.TP.unique() if re.match("^T[0-9]{,2}$", i)]
-                rep = {}
-                for g in gr:
-                    choice = ask_choice(
-                        f"Semaine pour le créneau {g} (A ou B) ? ",
-                        choices={"A": "A", "a": "A", "B": "B", "b": "B"},
-                    )
-                    rep[g] = g + choice
-                df = df.replace({"TP": rep})
-        return df
+    def setup(self, base_dir, uv):
+        for a in self.actions:
+            a.base_dir = base_dir
+            a.uv = uv
+        self.uv = uv
 
-    def run(self):
-        if self.utc_listing is None:
-            raise ImproperlyConfigured(
-                "La variable 'AFFECTATION_LISTING' n'est pas renseignée"
-            )
-        if not os.path.exists(self.utc_listing):
-            raise FileNotFoundError("Le fichier '{0}' n'existe pas".format(
-                rel_to_dir(self.utc_listing, self.settings.SEMESTER_DIR)
-            ))
-        df = self.parse_UTC_listing()
-        with Output(self.target) as out:
-            df.to_csv(out.target, index=False)
+    def generate_doit_tasks(self):
+        steps = split_list_by_token_inclusive(self.actions)
+        for i, lst in enumerate(steps):
+            step = i if i < len(steps) - 1 else "final"
+            target = self.target_from(step=step, uv=self.uv)
+            cache_file = self.target_from(step=i-1, uv=self.uv) if i > 0 else None
+
+            other_deps = [d for a in lst for d in a.deps]
+            deps = other_deps if cache_file is None else [cache_file] + other_deps
+
+            def build_action(lst, cache_file, target):
+                def func():
+                    df = pd.read_csv(cache_file) if cache_file is not None else None
+                    for a in lst:
+                        logger.info(a.message())
+                        try:
+                            df = a.apply(df)
+                        except Exception as e:
+                            if settings.DEBUG <= logging.DEBUG:
+                                raise e from e
+                            return TaskFailed(f"L'étape `{a.name()}` a échoué : {str(e)}")
+
+                    df.to_csv(target, index=False)
+                return func
+
+            foo = "-".join(op.hash() for op in lst)
+            doit_task = {
+                "basename": f"DOCS_{i}",
+                "actions": [build_action(lst, cache_file, target)],
+                "file_dep": deps,
+                "targets": [target],
+                "uptodate": [config_changed(foo)]
+            }
+            def format_task(doit_task):
+                return "\n".join(f"{key}: {value}" for key, value in doit_task.items()
+                                 if key not in ["doc"])
+
+            logger.debug("Task properties are:")
+            logger.debug(format_task(doit_task))
+
+            yield doit_task
+
+    def add_action(self, action):
+        self._actions.append(action)
+
+    @property
+    def actions(self):
+        return self._actions
+
+    @property
+    def deps(self):
+        return [d for a in self.actions for d in a.deps]
 
 
 class XlsStudentData(UVTask):
-    """Construit le fichier Excel des données étudiants fournies par l'UTC
+    """Agrège les informations spécifiées dans la variable ``DOCS``
 
-    Les données utilisées sont le fichier disponible sur l'ENT de
-    l'effectif officiel de l'UV repéré par la variable ``ENT_LISTING``
-    dans le fichier ``config.py`` de l'UV, le fichier des affectations aux
-    créneaux de Cours/TD/TP repéré par la variable ``AFFECTATION_LISTING``
-    dans le fichier ``config.py`` de l'UV et le fichier Moodle des
-    inscrits à l'UV (si disponible) repéré par la variable
-    ``MOODLE_LISTING`` dans le fichier ``config.py`` de l'UV.
+    Agrège les informations spécifiées dans la variable ``DOCS`` du fichier
+    ``config.py`` d'une UV dans un seul fichier ``effectif.xlsx``.
+
     """
 
-    hidden = True
-    target_dir = "generated"
-    target_name = "student_data.xlsx"
-    unique_uv = False
-
-    def setup(self):
-        super().setup()
-        self.file_dep = []
-        self.target = self.build_target()
-
-        if "ENT_LISTING" in self.settings and self.settings.ENT_LISTING:
-            self.extraction_ENT = os.path.join(
-                self.settings.SEMESTER_DIR, self.uv, self.settings.ENT_LISTING
-            )
-            self.file_dep.append(self.extraction_ENT)
-        else:
-            self.extraction_ENT = None
-
-        if self.settings.AFFECTATION_LISTING is not None:
-            self.csv_UTC = CsvInscrits.target_from(**self.info)
-            self.file_dep.append(self.csv_UTC)
-        else:
-            self.csv_UTC = None
-
-        if "MOODLE_LISTING" in self.settings and self.settings.MOODLE_LISTING:
-            self.csv_moodle = os.path.join(
-                self.settings.SEMESTER_DIR, self.uv, self.settings.MOODLE_LISTING
-            )
-            self.file_dep.append(self.csv_moodle)
-        else:
-            self.csv_moodle = None
-
-    def run(self):
-        if self.extraction_ENT is not None:
-            logger.info(
-                "Chargement des données issues de l'ENT: `%s`",
-                rel_to_dir(self.extraction_ENT),
-            )
-            if not os.path.isfile(self.extraction_ENT):
-                raise FileNotFoundError(
-                    "Le chemin `{}` n'existe pas ou n'est pas un fichier".format(
-                        rel_to_dir(self.extraction_ENT)
-                    )
-                )
-
-            df = self.load_ENT_data()
-
-            df_nodup = df.drop_duplicates()
-
-            n = len(df) - len(df_nodup)
-            if n > 0:
-                df = df_nodup
-                logger.warning("Présence de %d enregistrement%s dupliqué%s", n, ps(n), ps(n))
-
-            if self.csv_moodle is not None:
-                logger.info(
-                    "Ajout des données issues de Moodle: `%s`",
-                    rel_to_dir(self.csv_moodle),
-                )
-
-                if not os.path.isfile(self.csv_moodle):
-                    raise Exception(
-                        "Le chemin `{}` n'existe pas ou n'est pas un fichier".format(
-                            rel_to_dir(self.csv_moodle)
-                        )
-                    )
-
-                df_moodle = self.load_moodle_data()
-                df = self.add_moodle_data(df, df_moodle)
-        else:
-            if self.csv_moodle is None:
-                raise GuvUserError("Pas de fichier `ENT_LISTING` ni `MOODLE_LISTING`")
-            logger.info("Chargement des données issues de Moodle")
-            df = self.load_moodle_data()
-
-        if self.csv_UTC is not None:
-            logger.info(
-                "Ajout des affectations aux Cours/TD/TP : `%s`",
-                rel_to_dir(self.csv_UTC),
-            )
-            df = self.add_UTC_data(df, self.csv_UTC)
-
-        dff = sort_values(df, ["Nom", "Prénom"])
-
-        with Output(self.target) as out:
-            dff.to_excel(out.target, index=False)
-
-    def load_ENT_data(self):
-        try:
-            return self.load_ENT_data_old()
-        except (pd.errors.ParserError, KeyError) as e:
-            try:
-                return self.load_ENT_data_new()
-            except KeyError:
-                return self.load_ENT_data_basic()
-
-    def load_ENT_data_new(self):
-        df = pd.read_excel(self.extraction_ENT)
-
-        # Split information in 2 columns
-        df[["Branche", "Semestre"]] = df.pop('Spécialité').str.extract(
-            '(?P<Branche>[a-zA-Z]+) *(?P<Semestre>[0-9]+)',
-            expand=True
-        )
-        df["Semestre"] = pd.to_numeric(df['Semestre'])
-
-        # Drop irrelevant columns
-        df = df.drop(['Réussite', 'Résultat ECTS', 'Mention'], axis=1)
-
-        return df
-
-    def load_ENT_data_old(self):
-        df = pd.read_csv(self.extraction_ENT, sep="\t", encoding='ISO_8859_1')
-
-        # Split information in 2 columns
-        df[["Branche", "Semestre"]] = df.pop('Spécialité 1').str.extract(
-            '(?P<Branche>[a-zA-Z]+) *(?P<Semestre>[0-9]+)',
-            expand=True
-        )
-        df["Semestre"] = pd.to_numeric(df['Semestre'])
-
-        # Drop irrelevant columns
-        df = df.drop(['Inscription', 'Spécialité 2', 'Résultat ECTS', 'UTC', 'Réussite', 'Statut'], axis=1)
-
-        # Drop unnamed columns
-        df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
-
-        return df
-
-    def load_ENT_data_basic(self):
-        return pd.read_excel(self.extraction_ENT)
-
-    def load_moodle_data(self):
-        df = read_dataframe(self.csv_moodle)
-
-        # For some reason "Nom" changed to "Nom de famille" in recent Moodle.
-        # This breaks the intended clash with "Nom" for effectif.xlsx.
-        df = df.rename(columns={"Nom de famille": "Nom"})
-
-        nans = df["Nom"].isna() | df["Prénom"].isna()
-        n = sum(nans)
-        if n != 0:
-            logger.warning(
-                "%d enregistrement%s %s été ignoré%s dans le fichier `%s`",
-                n,
-                ps(n),
-                plural(n, "ont", "a"),
-                ps(n),
-                rel_to_dir(self.csv_moodle)
-            )
-            df = df.drop(df[nans].index)
-
-        # On laisse tomber les colonnes inintéressantes
-        df = df.drop(
-            ["Institution", "Département", "Dernier téléchargement depuis ce cours"],
-            axis=1,
-        )
-
-        return df
-
-    def add_moodle_data(self, df, df_moodle):
-        """Incorpore les données du fichier extrait de Moodle"""
-
-        if "Courriel" not in df.columns:
-            raise GuvUserError("La colonne `Courriel` n'est pas présente dans le fichier central")
-
-        moodle_short_email = re.match(r"^\w+@", df_moodle.iloc[0]["Adresse de courriel"]) is not None
-        ent_short_email = re.match(r"^\w+@", df.iloc[0]["Courriel"]) is not None
-
-        if moodle_short_email ^ ent_short_email:
-            logger.info("Les adresses courriels sont dans un format différent, agrégation avec les colonnes `Nom` et `Prénom`")
-            left_on = id_slug("Nom", "Prénom")
-            right_on = id_slug("Nom", "Prénom")
-        else:
-            left_on = "Courriel"
-            right_on = "Adresse de courriel"
-
-        # Outer aggregation only to handle specifically mismatches
-        agg = Aggregator(
-            left_df=df,
-            right_df=df_moodle,
-            left_on=left_on,
-            right_on=right_on,
-            suffixes=("", "_moodle"),
-            how="outer"
-        )
-        df_outer = agg.merge(clean_exclude="_merge")
-
-        # Warn of any mismatch
-        lo = df_outer.loc[df_outer["_merge"] == "left_only"]
-        for index, row in lo.iterrows():
-            fullname = row["Nom"] + " " + row["Prénom"]
-            logger.warning("`%s` n'est pas présent dans les données Moodle", fullname)
-
-        ro = df_outer.loc[df_outer["_merge"] == "right_only"]
-        for index, row in ro.iterrows():
-            fullname = row["Nom_moodle"] + " " + row["Prénom_moodle"]
-            logger.warning("`%s` n'est pas présent dans le fichier central", fullname)
-
-        # Base dataframe to add row to
-        df_both = df_outer.loc[df_outer["_merge"] == "both"]
-
-        # Ask user to do the matching
-        for index, row in lo.iterrows():
-            if len(ro.index) != 0:
-                fullname = row["Nom"] + " " + row["Prénom"]
-                logger.info("Recherche de correspondance pour `%s` :", fullname)
-                for i, (index_ro, row_ro) in enumerate(ro.iterrows()):
-                    fullname_ro = row_ro["Nom_moodle"] + " " + row_ro["Prénom_moodle"]
-                    print(f"  ({i}) {fullname_ro}")
-
-                choice = ask_choice(
-                    "Choix ? (entrée si pas de correspondance) ",
-                    {**{str(i): i for i in range(len(ro.index))}, "": None}
-                )
-
-                if choice is not None:
-                    row_merge = lo.loc[index, :].combine_first(ro.iloc[choice, :])
-                    ro = ro.drop(index=ro.iloc[[choice]].index)
-                    row_merge["_merge"] = "both"
-                    df_both = pd.concat((df_both, row_merge.to_frame().T))
-                else:
-                    row_merge = lo.loc[index, :].copy()
-                    row_merge["_merge"] = "both"
-                    df_both = pd.concat((df_both, row_merge.to_frame().T))
-            else:
-                row_merge = lo.loc[index, :].copy()
-                row_merge["_merge"] = "both"
-                df_both = pd.concat((df_both, row_merge.to_frame().T))
-
-        return df_both.drop(["_merge"], axis=1)
-
-    def add_UTC_data(self, df, fn):
-        "Incorpore les données Cours/TD/TP des inscrits UTC"
-
-        if "Nom" not in df.columns:
-            raise GuvUserError("Pas de colonne 'Nom' pour agréger les données")
-        if "Prénom" not in df.columns:
-            raise GuvUserError("Pas de colonne 'Prénom' pour agréger les données")
-
-        # Données issues du fichier des affectations au Cours/TD/TP
-        dfu = pd.read_csv(fn)
-
-        fullnames = df["Nom"] + " " + df["Prénom"]
-
-        def slug(e):
-            return unidecode(e.upper()[:23].strip())
-
-        df["fullname_slug"] = fullnames.apply(slug)
-
-        dfr = pd.merge(
-            df,
-            dfu,
-            suffixes=("", "_utc"),
-            how="outer",
-            left_on=["fullname_slug", "Branche", "Semestre"],
-            right_on=["Name", "Branche", "Semestre"],
-            indicator=True,
-        )
-
-        dfr_clean = dfr.loc[dfr["_merge"] == "both"]
-
-        lo = dfr.loc[dfr["_merge"] == "left_only"]
-        for index, row in lo.iterrows():
-            key = row["fullname_slug"]
-            branch = row["Branche"]
-            semester = row["Semestre"]
-            logger.warning("(`%s`, `%s`, `%s`) présent dans `ENT_LISTING` mais pas dans `AFFECTATION_LISTING`", key, branch, semester)
-
-        ro = dfr.loc[dfr["_merge"] == "right_only"]
-        for index, row in ro.iterrows():
-            key = row["Name"]
-            branch = row["Branche"]
-            semester = row["Semestre"]
-            logger.warning("(`%s`, `%s`, `%s`) présent dans `AFFECTATION_LISTING` mais pas dans `ENT_LISTING`", key, branch, semester)
-
-        # Trying to merge manually lo and ro
-        for index, row in lo.iterrows():
-            if len(ro.index) != 0:
-                fullname = row["Nom"] + " " + row["Prénom"]
-                logger.info("Recherche de correspondance pour `%s` :", fullname)
-
-                for i, (index_ro, row_ro) in enumerate(ro.iterrows()):
-                    fullname_ro = row_ro["Name"]
-                    print(f"  ({i}) {fullname_ro}")
-
-                choice = ask_choice(
-                    "Choix ? (entrée si pas de correspondance) ",
-                    {**{str(i): i for i in range(len(ro.index))}, "": None}
-                )
-
-                if choice is not None:
-                    row_merge = lo.loc[index, :].combine_first(ro.iloc[choice, :])
-                    ro = ro.drop(index=ro.iloc[[choice]].index)
-                    row_merge["_merge"] = "both"
-                    dfr_clean = pd.concat((dfr_clean, row_merge.to_frame().T))
-                else:
-                    row_merge = lo.loc[index, :].copy()
-                    row_merge["_merge"] = "both"
-                    dfr_clean = pd.concat((dfr_clean, row_merge.to_frame().T))
-            else:
-                row_merge = lo.loc[index, :].copy()
-                row_merge["_merge"] = "both"
-                dfr_clean = pd.concat((dfr_clean, row_merge.to_frame().T))
-
-        for index, row in ro.iterrows():
-            logger.warning("`%s` présent dans `AFFECTATION_LISTING` est ignoré", row["Name"])
-
-        dfr_clean = dfr_clean.drop(["_merge", "fullname_slug", "Name"], axis=1)
-
-        return dfr_clean
-
-    @staticmethod
-    def read_target(student_data):
-        return pd.read_excel(student_data, engine="openpyxl")
-
-
-class XlsStudentDataMerge(UVTask):
-    """Ajoute toutes les autres informations étudiants
-
-    Ajoute les informations de changement de TD/TP, les tiers-temps et
-    des informations par étudiants. Ajoute également les informations
-    spécifiées dans ``DOCS``.
-    """
-
-    hidden = True
     target_name = "effectif.xlsx"
     target_dir = "."
     unique_uv = False
 
+    @classmethod
+    def create_doit_tasks_aux(cls):
+        tasks = []
+        generators = []
+        for planning, uv, info in selected_uv():
+            instance = cls(planning, uv, info)
+            task = instance.to_doit_task(
+                name=f"{instance.planning}_{instance.uv}",
+                uv=instance.uv
+            )
+            docs = instance.settings.DOCS
+            if not isinstance(docs, Documents):
+                raise ImproperlyConfigured("La variable DOCS doit être de type `Documents`: `DOCS = Documents()`")
+            docs.setup(base_dir=os.path.join(settings.SEMESTER_DIR, uv), uv=uv)
+            tasks.append(task)
+            generators.append(docs.generate_doit_tasks())
+
+        return (item for gen in [*generators, tasks] for item in gen)
+
     def setup(self):
         super().setup()
-        self.student_data = XlsStudentData.target_from(**self.info)
-        self.target = self.build_target()
-
-        base_dir = os.path.join(self.settings.SEMESTER_DIR, self.uv)
-        documents = Documents(base_dir=base_dir, info=self.info)
-
-        if "CHANGEMENT_COURS" in self.settings and self.settings.CHANGEMENT_COURS:
-            documents.switch(
-                self.settings.CHANGEMENT_COURS,
-                colname="Cours",
-                backup=True
-            )
-
-        if "CHANGEMENT_TD" in self.settings and self.settings.CHANGEMENT_TD:
-            documents.switch(
-                self.settings.CHANGEMENT_TD,
-                colname="TD",
-                backup=True
-            )
-
-        if "CHANGEMENT_TP" in self.settings and self.settings.CHANGEMENT_TP:
-            documents.switch(
-                self.settings.CHANGEMENT_TP,
-                colname="TP",
-                backup=True
-            )
-
-        if "TIERS_TEMPS" in self.settings and self.settings.TIERS_TEMPS:
-            documents.flag(
-                self.settings.TIERS_TEMPS,
-                colname="Tiers-temps",
-                flags=["Oui", "Non"]
-            )
-
-        if "INFO_ETUDIANT" in self.settings and self.settings.INFO_ETUDIANT:
-            documents.aggregate_org(
-                self.settings.INFO_ETUDIANT,
-                colname="Info"
-            )
-
         if "DOCS" in self.settings:
-            for action in self.settings.DOCS.actions:
-                documents.add_action(action)
-
-        self.documents = documents
-        self.file_dep = documents.deps + [self.student_data] + self.settings.config_files
+            self.student_data = Documents.target_from(uv=self.info["uv"], step="final")
+            self.file_dep = [self.student_data]
+            self.target = self.build_target()
+        else:
+            self.file_dep = []
+            self.target = None
 
     def get_column_dimensions(self):
         if not os.path.exists(self.target):
@@ -573,17 +177,22 @@ class XlsStudentDataMerge(UVTask):
         return {colname: width for colname, width in column_dimensions(ws)}
 
     def run(self):
-        df = XlsStudentData.read_target(self.student_data)
-
-        # Aggregate documents
-        df = self.documents.apply_actions(df, ref_dir=self.settings.CWD)
-
-        dff = sort_values(df, ["Nom", "Prénom"])
+        df = pd.read_csv(self.student_data)
 
         # Write set of columns for completion
         fp = os.path.join(self.settings.SEMESTER_DIR, self.uv, "generated", ".columns.list")
         with open(fp, "w") as file:
             file.write("\n".join(f"{e}" for e in df.columns.values))
+
+        # Keep dataframe ordered the same as original effectif.xlsx
+        if os.path.exists(self.target):
+            df_ordered = XlsStudentData.read_target(self.target)
+            if len(df_ordered.index) == len(df.index):
+                if "Login" in df.columns and "Login" in df_ordered.columns:
+                    if set(df["Login"]) == set(df_ordered["Login"]):
+                        df = df.set_index("Login", drop=False).loc[df_ordered["Login"]].reset_index(drop=True)
+        else:
+            df = sort_values(df, ["Nom", "Prénom"])
 
         # Get column dimensions of original effectif.xlsx
         column_dimensions = self.get_column_dimensions()
@@ -591,7 +200,7 @@ class XlsStudentDataMerge(UVTask):
         wb = Workbook()
         ws = wb.active
 
-        for r in dataframe_to_rows(dff, index=False, header=True):
+        for r in dataframe_to_rows(df, index=False, header=True):
             ws.append(r)
 
         for cell in ws[1]:
@@ -629,11 +238,11 @@ class XlsStudentDataMerge(UVTask):
 
         target = os.path.splitext(self.target)[0] + ".csv"
         with Output(target) as out:
-            dff.to_csv(out.target, index=False)
+            df.to_csv(out.target, index=False)
 
     @staticmethod
-    def read_target(student_data_merge):
-        return pd.read_excel(student_data_merge, engine="openpyxl")
+    def read_target(student_data):
+        return pd.read_excel(student_data, engine="openpyxl")
 
 
 class UtcUvListToCsv(SemesterTask):
