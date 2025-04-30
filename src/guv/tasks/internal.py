@@ -619,7 +619,7 @@ class XlsStudentDataMerge(UVTask):
             elif header_value == "Prénom":
                 width = 1.3 * 16
             elif header_value:
-                width = 1.3 * len(header_value)
+                width = 1.3 * max(len(header_value), 4)
 
             if width is not None:
                 ws.column_dimensions[cell.column_letter].width = width
