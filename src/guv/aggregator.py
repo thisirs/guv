@@ -123,7 +123,10 @@ def _apply_processing(df, processing_type, processing):
                     logger.info(f"{processing_type} : %s", op.__desc__)
                 else:
                     logger.info(processing_type)
-                df = op(df)
+                try:
+                    df = op(df)
+                except Exception as e:
+                    raise Exception(f"Erreur dans `{processing_type.lower()}` :", repr(e)) from e
             else:
                 raise TypeError(f"Unsupported {processing_type} operation", op)
     return df
