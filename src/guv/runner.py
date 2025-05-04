@@ -1,5 +1,6 @@
 import argparse
 import importlib
+import importlib.metadata
 import inspect
 import logging
 import os
@@ -13,14 +14,11 @@ from doit.cmd_base import NamespaceTaskLoader
 from doit.doit_cmd import DoitMain
 
 import guv
-
 from . import tasks
-from .tasks.internal import XlsStudentData
 from .config import settings
-# Load settings from configuration files
 from .logger import logger
 from .parser import get_parser
-from .tasks.base import CliArgsMixin, SemesterTask, TaskBase, UVTask
+from .tasks.base import SemesterTask, TaskBase, UVTask
 
 
 class ModuleTaskLoader(NamespaceTaskLoader):
@@ -34,6 +32,17 @@ class ModuleTaskLoader(NamespaceTaskLoader):
         self.tasks = {}
         self.variables = {}
         self.load_modules(*modules)
+
+    def load_plugin_tasks(self):
+        tasks = []
+        for entry_point in importlib.metadata.entry_points(group="guv_tasks"):
+            name = entry_point.name
+            task_class = entry_point.load()
+            tasks.append((name, task_class))
+        logger.debug("%s tasks loaded from plugins", len(tasks))
+
+        self.tasks.update(dict(tasks))
+        self.namespace.update(dict(tasks))
 
     def load_modules(self, *modules):
         for module in modules:
@@ -193,6 +202,7 @@ def run_task(task_name):
     task_loader.load_variables(settings.settings)
     modules = load_custom_tasks(settings.TASKS)
     task_loader.load_modules(*modules)
+    task_loader.load_plugin_tasks()
 
     if task_name is None:
         logger.debug("Run doit with default tasks")

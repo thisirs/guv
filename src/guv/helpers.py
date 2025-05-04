@@ -1,5 +1,6 @@
 import copy
 import functools
+import importlib.metadata
 import os
 import re
 import textwrap
@@ -9,7 +10,6 @@ from typing import List, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
-from unidecode import unidecode
 
 from .aggregator import Aggregator, ColumnsMerger
 from .config import settings
@@ -1121,73 +1121,6 @@ class AggregateOrg(FileOperation):
         return df_merge
 
 
-class AggregateAmenagements(FileOperation):
-    """Agrégation du fichier des aménagements pour les examens.
-
-    Le document à agréger est disponible
-    [ici](https://webapplis.utc.fr/amenagement/examens/enseignant/suivi-demandes.xhtml).
-    Les colonnes ``Aménagements``, ``Salle dédiée`` et ``Sujet spécifique`` sont
-    créées.
-
-    Parameters
-    ----------
-
-    filename : :obj:`str`
-        Le chemin du fichier Excel d'aménagements à agréger.
-
-    Examples
-    --------
-
-    .. code:: python
-
-       DOCS.aggregate_amenagements("documents/amenagements_examens_Printemps_2024_SY02.xls")
-
-    """
-
-    hash_fields = ["_filename"]
-
-    def __init__(self, filename: str):
-        super().__init__(filename)
-        self._filename = filename
-
-    def apply(self, left_df):
-        check_filename(self.filename, base_dir=settings.SEMESTER_DIR)
-
-        right_df = pd.read_excel(self.filename)
-
-        def is_tt(row):
-            s = str(row["Aménagements"])
-            if "Temps de composition majoré d'un tiers" in s and "pour les épreuves écrites" in s:
-                return "Oui"
-            else:
-                return "Non"
-
-        def is_dys(row):
-            s = str(row["Aménagements"])
-            if "Adaptation dans la présentation des sujets" in s:
-                return "Oui"
-            else:
-                return "Non"
-
-        agg = Aggregator(
-            left_df,
-            right_df,
-            left_on=id_slug("Nom", "Prénom"),
-            right_on=id_slug("Etudiant"),
-            subset="Aménagements",
-            how="left",
-            postprocessing=[
-                ComputeNewColumn("Aménagements", func=is_tt, colname="Salle dédiée"),
-                ComputeNewColumn("Aménagements", func=is_dys, colname="Sujet spécifique")
-            ],
-        )
-
-        df_merge = agg.merge()
-        agg.report()
-
-        return df_merge
-
-
 class FileStringOperation(FileOperation):
     msg_file = "Agrégation du fichier `{filename}`"
     msg_string = "Agrégation directe de \"{string}\""
@@ -1593,68 +1526,6 @@ class AggregateMoodleGroups(FileOperation):
         return f"Agrégation du fichier de groupes `{rel_to_dir(self.filename, ref_dir)}`"
 
 
-class AggregateWexamGrades(FileOperation):
-    """Agrège des feuilles de notes provenant de Wexam."""
-
-    hash_fields = ["_filename", "rename"]
-
-    def __init__(
-        self,
-        filename: str,
-        rename: Optional[dict] = None,
-    ):
-        super().__init__(filename)
-        self.rename = rename
-
-    def apply(self, left_df):
-        kw_read = {"na_values": "-"}
-        right_df = read_dataframe(self.filename, kw_read=kw_read)
-        columns = set(right_df.columns.values)
-
-        if {"Nom", "Prénom", "Login", "Somme"} == columns:
-            drop = ["Nom", "Prénom", "Note"]
-            rename = self.rename
-        elif (regular_columns := {"Nom", "Prénom", "Login", "Note"}).issubset(columns):
-            rest = list(columns - regular_columns)
-            if not all(e.endswith("_Somme") for e in rest):
-                raise GuvUserError("Fichier de notes Wexam non reconnu")
-
-            drop = ["Nom", "Prénom", "Note"]
-            if self.rename is None:
-                rename = {v: v.strip("_Somme") for v in rest}
-            else:
-                rename = self.rename
-        else:
-            raise GuvUserError("Fichier de notes Wexam non reconnu")
-
-        if "Login" in left_df and "Login" in right_df:
-            right_on = left_on = "Login"
-
-        elif {"Nom", "Prénom"}.issubset(set(left_df.columns)) and {"Nom", "Prénom"}.issubset(set(right_df.columns)):
-            left_on=id_slug("Nom", "Prénom"),
-            right_on=id_slug("Nom", "Prénom"),
-        else:
-            raise GuvUserError("La colonne `Login` ou les colonnes `Nom` et `Prénom` sont requises")
-
-        agg = Aggregator(
-            left_df,
-            right_df,
-            left_on=left_on,
-            right_on=right_on,
-            rename=rename,
-            drop=drop,
-            how="left"
-        )
-
-        df_merge = agg.merge()
-        agg.report()
-
-        return df_merge
-
-    def message(self, ref_dir=""):
-        return f"Agrégation du fichier de notes Wexam `{rel_to_dir(self.filename, ref_dir)}`"
-
-
 def keep_drop_moodle_grades(columns):
     try:
         keep, drop = keep_drop_quiz(columns)
@@ -1863,191 +1734,6 @@ class AggregateJury(FileOperation):
         return op.apply(df)
 
 
-class AddAffectation(FileOperation):
-    cache = True
-
-    def apply(self, df):
-        if "Nom" not in df.columns:
-            raise GuvUserError("Pas de colonne 'Nom' pour agréger les données")
-        if "Prénom" not in df.columns:
-            raise GuvUserError("Pas de colonne 'Prénom' pour agréger les données")
-
-        # Données issues du fichier des affectations au Cours/TD/TP
-        dfu = self.parse_UTC_listing()
-
-        fullnames = df["Nom"] + " " + df["Prénom"]
-
-        def slug(e):
-            return unidecode(e.upper()[:23].strip())
-
-        df["fullname_slug"] = fullnames.apply(slug)
-
-        dfr = pd.merge(
-            df,
-            dfu,
-            suffixes=("", "_utc"),
-            how="outer",
-            left_on=["fullname_slug", "Branche", "Semestre"],
-            right_on=["Name", "Branche", "Semestre"],
-            indicator=True,
-        )
-
-        dfr_clean = dfr.loc[dfr["_merge"] == "both"]
-
-        lo = dfr.loc[dfr["_merge"] == "left_only"]
-        for index, row in lo.iterrows():
-            key = row["fullname_slug"]
-            branch = row["Branche"]
-            semester = row["Semestre"]
-            logger.warning("(`%s`, `%s`, `%s`) présent dans `ENT_LISTING` mais pas dans `AFFECTATION_LISTING`", key, branch, semester)
-
-        ro = dfr.loc[dfr["_merge"] == "right_only"]
-        for index, row in ro.iterrows():
-            key = row["Name"]
-            branch = row["Branche"]
-            semester = row["Semestre"]
-            logger.warning("(`%s`, `%s`, `%s`) présent dans `AFFECTATION_LISTING` mais pas dans `ENT_LISTING`", key, branch, semester)
-
-        # Trying to merge manually lo and ro
-        for index, row in lo.iterrows():
-            if len(ro.index) != 0:
-                fullname = row["Nom"] + " " + row["Prénom"]
-                logger.info("Recherche de correspondance pour `%s` :", fullname)
-
-                for i, (index_ro, row_ro) in enumerate(ro.iterrows()):
-                    fullname_ro = row_ro["Name"]
-                    print(f"  ({i}) {fullname_ro}")
-
-                choice = ask_choice(
-                    "Choix ? (entrée si pas de correspondance) ",
-                    {**{str(i): i for i in range(len(ro.index))}, "": None}
-                )
-
-                if choice is not None:
-                    row_merge = lo.loc[index, :].combine_first(ro.iloc[choice, :])
-                    ro = ro.drop(index=ro.iloc[[choice]].index)
-                    row_merge["_merge"] = "both"
-                    dfr_clean = pd.concat((dfr_clean, row_merge.to_frame().T))
-                else:
-                    row_merge = lo.loc[index, :].copy()
-                    row_merge["_merge"] = "both"
-                    dfr_clean = pd.concat((dfr_clean, row_merge.to_frame().T))
-            else:
-                row_merge = lo.loc[index, :].copy()
-                row_merge["_merge"] = "both"
-                dfr_clean = pd.concat((dfr_clean, row_merge.to_frame().T))
-
-        for index, row in ro.iterrows():
-            logger.warning("`%s` présent dans `AFFECTATION_LISTING` est ignoré", row["Name"])
-
-        dfr_clean = dfr_clean.drop(["_merge", "fullname_slug", "Name"], axis=1)
-
-        return dfr_clean
-
-    def parse_UTC_listing(self):
-        """Parse `utc_listing` into DataFrame"""
-
-        if "RX_STU" in settings:
-            RX_STU = re.compile(settings.RX_STU)
-        else:
-            # 042   NOM PRENOM            GI02
-            RX_STU = re.compile(
-                r"^"
-                r"\d{3}"
-                r"\s{3}"
-                r"(?P<name>.{23})"
-                r"\s{3}"
-                r"(?P<branche>[A-Z]{2})"
-                r"(?P<semestre>[0-9]{2})"
-                r"$"
-            )
-
-        if "RX_UV" in settings:
-            RX_UV = re.compile(settings.RX_UV)
-        else:
-            # SY19       C 1   ,PL.MAX= 73 ,LIBRES=  0 ,INSCRITS= 73  H=MERCREDI 08:00-10:00,F1,S=
-            RX_UV = re.compile(
-                r"^(?P<uv>\w+)"
-                r"\s+"
-                r"(?P<course>[CTD])"
-                r"\s*"
-                r"(?P<number>[0-9]+)"
-                r"\s*"
-                r"(?P<week>[AB])?"
-            )
-
-        if "RX_JUNK" in settings:
-            RX_JUNK = re.compile(settings.RX_JUNK)
-        else:
-            RX_JUNK = re.compile(r"\s*(\+-+|\d)\s*")
-
-        with open(self.filename, "r") as fd:
-            course_name = course_type = None
-            rows = []
-            for line in fd:
-                line = line.strip()
-                if not line:
-                    continue
-
-                if (m := RX_UV.match(line)) is not None:
-                    number = m.group("number") or ""
-                    week = m.group("week") or ""
-                    course = m.group("course") or ""
-                    course_name = course + number + week
-                    course_type = {"C": "Cours", "D": "TD", "T": "TP"}[course]
-                    logger.debug("Séance `%s` ajoutée", course_name)
-                elif (m := RX_STU.match(line)) is not None:
-                    name = m.group("name").strip()
-                    spe = m.group("branche")
-                    sem = int(m.group("semestre"))
-                    if spe == "HU":
-                        spe = "HuTech"
-                    elif spe == "MT":
-                        spe = "ISC"
-                    rows.append(
-                        {
-                            "Name": name,
-                            "course_type": course_type,
-                            "course_name": course_name,
-                            "Branche": spe,
-                            "Semestre": sem,
-                        }
-                    )
-                    logger.debug("Étudiant `%s` ajouté dans `%s`", name, course_name)
-                elif (m := RX_JUNK.match(line)) is not None:
-                    logger.debug("Line `%s` ignorée", line)
-                else:
-                    logger.warning("La ligne ci-après n'est pas reconnue :")
-                    logger.warning(line.strip())
-
-        df = pd.DataFrame(rows, columns=["Name", "course_type", "course_name", "Branche", "Semestre"])
-        df = pd.pivot_table(
-            df,
-            columns=["course_type"],
-            index=["Name", "Branche", "Semestre"],
-            values="course_name",
-            aggfunc="first",
-        )
-        df = df.reset_index()
-
-        # Il peut arriver qu'un créneau A/B ne soit pas marqué comme tel
-        # car il n'a pas de pendant pour l'autre semaine. On le fixe donc
-        # manuellement à A ou B.
-        if "TP" in df.columns:
-            semAB = [i for i in df.TP.unique() if re.match("T[0-9]{,2}[AB]", i)]
-            if semAB:
-                gr = [i for i in df.TP.unique() if re.match("^T[0-9]{,2}$", i)]
-                rep = {}
-                for g in gr:
-                    choice = ask_choice(
-                        f"Semaine pour le créneau {g} (A ou B) ? ",
-                        choices={"A": "A", "a": "A", "B": "B", "b": "B"},
-                    )
-                    rep[g] = g + choice
-                df = df.replace({"TP": rep})
-        return df
-
-
 class AddMoodleListing(FileOperation):
     def apply(self, df):
         """Incorpore les données du fichier extrait de Moodle"""
@@ -2124,59 +1810,6 @@ class AddMoodleListing(FileOperation):
         return df_both.drop(["_merge"], axis=1)
 
 
-class AddUtcEntListing(FileOperation):
-    cache = True
-
-    def apply(self, df=None):
-        # TODO: Add exception if df != None
-        try:
-            return self.load_ENT_data_old()
-        except (pd.errors.ParserError, KeyError) as e:
-            try:
-                return self.load_ENT_data_new()
-            except KeyError:
-                return self.load_ENT_data_basic()
-
-    def load_ENT_data_new(self):
-        df = pd.read_excel(self.filename)
-
-        # Split information in 2 columns
-        df[["Branche", "Semestre"]] = df.pop('Spécialité').str.extract(
-            '(?P<Branche>[a-zA-Z]+) *(?P<Semestre>[0-9]+)',
-            expand=True
-        )
-        df["Semestre"] = pd.to_numeric(df['Semestre'])
-
-        # Drop irrelevant columns
-        df = df.drop(['Réussite', 'Résultat ECTS', 'Mention'], axis=1)
-
-        return df
-
-    def load_ENT_data_old(self):
-        df = pd.read_csv(self.filename, sep="\t", encoding='ISO_8859_1')
-        pass
-        # with Output(self.target) as out:
-        #     dff.to_excel(out.target, index=False)
-
-        # Split information in 2 columns
-        df[["Branche", "Semestre"]] = df.pop('Spécialité 1').str.extract(
-            '(?P<Branche>[a-zA-Z]+) *(?P<Semestre>[0-9]+)',
-            expand=True
-        )
-        df["Semestre"] = pd.to_numeric(df['Semestre'])
-
-        # Drop irrelevant columns
-        df = df.drop(['Inscription', 'Spécialité 2', 'Résultat ECTS', 'UTC', 'Réussite', 'Statut'], axis=1)
-
-        # Drop unnamed columns
-        df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
-
-        return df
-
-    def load_ENT_data_basic(self):
-        return pd.read_excel(self.filename)
-
-
 def add_action_method(cls, klass, method_name):
     """Add new method named `method_name` to class `cls`"""
 
@@ -2190,30 +1823,35 @@ def add_action_method(cls, klass, method_name):
 
     setattr(cls, method_name, dummy)
 
+def load_actions():
+    actions = [
+        ("fillna_column", FillnaColumn),
+        ("replace_regex", ReplaceRegex),
+        ("replace_column", ReplaceColumn),
+        ("apply_df", ApplyDf),
+        ("apply_column", ApplyColumn),
+        ("compute_new_column", ComputeNewColumn),
+        ("add", Add),
+        ("aggregate", Aggregate),
+        ("aggregate_self", AggregateSelf),
+        ("aggregate_moodle_grades", AggregateMoodleGrades),
+        ("aggregate_moodle_groups", AggregateMoodleGroups),
+        ("aggregate_jury", AggregateJury),
+        ("aggregate_org", AggregateOrg),
+        ("flag", Flag),
+        ("apply_cell", ApplyCell),
+        ("switch", Switch),
+        ("add_moodle_listing", AddMoodleListing),
+    ]
 
-actions = [
-    ("fillna_column", FillnaColumn),
-    ("replace_regex", ReplaceRegex),
-    ("replace_column", ReplaceColumn),
-    ("apply_df", ApplyDf),
-    ("apply_column", ApplyColumn),
-    ("compute_new_column", ComputeNewColumn),
-    ("add", Add),
-    ("aggregate", Aggregate),
-    ("aggregate_self", AggregateSelf),
-    ("aggregate_moodle_grades", AggregateMoodleGrades),
-    ("aggregate_moodle_groups", AggregateMoodleGroups),
-    ("aggregate_wexam_grades", AggregateWexamGrades),
-    ("aggregate_jury", AggregateJury),
-    ("aggregate_org", AggregateOrg),
-    ("aggregate_amenagements", AggregateAmenagements),
-    ("flag", Flag),
-    ("apply_cell", ApplyCell),
-    ("switch", Switch),
-    ("add_moodle_listing", AddMoodleListing),
-    ("add_affectation", AddAffectation),
-    ("add_utc_ent_listing", AddUtcEntListing)
-]
+    for entry_point in importlib.metadata.entry_points(group="guv_operations"):
+        name = entry_point.name
+        operation_class = entry_point.load()
+        actions.append((name, operation_class))
+    return actions
+
+
+actions = load_actions()
 
 for method_name, klass in actions:
     # Add as method

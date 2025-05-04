@@ -9,16 +9,9 @@ la classe. Par exemple
 """
 
 from .attendance import PdfAttendance, PdfAttendanceFull
-from .calendar import CalInst, CalUv
 from .gradebook import XlsGradeBookGroup, XlsGradeBookJury, XlsGradeBookNoGroup
-from .grades import CsvAmcList, CsvForUpload, YamlQCM
-from .ical import IcalInst, IcalSlots, IcalUv
-from .instructors import (WeekSlotsDetails, XlsInstructors, XlsRemplacements,
-                          XlsUTP)
-from .internal import (Planning, PlanningSlots, PlanningSlotsAll,
-                       UtcUvListToCsv, WeekSlots, WeekSlotsAll, XlsStudentData)
+from .grades import YamlQCM
+from .internal import XlsStudentData
 from .moodle import (CsvCreateGroups, CsvGroups, CsvGroupsGroupings,
-                     FetchGroupId, HtmlInst, HtmlTable, JsonGroup,
-                     JsonRestriction)
-from .students import MaggleTeams, PasswordFile, SendEmail, ZoomBreakoutRooms
-from .trombinoscope import PdfTrombinoscope
+                     FetchGroupId)
+from .students import MaggleTeams, SendEmail, ZoomBreakoutRooms

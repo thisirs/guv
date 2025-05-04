@@ -1,5 +1,0 @@
-Enseignants :
-
-{% for instructor in instructors -%}
-- {{ instructor | display_name }}{% if instructor.is_manager %} (responsable){% endif %}: {{ instructor.slot_list }}
-{% endfor %}

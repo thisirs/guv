@@ -5,11 +5,7 @@ sur l'effectif d'une UV.
 
 import getpass
 import os
-import re
-import shlex
 import smtplib
-import sys
-import textwrap
 
 import jinja2
 import openpyxl
@@ -22,7 +18,7 @@ fixit(openpyxl)
 from ..exceptions import GuvUserError
 from ..logger import logger
 from ..utils import argument, normalize_string
-from ..utils_config import Output, ask_choice, rel_to_dir
+from ..utils_config import Output, ask_choice
 from .base import CliArgsMixin, UVTask
 from .internal import XlsStudentData
 
@@ -209,93 +205,4 @@ class SendEmail(UVTask, CliArgsMixin):
                 for email, message in email_and_message:
                     smtp.sendmail(from_addr=from_email, to_addrs=email, msg=message)
 
-
-class PasswordFile(UVTask, CliArgsMixin):
-    """Crée un fichier csv d'association entre étudiants et mots de passe."""
-
-    target_name = "machine_password.csv"
-    target_dir = "generated"
-    cli_args = (
-        argument(
-            "file",
-            help="Le chemin du fichier contenant les mots de passe"
-        ),
-    )
-
-    def setup(self):
-        super().setup()
-        self.xls_merge = XlsStudentData.target_from(**self.info)
-        self.file_dep = [self.xls_merge]
-
-        # No targets to avoid circular deps in doit as we probably
-        # want to aggregate target in effectif.xlsx
-        self.targets = []
-
-        self.parse_args()
-
-    def run(self):
-        df = XlsStudentData.read_target(self.xls_merge)
-        df = df[["Nom", "Prénom", "Courriel"]]
-
-        df_passwd = self.parse_passwd_file()
-        df_passwd = df_passwd.iloc[:len(df.index)]
-
-        # Before concat (see https://stackoverflow.com/a/32802014)
-        df.reset_index(drop=True, inplace=True)
-        df_passwd.reset_index(drop=True, inplace=True)
-
-        df_concat = pd.concat((df, df_passwd), axis="columns")
-
-        target = self.build_target()
-        with Output(target, protected=True) as out:
-            df_concat.to_csv(out.target, index=False)
-
-        logger.info(self.message(target))
-
-    def parse_passwd_file(self):
-        if "RX_PASSWD" in self.settings:
-            RX_PASSWD = re.compile(self.settings.RX_PASSWD)
-        else:
-            RX_PASSWD = re.compile(
-                r"^"
-                r"(?P<windows>[a-z0-9@]+)"
-                r"\s+"
-                r"(?P<unix>[a-z0-9]+)"
-                r"\s+"
-                r"(?P<passwd>[a-zA-Z0-9]+)"
-                r"$"
-            )
-
-        def gen_data():
-            with open(self.file, "r") as fd:
-                for line in fd:
-                    line = line.strip()
-                    if not line:
-                        continue
-
-                    m = RX_PASSWD.match(line)
-                    if m:
-                        yield m.group("windows"), m.group("unix"), m.group("passwd")
-
-        return pd.DataFrame(gen_data(), columns=["windows", "unix", "passwd"])
-
-    def message(self, target):
-        columns = ["windows", "unix", "passwd"]
-        return textwrap.dedent("""\
-
-        Pour agréger ce fichier au fichier central `effectif.xlsx`, ajouter :
-
-        # Créé avec la commande : {command_line}
-        DOCS.aggregate(
-            "{filename}",
-            on="Courriel",
-            subset={columns}
-        )
-
-        dans le fichier `config.py` de l'UV/UE.
-        """.format(**{
-            "filename": rel_to_dir(target, self.settings.UV_DIR),
-            "columns": columns,
-            "command_line": "guv " + " ".join(map(shlex.quote, sys.argv[1:]))
-        }))
 
