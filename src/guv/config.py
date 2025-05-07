@@ -192,7 +192,7 @@ class Settings:
                 "dep_file": os.path.join(self.semester_directory, ".guv.db"),
                 # "check_file_uptodate": "timestamp",
                 "verbosity": 2,
-                "default_tasks": ["week_slots"],
+                "default_tasks": ["xls_student_data"],
             }
             to_load = [Path(self.conf_dir) / "config.py"]
 
@@ -210,7 +210,7 @@ class Settings:
                 "dep_file": os.path.join(self.semester_directory, ".guv.db"),
                 # "check_file_uptodate": "timestamp",
                 "verbosity": 2,
-                "default_tasks": ["utc_uv_list_to_csv", "xls_student_data"],
+                "default_tasks": ["xls_student_data"],
             }
 
             to_load = [
