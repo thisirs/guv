@@ -51,16 +51,6 @@ _SETTING_LIST = [
         help="La variable 'PLANNINGS' est incorrecte: il faut que ce soit un dictionnaire dont les clés sont des plannings et les valeurs un dictionnaire de propriétés",
     ),
     Setting(
-        "CRENEAU_UV",
-        schema=Schema(str),
-        help="La variable 'CRENEAU_UV' est incorrecte : un chemin relatif vers le fichier pdf des créneaux ingénieur est attendu",
-    ),
-    Setting(
-        "DEFAULT_INSTRUCTOR",
-        schema=Schema(str),
-        help="La variable 'DEFAULT_INSTRUCTOR' est incorrecte : une chaîne de caractères est attendue",
-    ),
-    Setting(
         "DEBUG",
         schema=Schema(Or(
             int,
@@ -73,26 +63,6 @@ _SETTING_LIST = [
         )),
         help="La variable 'DEBUG' est incorrecte : un entier est attendu",
         default=logging.INFO
-    ),
-    Setting(
-        "SKIP_DAYS_C",
-        schema=Schema(Or([Or(date)], (Or(date)))),
-        help="La variable 'SKIP_DAYS_C' est incorrecte : une liste d'objets `date` est attendue",
-    ),
-    Setting(
-        "SKIP_DAYS_D",
-        schema=Schema(Or([date], (date,))),
-        help="La variable 'SKIP_DAYS_D' est incorrecte : une liste d'objets `date` est attendue",
-    ),
-    Setting(
-        "SKIP_DAYS_T",
-        schema=Schema(Or([date], (date,))),
-        help="La variable 'SKIP_DAYS_T' est incorrecte : une liste d'objets `date` est attendu",
-    ),
-    Setting(
-        "TURN",
-        schema=Schema({date: str}),
-        help="La variable 'TURN' est incorrecte : un dictionnaire d'objets vers un jour est attendu",
     ),
     Setting(
         "DOCS",

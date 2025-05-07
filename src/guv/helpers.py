@@ -1725,24 +1725,15 @@ class AggregateJury(FileOperation):
 
 
 class AddMoodleListing(FileOperation):
+    def get_arguments(self, df):
+        return "Courriel", "Adresse de courriel"
+
     def apply(self, df):
         """Incorpore les données du fichier extrait de Moodle"""
 
         df_moodle = read_dataframe(self.filename)
 
-        if "Courriel" not in df.columns:
-            raise GuvUserError("La colonne `Courriel` n'est pas présente dans le fichier central")
-
-        moodle_short_email = re.match(r"^\w+@", df_moodle.iloc[0]["Adresse de courriel"]) is not None
-        ent_short_email = re.match(r"^\w+@", df.iloc[0]["Courriel"]) is not None
-
-        if moodle_short_email ^ ent_short_email:
-            logger.info("Les adresses courriels sont dans un format différent, agrégation avec les colonnes `Nom` et `Prénom`")
-            left_on = id_slug("Nom", "Prénom")
-            right_on = id_slug("Nom", "Prénom")
-        else:
-            left_on = "Courriel"
-            right_on = "Adresse de courriel"
+        left_on, right_on = self.get_arguments(df)
 
         # Outer aggregation only to handle specifically mismatches
         agg = Aggregator(
