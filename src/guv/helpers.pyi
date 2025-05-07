@@ -71,9 +71,6 @@ class Documents:
     def aggregate_moodle_groups(self, filename: str, colname: str, backup: bool | None = False,) -> None:
         ...
 
-    def aggregate_wexam_grades(self, filename: str, rename: dict | None = None,) -> None:
-        ...
-
     def aggregate_jury(self, filename: str) -> None:
         ...
 
@@ -84,9 +81,6 @@ class Documents:
         on: str | None = None,
         postprocessing: Callable | Operation | None = None,
     ) -> None:
-        ...
-
-    def aggregate_amenagements(self, filename: str) -> None:
         ...
 
     def flag(self, filename_or_string: str, *, colname: str, flags: list[str] | None = ["Oui", ""]) -> None:
@@ -108,8 +102,3 @@ class Documents:
     def add_moodle_listing(self, filename: str) -> None:
         ...
 
-    def add_affectation(self, filename: str) -> None:
-        ...
-
-    def add_utc_ent_listing(self, filename: str) -> None:
-        ...

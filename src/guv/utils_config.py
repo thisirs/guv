@@ -3,7 +3,6 @@ import os
 import shutil
 import time
 import zipfile
-from datetime import timedelta
 import logging
 
 from .config import settings
@@ -169,49 +168,6 @@ class Output:
             return True
         if issubclass(type, GuvUserError):
             return False
-
-
-def generate_row(beg, end, skip, turn):
-    """Generate tuples that represent days."""
-
-    daynames = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"]
-    delta = end - beg
-    day_counter = {day: 0 for day in daynames}
-
-    nweek = 0
-
-    for i in range(delta.days + 1):
-        date = beg + timedelta(days=i)
-
-        # Lundi
-        if i % 7 == 0:
-            nweek += 1
-
-        # Ignore Sunday
-        if date.weekday() == 6:
-            continue
-
-        # Skip days
-        if date in skip:
-            continue
-
-        # Get real day
-        dayname = turn[date].capitalize() if date in turn else daynames[date.weekday()]
-        if dayname not in daynames:
-            daynames_ = ", ".join(f"`{d}`" for d in daynames)
-            raise ImproperlyConfigured(
-                f"Nom de journée inconnu: `{dayname}`. Choisir parmi {daynames_}"
-            )
-        day_counter[dayname] += 1
-        num = day_counter[dayname]
-
-        # A, B, A, B when num is 1, 2, 3, 4
-        weekAB = "A" if num % 2 == 1 else "B"
-
-        # 1, 1, 2, 2 when num is 1, 2, 3, 4
-        numAB = (num + 1) // 2
-
-        yield date, dayname, num, weekAB, numAB, nweek
 
 
 def render_from_contexts(template, contexts, save_tex=False, target=None):
