@@ -27,8 +27,6 @@
   par planning dans `PLANNINGS`.
 - `DEBUG` : Un entier qui règle le niveau de log, par défaut 30.
   Plus l'entier est petit, plus le niveau de log est important.
-- `TASKS` : Liste de chemins vers des fichiers Python définissant
-  des tâches, voir {ref}`creation-tache`.
 
 ## Variables reconnues dans les fichiers `config.py` d'UV
 

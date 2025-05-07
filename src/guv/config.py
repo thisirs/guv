@@ -75,12 +75,6 @@ _SETTING_LIST = [
         default=logging.INFO
     ),
     Setting(
-        "TASKS",
-        schema=Schema([str]),
-        help="La variable 'TASKS' est incorrecte : une liste de chemin vers des fichiers est attendue",
-        default=[]
-    ),
-    Setting(
         "SKIP_DAYS_C",
         schema=Schema(Or([Or(date)], (Or(date)))),
         help="La variable 'SKIP_DAYS_C' est incorrecte : une liste d'objets `date` est attendue",
