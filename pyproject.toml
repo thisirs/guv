@@ -14,9 +14,7 @@ requires-python = ">=3.8"
 license = {text = "MIT"}
 scripts = {guv = "guv.runner:main"}
 dependencies = [
-  "PyPDF2>=3.0.0",
   "doit",
-  "icalendar",
   "jinja2",
   "jsonschema",
   "latex",
@@ -28,10 +26,8 @@ dependencies = [
   "pandas",
   "prompt_toolkit",
   "pynliner",
-  "pytz",
   "requests",
   "schema",
-  "tabula-py",
   "unidecode",
   "xlrd",
   "yapf",
