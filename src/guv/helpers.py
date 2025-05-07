@@ -1465,10 +1465,32 @@ class AggregateMoodleGroups(FileOperation):
         super().__init__(filename)
         self.colname = colname
         self.backup = backup
+        self._moodle_df = None
+        self._version = None
+
+    @property
+    def moodle_df(self):
+        if self._moodle_df is None:
+            self._moodle_df = read_dataframe(self.filename)
+        return self._moodle_df
+
+    @property
+    def version(self):
+        if self._version is None:
+            ver1 = set(["Nom", "Prénom", "Numéro d’identification", "Choix", "Adresse de courriel"]).issubset(set(self.moodle_df.columns))
+            ver2 = set(["Nom de famille", "Prénom", "Numéro d’identification", "Choix", "Adresse de courriel"]).issubset(set(self.moodle_df.columns))
+            if not ver1 and not ver2:
+                raise GuvUserError("Le fichier n'est pas reconnu comme un fichier issu d'une activité groupe de Moodle")
+            if ver1:
+                self._version = "ver1"
+            elif ver2:
+                self._version = "ver2"
+            else:
+                raise RuntimeError
+
+        return self._version
 
     def apply(self, df):
-        right_df = read_dataframe(self.filename)
-
         # Backup column
         if self.backup:
             suffixes = ("_orig", "")
@@ -1479,35 +1501,11 @@ class AggregateMoodleGroups(FileOperation):
             suffixes = ("_orig", "")
             merge_policy = "erase"
 
-        ver1 = set(["Nom", "Prénom", "Numéro d’identification", "Choix", "Adresse de courriel"]).issubset(set(right_df.columns))
-        ver2 = set(["Nom de famille", "Prénom", "Numéro d’identification", "Choix", "Adresse de courriel"]).issubset(set(right_df.columns))
-
-        if not ver1 and not ver2:
-            raise GuvUserError("Le fichier n'est pas reconnu comme un fichier issu d'une activité groupe de Moodle")
-
-        if re.match(r"^\w+@", df.iloc[0]["Courriel"]) is not None:
-            left_on = id_slug("Nom", "Prénom")
-            if ver1:
-                right_on = id_slug("Nom", "Prénom")
-                drop = ["Nom", "Prénom", "Numéro d’identification", "Choix", "Adresse de courriel"]
-            elif ver2:
-                right_on = id_slug("Nom de famille", "Prénom")
-                drop = ["Nom de famille", "Prénom", "Numéro d’identification", "Choix", "Adresse de courriel"]
-            else:
-                raise RuntimeError("Erreur logique")
-        else:
-            left_on = "Courriel"
-            right_on = "Adresse de courriel"
-            if ver1:
-                drop = ["Nom", "Prénom", "Numéro d’identification", "Choix"]
-            elif ver2:
-                drop = ["Nom de famille", "Prénom", "Numéro d’identification", "Choix"]
-            else:
-                raise RuntimeError("Erreur logique")
+        left_on, right_on, drop = self.get_arguments(df)
 
         agg = Aggregator(
             df,
-            right_df,
+            self.moodle_df,
             left_on=left_on,
             right_on=right_on,
             drop=drop,
@@ -1521,6 +1519,18 @@ class AggregateMoodleGroups(FileOperation):
         agg.report()
 
         return df_merge
+
+    def get_arguments(self, df):
+        left_on = "Courriel"
+        right_on = "Adresse de courriel"
+        if self.version == "ver1":
+            drop = ["Nom", "Prénom", "Numéro d’identification", "Choix"]
+        elif self.version == "ver2":
+            drop = ["Nom de famille", "Prénom", "Numéro d’identification", "Choix"]
+        else:
+            raise RuntimeError("Erreur logique")
+
+        return left_on, right_on, drop
 
     def message(self, ref_dir=""):
         return f"Agrégation du fichier de groupes `{rel_to_dir(self.filename, ref_dir)}`"
