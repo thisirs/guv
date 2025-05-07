@@ -606,7 +606,7 @@ class ApplyCell(Operation):
         check_if_absent(df, "fullname_slug")
         df["fullname_slug"] = tf_df(df)
 
-        if '@etu' in self.name_or_email:
+        if '@' in self.name_or_email:
             sturow = df.loc[df['Courriel'] == self.name_or_email]
             if len(sturow) > 1:
                 raise GuvUserError(f'Adresse courriel `{self.name_or_email}` présente plusieurs fois')
@@ -1375,7 +1375,7 @@ def validate_pair(df, colname, part1, part2):
     names = df[colname].unique()
 
     # Indice de l'étudiant 1
-    if "@etu" in part1:
+    if "@" in part1:
         stu1row = df.loc[df["Courriel"] == part1]
         if len(stu1row) != 1:
             raise GuvUserError(
@@ -1394,7 +1394,7 @@ def validate_pair(df, colname, part1, part2):
         return "move", stu1idx, part2
     elif part2 in ["null", "nan"]:
         return "quit", stu1idx, None
-    elif "@etu" in part2:  # Le deuxième élément est une adresse email
+    elif "@" in part2:  # Le deuxième élément est une adresse email
         stu2row = df.loc[df["Courriel"] == part2]
         if len(stu2row) != 1:
             raise GuvUserError(
