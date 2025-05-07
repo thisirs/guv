@@ -1639,9 +1639,18 @@ class AggregateMoodleGrades(FileOperation):
         super().__init__(filename)
         self.rename = rename
 
+    @property
+    def moodle_df(self):
+        if self._moodle_df is None:
+            kw_read = {"na_values": "-"}
+            self._moodle_df = read_dataframe(self.filename, kw_read=kw_read)
+        return self._moodle_df
+
+    def get_arguments(self, df):
+        return "Courriel", "Adresse de courriel"
+
     def apply(self, left_df):
-        kw_read = {"na_values": "-"}
-        right_df = read_dataframe(self.filename, kw_read=kw_read)
+        right_df = self.moodle_df
         columns = set(right_df.columns.values)
 
         try:
@@ -1658,36 +1667,7 @@ class AggregateMoodleGrades(FileOperation):
             except ValueError:
                 pass
 
-        moodle_short_email = (
-            re.match(r"^\w+@", right_df.iloc[0]["Adresse de courriel"]) is not None
-        )
-        ent_short_email = re.match(r"^\w+@", left_df.iloc[0]["Courriel"]) is not None
-
-        def left_right():
-            if not (moodle_short_email ^ ent_short_email):
-                return "Courriel", "Adresse de courriel"
-
-            if "Adresse de courriel" in left_df.columns:
-                ent_short_email2 = (
-                    re.match(r"^\w+@", left_df.iloc[0]["Adresse de courriel"])
-                    is not None
-                )
-                if not (moodle_short_email ^ ent_short_email2):
-                    return "Adresse de courriel", "Adresse de courriel"
-
-            if type == "assignment":
-                right_on = id_slug("Nom complet")
-            else:
-                right_on = id_slug("Nom", "Prénom")
-
-            if "Nom_moodle" in left_df.columns and "Prénom_moodle" in left_df.columns:
-                left_on = id_slug("Nom_moodle", "Prénom_moodle")
-            else:
-                left_on = id_slug("Nom", "Prénom")
-
-            return left_on, right_on
-
-        left_on, right_on = left_right()
+        left_on, right_on = self.get_arguments()
 
         # Don't try to drop a required column
         if right_on in drop_columns:
