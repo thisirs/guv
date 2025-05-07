@@ -8,15 +8,6 @@ from guv.helpers import Documents
 
 DOCS = Documents()
 
-# Chemin relatif vers le fichier Excel de l'effectif issu de l'ENT
-# DOCS.add_utc_ent_listing("...")
-
-# Chemin relatif vers les affectations dans les Cours/TD/TP
-# DOCS.add_affectation("...")
-
-# Chemin relatif vers le fichier Excel des aménagements
-# DOCS.aggregate_amenagements("...")
-
 # Chemin relatif vers le listing provenant de Moodle
 # DOCS.add_moodle_listing("...")
 
