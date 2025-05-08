@@ -285,6 +285,12 @@ def main(argv=sys.argv[1:]):
             return
 
         elif task_name is None:
+            task_loader.namespace.update({
+                "DOIT_CONFIG": {
+                    "default_tasks": ["xls_student_data"]
+                }
+            })
+
             logger.debug("Run doit with default tasks")
             ret = DoitMain(task_loader).run([])
 
