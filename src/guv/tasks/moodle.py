@@ -170,6 +170,8 @@ class CsvGroups(UVTask, CliArgsMixin):
     def run(self):
         df = XlsStudentData.read_target(self.xls_merge)
 
+        self.check_if_present(df, ["Nom", "Prénom", "Login"])
+
         dfs = self.build_dataframes(df)
 
         if self.single:
