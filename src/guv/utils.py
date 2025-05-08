@@ -310,3 +310,31 @@ def rel_to_dir_aux(path, ref_dir, root_dir):
         return os.path.relpath(path, ref_dir)
 
     return path
+
+
+def get_descriptive_function(df):
+    if "Nom" in df.columns and "Prénom" in df.columns:
+        def func(row):
+            return getattr(row, "Nom") + " " + getattr(row, "Prénom")
+    elif "Nom de famille" in df.columns and "Prénom" in df.columns:
+        def func(row):
+            return getattr(row, "Nom de famille") + " " + getattr(row, "Prénom")
+    elif "Nom_moodle" in df.columns and "Prénom_moodle" in df.columns:
+        def func(row):
+            return getattr(row, "Nom") + " " + getattr(row, "Prénom")
+    elif "Nom de famille" in df.columns and "Prénom_moodle" in df.columns:
+        def func(row):
+            return getattr(row, "Nom") + " " + getattr(row, "Prénom")
+    elif "Courriel" in df.columns:
+        def func(row):
+            return getattr(row, "Courriel")
+    elif "Adresse de courriel" in df.columns:
+        def func(row):
+            return getattr(row, "Adresse de courriel")
+    else:
+        def func(row):
+            if hasattr(row, "Index"):
+                return "L'enregistrement `{getattr(row, 'Index')}`"
+            else:
+                return str(row[0])
+    return func

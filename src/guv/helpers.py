@@ -18,7 +18,7 @@ from .logger import logger
 from .operation import Operation
 from .tasks.internal import Documents
 from .utils import (check_if_absent, check_if_present, convert_to_numeric,
-                    read_dataframe, slugrot_string)
+                    read_dataframe, slugrot_string, get_descriptive_function)
 from .utils_config import ask_choice, check_filename, rel_to_dir
 
 
@@ -590,6 +590,8 @@ class ApplyCell(Operation):
     """
 
     hash_fields = ["name_or_email", "colname", "value"]
+    base_columns = ["Nom", "Prénom"]
+    base_email_columns = ["Courriel", "Adresse de courriel"]
 
     def __init__(self, name_or_email: str, colname: str, value, msg: Optional[str] = None):
         super().__init__()
@@ -601,29 +603,37 @@ class ApplyCell(Operation):
     def apply(self, df):
         check_if_present(df, self.colname)
 
-        # Add slugname column
-        tf_df = slugrot("Nom", "Prénom")
-        check_if_absent(df, "fullname_slug")
-        df["fullname_slug"] = tf_df(df)
+        for c in type(self).base_email_columns:
+            if c in df.columns:
+                left_on = c
+                break
+        else:
+            cols = ", ".join(f"`{c}`" for c in type(self).base_email_columns)
+            raise ImproperlyConfigured(f"Il faut au moins l'une des colonnes suivantes déjà présente pour agréger : {cols}")
 
         if '@' in self.name_or_email:
-            sturow = df.loc[df['Courriel'] == self.name_or_email]
+            sturow = df.loc[df[left_on] == self.name_or_email]
             if len(sturow) > 1:
                 raise GuvUserError(f'Adresse courriel `{self.name_or_email}` présente plusieurs fois')
             if len(sturow) == 0:
                 raise GuvUserError(f'Adresse courriel `{self.name_or_email}` non présente dans le fichier central')
             stuidx = sturow.index[0]
         else:
+            # Add slugname column
+            tf_df = slugrot(*type(self).base_columns)
+            check_if_absent(df, "fullname_slug")
+            df["fullname_slug"] = tf_df(df)
+
             sturow = df.loc[df.fullname_slug == slugrot_string(self.name_or_email)]
             if len(sturow) > 1:
                 raise GuvUserError(f'Étudiant de nom `{self.name_or_email}` présent plusieurs fois')
             if len(sturow) == 0:
                 raise GuvUserError(f'Étudiant de nom `{self.name_or_email}` non présent dans le fichier central')
             stuidx = sturow.index[0]
+            df = df.drop('fullname_slug', axis=1)
 
         df.loc[stuidx, self.colname] = self.value
 
-        df = df.drop('fullname_slug', axis=1)
         return df
 
     def message(self, **kwargs):
@@ -695,16 +705,18 @@ class Add(FileOperation):
 
     hash_fields = ["_filename", "func"]
 
-    def __init__(self, filename, func):
+    def __init__(self, filename, func=None):
         super().__init__(filename)
         self.func = func
 
     def apply(self, df):
-        return self.func(df, self.filename)
+        if df is not None and self.func is None:
+            raise ImproperlyConfigured("Il faut fournir une fonction d'agrégation")
 
-    @property
-    def deps(self):
-        return ["config.py"]
+        if self.func is not None:
+            return self.func(df, self.filename)
+        else:
+            return read_dataframe(self.filename)
 
 
 class Aggregate(FileOperation):
@@ -1069,6 +1081,7 @@ class AggregateOrg(FileOperation):
     """
 
     hash_fields = ["_filename", "colname", "on", "postprocessing"]
+    base_columns = ["Nom", "Prénom"]
 
     def __init__(
         self,
@@ -1100,7 +1113,7 @@ class AggregateOrg(FileOperation):
         df_org = pd.DataFrame(parse_org(text), columns=["header", self.colname])
 
         if self.on is None:
-            left_on = id_slug("Nom", "Prénom")
+            left_on = id_slug(*type(self).base_columns)
             right_on = id_slug("header")
         else:
             left_on = self.on
@@ -1313,10 +1326,6 @@ class Switch(FileStringOperation):
         # Check that column exist
         check_if_present(df, self.colname)
 
-        # Add slugname column
-        tf_df = slugrot("Nom", "Prénom")
-        df["fullname_slug"] = tf_df(df)
-
         new_column = swap_column(df, self.lines, self.colname)
         df = replace_column_aux(
             df,
@@ -1327,7 +1336,6 @@ class Switch(FileStringOperation):
             errors="silent"
         )
 
-        df = df.drop("fullname_slug", axis=1)
         return df
 
 
@@ -1416,25 +1424,26 @@ def swap_column(df, lines, colname):
     """Return copy of column `colname` modified by swaps from `lines`. """
 
     new_column = df[colname].copy()
+    desc = get_descriptive_function(df)
 
     for part1, part2 in read_pairs(lines):
         type, idx1, idx2 = validate_pair(df, colname, part1, part2)
 
         if type == "swap":
-            nom1 = " ".join(df.loc[idx1, ["Nom", "Prénom"]])
-            nom2 = " ".join(df.loc[idx2, ["Nom", "Prénom"]])
+            nom1 = desc(df.loc[idx1, :])
+            nom2 = desc(df.loc[idx2, :])
             logger.info("Échange de `%s` et `%s` dans la colonne `%s`", nom1, nom2, colname)
 
             tmp = new_column[idx1]
             new_column[idx1] = new_column[idx2]
             new_column[idx2] = tmp
         elif type == "move":
-            nom = " ".join(df.loc[idx1, ["Nom", "Prénom"]])
+            nom = desc(df.loc[idx1, :])
             logger.info("Étudiant(e) `%s` affecté(e) au groupe `%s`", nom, idx2)
 
             new_column[idx1] = idx2
         elif type == "quit":
-            nom = " ".join(df.loc[idx1, ["Nom", "Prénom"]])
+            nom = desc(df.loc[idx1, :])
             logger.info("Abandon étudiant(e) `%s`", nom)
 
             new_column[idx1] = np.nan
@@ -1442,7 +1451,19 @@ def swap_column(df, lines, colname):
     return new_column
 
 
-class AggregateMoodleGroups(FileOperation):
+class MoodleFileOperation(FileOperation):
+    def __init__(self, filename):
+        super().__init__(filename)
+        self._moodle_df = None
+
+    @property
+    def moodle_df(self):
+        if self._moodle_df is None:
+            self._moodle_df = read_dataframe(self.filename)
+        return self._moodle_df
+
+
+class AggregateMoodleGroups(MoodleFileOperation):
     """Agrège des données de groupes issue de l'activité "Choix de Groupe".
 
     Le nom de la colonne des groupes étant toujours "Groupe", l'argument
@@ -1460,19 +1481,14 @@ class AggregateMoodleGroups(FileOperation):
     """
 
     hash_fields = ["_filename", "colname", "backup"]
+    moodle_email_column = "Adresse de courriel"
+    base_email_columns = ["Courriel", "Adresse de courriel"]
 
     def __init__(self, filename: str, colname: str, backup: Optional[bool] = False):
         super().__init__(filename)
         self.colname = colname
         self.backup = backup
-        self._moodle_df = None
         self._version = None
-
-    @property
-    def moodle_df(self):
-        if self._moodle_df is None:
-            self._moodle_df = read_dataframe(self.filename)
-        return self._moodle_df
 
     @property
     def version(self):
@@ -1521,8 +1537,18 @@ class AggregateMoodleGroups(FileOperation):
         return df_merge
 
     def get_arguments(self, df):
-        left_on = "Courriel"
-        right_on = "Adresse de courriel"
+        if df is not None:
+            for c in type(self).base_email_columns:
+                if c in df.columns:
+                    left_on = c
+                    break
+            else:
+                cols = ", ".join(f"`{c}`" for c in type(self).base_email_columns)
+                raise ImproperlyConfigured(f"Il faut au moins l'une des colonnes suivantes déjà présente pour agréger : {cols}")
+
+        else:
+            left_on = None
+
         if self.version == "ver1":
             drop = ["Nom", "Prénom", "Numéro d’identification", "Choix"]
         elif self.version == "ver2":
@@ -1530,7 +1556,7 @@ class AggregateMoodleGroups(FileOperation):
         else:
             raise RuntimeError("Erreur logique")
 
-        return left_on, right_on, drop
+        return left_on, type(self).moodle_email_column, drop
 
     def message(self, ref_dir=""):
         return f"Agrégation du fichier de groupes `{rel_to_dir(self.filename, ref_dir)}`"
@@ -1610,7 +1636,7 @@ def keep_drop_assignment(columns):
     raise ValueError
 
 
-class AggregateMoodleGrades(FileOperation):
+class AggregateMoodleGrades(MoodleFileOperation):
     """Agrège des feuilles de notes provenant de Moodle.
 
     La feuille de notes peut être un export du carnet de notes de Moodle, un
@@ -1630,6 +1656,8 @@ class AggregateMoodleGrades(FileOperation):
     """
 
     hash_fields = ["_filename", "rename"]
+    moodle_email_column = "Adresse de courriel"
+    base_email_columns = ["Courriel", "Adresse de courriel"]
 
     def __init__(
         self,
@@ -1638,16 +1666,22 @@ class AggregateMoodleGrades(FileOperation):
     ):
         super().__init__(filename)
         self.rename = rename
-
-    @property
-    def moodle_df(self):
-        if self._moodle_df is None:
-            kw_read = {"na_values": "-"}
-            self._moodle_df = read_dataframe(self.filename, kw_read=kw_read)
-        return self._moodle_df
+        self._moodle_df = None
 
     def get_arguments(self, df):
-        return "Courriel", "Adresse de courriel"
+        if df is not None:
+            for c in type(self).base_email_columns:
+                if c in df.columns:
+                    left_on = c
+                    break
+            else:
+                cols = ", ".join(f"`{c}`" for c in type(self).base_email_columns)
+                raise ImproperlyConfigured(f"Il faut au moins l'une des colonnes suivantes déjà présente pour agréger : {cols}")
+
+        else:
+            left_on = None
+
+        return left_on, type(self).moodle_email_column
 
     def apply(self, left_df):
         right_df = self.moodle_df
@@ -1667,7 +1701,7 @@ class AggregateMoodleGrades(FileOperation):
             except ValueError:
                 pass
 
-        left_on, right_on = self.get_arguments()
+        left_on, right_on = self.get_arguments(left_df)
 
         # Don't try to drop a required column
         if right_on in drop_columns:
@@ -1724,16 +1758,45 @@ class AggregateJury(FileOperation):
         return op.apply(df)
 
 
-class AddMoodleListing(FileOperation):
+class AddMoodleListing(MoodleFileOperation):
+    moodle_email_column = "Adresse de courriel"
+    base_email_columns = ["Courriel", "Adresse de courriel"]
+
     def get_arguments(self, df):
-        return "Courriel", "Adresse de courriel"
+        if df is not None:
+            for c in type(self).base_email_columns:
+                if c in df.columns:
+                    left_on = c
+                    break
+            else:
+                cols = ", ".join(f"`{c}`" for c in type(self).base_email_columns)
+                raise ImproperlyConfigured(f"Il faut au moins l'une des colonnes suivantes déjà présente pour agréger : {cols}")
+
+        else:
+            left_on = None
+
+        if set(self.moodle_df.columns) == set(["Prénom", "Nom", "Numéro d'identification", "Institution", "Département", "Adresse de courriel", "Dernier téléchargement depuis ce cours",]):
+            drop = [
+                "Numéro d'identification",
+                "Institution",
+                "Département",
+                "Dernier téléchargement depuis ce cours",
+            ]
+        elif set(self.moodle_df.columns) == set(["Prénom", "Nom de famille", "Groupes"]):
+            drop = ["Groupes",]
+        else:
+            raise ImproperlyConfigured("Fichier d'effectif Moodle non reconnu")
+
+        return left_on, type(self).moodle_email_column, drop
 
     def apply(self, df):
-        """Incorpore les données du fichier extrait de Moodle"""
-
         df_moodle = read_dataframe(self.filename)
 
-        left_on, right_on = self.get_arguments(df)
+        left_on, right_on, drop = self.get_arguments(df)
+        df_moodle = df_moodle.drop(columns=drop)
+
+        if df is None:
+            return df_moodle
 
         # Outer aggregation only to handle specifically mismatches
         agg = Aggregator(
@@ -1748,26 +1811,28 @@ class AddMoodleListing(FileOperation):
 
         # Warn of any mismatch
         lo = df_outer.loc[df_outer["_merge"] == "left_only"]
-        for index, row in lo.iterrows():
-            fullname = row["Nom"] + " " + row["Prénom"]
-            logger.warning("`%s` n'est pas présent dans les données Moodle", fullname)
+        desc_lo = get_descriptive_function(lo)
+        for row in lo.itertuples(index=True):
+            description = desc_lo(row)
+            logger.warning("`%s` n'est pas présent dans les données Moodle", description)
 
         ro = df_outer.loc[df_outer["_merge"] == "right_only"]
-        for index, row in ro.iterrows():
-            fullname = row["Nom_moodle"] + " " + row["Prénom_moodle"]
-            logger.warning("`%s` n'est pas présent dans le fichier central", fullname)
+        desc_ro = get_descriptive_function(ro)
+        for row in ro.itertuples(index=True):
+            description = desc_ro(row)
+            logger.warning("`%s` n'est pas présent dans le fichier central", description)
 
         # Base dataframe to add row to
         df_both = df_outer.loc[df_outer["_merge"] == "both"]
 
         # Ask user to do the matching
-        for index, row in lo.iterrows():
+        for row in lo.itertuples(index=True):
             if len(ro.index) != 0:
-                fullname = row["Nom"] + " " + row["Prénom"]
-                logger.info("Recherche de correspondance pour `%s` :", fullname)
-                for i, (index_ro, row_ro) in enumerate(ro.iterrows()):
-                    fullname_ro = row_ro["Nom_moodle"] + " " + row_ro["Prénom_moodle"]
-                    print(f"  ({i}) {fullname_ro}")
+                description = desc_lo(row)
+                logger.info("Recherche de correspondance pour `%s` :", description)
+                for i, row_ro in enumerate(ro.itertuples(index=True)):
+                    description = desc_ro(row)
+                    print(f"  ({i}) {description}")
 
                 choice = ask_choice(
                     "Choix ? (entrée si pas de correspondance) ",
@@ -1775,16 +1840,16 @@ class AddMoodleListing(FileOperation):
                 )
 
                 if choice is not None:
-                    row_merge = lo.loc[index, :].combine_first(ro.iloc[choice, :])
+                    row_merge = lo.loc[row["index"], :].combine_first(ro.iloc[choice, :])
                     ro = ro.drop(index=ro.iloc[[choice]].index)
                     row_merge["_merge"] = "both"
                     df_both = pd.concat((df_both, row_merge.to_frame().T))
                 else:
-                    row_merge = lo.loc[index, :].copy()
+                    row_merge = lo.loc[row["index"], :].copy()
                     row_merge["_merge"] = "both"
                     df_both = pd.concat((df_both, row_merge.to_frame().T))
             else:
-                row_merge = lo.loc[index, :].copy()
+                row_merge = lo.loc[row["index"], :].copy()
                 row_merge["_merge"] = "both"
                 df_both = pd.concat((df_both, row_merge.to_frame().T))
 
