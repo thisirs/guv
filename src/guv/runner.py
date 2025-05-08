@@ -277,6 +277,7 @@ def main(argv=sys.argv[1:]):
     try:
         task_loader = get_task_loader()
         handlers = get_handlers()
+        task_names = [klass.task_name() for t, klass in task_loader.namespace.items()]
 
         if "-h" in other or "--help" in other:
             parser = get_parser(task_loader.namespace)
@@ -291,7 +292,7 @@ def main(argv=sys.argv[1:]):
             logger.debug("Bypass call to doit")
             ret = DoitMain(task_loader).run(sys.argv[2:])
 
-        elif task_name in task_loader.namespace:
+        elif task_name in task_names:
             ret = DoitMain(task_loader).run([task_name])
 
         elif task_name in handlers:
