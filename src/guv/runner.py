@@ -277,33 +277,27 @@ def main(argv=sys.argv[1:]):
     try:
         task_loader = get_task_loader()
         handlers = get_handlers()
-        task_names = [klass.task_name() for t, klass in task_loader.namespace.items()]
 
         if "-h" in other or "--help" in other:
             parser = get_parser(task_loader.namespace)
             parser.parse_args(argv)
             return
 
-        elif task_name is None:
-            task_loader.namespace.update({
-                "DOIT_CONFIG": {
-                    "default_tasks": ["xls_student_data"]
-                }
-            })
-
-            logger.debug("Run doit with default tasks")
-            ret = DoitMain(task_loader).run([])
-
-        elif task_name == "doit":
-            logger.debug("Bypass call to doit")
-            ret = DoitMain(task_loader).run(sys.argv[2:])
-
-        elif task_name in task_names:
-            ret = DoitMain(task_loader).run([task_name])
-
-        elif task_name in handlers:
+        if task_name in handlers:
             handler = handlers[task_name]
             ret = handler(other)
+        else:
+            task_loader.namespace.update(settings.settings)
+            if task_name is None:
+                logger.debug("Run doit with default tasks")
+                ret = DoitMain(task_loader).run([])
+
+            elif task_name == "doit":
+                logger.debug("Bypass call to doit")
+                ret = DoitMain(task_loader).run(sys.argv[2:])
+
+            else:
+                ret = DoitMain(task_loader).run([task_name])
 
     except Exception as e:
         if logger.level < logging.INFO:
