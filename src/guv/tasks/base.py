@@ -60,9 +60,11 @@ class TaskBase:
                 raise e from e
             fn = rel_to_dir(file, base_dir or self.settings.CWD)
             if errors == "raise":
-                raise CommonColumns(e.common_columns, origin=fn)
+                e.origin = fn
+                raise e
             elif errors == "warning":
-                logger.warning(str(CommonColumns(e.common_columns, origin=fn)))
+                e.origin = fn
+                logger.warning(str(e))
             elif errors == "silent":
                 pass
             else:
@@ -82,9 +84,11 @@ class TaskBase:
                 raise e from e
             fn = rel_to_dir(file, base_dir or self.settings.CWD)
             if errors == "raise":
-                raise MissingColumns(e.missing_columns, origin=fn)
+                e.origin = fn
+                raise e
             elif errors == "warning":
-                logger.warning(str(MissingColumns(e.missing_columns, origin=fn)))
+                e.origin = fn
+                logger.warning(str(e))
             elif errors == "silent":
                 pass
             else:
