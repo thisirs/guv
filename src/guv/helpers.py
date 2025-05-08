@@ -1840,16 +1840,16 @@ class AddMoodleListing(MoodleFileOperation):
                 )
 
                 if choice is not None:
-                    row_merge = lo.loc[row["index"], :].combine_first(ro.iloc[choice, :])
+                    row_merge = lo.loc[row.Index, :].combine_first(ro.iloc[choice, :])
                     ro = ro.drop(index=ro.iloc[[choice]].index)
                     row_merge["_merge"] = "both"
                     df_both = pd.concat((df_both, row_merge.to_frame().T))
                 else:
-                    row_merge = lo.loc[row["index"], :].copy()
+                    row_merge = lo.loc[row.Index, :].copy()
                     row_merge["_merge"] = "both"
                     df_both = pd.concat((df_both, row_merge.to_frame().T))
             else:
-                row_merge = lo.loc[row["index"], :].copy()
+                row_merge = lo.loc[row.Index, :].copy()
                 row_merge["_merge"] = "both"
                 df_both = pd.concat((df_both, row_merge.to_frame().T))
 
