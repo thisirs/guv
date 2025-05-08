@@ -2,7 +2,7 @@ import os
 
 import openpyxl
 import pandas as pd
-from doit.tools import config_changed
+from doit.tools import config_changed, check_timestamp_unchanged
 from doit.exceptions import TaskFailed
 import logging
 
@@ -33,6 +33,19 @@ def split_list_by_token_inclusive(lst):
     if current:
         result.append(current)
     return result
+
+
+class Wrap():
+    def __init__(self, filename, value):
+        self.check_timestamp_unchanged = check_timestamp_unchanged(filename)
+        self.config_changed = config_changed(value)
+
+    def __call__(self, task, values):
+        try:
+            res = self.check_timestamp_unchanged(task, values)
+        except FileNotFoundError:
+            return False
+        return res or self.config_changed(task, values)
 
 
 class Documents:
@@ -84,15 +97,18 @@ class Documents:
                     df.to_csv(target, index=False)
                 return func
 
-            foo = "-".join(op.hash() for op in lst)
+            value = "-".join(op.hash() for op in lst)
+            config_file = os.path.join(settings.SEMESTER_DIR, self.uv, "config.py")
+
             doit_task = {
                 "basename": f"DOCS_{i}",
                 "actions": [build_action(lst, cache_file, target)],
                 "file_dep": deps,
                 "targets": [target],
-                "uptodate": [config_changed(foo)],
+                "uptodate": [Wrap(config_file, value)],
                 "verbosity": 2
             }
+
             def format_task(doit_task):
                 return "\n".join(f"{key}: {value}" for key, value in doit_task.items()
                                  if key not in ["doc"])
