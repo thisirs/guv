@@ -90,7 +90,8 @@ class Documents:
                 "actions": [build_action(lst, cache_file, target)],
                 "file_dep": deps,
                 "targets": [target],
-                "uptodate": [config_changed(foo)]
+                "uptodate": [config_changed(foo)],
+                "verbosity": 2
             }
             def format_task(doit_task):
                 return "\n".join(f"{key}: {value}" for key, value in doit_task.items()
