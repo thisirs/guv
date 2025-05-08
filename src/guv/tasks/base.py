@@ -119,7 +119,7 @@ class TaskBase:
                 except Exception as e:
                     if settings.DEBUG <= logging.DEBUG:
                         raise e from e
-                    return TaskFailed(f"La tâche `{self.name()}` a échoué : {str(e)}")
+                    return TaskFailed(f"La tâche `{self.task_name()}` a échoué : {str(e)}")
 
             doit_task["actions"] = [action]
 
