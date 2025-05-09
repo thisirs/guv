@@ -175,8 +175,7 @@ def escape_tex(value):
 
 
 class LaTeXEnvironment(jinja2.Environment):
-    def __init__(self):
-        tmpl_dir = os.path.join(guv.__path__[0], "data", "templates")
+    def __init__(self, tmpl_dir):
         super().__init__(
             loader=jinja2.FileSystemLoader(tmpl_dir),
             block_start_string="((*",
@@ -189,7 +188,7 @@ class LaTeXEnvironment(jinja2.Environment):
         self.filters["escape_tex"] = escape_tex
 
 
-def render_latex_template(template, context):
+def render_latex_template(tmpl_dir, template, context):
     """Render template with context.
 
     Dictionary `context` must contain `filename_no_ext`. Return path
@@ -197,7 +196,7 @@ def render_latex_template(template, context):
 
     """
 
-    latex_env = LaTeXEnvironment()
+    latex_env = LaTeXEnvironment(tmpl_dir)
     tmpl = latex_env.get_template(template)
 
     tex = tmpl.render(**context)

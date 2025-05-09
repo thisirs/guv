@@ -3,6 +3,9 @@ Ce module rassemble les tâches liées à la création de fiches de
 présence.
 """
 
+import os
+import guv
+
 from ..exceptions import GuvUserError
 from ..utils import (LaTeXEnvironment, argument, generate_groupby, make_groups,
                      normalize_string, pformat, sort_values)
@@ -117,7 +120,8 @@ class PdfAttendance(UVTask, CliArgsMixin):
             group=normalize_string(self.group, type="file_no_space") if self.group else "all",
             title=normalize_string(self.title, type="file_no_space")
         )
-        latex_env = LaTeXEnvironment()
+        tmpl_dir = os.path.join(guv.__path__[0], "data", "templates")
+        latex_env = LaTeXEnvironment(tmpl_dir)
         self.template = latex_env.get_template(self.template_file)
 
     def generate_contexts(self):
@@ -229,8 +233,9 @@ class PdfAttendance(UVTask, CliArgsMixin):
     def run(self):
         contexts = self.generate_contexts()
 
+        tmpl_dir = os.path.join(guv.__path__[0], "data", "templates")
         render_from_contexts(
-            self.template, contexts, save_tex=self.save_tex, target=self.target
+            tmpl_dir, self.template, contexts, save_tex=self.save_tex, target=self.target
         )
 
 
@@ -306,8 +311,9 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
 
         contexts = self.generate_contexts(df)
 
+        tmpl_dir = os.path.join(guv.__path__[0], "data", "templates")
         render_from_contexts(
-            self.template_file, contexts, save_tex=self.save_tex, target=self.target
+            tmpl_dir, self.template_file, contexts, save_tex=self.save_tex, target=self.target
         )
 
     def generate_contexts(self, df):

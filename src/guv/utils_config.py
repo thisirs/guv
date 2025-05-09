@@ -170,7 +170,7 @@ class Output:
             return False
 
 
-def render_from_contexts(template, contexts, save_tex=False, target=None):
+def render_from_contexts(tmpl_dir, template, contexts, save_tex=False, target=None):
     """Render `template` with different `contexts` and save using `target`.
 
     Rendered in a temporary directory by `render_latex_template`.
@@ -183,7 +183,7 @@ def render_from_contexts(template, contexts, save_tex=False, target=None):
     texs = []
     for context in contexts:
         try:
-            tex_filepath = render_latex_template(template, context)
+            tex_filepath = render_latex_template(tmpl_dir, template, context)
             texs.append(tex_filepath)
         except Exception as e:
             if settings.DEBUG <= logging.DEBUG:
