@@ -186,20 +186,13 @@ def render_from_contexts(tmpl_dir, template, contexts, save_tex=False, target=No
             tex_filepath = render_latex_template(tmpl_dir, template, context)
             texs.append(tex_filepath)
         except Exception as e:
-            if settings.DEBUG <= logging.DEBUG:
-                raise e from e
-            else:
-                logger.error("Erreur dans la création du fichier .tex")
+            raise GuvUserError("Erreur dans la création du fichier .tex :", str(e))
 
         try:
             pdf_filepath = compile_latex_file(tex_filepath)
             pdfs.append(pdf_filepath)
         except Exception as e:
-            if settings.DEBUG <= logging.DEBUG:
-                raise e from e
-            else:
-                logger.error("Erreur dans la compilation du fichier .tex")
-
+            raise GuvUserError("Erreur dans la création du fichier .tex :", str(e))
 
     # Écriture du pdf dans un zip si plusieurs
     if len(pdfs) == 1:
