@@ -1807,53 +1807,7 @@ class AddMoodleListing(MoodleFileOperation):
             suffixes=("", "_moodle"),
             how="outer"
         )
-        df_outer = agg.merge(clean_exclude="_merge")
-
-        # Warn of any mismatch
-        lo = df_outer.loc[df_outer["_merge"] == "left_only"]
-        desc_lo = get_descriptive_function(lo)
-        for row in lo.itertuples(index=True):
-            description = desc_lo(row)
-            logger.warning("`%s` n'est pas présent dans les données Moodle", description)
-
-        ro = df_outer.loc[df_outer["_merge"] == "right_only"]
-        desc_ro = get_descriptive_function(ro)
-        for row in ro.itertuples(index=True):
-            description = desc_ro(row)
-            logger.warning("`%s` n'est pas présent dans le fichier central", description)
-
-        # Base dataframe to add row to
-        df_both = df_outer.loc[df_outer["_merge"] == "both"]
-
-        # Ask user to do the matching
-        for row in lo.itertuples(index=True):
-            if len(ro.index) != 0:
-                description = desc_lo(row)
-                logger.info("Recherche de correspondance pour `%s` :", description)
-                for i, row_ro in enumerate(ro.itertuples(index=True)):
-                    description = desc_ro(row)
-                    print(f"  ({i}) {description}")
-
-                choice = ask_choice(
-                    "Choix ? (entrée si pas de correspondance) ",
-                    {**{str(i): i for i in range(len(ro.index))}, "": None}
-                )
-
-                if choice is not None:
-                    row_merge = lo.loc[row.Index, :].combine_first(ro.iloc[choice, :])
-                    ro = ro.drop(index=ro.iloc[[choice]].index)
-                    row_merge["_merge"] = "both"
-                    df_both = pd.concat((df_both, row_merge.to_frame().T))
-                else:
-                    row_merge = lo.loc[row.Index, :].copy()
-                    row_merge["_merge"] = "both"
-                    df_both = pd.concat((df_both, row_merge.to_frame().T))
-            else:
-                row_merge = lo.loc[row.Index, :].copy()
-                row_merge["_merge"] = "both"
-                df_both = pd.concat((df_both, row_merge.to_frame().T))
-
-        return df_both.drop(["_merge"], axis=1)
+        return agg.manual_merge()
 
 
 def add_action_method(cls, klass, method_name):
