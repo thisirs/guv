@@ -1,9 +1,12 @@
 from abc import ABC, abstractmethod
 
-from .exceptions import ImpossibleMerge, GuvUserError
+import pandas as pd
+
+from .exceptions import GuvUserError, ImpossibleMerge
 from .logger import logger
 from .operation import Operation
-from .utils import ps, plural, check_if_present
+from .utils import check_if_present, get_descriptive_function, plural, ps
+from .utils_config import ask_choice
 
 
 class Merger(ABC):
@@ -170,21 +173,20 @@ class Aggregator:
         self.merge_policy = merge_policy
         self._df_outer = None
 
-    def merge(self, clean_exclude=None):
+    def merge(self):
         check_if_present(self.left_df, self.left_merger.descriptive_columns)
         check_if_present(self.right_df, self.right_merger.descriptive_columns)
 
         df_outer = self._df_outer = self._outer_merge()
 
+        return self._cleanup_after_merge(df_outer)
+
+    def _cleanup_after_merge(self, df_outer):
         if self.how == "outer_raw":
             return merge_columns(df_outer, policy=self.merge_policy)
 
         elif self.how == "outer":
             columns = _drop_cols(self.left_merger, self.right_merger)
-            if clean_exclude is not None:
-                if isinstance(clean_exclude, str):
-                    clean_exclude = [clean_exclude]
-                columns = list(set(columns) - set(clean_exclude))
             df_clean = df_outer.drop(columns, axis=1)
             df_merge = merge_columns(df_clean, policy=self.merge_policy)
             return _apply_processing(df_merge, "Postprocessing", self.postprocessing)
@@ -271,6 +273,63 @@ class Aggregator:
                 raise GuvUserError(f"Les clés {inter_msg} sont requises et ne peuvent pas être renommées")
 
             self._right_df = self._right_df.rename(columns=self.rename)
+
+    def manual_merge(self):
+        if self.how != "outer":
+            raise ValueError("Manual merge for outer merge only")
+
+        check_if_present(self.left_df, self.left_merger.descriptive_columns)
+        check_if_present(self.right_df, self.right_merger.descriptive_columns)
+
+        self._df_outer = self._outer_merge()
+        df_both = self._df_outer.loc[self._df_outer["_merge"] == "both"]
+
+        lo = self._df_outer.loc[self._df_outer["_merge"] == "left_only"]
+        lo_index_column = self.left_merger.index_column
+        origin_lo = self._left_df.loc[lo[lo_index_column]]
+        desc_lo = get_descriptive_function(origin_lo)
+
+        for row in origin_lo.itertuples(index=True):
+            description = desc_lo(row)
+            logger.warning("`%s` n'est pas présent dans les données Moodle", description)
+
+        ro = self._df_outer.loc[self._df_outer["_merge"] == "right_only"]
+        ro_index_column = self.right_merger.index_column
+        origin_ro = self._right_df.loc[ro[ro_index_column]]
+        desc_ro = get_descriptive_function(origin_ro)
+
+        for row in origin_ro.itertuples(index=True):
+            description = desc_ro(row)
+            logger.warning("`%s` n'est pas présent dans les données Moodle", description)
+
+        for row in lo.itertuples(index=True):
+            if len(ro.index != 0):
+                origin_lo_row = origin_lo.loc[getattr(row, lo_index_column)]
+                description = desc_lo(origin_lo_row)
+                logger.info("Recherche de correspondance pour `%s` :", description)
+
+                for i, row_ro in enumerate(ro.itertuples(index=True)):
+                    origin_ro_row = origin_ro.loc[getattr(row_ro, ro_index_column)]
+                    description = desc_ro(origin_ro_row)
+                    print(f"  ({i}) {description}")
+
+                choice = ask_choice(
+                    "Choix ? (entrée si pas de correspondance) ",
+                    {**{str(i): i for i in range(len(origin_ro.index))}, "": None}
+                )
+
+                if choice is not None:
+                    row_merge = lo.loc[row.Index, :].combine_first(ro.iloc[choice, :])
+                    ro = ro.drop(index=ro.iloc[[choice]].index)
+                else:
+                    row_merge = lo.loc[row.Index, :].copy()
+            else:
+                row_merge = lo.loc[row.Index, :].copy()
+
+            row_merge["_merge"] = "both"
+            df_both = pd.concat((df_both, row_merge.to_frame().T))
+
+        return self._cleanup_after_merge(df_both)
 
     def report(self):
         if self._df_outer is None:
