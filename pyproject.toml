@@ -33,23 +33,18 @@ dependencies = [
   "yapf",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
-  "pytest >= 5.0.0",
-  "pytest-dependency",
-  "pytest-order"
+    "pytest>=8.3.5",
+    "pytest-dependency",
+    "pytest-order"
 ]
 doc = [
-  "tox",
-  "sphinx",
-  "furo",
-  "schema",
-  "myst_parser"
-]
-test = [
-  "pytest >= 5.0.0",
-  "pytest-dependency",
-  "pytest-order"
+    "tox",
+    "sphinx",
+    "furo",
+    "schema",
+    "myst_parser"
 ]
 
 [tool.setuptools.packages.find]
