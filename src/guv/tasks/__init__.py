@@ -14,4 +14,4 @@ from .grades import YamlQCM
 from .internal import XlsStudentData
 from .moodle import (CsvCreateGroups, CsvGroups, CsvGroupsGroupings,
                      FetchGroupId)
-from .students import MaggleTeams, SendEmail, ZoomBreakoutRooms
+from .students import SendEmail, ZoomBreakoutRooms
