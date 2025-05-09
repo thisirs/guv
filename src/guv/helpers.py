@@ -1668,7 +1668,7 @@ class AggregateMoodleGrades(MoodleFileOperation):
         self.rename = rename
         self._moodle_df = None
 
-    def get_arguments(self, df):
+    def get_arguments(self, df, doc_type):
         if df is not None:
             for c in type(self).base_email_columns:
                 if c in df.columns:
@@ -1688,11 +1688,11 @@ class AggregateMoodleGrades(MoodleFileOperation):
         columns = set(right_df.columns.values)
 
         try:
-            type, keep_columns, drop_columns = keep_drop_moodle_grades(columns)
+            doc_type, keep_columns, drop_columns = keep_drop_moodle_grades(columns)
         except ValueError:
             raise GuvUserError("Le fichier n'est pas reconnu comme une feuille de notes Moodle")
         else:
-            logger.info("Fichier de notes Moodle de type `%s` reconnu", type)
+            logger.info("Fichier de notes Moodle de type `%s` reconnu", doc_type)
 
         # Convert columns into numeric if possible
         for c in keep_columns:
@@ -1701,7 +1701,7 @@ class AggregateMoodleGrades(MoodleFileOperation):
             except ValueError:
                 pass
 
-        left_on, right_on = self.get_arguments(left_df)
+        left_on, right_on = self.get_arguments(left_df, doc_type)
 
         # Don't try to drop a required column
         if right_on in drop_columns:
