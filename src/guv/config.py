@@ -188,9 +188,7 @@ class Settings:
             self._settings["SEMESTER"] = os.path.basename(self.semester_directory)
             self._settings["SEMESTER_DIR"] = self.semester_directory
             self._settings["DOIT_CONFIG"] = {
-                # "reporter": ZeroReporter,
                 "dep_file": os.path.join(self.semester_directory, ".guv.db"),
-                # "check_file_uptodate": "timestamp",
                 "verbosity": 2,
                 "default_tasks": ["xls_student_data"],
             }
@@ -206,9 +204,7 @@ class Settings:
             self._settings["SEMESTER"] = os.path.basename(self.semester_directory)
             self._settings["SEMESTER_DIR"] = self.semester_directory
             self._settings["DOIT_CONFIG"] = {
-                # "reporter": ZeroReporter,
                 "dep_file": os.path.join(self.semester_directory, ".guv.db"),
-                # "check_file_uptodate": "timestamp",
                 "verbosity": 2,
                 "default_tasks": ["xls_student_data"],
             }
