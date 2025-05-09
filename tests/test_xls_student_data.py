@@ -62,4 +62,25 @@ def test_xls_student_data(guv, xlsx, guvcapfd):
     guv().succeed()
     guvcapfd.stdout_search(".  xls_student_data")
     guvcapfd.no_warning()
+    guvcapfd.reset()
+
+    guv.change_config("""\
+    import numpy as np
+
+    def add_groups(df):
+        g = np.tile(["g1", "g2"], len(df))[: len(df)]
+        np.random.shuffle(g)
+        df = df.assign(group_1=g)
+
+        g = np.repeat(["g1", "g2", "g3", "g4"], len(df) // 4 + 1)[: len(df)]
+        np.random.shuffle(g)
+        df = df.assign(group_2=g)
+
+        return df
+
+    DOCS.apply_df(add_groups)
+    """)
+    guv().succeed()
+    guvcapfd.stdout_search(".  xls_student_data")
+    guvcapfd.no_warning()
 
