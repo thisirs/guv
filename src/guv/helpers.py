@@ -22,48 +22,42 @@ from .utils import (check_if_absent, check_if_present, convert_to_numeric,
 from .utils_config import ask_choice, check_filename, rel_to_dir
 
 
-def slugrot(*columns):
+def slugrot(df, *columns):
     "Rotation-invariant hash function on a dataframe"
 
-    def func(df):
-        check_if_present(df, columns)
-        s = df[list(columns)].apply(
-            lambda x: "".join(x.astype(str)),
-            axis=1
-        )
+    check_if_present(df, columns)
+    s = df[list(columns)].apply(
+        lambda x: "".join(x.astype(str)),
+        axis=1
+    )
 
-        s = s.apply(slugrot_string)
-        s.name = "guv_" + "_".join(columns)
-        return s
-
-    return func
+    s = s.apply(slugrot_string)
+    s.name = "guv_" + "_".join(columns)
+    return s
 
 
 class SlugRotMerger(ColumnsMerger):
     def __init__(self, *columns, type=None):
-        super().__init__(*columns, type=type, func=slugrot(*columns))
+        super().__init__(*columns, type=type, func=slugrot)
 
 
 def id_slug(*columns):
     return SlugRotMerger(*columns)
 
 
-def make_concat(*columns):
-    def func(df):
-        check_if_present(df, columns)
-        s = df[list(columns)].apply(
-            lambda x: "".join(x.astype(str)),
-            axis=1
-        )
+def make_concat(df, *columns):
+    check_if_present(df, columns)
+    s = df[list(columns)].apply(
+        lambda x: "".join(x.astype(str)),
+        axis=1
+    )
 
-        s.name = "guv_" + "_".join(columns)
-        return s
-
-    return func
+    s.name = "guv_" + "_".join(columns)
+    return s
 
 
 def concat(*columns):
-    return ColumnsMerger(*columns, func=make_concat(*columns))
+    return ColumnsMerger(*columns, func=make_concat)
 
 
 class FillnaColumn(Operation):
@@ -620,9 +614,8 @@ class ApplyCell(Operation):
             stuidx = sturow.index[0]
         else:
             # Add slugname column
-            tf_df = slugrot(*type(self).base_columns)
             check_if_absent(df, "fullname_slug")
-            df["fullname_slug"] = tf_df(df)
+            df["fullname_slug"] = slugrot(df, *type(self).base_columns)
 
             sturow = df.loc[df.fullname_slug == slugrot_string(self.name_or_email)]
             if len(sturow) > 1:
@@ -1240,8 +1233,7 @@ class Flag(FileStringOperation):
         df[self.colname] = self.flags[1]
 
         # Add column that acts as a primary key
-        tf_df = slugrot("Nom", "Prénom")
-        df["fullname_slug"] = tf_df(df)
+        df["fullname_slug"] = slugrot(df, "Nom", "Prénom")
 
         for line in self.lines:
             # Saute commentaire ou ligne vide
