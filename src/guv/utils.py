@@ -333,7 +333,7 @@ def get_descriptive_function(df):
     else:
         def func(row):
             if hasattr(row, "Index"):
-                return "L'enregistrement `{getattr(row, 'Index')}`"
+                return f"L'enregistrement `{getattr(row, 'Index')}`"
             else:
                 return str(row[0])
     return func
