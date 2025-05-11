@@ -18,16 +18,15 @@ class Merger(ABC):
     def from_obj(obj, type=None, index=True):
         if isinstance(obj, str):
             return SimpleMerger(obj, type=type, index=index)
-        elif isinstance(obj, list) and all(isinstance(item, str) for item in obj):
-            return SimpleMerger(*obj, type=type, index=index)
         elif isinstance(obj, Merger):
             obj.type = type
             obj.index = True
             return obj
-        elif isinstance(obj, list) and all(isinstance(item, Merger) for item in obj):
-            return RecursiveMerger(*obj, type=type, index=index)
+        elif isinstance(obj, list):
+            mergers = [Merger.from_obj(e) for e in obj]
+            return RecursiveMerger(*mergers, type=type, index=index)
         else:
-            raise TypeError("Unknown merger")
+            raise TypeError("Unknown merger", obj)
 
     @property
     @abstractmethod
