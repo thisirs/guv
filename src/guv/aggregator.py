@@ -10,23 +10,24 @@ from .utils_config import ask_choice
 
 
 class Merger(ABC):
-    def __init__(self, type=None):
+    def __init__(self, type=None, index=True):
         self.type = type
+        self.index = index
 
     @staticmethod
-    def from_obj(obj, type=None):
+    def from_obj(obj, type=None, index=True):
         if isinstance(obj, str):
-            return SimpleMerger(obj, type=type)
+            return SimpleMerger(obj, type=type, index=index)
+        elif isinstance(obj, list) and all(isinstance(item, str) for item in obj):
+            return SimpleMerger(*obj, type=type, index=index)
         elif isinstance(obj, Merger):
             obj.type = type
+            obj.index = True
             return obj
+        elif isinstance(obj, list) and all(isinstance(item, Merger) for item in obj):
+            return RecursiveMerger(*obj, type=type, index=index)
         else:
             raise TypeError("Unknown merger")
-
-    @property
-    def index_column(self):
-        """Column to keep track of original index before merge"""
-        return "index_" + self.type
 
     @property
     @abstractmethod
@@ -35,25 +36,36 @@ class Merger(ABC):
 
     @property
     @abstractmethod
+    def descriptive_columns(self):
+        """Columns that are used to describe a row when reporting"""
+
+    @property
     def required_columns(self):
         """Columns that are required for the merge"""
+        if self.index:
+            return ["index_" + self.type]
+        return None
+
+    @property
+    def index_column(self):
+        """Column to keep track of original index before merge"""
+        if self.index:
+            return "index_" + self.type
+        return None
 
     @property
     def created_columns(self):
         """Columns that are created only for the merge"""
-        return [self.index_column]
-
-    @property
-    @abstractmethod
-    def descriptive_columns(self):
-        """Columns that are used to describe a row when reporting"""
-        return [self.column]
+        if self.index:
+            return [self.index_column]
+        return []
 
     def transform(self, df):
         # Reset any (possibly multi-indexed) index, use integer indexing. This
         # makes sure that we have a column named `self.index_column`.
-        df = df.reset_index(drop=True)
-        df = df.reset_index(names=self.index_column)
+        if self.index:
+            df = df.reset_index(drop=True)
+            df = df.reset_index(names=self.index_column)
 
         return df
 
@@ -61,31 +73,66 @@ class Merger(ABC):
 class SimpleMerger(Merger):
     """Merger along a simple column"""
 
-    def __init__(self, column, type=None):
-        super().__init__(type=type)
-        self.column = column
+    def __init__(self, *columns, type=None, index=True):
+        super().__init__(type=type, index=index)
+        self.columns = columns
 
     def fingerprint(self):
-        return self.column
+        return " ".join(self.columns)
 
     @property
     def on(self):
-        return self.column
+        return list(self.columns)
 
     @property
     def required_columns(self):
-        return [self.column, self.index_column]
+        return super().required_columns + list(self.columns)
 
     @property
     def descriptive_columns(self):
-        return [self.column]
+        return self.columns
+
+
+class RecursiveMerger(Merger):
+    def __init__(self, *mergers, type=None, index=True):
+        super().__init__(type=type, index=index)
+        self.mergers = mergers
+        for merger in self.mergers:
+            merger.index=False
+
+    def fingerprint(self):
+        return " ".join(item.fingerprint() for item in self.mergers)
+
+    @property
+    def required_columns(self):
+        return super().required_columns + [e for merger in self.mergers for e in merger.required_columns]
+
+    @property
+    def created_columns(self):
+        return super().created_columns + [e for merger in self.mergers for e in merger.created_columns]
+
+    @property
+    def descriptive_columns(self):
+        return [e for merger in self.mergers for e in merger.descriptive_columns]
+
+    @property
+    def on(self):
+        return [e for merger in self.mergers for e in merger.on]
+
+    def transform(self, df):
+        df = super().transform(df)
+
+        for merger in self.mergers:
+            df = merger.transform(df)
+
+        return df
 
 
 class ColumnsMerger(Merger):
     """Merger along a column created from several other ones"""
 
-    def __init__(self, *columns, type=None, func=None):
-        super().__init__(type=type)
+    def __init__(self, *columns, type=None, func=None, index=True):
+        super().__init__(type=type, index=index)
         self.columns = columns
         self.slug_column = "guv_" + "_".join(columns)
         self.func = func
@@ -95,23 +142,23 @@ class ColumnsMerger(Merger):
 
     @property
     def on(self):
-        return self.slug_column
+        return [self.slug_column]
 
     @property
     def required_columns(self):
-        return [self.slug_column , self.index_column]
+        return super().required_columns + [self.slug_column]
 
     @property
     def created_columns(self):
-        return [self.slug_column, self.index_column]
+        return super().created_columns + [self.slug_column]
 
     @property
     def descriptive_columns(self):
-        return self.columns
+        return list(self.columns)
 
     def transform(self, df):
         df = super().transform(df)
-        df = df.assign(**{self.slug_column: self.func(df)})
+        df = df.assign(**{self.slug_column: self.func(df, *self.columns)})
 
         return df
 
@@ -186,7 +233,7 @@ class Aggregator:
             return merge_columns(df_outer, policy=self.merge_policy)
 
         elif self.how == "outer":
-            columns = _drop_cols(self.left_merger, self.right_merger)
+            columns = _drop_cols(df_outer.columns, self.left_merger, self.right_merger)
             df_clean = df_outer.drop(columns, axis=1)
             df_merge = merge_columns(df_clean, policy=self.merge_policy)
             return _apply_processing(df_merge, "Postprocessing", self.postprocessing)
@@ -194,7 +241,7 @@ class Aggregator:
         elif self.how == "left":
             df_left = df_outer.loc[df_outer["_merge"].isin(['left_only', 'both'])]
 
-            columns = _drop_cols(self.left_merger, self.right_merger)
+            columns = _drop_cols(df_outer.columns, self.left_merger, self.right_merger)
             df_clean = df_left.drop(columns, axis=1)
 
             df_merge = merge_columns(df_clean, policy=self.merge_policy)
@@ -363,31 +410,34 @@ class Aggregator:
                 print(errors.to_string(index=False))
 
 
-def _drop_cols(left_merger, right_merger):
-    """Return list of columns added by left_merger and right_merger to be dropped"""
+def _drop_cols(columns, left_merger, right_merger):
+    blah = {
+        (True, True, True, True): lambda x: [x],
+        (True, True, True, False): lambda x: [x, x + "_y"],
+        (True, True, False, True): lambda x: [x],
+        (True, True, False, False): lambda x: [x, x + "_y"],
+        (True, False, True, True): lambda x: [],
+        (True, False, True, False): lambda x: [x],
+        (True, False, False, True): lambda x: [x],
+        (True, False, False, False): lambda x: [x],
+        (False, True, True, True): lambda x: [x + "_y"],
+        (False, True, True, False): lambda x: [x + "_y"],
+        (False, True, False, True): lambda x: [x],
+        (False, True, False, False): lambda x: [x],
+        (False, False, True, True): lambda x: [],
+        (False, False, True, False): lambda x: [],
+        (False, False, False, True): lambda x: [] if x + "_y" in columns else [x],
+        (False, False, False, False): lambda x: [],
+    }
 
-    # Drop added columns
     drop_cols = ["_merge"]
-    drop_cols.extend(left_merger.created_columns)
-
-    # Common created columns
-    inter = list(set(left_merger.created_columns).intersection(set(right_merger.created_columns)))
-
-    # Column that will receive a "_y" during merge
-    if left_merger.on in inter and right_merger.on == left_merger.on:
-        dups = [e + "_y" for e in inter if e != left_merger.on]
-    else:
-        dups = [e + "_y" for e in inter]
-
-    drop_cols.extend(inter + dups)
-
-    right_only = list(set(right_merger.created_columns) - set(left_merger.created_columns))
-    drop_cols.extend(right_only)
-
-    # Drop right primary key
-    if right_merger.on != left_merger.on and left_merger.on not in drop_cols:
-        drop_cols.append(right_merger.on)
-
+    for colname in columns:
+        is_created_left = colname in left_merger.created_columns
+        is_created_right = colname in right_merger.created_columns
+        is_on_left = colname in left_merger.on
+        is_on_right = colname in right_merger.on
+        func = blah[(is_created_left, is_created_right, is_on_left, is_on_right)]
+        drop_cols.extend(func(colname))
     return drop_cols
 
 
