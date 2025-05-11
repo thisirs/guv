@@ -1294,6 +1294,7 @@ class Switch(FileStringOperation):
     msg_file = "Agrégation du fichier d'échanges `{filename}`"
     msg_string = "Agrégation directe des échanges \"{string}\""
     hash_fields = ["_filename", "colname", "backup", "new_colname"]
+    name_columns = ["Nom", "Prénom"]
 
     def __init__(
         self,
@@ -1318,6 +1319,10 @@ class Switch(FileStringOperation):
         # Check that column exist
         check_if_present(df, self.colname)
 
+        # Add slugname column
+        check_if_absent(df, "fullname_slug")
+        df["fullname_slug"] = slugrot(df, *type(self).name_columns)
+
         new_column = swap_column(df, self.lines, self.colname)
         df = replace_column_aux(
             df,
@@ -1328,6 +1333,7 @@ class Switch(FileStringOperation):
             errors="silent"
         )
 
+        df = df.drop('fullname_slug', axis=1)
         return df
 
 
