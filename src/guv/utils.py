@@ -311,7 +311,7 @@ def rel_to_dir_aux(path, ref_dir, root_dir):
     return path
 
 
-def get_descriptive_function(df):
+def get_descriptive_function(df, columns=[]):
     if "Nom" in df.columns and "Prénom" in df.columns:
         def func(row):
             return str(getattr(row, "Nom")) + " " + str(getattr(row, "Prénom"))
@@ -330,6 +330,9 @@ def get_descriptive_function(df):
     elif "Adresse de courriel" in df.columns:
         def func(row):
             return str(getattr(row, "Adresse de courriel"))
+    elif len(columns) > 0:
+        def func(row):
+            return ", ".join(str(getattr(row, e)) for e in columns)
     else:
         def func(row):
             if hasattr(row, "Index"):
