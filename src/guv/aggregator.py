@@ -333,7 +333,7 @@ class Aggregator:
         lo = self._df_outer.loc[self._df_outer["_merge"] == "left_only"]
         lo_index_column = self.left_merger.index_column
         origin_lo = self._left_df.loc[lo[lo_index_column]]
-        desc_lo = get_descriptive_function(origin_lo)
+        desc_lo = get_descriptive_function(origin_lo, self.left_merger.descriptive_columns)
 
         for row in origin_lo.itertuples(index=True):
             description = desc_lo(row)
@@ -342,7 +342,7 @@ class Aggregator:
         ro = self._df_outer.loc[self._df_outer["_merge"] == "right_only"]
         ro_index_column = self.right_merger.index_column
         origin_ro = self._right_df.loc[ro[ro_index_column]]
-        desc_ro = get_descriptive_function(origin_ro)
+        desc_ro = get_descriptive_function(origin_ro, self.right_merger.descriptive_columns)
 
         for row in origin_ro.itertuples(index=True):
             description = desc_ro(row)
