@@ -21,8 +21,9 @@ from openpyxl.utils import get_column_letter
 from openpyxl.utils.dataframe import dataframe_to_rows
 
 
-
 def split_list_by_token_inclusive(lst):
+    """Split a list of objects at locations where cache attribute is True"""
+
     result = []
     current = []
     for item in lst:
@@ -56,6 +57,8 @@ class check_file_and_config_unchanged:
 
 
 class Documents:
+    """Class recording operations done to central file"""
+
     target_dir = "generated"
     target_name = "student_data_{step}.csv"
 
@@ -147,6 +150,7 @@ class XlsStudentData(UVTask):
 
     @classmethod
     def create_doit_tasks_aux(cls):
+        """Overriding UVTask to also generate tasks from DOCS."""
         tasks = []
         generators = []
         for planning, uv, info in selected_uv():
