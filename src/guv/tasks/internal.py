@@ -35,7 +35,14 @@ def split_list_by_token_inclusive(lst):
     return result
 
 
-class Wrap():
+class check_file_and_config_unchanged:
+    """Custom doit check
+
+    Return True (up-to-date) if file hasn't changed and it it has, check that
+    value has.
+
+    """
+
     def __init__(self, filename, value):
         self.check_timestamp_unchanged = check_timestamp_unchanged(filename)
         self.config_changed = config_changed(value)
@@ -105,7 +112,7 @@ class Documents:
                 "actions": [build_action(lst, cache_file, target)],
                 "file_dep": deps,
                 "targets": [target],
-                "uptodate": [Wrap(config_file, value)],
+                "uptodate": [check_file_and_config_unchanged(config_file, value)],
                 "verbosity": 2
             }
 
