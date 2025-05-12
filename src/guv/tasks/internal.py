@@ -132,10 +132,6 @@ class Documents:
     def actions(self):
         return self._actions
 
-    @property
-    def deps(self):
-        return [d for a in self.actions for d in a.deps]
-
 
 class XlsStudentData(UVTask):
     """Agrège les informations spécifiées dans la variable ``DOCS``
