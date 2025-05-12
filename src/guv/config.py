@@ -1,7 +1,6 @@
 import importlib
 import logging
 import os
-from datetime import date
 from pathlib import Path
 
 from schema import And, Or, Schema, SchemaError, Use

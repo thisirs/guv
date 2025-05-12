@@ -19,7 +19,7 @@ from .operation import Operation
 from .tasks.internal import Documents
 from .utils import (check_if_absent, check_if_present, convert_to_numeric,
                     read_dataframe, slugrot_string, get_descriptive_function)
-from .utils_config import ask_choice, check_filename, rel_to_dir
+from .utils_config import check_filename, rel_to_dir
 
 
 def slugrot(df, *columns):

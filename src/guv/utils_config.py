@@ -3,7 +3,6 @@ import os
 import shutil
 import time
 import zipfile
-import logging
 
 from .config import settings
 from .exceptions import (AbortWithBody, GuvUserError, ImproperlyConfigured,

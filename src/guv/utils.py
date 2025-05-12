@@ -11,8 +11,6 @@ import numpy as np
 import pandas as pd
 import unidecode
 
-import guv
-
 from .exceptions import CommonColumns, MissingColumns
 from .logger import logger
 
