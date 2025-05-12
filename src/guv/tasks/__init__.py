@@ -10,7 +10,6 @@ la classe. Par exemple
 
 from .attendance import PdfAttendance, PdfAttendanceFull
 from .gradebook import XlsGradeBookGroup, XlsGradeBookJury, XlsGradeBookNoGroup
-from .grades import YamlQCM
 from .internal import XlsStudentData
 from .moodle import (CsvCreateGroups, CsvGroups, CsvGroupsGroupings,
                      FetchGroupId)
