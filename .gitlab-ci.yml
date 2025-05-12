@@ -23,12 +23,12 @@ before_script:
 test:
   stage: test
   script:
-    - uv run --with '.[test]' pytest -v -rA --cache-clear
+    - uv run pytest -v -rA --cache-clear
 
 pages:
   stage: deploy
   script:
-    - uv run --with '.[doc]' sphinx-build --builder html --fail-on-warning docs public
+    - uv run --group doc sphinx-build --builder html --fail-on-warning docs public
   artifacts:
     paths:
       - public
