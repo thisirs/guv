@@ -173,13 +173,9 @@ class XlsStudentData(UVTask):
 
     def setup(self):
         super().setup()
-        if "DOCS" in self.settings:
-            self.student_data = Documents.target_from(uv=self.info["uv"], step="final")
-            self.file_dep = [self.student_data]
-            self.target = self.build_target()
-        else:
-            self.file_dep = []
-            self.target = None
+        self.student_data = Documents.target_from(uv=self.info["uv"], step="final")
+        self.file_dep = [self.student_data]
+        self.target = self.build_target()
 
     def get_column_dimensions(self):
         if not os.path.exists(self.target):
@@ -197,6 +193,15 @@ class XlsStudentData(UVTask):
         return {colname: width for colname, width in column_dimensions(ws)}
 
     def run(self):
+        if "DOCS" not in self.settings:
+            raise ImproperlyConfigured("Le fichier `config.py` doit contenir une variable `DOCS`")
+
+        if not isinstance(self.settings.DOCS, Documents):
+            raise ImproperlyConfigured("La variable `DOCS` doit être de type `Documents`")
+
+        if len(self.settings.DOCS.actions) == 0:
+            raise ImproperlyConfigured("`DOCS` doit contenir au moins une opération")
+
         df = pd.read_csv(self.student_data)
 
         # Write set of columns for completion
