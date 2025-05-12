@@ -68,6 +68,26 @@ _SETTING_LIST = [
         "DOCS",
     ),
     Setting(
+        "EMAIL_COLUMN",
+        schema=Schema(str),
+        help = ""
+    ),
+    Setting(
+        "NAME_COLUMN",
+        schema=Schema(str),
+        help = ""
+    ),
+    Setting(
+        "LASTNAME_COLUMN",
+        schema=Schema(str),
+        help = ""
+    ),
+    Setting(
+        "LOGIN_COLUMN",
+        schema=Schema(str),
+        help=""
+    ),
+    Setting(
         "MOODLE_ID",
         schema=Schema(int),
         help="Identifiant de l'UV/UE sur Moodle"

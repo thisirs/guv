@@ -24,7 +24,8 @@ class YamlQCM(UVTask):
 
     def run(self):
         df = XlsStudentData.read_target(self.xls_merge)
-        dff = df[["Nom", "Prénom", "Courriel"]]
+        columns = [self.settings[e] for e in ["LASTNAME_COLUMN", "NAME_COLUMN", "EMAIL"]]
+        dff = df[columns]
         d = dff.to_dict(orient="index")
         rec = [
             {

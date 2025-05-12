@@ -146,7 +146,7 @@ class CsvGroups(UVTask, CliArgsMixin):
                 null = df[column_name].isnull()
                 if null.any():
                     for index, row in df.loc[null].iterrows():
-                        stu = row["Nom"] + " " + row["Prénom"]
+                        stu = row[self.settings.LASTNAME_COLUMN] + " " + row[self.settings.NAME]
                         logger.warning("Valeur non définie dans la colonne `%s` pour l'étudiant(e) %s", column_name, stu)
 
                 dff = df.loc[~null][["Login", column_name]]
@@ -170,7 +170,8 @@ class CsvGroups(UVTask, CliArgsMixin):
     def run(self):
         df = XlsStudentData.read_target(self.xls_merge)
 
-        self.check_if_present(df, ["Nom", "Prénom", "Login"])
+        columns = [self.settings[e] for e in ["NAME_COLUMN", "LASTNAME_COLUMN", "LOGIN_COLUMN"]]
+        self.check_if_present(df, columns)
 
         dfs = self.build_dataframes(df)
 
@@ -722,7 +723,9 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         if self.ordered is None:
             df = df.sample(frac=1).reset_index(drop=True)
         elif len(self.ordered) == 0:
-            df = sort_values(df, ["Nom", "Prénom"])
+            columns = [self.settings.LASTNAME_COLUMN, self.settings.NAME]
+            self.check_if_present(df, columns, file=self.xls_merge)
+            df = sort_values(df, columns)
         else:
             self.check_if_present(
                 df, self.ordered, file=self.xls_merge, base_dir=self.settings.CWD
@@ -816,7 +819,11 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                 index_i = df.index[partition == i]
                 first = df.loc[index_i[0]]
                 last = df.loc[index_i[-1]]
-                print(f'{series.loc[index_i[0]]} : {first["Nom"]} {first["Prénom"]} -- {last["Nom"]} {last["Prénom"]} ({len(index_i)})')
+                first_name = first[self.settings.NAME_COLUMN]
+                first_lastname = first[self.settings.LASTNAME_COLUMN]
+                last_name = last[self.settings.NAME_COLUMN]
+                last_lastname = last[self.settings.LASTNAME_COLUMN]
+                print(f'{series.loc[index_i[0]]} : {first_lastname} {first_name} -- {last_lastname} {last_name} ({len(index_i)})')
 
         return series
 
@@ -896,9 +903,9 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                     for i, j in np.column_stack(np.where(scores > 0)):
                         if i >= j:
                             continue
-
-                        stu1 = " ".join(df[["Nom", "Prénom"]].iloc[i])
-                        stu2 = " ".join(df[["Nom", "Prénom"]].iloc[j])
+                        columns = [self.settings[e] for e in ["NAME_COLUMN", "LASTNAME_COLUMN"]]
+                        stu1 = " ".join(df[columns].iloc[i])
+                        stu2 = " ".join(df[columns].iloc[j])
                         logger.warning(f"  - {stu1} -- {stu2}")
                 else:
                     logger.warning(f"- contrainte de non-appartenance par la colonne `{column}` vérifiée")
@@ -914,8 +921,9 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                         if i >= j:
                             continue
 
-                        stu1 = " ".join(df[["Nom", "Prénom"]].iloc[i])
-                        stu2 = " ".join(df[["Nom", "Prénom"]].iloc[j])
+                        columns = [self.settings[e] for e in ["NAME_COLUMN", "LASTNAME_COLUMN"]]
+                        stu1 = " ".join(df[columns].iloc[i])
+                        stu2 = " ".join(df[columns].iloc[j])
                         logger.warning(f"  - {stu1} -- {stu2}")
                 else:
                     logger.warning(f"- contrainte d'affinité par la colonne `{column}` vérifiée")

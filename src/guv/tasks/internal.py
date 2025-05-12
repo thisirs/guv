@@ -248,9 +248,9 @@ class XlsStudentData(UVTask):
 
             if header_value in column_dimensions:
                 width = column_dimensions[header_value]
-            elif header_value == "Nom":
+            elif header_value == self.settings.NAME_COLUMN:
                 width = 1.3 * 16
-            elif header_value == "Prénom":
+            elif header_value == self.settings.LASTNAME_COLUMN:
                 width = 1.3 * 16
             elif header_value:
                 width = 1.3 * max(len(header_value), 4)

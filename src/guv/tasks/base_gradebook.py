@@ -52,7 +52,11 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
         """
 
         # Default columns
-        columns = [("Nom", "raw", 0), ("Prénom", "raw", 0), ("Courriel", "raw", 0)]
+        columns = [
+            (self.settings.NAME_COLUMN, "raw", 0),
+            (self.settings.LASTNAME_COLUMN, "raw", 0),
+            (self.settings.EMAIL_COLUMN, "raw", 0),
+        ]
 
         return columns
 

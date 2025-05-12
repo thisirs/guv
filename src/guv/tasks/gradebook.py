@@ -429,7 +429,7 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
     def create_other_worksheets(self):
         """Create one or more worksheets based on `worksheets` and `marking_scheme` arguments."""
 
-        order_by = self.order_by if self.order_by is not None else "Nom"
+        order_by = self.order_by if self.order_by is not None else self.settings.LASTNAME_COLUMN
 
         if self.group_by is not None:
             gen_group = list(generate_groupby(self.first_df, self.group_by))
@@ -468,8 +468,8 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
 
         def insert_record(ref_cell, i, record):
             index = ref_cell.text(f"Étudiant {i}")
-            last_name = index.below().text(record["Nom"])
-            first_name = last_name.below().text(record["Prénom"])
+            last_name = index.below().text(record[self.settings.LASTNAME_COLUMN])
+            first_name = last_name.below().text(record[self.settings.NAME_COLUMN])
             first_grade = first_name.below()
             last_grade = first_grade.below(ms.height - 1)
             total = last_grade.below(2)
@@ -717,8 +717,8 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
 
         # Group student dataframe record and corresponding column range
         for stu_range, (index, record) in zip(gen, group.iterrows()):
-            stu_range[1].value = record["Nom"]
-            stu_range[2].value = record["Prénom"]
+            stu_range[1].value = record[self.settings.LASTNAME_COLUMN]
+            stu_range[2].value = record[self.settings.NAME_COLUMN]
 
             # Total of student
             stu_total = stu_range[-2]
@@ -873,7 +873,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
 
     def get_columns(self, **kwargs):
         # Les colonnes classiques
-        columns = [("Nom", "raw", 0), ("Prénom", "raw", 0), ("Courriel", "raw", 0)]
+        columns = [(self.settings.LASTNAME_COLUMN, "raw", 0), (self.settings.NAME_COLUMN, "raw", 0), (self.settings.EMAIL_COLUMN, "raw", 0)]
 
         # Les colonnes nécessaires pour les différents calculs
         columns.append(("Admis", "cell", 2))
@@ -951,7 +951,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
             grades_props.append(props)
 
         other_cols = cols.copy()
-        for c in ["Nom", "Prénom", "Courriel",]:
+        for c in [self.settings.LASTNAME_COLUMN, self.settings.NAME_COLUMN, self.settings.EMAIL_COLUMN,]:
             if c in other_cols:
                 other_cols.remove(c)
         for c in grades:

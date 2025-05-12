@@ -153,7 +153,11 @@ class PdfAttendance(UVTask, CliArgsMixin):
                     yield context
             else:
                 df = XlsStudentData.read_target(self.xls_merge)
-                df = sort_values(df, ["Nom", "Prénom"])
+
+                columns = [self.settings.LASTNAME_COLUMN, self.settings.NAME_COLUMN]
+                self.check_if_present(df, columns, file=self.xls_merge)
+
+                df = sort_values(df, columns)
                 context["blank"] = False
 
                 if self.tiers_temps is not None:
@@ -167,7 +171,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
                     df = df[df[self.tiers_temps] != "Oui"]
                     context["group"] = "Salle dédiée"
                     context["filename_no_ext"] = "Tiers_temps"
-                    students = [{"name": f'{row["Nom"]} {row["Prénom"]}'} for _, row in df_tt.iterrows()]
+                    students = [{"name": f'{row[self.settings.LASTNAME_COLUMN]} {row[self.settings.NAME_COLUMN]}'} for _, row in df_tt.iterrows()]
                     context["students"] = students
                     yield context
 
@@ -177,9 +181,9 @@ class PdfAttendance(UVTask, CliArgsMixin):
                 groups = make_groups(df.index, self.count)
                 for name, idxs in zip(self.names, groups):
                     group = df.loc[idxs]
-                    print(name, ":", " ".join(group.iloc[0][["Nom", "Prénom"]]), "--",
-                          " ".join(group.iloc[-1][["Nom", "Prénom"]]))
-                    students = [{"name": f'{row["Nom"]} {row["Prénom"]}'} for _, row in group.iterrows()]
+                    print(name, ":", " ".join(group.iloc[0][columns]), "--",
+                          " ".join(group.iloc[-1][columns]))
+                    students = [{"name": f'{row[self.settings.LAST_NAME_COLUMN]} {row[self.settings.NAME_COLUMN]}'} for _, row in group.iterrows()]
                     context["students"] = students
                     context["filename_no_ext"] = f"{name}"
                     context["group"] = name
@@ -187,7 +191,10 @@ class PdfAttendance(UVTask, CliArgsMixin):
 
         else:
             df = XlsStudentData.read_target(self.xls_merge)
-            df = sort_values(df, ["Nom", "Prénom"])
+            columns = [self.settings.LASTNAME_COLUMN, self.settings.NAME_COLUMN]
+            self.check_if_present(df, columns, file=self.xls_merge)
+
+            df = sort_values(df, columns)
 
             if self.tiers_temps:
                 self.check_if_present(
@@ -203,7 +210,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
                 context["blank"] = self.blank
                 context["num"] = len(df_tt)
                 context["filename_no_ext"] = "Tiers_temps"
-                students = [{"name": f'{row["Nom"]} {row["Prénom"]}'} for _, row in df_tt.iterrows()]
+                students = [{"name": f'{row[self.settings.LASTNAME_COLUMN]} {row[self.settings.NAME_COLUMN]}'} for _, row in df_tt.iterrows()]
                 context["students"] = students
                 yield context
 
@@ -226,7 +233,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
                 context["blank"] = self.blank
                 context["num"] = len(group)
                 context["filename_no_ext"] = f"{gn}" or normalize_string(self.title, type="filename_no_ext")
-                students = [{"name": f'{row["Nom"]} {row["Prénom"]}'} for _, row in group.iterrows()]
+                students = [{"name": f'{row[self.settings.LASTNAME_COLUMN]} {row[self.settings.NAME_COLUMN]}'} for _, row in group.iterrows()]
                 context["students"] = students
                 yield context
 
@@ -329,10 +336,14 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
 
         key = (lambda x: "all") if self.group is None else self.group
 
+        columns = [self.settings.LASTNAME_COLUMN, self.settings.NAME_COLUMN]
+        self.check_if_present(df, columns, file=self.xls_merge)
+
         for gn, group in df.groupby(key):
-            group = sort_values(group, ["Nom", "Prénom"])
+            group = sort_values(group, columns)
+
             students = [
-                {"name": f'{row["Nom"]} {row["Prénom"]}'} for _, row in group.iterrows()
+                {"name": f'{row[self.settings.LASTNAME_COLUMN]} {row[self.settings.NAME_COLUMN]}'} for _, row in group.iterrows()
             ]
             group_context = {
                 "group": None if gn == "all" else gn,
