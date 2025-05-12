@@ -202,6 +202,7 @@ class TaskBase:
                 "doc": cls.doc(),
             }
 
+
 class SemesterTask(TaskBase):
     @classmethod
     def create_doit_tasks_aux(cls):
@@ -255,7 +256,6 @@ class SemesterTask(TaskBase):
             kw["target_name"],
         )
         return pformat(target, **kw)
-
 
 
 class UVTask(TaskBase):
