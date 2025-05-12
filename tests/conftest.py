@@ -91,23 +91,6 @@ class Guv:
                     f.write(f"{k}={v}\n\n")
 
 
-@pytest.fixture(
-    params=[
-        {
-            "semester": "A2024",
-            "uvs": ["SY19", "SY02"],
-        },
-        {
-            "semester": "P2024",
-            "uvs": ["SY09", "SY02"],
-        }
-    ],
-    scope="session",
-)
-def guv_data_old(request):
-    return request.param
-
-
 @pytest.fixture(scope="session")
 def guv_data_current(request):
     return {
@@ -123,14 +106,6 @@ from tests.plugins.test_path import _TestPath
 def guv(request, tmp_path_factory, guv_data_current):
     path = _TestPath(request, tmp_path_factory).path
     g = Guv(path, request, guv_data_current)
-    g.update_db()
-    return g
-
-
-@pytest.fixture(scope="class")
-def guv_old(request, tmp_path_factory, guv_data_old):
-    path = _TestPath(request, tmp_path_factory).path
-    g = Guv(path, request, guv_data_old)
     g.update_db()
     return g
 
