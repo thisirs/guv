@@ -159,6 +159,9 @@ class XlsStudentData(UVTask):
                 name=f"{instance.planning}_{instance.uv}",
                 uv=instance.uv
             )
+            if "DOCS" not in instance.settings:
+                continue
+
             docs = instance.settings.DOCS
             if not isinstance(docs, Documents):
                 raise ImproperlyConfigured("La variable DOCS doit être de type `Documents`: `DOCS = Documents()`")
