@@ -25,7 +25,7 @@ def test_xls_student_data(guv, xlsx, guvcapfd):
     doc.check_columns(
         "Prénom",
         "Nom",
-        "Adresse de courriel",
+        "Courriel",
         "Cours",
         "TD",
         "Login"
@@ -46,7 +46,7 @@ def test_xls_student_data(guv, xlsx, guvcapfd):
     doc.check_columns(
         "Prénom",
         "Nom",
-        "Adresse de courriel",
+        "Courriel",
         "Cours",
         "TD",
         "Login",
