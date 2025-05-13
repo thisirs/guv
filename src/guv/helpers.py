@@ -584,8 +584,6 @@ class ApplyCell(Operation):
     """
 
     hash_fields = ["name_or_email", "colname", "value"]
-    base_columns = ["Nom", "Prénom"]
-    base_email_columns = ["Courriel", "Adresse de courriel"]
 
     def __init__(self, name_or_email: str, colname: str, value, msg: Optional[str] = None):
         super().__init__()
@@ -596,14 +594,8 @@ class ApplyCell(Operation):
 
     def apply(self, df):
         check_if_present(df, self.colname)
-
-        for c in type(self).base_email_columns:
-            if c in df.columns:
-                left_on = c
-                break
-        else:
-            cols = ", ".join(f"`{c}`" for c in type(self).base_email_columns)
-            raise ImproperlyConfigured(f"Il faut au moins l'une des colonnes suivantes déjà présente pour agréger : {cols}")
+        check_if_absent(df, self.settings.EMAIL_COLUMN)
+        left_on = self.settings.EMAIL_COLUMN
 
         if '@' in self.name_or_email:
             sturow = df.loc[df[left_on] == self.name_or_email]
@@ -615,7 +607,8 @@ class ApplyCell(Operation):
         else:
             # Add slugname column
             check_if_absent(df, "fullname_slug")
-            df["fullname_slug"] = slugrot(df, *type(self).base_columns)
+            columns = [self.settings.LASTNAME_COLUMN, self.settings.NAME_COLUMN]
+            df["fullname_slug"] = slugrot(df, *columns)
 
             sturow = df.loc[df.fullname_slug == slugrot_string(self.name_or_email)]
             if len(sturow) > 1:
@@ -1074,7 +1067,6 @@ class AggregateOrg(FileOperation):
     """
 
     hash_fields = ["_filename", "colname", "on", "postprocessing"]
-    base_columns = ["Nom", "Prénom"]
 
     def __init__(
         self,
@@ -1106,7 +1098,8 @@ class AggregateOrg(FileOperation):
         df_org = pd.DataFrame(parse_org(text), columns=["header", self.colname])
 
         if self.on is None:
-            left_on = id_slug(*type(self).base_columns)
+            columns = [self.settings.LASTNAME_COLUMN, self.settings.NAME_COLUMN]
+            left_on = id_slug(*columns)
             right_on = id_slug("header")
         else:
             left_on = self.on
@@ -1294,7 +1287,6 @@ class Switch(FileStringOperation):
     msg_file = "Agrégation du fichier d'échanges `{filename}`"
     msg_string = "Agrégation directe des échanges \"{string}\""
     hash_fields = ["_filename", "colname", "backup", "new_colname"]
-    name_columns = ["Nom", "Prénom"]
 
     def __init__(
         self,
@@ -1310,7 +1302,6 @@ class Switch(FileStringOperation):
         self.new_colname = new_colname
 
     def apply(self, df):
-
         if self.backup is True and self.new_colname is not None:
             raise ImproperlyConfigured(
                 "Les arguments `backup` et `new_colname` sont incompatibles."
@@ -1321,9 +1312,12 @@ class Switch(FileStringOperation):
 
         # Add slugname column
         check_if_absent(df, "fullname_slug")
-        df["fullname_slug"] = slugrot(df, *type(self).name_columns)
+        columns = [self.settings.LASTNAME_COLUMN, self.settings.NAME_COLUMN]
+        df["fullname_slug"] = slugrot(df, *columns)
 
-        new_column = swap_column(df, self.lines, self.colname)
+        check_if_present(df, self.settings.EMAIL_COLUMN)
+        email_column = self.settings.EMAIL_COLUMN
+        new_column = swap_column(df, self.lines, self.colname, email_column)
         df = replace_column_aux(
             df,
             colname=self.colname,
@@ -1375,14 +1369,14 @@ def read_pairs(lines):
             raise GuvUserError(f"Ligne incorrecte: `{line.strip()}`. Format `etu1 --- etu2` attendu.")
 
 
-def validate_pair(df, colname, part1, part2):
+def validate_pair(df, colname, part1, part2, email_column):
     """Return action to do with a pair `part1`, `part2`."""
 
     names = df[colname].unique()
 
     # Indice de l'étudiant 1
     if "@" in part1:
-        stu1row = df.loc[df["Courriel"] == part1]
+        stu1row = df.loc[df[email_column] == part1]
         if len(stu1row) != 1:
             raise GuvUserError(
                 f"Adresse courriel `{part1}` non présente dans le fichier central"
@@ -1401,7 +1395,7 @@ def validate_pair(df, colname, part1, part2):
     elif part2 in ["null", "nan"]:
         return "quit", stu1idx, None
     elif "@" in part2:  # Le deuxième élément est une adresse email
-        stu2row = df.loc[df["Courriel"] == part2]
+        stu2row = df.loc[df[email_column] == part2]
         if len(stu2row) != 1:
             raise GuvUserError(
                 f"Adresse courriel `{part2}` non présente dans le fichier central"
@@ -1418,14 +1412,14 @@ def validate_pair(df, colname, part1, part2):
         return "swap", stu1idx, stu2idx
 
 
-def swap_column(df, lines, colname):
+def swap_column(df, lines, colname, email_column):
     """Return copy of column `colname` modified by swaps from `lines`. """
 
     new_column = df[colname].copy()
     desc = get_descriptive_function(df)
 
     for part1, part2 in read_pairs(lines):
-        type, idx1, idx2 = validate_pair(df, colname, part1, part2)
+        type, idx1, idx2 = validate_pair(df, colname, part1, part2, email_column)
 
         if type == "swap":
             nom1 = desc(df.loc[idx1, :])
@@ -1480,7 +1474,6 @@ class AggregateMoodleGroups(MoodleFileOperation):
 
     hash_fields = ["_filename", "colname", "backup"]
     moodle_email_column = "Adresse de courriel"
-    base_email_columns = ["Courriel", "Adresse de courriel"]
 
     def __init__(self, filename: str, colname: str, backup: Optional[bool] = False):
         super().__init__(filename)
@@ -1536,14 +1529,9 @@ class AggregateMoodleGroups(MoodleFileOperation):
 
     def get_arguments(self, df):
         if df is not None:
-            for c in type(self).base_email_columns:
-                if c in df.columns:
-                    left_on = c
-                    break
-            else:
-                cols = ", ".join(f"`{c}`" for c in type(self).base_email_columns)
-                raise ImproperlyConfigured(f"Il faut au moins l'une des colonnes suivantes déjà présente pour agréger : {cols}")
-
+            email_column = self.settings.EMAIL_COLUMN
+            if email_column in df.columns:
+                left_on = email_column
         else:
             left_on = None
 
@@ -1655,7 +1643,6 @@ class AggregateMoodleGrades(MoodleFileOperation):
 
     hash_fields = ["_filename", "rename"]
     moodle_email_column = "Adresse de courriel"
-    base_email_columns = ["Courriel", "Adresse de courriel"]
 
     def __init__(
         self,
@@ -1668,14 +1655,9 @@ class AggregateMoodleGrades(MoodleFileOperation):
 
     def get_arguments(self, df, doc_type):
         if df is not None:
-            for c in type(self).base_email_columns:
-                if c in df.columns:
-                    left_on = c
-                    break
-            else:
-                cols = ", ".join(f"`{c}`" for c in type(self).base_email_columns)
-                raise ImproperlyConfigured(f"Il faut au moins l'une des colonnes suivantes déjà présente pour agréger : {cols}")
-
+            email_column = self.settings.EMAIL_COLUMN
+            if email_column in df.columns:
+                left_on = email_column
         else:
             left_on = None
 
@@ -1758,20 +1740,9 @@ class AggregateJury(FileOperation):
 
 class AddMoodleListing(MoodleFileOperation):
     moodle_email_column = "Adresse de courriel"
-    base_email_columns = ["Courriel", "Adresse de courriel"]
 
     def get_arguments(self, df):
-        if df is not None:
-            for c in type(self).base_email_columns:
-                if c in df.columns:
-                    left_on = c
-                    break
-            else:
-                cols = ", ".join(f"`{c}`" for c in type(self).base_email_columns)
-                raise ImproperlyConfigured(f"Il faut au moins l'une des colonnes suivantes déjà présente pour agréger : {cols}")
-
-        else:
-            left_on = None
+        left_on = self.settings.EMAIL_COLUMN
 
         if set(self.moodle_df.columns) == set(["Prénom", "Nom", "Numéro d'identification", "Institution", "Département", "Adresse de courriel", "Dernier téléchargement depuis ce cours",]):
             drop = [
