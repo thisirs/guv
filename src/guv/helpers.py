@@ -1634,7 +1634,6 @@ class AggregateMoodleGrades(MoodleFileOperation):
     """
 
     hash_fields = ["_filename", "rename"]
-    moodle_email_column = "Adresse de courriel"
 
     def __init__(
         self,
@@ -1653,7 +1652,7 @@ class AggregateMoodleGrades(MoodleFileOperation):
         else:
             left_on = None
 
-        return left_on, type(self).moodle_email_column
+        return left_on, self.settings.MOODLE_EMAIL_COLUMN
 
     def apply(self, left_df):
         right_df = self.moodle_df
