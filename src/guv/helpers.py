@@ -147,7 +147,7 @@ class FillnaColumn(Operation):
 
         return df
 
-    def message(self, **kwargs):
+    def message(self):
         if self.na_value is not None:
             return f"Remplace les NA dans la colonne `{self.colname}` par la valeur `{self.na_value}`"
 
@@ -230,7 +230,7 @@ class ReplaceRegex(Operation):
             backup=self.backup,
         )
 
-    def message(self, **kwargs):
+    def message(self):
         if self.msg is not None:
             return self.msg
         if self.new_colname is None:
@@ -323,7 +323,7 @@ class ReplaceColumn(Operation):
             backup=self.backup,
         )
 
-    def message(self, **kwargs):
+    def message(self):
         if self.msg is not None:
             return self.msg
         if self.new_colname is None:
@@ -394,7 +394,7 @@ class ApplyDf(Operation):
     def apply(self, df):
         return self.func(df)
 
-    def message(self, **kwargs):
+    def message(self):
         if self.msg is not None:
             return self.msg
 
@@ -445,7 +445,7 @@ class ApplyColumn(Operation):
         df.loc[:, self.colname] = df[self.colname].apply(self.func)
         return df
 
-    def message(self, **kwargs):
+    def message(self):
         if self.msg is not None:
             return self.msg
 
@@ -545,7 +545,7 @@ class ComputeNewColumn(Operation):
         df = df.assign(**{self.colname: new_col})
         return df
 
-    def message(self, **kwargs):
+    def message(self):
         if self.msg is not None:
             return self.msg
 
@@ -622,7 +622,7 @@ class ApplyCell(Operation):
 
         return df
 
-    def message(self, **kwargs):
+    def message(self):
         if self.msg is not None:
             return self.msg
 
@@ -632,24 +632,20 @@ class ApplyCell(Operation):
 class FileOperation(Operation):
     hash_fields = ["_filename"]
 
-    def __init__(self, filename, base_dir=None):
+    def __init__(self, filename):
         super().__init__()
         self._filename = filename
-        self.base_dir = base_dir
 
     @property
     def filename(self):
-        if self.base_dir:
-            return os.path.join(self.base_dir, self._filename)
-
-        return self._filename
+        return os.path.join(self.base_dir, self._filename)
 
     @property
     def deps(self):
         return [self.filename]
 
-    def message(self, ref_dir=""):
-        return f"Agrégation du fichier `{rel_to_dir(self.filename, ref_dir)}`"
+    def message(self):
+        return f"Agrégation du fichier `{rel_to_dir(self.filename, self.settings.CWD)}`"
 
 
 class Add(FileOperation):
@@ -972,7 +968,8 @@ class AggregateSelf(Operation):
 
     def apply(self, left_df):
         from .tasks.internal import XlsStudentData  # Circular deps
-        right_df = XlsStudentData.read_target(XlsStudentData.target_from(uv=self.uv))
+        uv = self.info["uv"]
+        right_df = XlsStudentData.read_target(XlsStudentData.target_from(uv=uv))
 
         if "Login" in left_df and "Login" in right_df:
             left_on = right_on = "Login"
@@ -994,7 +991,7 @@ class AggregateSelf(Operation):
 
         return agg.merge()
 
-    def message(self, ref_dir=None):
+    def message(self):
         msg = ", ".join(f"`{e}`" for e in self.columns)
         return f"Ajoute les colonnes manuelles : {msg}"
 
@@ -1124,10 +1121,9 @@ class FileStringOperation(FileOperation):
     msg_file = "Agrégation du fichier `{filename}`"
     msg_string = "Agrégation directe de \"{string}\""
 
-    def __init__(self, filename_or_string, base_dir=None):
+    def __init__(self, filename_or_string):
         super().__init__(filename_or_string)
         self.filename_or_string = filename_or_string
-        self.base_dir = base_dir
         self._is_file = None
 
     @property
@@ -1146,11 +1142,7 @@ class FileStringOperation(FileOperation):
     @property
     def lines(self):
         if self.is_file:
-            if self.base_dir:
-                filename =  os.path.join(self.base_dir, self.filename_or_string)
-            else:
-                filename = self.filename_or_string
-
+            filename =  os.path.join(self.base_dir, self.filename_or_string)
             check_filename(filename, base_dir=self.base_dir)
             lines = open(filename, "r").readlines()
         else:
@@ -1165,9 +1157,9 @@ class FileStringOperation(FileOperation):
         else:
             return []
 
-    def message(self, ref_dir=""):
+    def message(self):
         if self.is_file:
-            return self.msg_file.format(filename=rel_to_dir(self.filename_or_string, ref_dir))
+            return self.msg_file.format(filename=rel_to_dir(self.filename_or_string, self.settings.CWD))
         else:
             return self.msg_string.format(string=self.filename_or_string.lstrip().splitlines()[0] + "...")
 
@@ -1544,8 +1536,8 @@ class AggregateMoodleGroups(MoodleFileOperation):
 
         return left_on, type(self).moodle_email_column, drop
 
-    def message(self, ref_dir=""):
-        return f"Agrégation du fichier de groupes `{rel_to_dir(self.filename, ref_dir)}`"
+    def message(self):
+        return f"Agrégation du fichier de groupes `{rel_to_dir(self.filename, self.settings.CWD)}`"
 
 
 def keep_drop_moodle_grades(columns):

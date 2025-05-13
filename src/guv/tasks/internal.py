@@ -76,11 +76,10 @@ class Documents:
         )
         return pformat(target, step=kwargs["step"])
 
-    def setup(self, base_dir, uv):
-        for a in self.actions:
-            a.base_dir = base_dir
-            a.uv = uv
-        self.uv = uv
+    def setup(self, settings, info):
+        for action in self.actions:
+            action.setup(settings=settings, info=info)
+        self.uv = info["uv"]
 
     def generate_doit_tasks(self):
         steps = split_list_by_token_inclusive(self.actions)
@@ -155,17 +154,20 @@ class XlsStudentData(UVTask):
         generators = []
         for planning, uv, info in selected_uv():
             instance = cls(planning, uv, info)
-            task = instance.to_doit_task(
-                name=f"{instance.planning}_{instance.uv}",
-                uv=instance.uv
-            )
+
             if "DOCS" not in instance.settings:
                 continue
 
             docs = instance.settings.DOCS
             if not isinstance(docs, Documents):
                 raise ImproperlyConfigured("La variable DOCS doit être de type `Documents`: `DOCS = Documents()`")
-            docs.setup(base_dir=os.path.join(settings.SEMESTER_DIR, uv), uv=uv)
+
+            docs.setup(settings=instance.settings, info=info)
+
+            task = instance.to_doit_task(
+                name=f"{instance.planning}_{instance.uv}",
+                uv=instance.uv
+            )
             tasks.append(task)
             generators.append(docs.generate_doit_tasks())
 

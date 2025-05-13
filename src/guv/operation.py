@@ -10,8 +10,24 @@ class Operation:
     hash_fields = []
 
     def __init__(self):
-        self.base_dir = None
-        self.uv = None
+        self._settings = None
+        self._info = None
+
+    @property
+    def settings(self):
+        if self._settings is None:
+            raise RuntimeError("setup() has to be called first")
+        return self._settings
+
+    @property
+    def info(self):
+        if self._info is None:
+            raise RuntimeError("setup() has to be called first")
+        return self._info
+
+    @property
+    def base_dir(self):
+        return self.settings.UV_DIR
 
     def message(self):
         return "Pas de message"
@@ -25,6 +41,10 @@ class Operation:
 
     def apply(self, df):
         pass
+
+    def setup(self, settings=None, info=None):
+        self._settings = settings
+        self._info = info
 
     def fingerprint(self):
         relevant_data = {field: fingerprint(getattr(self, field)) for field in self.hash_fields}
