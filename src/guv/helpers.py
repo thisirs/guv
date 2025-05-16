@@ -1465,29 +1465,12 @@ class AggregateMoodleGroups(MoodleFileOperation):
     """
 
     hash_fields = ["_filename", "colname", "backup"]
-    moodle_email_column = "Adresse de courriel"
 
     def __init__(self, filename: str, colname: str, backup: Optional[bool] = False):
         super().__init__(filename)
         self.colname = colname
         self.backup = backup
         self._version = None
-
-    @property
-    def version(self):
-        if self._version is None:
-            ver1 = set(["Nom", "Prénom", "Numéro d’identification", "Choix", "Adresse de courriel"]).issubset(set(self.moodle_df.columns))
-            ver2 = set(["Nom de famille", "Prénom", "Numéro d’identification", "Choix", "Adresse de courriel"]).issubset(set(self.moodle_df.columns))
-            if not ver1 and not ver2:
-                raise GuvUserError("Le fichier n'est pas reconnu comme un fichier issu d'une activité groupe de Moodle")
-            if ver1:
-                self._version = "ver1"
-            elif ver2:
-                self._version = "ver2"
-            else:
-                raise RuntimeError
-
-        return self._version
 
     def apply(self, df):
         # Backup column
@@ -1500,14 +1483,19 @@ class AggregateMoodleGroups(MoodleFileOperation):
             suffixes = ("_orig", "")
             merge_policy = "erase"
 
-        left_on, right_on, drop = self.get_arguments(df)
+        left_on = self.settings.EMAIL_COLUMN
+        right_on = self.settings.MOODLE_EMAIL_COLUMN
+
+        # Group column is the fourth one
+        drop_columns = [v for i, v in enumerate(self.moodle_df.columns) if i != 4]
+        drop_columns.remove(right_on)
 
         agg = Aggregator(
             df,
             self.moodle_df,
             left_on=left_on,
             right_on=right_on,
-            drop=drop,
+            drop=drop_columns,
             rename={"Groupe": self.colname},
             how="left",
             merge_policy=merge_policy,
@@ -1518,23 +1506,6 @@ class AggregateMoodleGroups(MoodleFileOperation):
         agg.report()
 
         return df_merge
-
-    def get_arguments(self, df):
-        if df is not None:
-            email_column = self.settings.EMAIL_COLUMN
-            if email_column in df.columns:
-                left_on = email_column
-        else:
-            left_on = None
-
-        if self.version == "ver1":
-            drop = ["Nom", "Prénom", "Numéro d’identification", "Choix"]
-        elif self.version == "ver2":
-            drop = ["Nom de famille", "Prénom", "Numéro d’identification", "Choix"]
-        else:
-            raise RuntimeError("Erreur logique")
-
-        return left_on, type(self).moodle_email_column, drop
 
     def message(self):
         return f"Agrégation du fichier de groupes `{rel_to_dir(self.filename, self.settings.CWD)}`"
@@ -1617,9 +1588,8 @@ def keep_drop_assignment(columns):
 class AggregateMoodleGrades(MoodleFileOperation):
     """Agrège des feuilles de notes provenant de Moodle.
 
-    La feuille de notes peut être un export du carnet de notes de Moodle, un
-    export des notes d'une activité quiz ou un export d'une activité devoir sous
-    la forme d'un fichier Excel ou csv.
+    La feuille de notes doit être un export d'une ou plusieurs notes du carnet
+    de notes de Moodle sous la forme d'un fichier Excel ou csv.
 
     Les colonnes inutiles seront éliminées. Un renommage des colonnes peut être
     effectué en renseignant ``rename``.
@@ -1642,9 +1612,8 @@ class AggregateMoodleGrades(MoodleFileOperation):
     ):
         super().__init__(filename)
         self.rename = rename
-        self._moodle_df = None
 
-    def get_arguments(self, df, doc_type):
+    def get_arguments(self, df):
         if df is not None:
             email_column = self.settings.EMAIL_COLUMN
             if email_column in df.columns:
@@ -1656,27 +1625,17 @@ class AggregateMoodleGrades(MoodleFileOperation):
 
     def apply(self, left_df):
         right_df = self.moodle_df
-        columns = set(right_df.columns.values)
+        left_on, right_on = self.get_arguments(left_df)
 
-        try:
-            doc_type, keep_columns, drop_columns = keep_drop_moodle_grades(columns)
-        except ValueError:
-            raise GuvUserError("Le fichier n'est pas reconnu comme une feuille de notes Moodle")
-        else:
-            logger.info("Fichier de notes Moodle de type `%s` reconnu", doc_type)
+        right_df = right_df.drop(columns=right_df.columns[[0, 1, 2, 3, 4, len(right_df.columns)-1]])
+
 
         # Convert columns into numeric if possible
-        for c in keep_columns:
-            try:
-                right_df[c] = convert_to_numeric(right_df[c])
-            except ValueError:
-                pass
-
-        left_on, right_on = self.get_arguments(left_df, doc_type)
-
-        # Don't try to drop a required column
-        if right_on in drop_columns:
-            drop_columns.remove(right_on)
+        # for c in keep:
+        #     try:
+        #         right_df[c] = convert_to_numeric(right_df[c])
+        #     except ValueError:
+        #         pass
 
         agg = Aggregator(
             left_df,
@@ -1684,7 +1643,6 @@ class AggregateMoodleGrades(MoodleFileOperation):
             left_on=left_on,
             right_on=right_on,
             rename=self.rename,
-            drop=drop_columns,
             how="left"
         )
 
@@ -1729,47 +1687,6 @@ class AggregateJury(FileOperation):
         return op.apply(df)
 
 
-class AddMoodleListing(MoodleFileOperation):
-    moodle_email_column = "Adresse de courriel"
-
-    def get_arguments(self, df):
-        left_on = self.settings.EMAIL_COLUMN
-
-        if set(self.moodle_df.columns) == set(["Prénom", "Nom", "Numéro d'identification", "Institution", "Département", "Adresse de courriel", "Dernier téléchargement depuis ce cours",]):
-            drop = [
-                "Numéro d'identification",
-                "Institution",
-                "Département",
-                "Dernier téléchargement depuis ce cours",
-            ]
-        elif set(self.moodle_df.columns) == set(["Prénom", "Nom de famille", "Groupes"]):
-            drop = ["Groupes",]
-        else:
-            raise ImproperlyConfigured("Fichier d'effectif Moodle non reconnu")
-
-        return left_on, type(self).moodle_email_column, drop
-
-    def apply(self, df):
-        df_moodle = read_dataframe(self.filename)
-
-        left_on, right_on, drop = self.get_arguments(df)
-        df_moodle = df_moodle.drop(columns=drop)
-
-        if df is None:
-            return df_moodle
-
-        # Outer aggregation only to handle specifically mismatches
-        agg = Aggregator(
-            left_df=df,
-            right_df=df_moodle,
-            left_on=left_on,
-            right_on=right_on,
-            suffixes=("", "_moodle"),
-            how="outer"
-        )
-        return agg.manual_merge()
-
-
 def add_action_method(cls, klass, method_name):
     """Add new method named `method_name` to class `cls`"""
 
@@ -1801,7 +1718,6 @@ def load_actions():
         ("flag", Flag),
         ("apply_cell", ApplyCell),
         ("switch", Switch),
-        ("add_moodle_listing", AddMoodleListing),
     ]
 
     for entry_point in importlib.metadata.entry_points(group="guv_operations"):

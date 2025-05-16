@@ -3,13 +3,14 @@ from tests.plugins.test_path import path_dependency
 
 
 @path_dependency("test_xls_student_data")
-@pytest.mark.parametrize("filename", ("moodle_export_group_v1.xlsx", "moodle_export_group_v2.xlsx"))
+@pytest.mark.parametrize("filename", ("moodle_export_group_v1_fr.xlsx", "moodle_export_group_v2_fr.xlsx"))
 def test_aggregate_moodle_groups(guv, xlsx, guvcapfd, filename):
     uv = guv.uvs[0]
     guv.cd(guv.semester, uv)
     guv.copy_file(filename, "documents")
 
     guv.change_config(f"""
+    MOODLE_EMAIL_COLUMN = "Adresse de courriel"
     DOCS.aggregate_moodle_groups("documents/{filename}", "Projet")
     """)
 
@@ -24,21 +25,20 @@ def test_aggregate_moodle_groups(guv, xlsx, guvcapfd, filename):
     assert(columns_after - columns_before == {"Projet"})
 
 
-data = [("moodle_export_assignment.csv", ("Note",)),
-        ("moodle_export_gradebook_v1.xlsx", ("Test Quiz (Brut)",)),
-        ("moodle_export_gradebook_v2.xlsx", ("Test Quiz (Brut)",)),
-        ("moodle_export_gradebook_v3.xlsx", ("Test Quiz (Brut)",)),
-        ("moodle_export_quiz_v1.xlsx", ("Note/20,00",))]
-
+data = [("Adresse de courriel", "moodle_export_gradebook_v1_fr.xlsx", ("Test Quiz (Brut)",)),
+        ("Adresse de courriel", "moodle_export_gradebook_v2_fr.xlsx", ("Test Quiz (Feedback)", "Test Quiz (Brut)")),
+        ("Adresse de courriel", "moodle_export_gradebook_v3_fr.xlsx", ("Test Quiz (Feedback)", "Suspendu", "Test Quiz (Brut)")),
+        ("Email address", "moodle_export_gradebook_en.xlsx", ("Note de médian (Real)", "Quiz: Quiz semaine 14 (Real)", "Assignment: Rendu du chapitre 1 : Modélisation (Real)"))]
 
 @path_dependency("test_xls_student_data")
-@pytest.mark.parametrize("filename,keep", data)
-def test_aggregate_moodle_grades(guv, xlsx, guvcapfd, filename, keep):
+@pytest.mark.parametrize("moodle_email_column,filename,keep", data)
+def test_aggregate_moodle_grades(guv, xlsx, guvcapfd, moodle_email_column, filename, keep):
     uv = guv.uvs[0]
     guv.cd(guv.semester, uv)
     guv.copy_file(filename, "documents")
 
     guv.change_config(f"""
+    MOODLE_EMAIL_COLUMN = "{moodle_email_column}"
     DOCS.aggregate_moodle_grades("documents/{filename}")
     """)
 
