@@ -1487,6 +1487,7 @@ class AggregateMoodleGroups(MoodleFileOperation):
         right_on = self.settings.MOODLE_EMAIL_COLUMN
 
         # Group column is the fourth one
+        group_column_name = self.moodle_df.columns[4]
         drop_columns = [v for i, v in enumerate(self.moodle_df.columns) if i != 4]
         drop_columns.remove(right_on)
 
@@ -1496,7 +1497,7 @@ class AggregateMoodleGroups(MoodleFileOperation):
             left_on=left_on,
             right_on=right_on,
             drop=drop_columns,
-            rename={"Groupe": self.colname},
+            rename={group_column_name: self.colname},
             how="left",
             merge_policy=merge_policy,
             suffixes=suffixes
