@@ -7,6 +7,7 @@ from schema import And, Or, Schema, SchemaError, Use
 
 from .exceptions import ImproperlyConfigured, NotUVDirectory
 from .logger import logger
+from .translations import _
 from .utils import pformat, rel_to_dir_aux
 
 SEMESTER_VARIABLE = "GUV_SEMESTER_PATH"
@@ -42,12 +43,12 @@ _SETTING_LIST = [
     Setting(
         "UVS",
         schema=Schema(Or([str], (str,))),
-        help="La variable 'UVS' est incorrecte : une liste des UV gérées est attendue",
+        help=_("The 'UVS' variable is incorrect: a list of managed UVs is expected"),
     ),
     Setting(
         "PLANNINGS",
         schema=Schema({str: dict}),
-        help="La variable 'PLANNINGS' est incorrecte: il faut que ce soit un dictionnaire dont les clés sont des plannings et les valeurs un dictionnaire de propriétés",
+        help=_("The 'PLANNINGS' variable is incorrect: it must be a dictionary whose keys are plannings and the values are a dictionary of properties"),
     ),
     Setting(
         "DEBUG",
@@ -60,7 +61,7 @@ _SETTING_LIST = [
                 Use(lambda s: LEVELS[s.lower()])
             ),
         )),
-        help="La variable 'DEBUG' est incorrecte : un entier est attendu",
+        help=_("The 'DEBUG' variable is incorrect: an integer is expected"),
         default=logging.INFO
     ),
     Setting(
@@ -89,29 +90,29 @@ _SETTING_LIST = [
     Setting(
         "MOODLE_ID",
         schema=Schema(int),
-        help="Identifiant de l'UV/UE sur Moodle"
+        help=_("Identifier of the UV/UE on Moodle")
     ),
     Setting(
         "PORT",
         schema=Schema(int),
-        help="Port pour l'envoi de courriel",
+        help=_("Port for sending email"),
         default=587
     ),
     Setting(
         "SMTP_SERVER",
         schema=Schema(str),
-        help="Serveur SMTP pour l'envoi de courriel",
+        help=_("SMTP server for sending email"),
         default="smtps.utc.fr"
     ),
     Setting(
         "FROM_EMAIL",
         schema=Schema(str),
-        help="Adresse de courriel d'origine des courriels envoyés"
+        help=_("Origin email address of sent emails")
     ),
     Setting(
         "LOGIN",
         schema=Schema(str),
-        help="Login pour le server smtp"
+        help=_("Login for the SMTP server")
     )
 ]
 
@@ -170,7 +171,7 @@ class Settings:
             value = DEFAULT_SETTINGS[name]
         else:
             raise ImproperlyConfigured(
-                f"La variable `{name}` n'a pas pu être trouvée"
+                _("The variable `{name}` could not be found").format(name=name)
             )
 
         if name in SETTINGS:
@@ -233,17 +234,18 @@ class Settings:
                 Path(self.conf_dir) / "config.py"
             ]
         else:
-            raise NotUVDirectory("Pas dans un dossier d'UV/semestre")
+            raise NotUVDirectory(_("Not in a UV/semester folder"))
 
         for config_file in to_load:
             try:
                 self.load_file(config_file)
             except Exception as e:
                 config_file = rel_to_dir_aux(config_file, self._settings["CWD"], self._settings["SEMESTER_DIR"])
-                raise ImproperlyConfigured(f"Problème de chargement du fichier `{config_file}`: {e}") from e
+                msg = _("Problem loading file `{config_file}`: ").format(config_file=config_file)
+                raise ImproperlyConfigured(msg, e) from e
 
     def load_file(self, config_file):
-        logger.debug("Loading configuration file: `%s`", config_file)
+        logger.debug(_("Loading configuration file: `%s`"), config_file)
         module_name = os.path.splitext(os.path.basename(config_file))[0]
         spec = importlib.util.spec_from_file_location(module_name, config_file)
         module = importlib.util.module_from_spec(spec)

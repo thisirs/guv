@@ -1,0 +1,1422 @@
+# French translations for PACKAGE package
+# Traductions françaises du paquet PACKAGE.
+# Copyright (C) 2025 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# sylvain <sylvain.rousseau@hds.utc.fr>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-05-21 20:21+0200\n"
+"PO-Revision-Date: 2025-05-17 21:05+0200\n"
+"Last-Translator: sylvain <sylvain.rousseau@hds.utc.fr>\n"
+"Language-Team: French <traduc@traduc.org>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: src/guv/exceptions.py:29
+#, python-brace-format
+msgid "Column already exists: {common_cols}"
+msgid_plural "Columns already exist: {common_cols}"
+msgstr[0] "Colonne{s} déjà existante{s}: {common_cols}"
+msgstr[1] "Colonne{s} déjà existante{s}: {common_cols}"
+
+#: src/guv/exceptions.py:35
+#, python-brace-format
+msgid ""
+"Column already exists: {common_cols} in the dataframe from the file `{origin}"
+"`"
+msgid_plural ""
+"Columns already exist: {common_cols} in the dataframe from the file `{origin}"
+"`"
+msgstr[0] ""
+"Colonne{s} déjà existante{s}: {common_cols} dans le dataframe issu du "
+"fichier `{origin}`"
+msgstr[1] ""
+"Colonne{s} déjà existante{s}: {common_cols} dans le dataframe issu du "
+"fichier `{origin}`"
+
+#: src/guv/exceptions.py:52
+#, python-brace-format
+msgid "Missing column: {missing_cols}. Available columns: {avail_cols}"
+msgid_plural "Missing columns: {missing_cols}. Available columns: {avail_cols}"
+msgstr[0] ""
+"Colonne manquante: {missing_cols}. Colonnes disponibles: {avail_cols}"
+msgstr[1] ""
+"Colonnes manquantes: {missing_cols}. Colonnes disponibles: {avail_cols}"
+
+#: src/guv/exceptions.py:58
+#, python-brace-format
+msgid ""
+"Missing column: {missing_cols} in the dataframe from the file `{origin}`. "
+"Available columns: {avail_cols}"
+msgid_plural ""
+"Missing columns: {missing_cols} in the dataframe from the file `{origin}`. "
+"Available columns: {avail_cols}"
+msgstr[0] ""
+"Colonne manquante: {missing_cols} dans le dataframe issu du fichier `{origin}"
+"`. Colonnes disponibles: {avail_cols}"
+msgstr[1] ""
+"Colonnes manquantes: {missing_cols} dans le dataframe issu du fichier "
+"`{origin}`. Colonnes disponibles: {avail_cols}"
+
+#: src/guv/helpers.py:83
+msgid "Only one of the options `na_value` and `group_column` must be specified"
+msgstr "Une seule des options `na_value` et `group_column` doit être spécifiée"
+
+#: src/guv/helpers.py:92
+#, python-format
+msgid "The column `%s` contains empty entries"
+msgstr "La colonne `%s` contient des entrées vides"
+
+#: src/guv/helpers.py:98
+#, python-format
+msgid "No non-NA value in the group `%s`"
+msgstr "Aucune valeur non-NA dans le groupe `%s`"
+
+#: src/guv/helpers.py:106
+#, python-format
+msgid "Multiple non-NA and different values in the group `%s`"
+msgstr "Plusieurs valeurs non-NA et différentes dans le groupe `%s`"
+
+#: src/guv/helpers.py:117
+#, python-brace-format
+msgid "Replace NAs in the column `{colname}` with the value `{na_value}`"
+msgstr "Remplace les NA dans la colonne `{colname}` par la valeur `{na_value}`"
+
+#: src/guv/helpers.py:119
+#, python-brace-format
+msgid "Replace NAs in the column `{colname}` by grouping by `{group_column}`"
+msgstr ""
+"Remplace les NA dans la colonne `{colname}` en groupant par `{group_column}`"
+
+#: src/guv/helpers.py:145 src/guv/helpers.py:194 src/guv/helpers.py:671
+msgid "The arguments `backup` and `new_colname` are incompatible."
+msgstr "Les arguments `backup` et `new_colname` sont incompatibles."
+
+#: src/guv/helpers.py:166
+#, python-brace-format
+msgid "Regex replacement in column `{colname}`"
+msgstr "Remplacement regex dans colonne `{colname}`"
+
+#: src/guv/helpers.py:168
+#, python-brace-format
+msgid "Regex replacement in column `{colname}` to column `{new_colname}`"
+msgstr ""
+"Remplacement regex dans colonne `{colname}` vers colonne `{new_colname}`"
+
+#: src/guv/helpers.py:211
+#, python-brace-format
+msgid "Replacement in column `{colname}`"
+msgstr "Remplacement dans colonne `{colname}`"
+
+#: src/guv/helpers.py:213
+#, python-brace-format
+msgid "Replacement in column `{colname}` to column `{new_colname}`"
+msgstr "Replacement dans colonne `{colname}` vers colonne `{new_colname}`"
+
+#: src/guv/helpers.py:233
+msgid "Apply a function to the Dataframe"
+msgstr "Appliquer une fonction au Dataframe"
+
+#: src/guv/helpers.py:256
+#, python-brace-format
+msgid "Apply a function to the column `{colname}`"
+msgstr "Appliquer une fonction à la colonne `{colname}`"
+
+#: src/guv/helpers.py:296
+#, python-brace-format
+msgid "Calculation of the column `{colname}`"
+msgstr "Calcul de la colonne `{colname}`"
+
+#: src/guv/helpers.py:319
+#, python-brace-format
+msgid "Email address `{email}` appears multiple times"
+msgstr "Adresse courriel `{email}` présente plusieurs fois"
+
+#: src/guv/helpers.py:321 src/guv/helpers.py:746 src/guv/helpers.py:765
+#, python-brace-format
+msgid "Email address `{email}` not present in the central file"
+msgstr "Adresse courriel `{email}` non présente dans le fichier central"
+
+#: src/guv/helpers.py:331
+#, python-brace-format
+msgid "Student named `{name}` appears multiple times"
+msgstr "Étudiant de nom `{name}` présent plusieurs fois"
+
+#: src/guv/helpers.py:333 src/guv/helpers.py:753 src/guv/helpers.py:773
+#, python-brace-format
+msgid "Student named `{name}` not present or recognized in the central file"
+msgstr ""
+"Étudiant de nom `{name}` non présent ou reconnu dans le fichier central"
+
+#: src/guv/helpers.py:345
+#, python-brace-format
+msgid ""
+"Modification of the column `{colname}` for the identifier `{name_or_email}`"
+msgstr ""
+"Modification de la colonne `{colname}` pour l'identifiant `{name_or_email}`"
+
+#: src/guv/helpers.py:364 src/guv/helpers.py:559
+#, python-brace-format
+msgid "Aggregation of the file `{filename}`"
+msgstr "Agrégation du fichier `{filename}`"
+
+#: src/guv/helpers.py:378
+msgid "An aggregation function must be provided"
+msgstr "Il faut fournir une fonction d'agrégation"
+
+#: src/guv/helpers.py:426
+msgid "Either `on`, or `left_on` and `right_on` must be specified."
+msgstr "On doit spécifier soit `on`, soit `left_on` et `right_on`."
+
+#: src/guv/helpers.py:436
+msgid "`left_on` and `right_on` must both be from `id_slug`"
+msgstr "`left_on` et `right_on` doivent être simultanément issus de `id_slug`"
+
+#: src/guv/helpers.py:482
+msgid "The `{login_col}` column or the `{lastname_column}` and `{name_column}` columns are required"
+msgstr "La colonne `{login_col}` ou les colonnes `{lastname_column}` et `{name_column}` sont requises"
+
+#: src/guv/helpers.py:498
+#, python-brace-format
+msgid "Add manual columns: {msg}"
+msgstr "Ajoute les colonnes manuelles : {msg}"
+
+#: src/guv/helpers.py:560
+#, python-brace-format
+msgid "Direct aggregation of `{string}`"
+msgstr "Agrégation directe de `{string}`"
+
+#: src/guv/helpers.py:639
+msgid "No match for `{:s}`"
+msgstr "Pas de correspondance pour `{:s}`"
+
+#: src/guv/helpers.py:641
+msgid "Multiple matches for `{:s}`"
+msgstr "Plusieurs correspondances pour `{:s}`"
+
+#: src/guv/helpers.py:651
+#, python-brace-format
+msgid "Aggregation of the exchange file `{filename}`"
+msgstr "Agrégation du fichier d'échanges `{filename}`"
+
+#: src/guv/helpers.py:652
+#, python-brace-format
+msgid "Direct aggregation of exchanges `{string}`"
+msgstr "Agrégation directe des échanges `{string}`"
+
+#: src/guv/helpers.py:730 src/guv/helpers.py:733
+#, python-brace-format
+msgid "Incorrect line: `{line}`. Expected format `etu1 --- etu2`."
+msgstr "Ligne incorrecte: `{line}`. Format `etu1 --- etu2` attendu."
+
+#: src/guv/helpers.py:791
+#, python-brace-format
+msgid "Exchange of `{nom1}` and `{nom2}` in the column `{colname}`"
+msgstr "Échange de `{nom1}` et `{nom2}` dans la colonne `{colname}`"
+
+#: src/guv/helpers.py:798
+#, python-brace-format
+msgid "Student `{nom}` assigned to group `{idx}`"
+msgstr "Étudiant(e) `{nom}` affecté(e) au groupe `{idx}`"
+
+#: src/guv/helpers.py:803
+#, python-format
+msgid "Abandon student `%s`"
+msgstr "Abandon étudiant(e) `%s`"
+
+#: src/guv/helpers.py:839
+#, python-format
+msgid ""
+"The backup of the column `%s` is activated but it is not present in the "
+"central file"
+msgstr ""
+"Le backup de la colonne `%s` est activé mais elle n'est pas présente dans le "
+"fichier central"
+
+#: src/guv/helpers.py:870
+#, python-brace-format
+msgid "Aggregation of the group file `{filename}`"
+msgstr "Agrégation du fichier de groupes `{filename}`"
+
+#: src/guv/helpers.py:936 src/guv/tasks/gradebook.py:640
+#: src/guv/tasks/gradebook.py:756 src/guv/tasks/gradebook.py:893
+#: src/guv/tasks/gradebook.py:910 src/guv/tasks/gradebook.py:913
+#: src/guv/tasks/gradebook.py:950 src/guv/tasks/gradebook.py:963
+msgid "Aggregated grade"
+msgstr "Note agrégée"
+
+#: src/guv/helpers.py:936 src/guv/tasks/gradebook.py:638
+#: src/guv/tasks/gradebook.py:640 src/guv/tasks/gradebook.py:868
+#: src/guv/tasks/gradebook.py:994 src/guv/tasks/gradebook.py:997
+#: src/guv/tasks/gradebook.py:1001 src/guv/tasks/gradebook.py:1030
+msgid "ECTS grade"
+msgstr "Note ECTS"
+
+#: src/guv/aggregator.py:185
+#, python-brace-format
+msgid "Error in `{m}`:"
+msgstr "Erreur dans `{m}` :"
+
+#: src/guv/aggregator.py:274
+msgid "The following record is not unique"
+msgid_plural "The following records are not unique"
+msgstr[0] "L'enregistrement suivant n'est pas unique"
+msgstr[1] "Les enregistrements suivantes ne sont pas uniques"
+
+#: src/guv/aggregator.py:341 src/guv/aggregator.py:350
+#, python-format
+msgid "`%s` is not present in the Moodle data"
+msgstr "`%s` n'est pas présent dans les données Moodle"
+
+#: src/guv/aggregator.py:356
+#, python-format
+msgid "Searching for match for `%s` :"
+msgstr "Recherche de correspondance pour `%s` :"
+
+#: src/guv/aggregator.py:364
+msgid "Choice? (enter if no match) "
+msgstr "Choix ? (entrée si pas de correspondance) "
+
+#: src/guv/aggregator.py:405
+#, python-brace-format
+msgid "{n} record could not be incorporated into the central file"
+msgid_plural "{n} records could not be incorporated into the central file"
+msgstr[0] "{n} enregistrement n'a pas pu être incorporé au fichier central"
+msgstr[1] "{n} enregistrements n'ont pas pu être incorporé au fichier central"
+
+#: src/guv/aggregator.py:465
+msgid "Merge impossible"
+msgstr "Fusion impossible"
+
+#: src/guv/aggregator.py:519
+#, python-brace-format
+msgid "Attempting to merge columns `{col1}` and `{col2}`"
+msgstr "Tentative de fusion des colonnes `{col1}` et `{col2}`"
+
+#: src/guv/aggregator.py:523
+#, python-brace-format
+msgid "Merge impossible, keeping columns `{col1}` and `{col2}`"
+msgstr "Fusion impossible, on garde les colonnes `{col1}` et `{col2}`"
+
+#: src/guv/scripts/moodle_date.py:87
+#, python-brace-format
+msgid ""
+"The group named {grp} does not have a Moodle match in the MOODLE_GROUPS "
+"variable"
+msgstr ""
+"Le groupe nommé {grp} n'a pas de correspondance Moodle dans la variable "
+"MOODLE_GROUPS"
+
+#: src/guv/handlers.py:34 src/guv/handlers.py:39
+msgid "Create a semester folder"
+msgstr "Crée un dossier de semestre"
+
+#: src/guv/handlers.py:58 src/guv/handlers.py:61 src/guv/handlers.py:64
+#: src/guv/handlers.py:95 src/guv/handlers.py:98 src/guv/handlers.py:101
+#, python-format
+msgid "Creating folder %s"
+msgstr "Création du dossier %s"
+
+#: src/guv/handlers.py:80 src/guv/handlers.py:112
+#, python-format
+msgid "Creating file %s"
+msgstr "Création du fichier %s"
+
+#: src/guv/handlers.py:82
+#, python-format
+msgid "The file %s already exists"
+msgstr "Le fichier %s existe déjà"
+
+#: src/guv/handlers.py:114
+#, python-format
+msgid "The file `%s` already exists"
+msgstr "Le fichier `%s` existe déjà"
+
+#: src/guv/handlers.py:130 src/guv/handlers.py:135
+msgid "Create UV folders"
+msgstr "Crée des dossiers d'UV"
+
+#: src/guv/utils_config.py:30
+#, python-brace-format
+msgid "The file `{fn}` does not exist"
+msgstr "Le fichier `{fn}` n'existe pas"
+
+#: src/guv/utils_config.py:47
+#, python-brace-format
+msgid "The planning `{plng}` does not have a key `UVS` or `UES`."
+msgstr "Le planning `{plng}` n'a pas de clé `UVS` ou `UES`."
+
+#: src/guv/utils_config.py:55
+#, python-brace-format
+msgid ""
+"The UV `{uv}` is not recognized because it is not registered in the `UVS` "
+"variable."
+msgstr ""
+"L'UV `{uv}` n'est pas reconnue car elle n'est pas enregistrée dans la "
+"variable `UVS`."
+
+#: src/guv/utils_config.py:61
+#, python-brace-format
+msgid "The folder for the UV {uv} does not exist."
+msgstr "Le dossier pour l'UV {uv} n'existe pas."
+
+#: src/guv/utils_config.py:65
+#, python-brace-format
+msgid "The UV `{uv}` does not have an associated planning in `PLANNINGS`"
+msgstr "L'UV `{uv}` n'a pas de planning associé dans `PLANNINGS`"
+
+#: src/guv/utils_config.py:69
+#, python-brace-format
+msgid "The UV `{uv}` has multiple associated plannings in `PLANNINGS`"
+msgstr "L'UV `{uv}` a plusieurs plannings associés dans `PLANNINGS`"
+
+#: src/guv/utils_config.py:78
+msgid "The task must be executed in a UV/semester folder"
+msgstr "La tâche doit être exécutée dans un dossier d'UV/semestre"
+
+#: src/guv/utils_config.py:92
+msgid "The task must be executed in a UV folder"
+msgstr "La tâche doit être exécutée dans un dossier d'UV"
+
+#: src/guv/utils_config.py:124
+#, python-brace-format
+msgid "The file `{fn}` already exists. "
+msgstr "Le fichier `{fn}` existe déjà. "
+
+#: src/guv/utils_config.py:125
+msgid "Overwrite (d), keep (g), save (s), cancel (a)? "
+msgstr "Écraser (d), garder (g), sauvegarder (s), annuler (a) ? "
+
+#: src/guv/utils_config.py:127
+msgid "d"
+msgstr "d"
+
+#: src/guv/utils_config.py:128
+msgid "g"
+msgstr "g"
+
+#: src/guv/utils_config.py:129
+msgid "s"
+msgstr "s"
+
+#: src/guv/utils_config.py:130
+msgid "a"
+msgstr "a"
+
+#: src/guv/utils_config.py:142
+msgid "Cancellation"
+msgstr "Annulation"
+
+#: src/guv/utils_config.py:150
+#, python-format
+msgid "Backup to `%s`"
+msgstr "Sauvegarde vers `%s`"
+
+#: src/guv/utils_config.py:152
+#, python-format
+msgid "Overwriting the file `%s`"
+msgstr "Écrasement du fichier `%s`"
+
+#: src/guv/utils_config.py:157
+#, python-format
+msgid "Writing the file `%s`"
+msgstr "Écriture du fichier `%s`"
+
+#: src/guv/utils_config.py:189 src/guv/utils_config.py:195
+msgid "Error in creating the .tex file:"
+msgstr "Erreur dans la création du fichier .tex :"
+
+#: src/guv/parser.py:60 src/guv/parser.py:61
+msgid "Allows access to underlying sub-commands"
+msgstr "Permet d'avoir accès aux commandes doit sous-jacentes"
+
+#: src/guv/utils_ask.py:70
+msgid "Number or fraction not recognized"
+msgstr "Nombre ou fraction pas reconnu"
+
+#: src/guv/utils.py:228 src/guv/utils.py:234
+#, python-brace-format
+msgid "The identifier `{name}` does not allow for a valid filename"
+msgstr "L'identifiant `{name}` ne permet pas d'avoir un nom de fichier valide"
+
+#: src/guv/utils.py:250
+msgid "Excel or CSV file only"
+msgstr "Fichier Excel ou csv seulement"
+
+#: src/guv/config.py:46
+msgid "The 'UVS' variable is incorrect: a list of managed UVs is expected"
+msgstr ""
+"La variable 'UVS' est incorrecte : une liste des UV gérées est attendue"
+
+#: src/guv/config.py:51
+msgid ""
+"The 'PLANNINGS' variable is incorrect: it must be a dictionary whose keys "
+"are plannings and the values are a dictionary of properties"
+msgstr ""
+"La variable 'PLANNINGS' est incorrecte: il faut que ce soit un dictionnaire "
+"dont les clés sont des plannings et les valeurs un dictionnaire de propriétés"
+
+#: src/guv/config.py:64
+msgid "The 'DEBUG' variable is incorrect: an integer is expected"
+msgstr "La variable 'DEBUG' est incorrecte : un entier est attendu"
+
+#: src/guv/config.py:93
+msgid "Identifier of the UV/UE on Moodle"
+msgstr "Identifiant de l'UV/UE sur Moodle"
+
+#: src/guv/config.py:98
+msgid "Port for sending email"
+msgstr "Port pour l'envoi de courriel"
+
+#: src/guv/config.py:104
+msgid "SMTP server for sending email"
+msgstr "Serveur SMTP pour l'envoi de courriel"
+
+#: src/guv/config.py:110
+msgid "Origin email address of sent emails"
+msgstr "Adresse de courriel d'origine des courriels envoyés"
+
+#: src/guv/config.py:115
+msgid "Login for the SMTP server"
+msgstr "Login pour le server smtp"
+
+#: src/guv/config.py:174
+#, python-brace-format
+msgid "The variable `{name}` could not be found"
+msgstr "La variable `{name}` n'a pas pu être trouvée"
+
+#: src/guv/config.py:237 src/guv/tasks/base.py:213
+msgid "Not in a UV/semester folder"
+msgstr "Pas dans un dossier d'UV/semestre"
+
+#: src/guv/config.py:244
+#, python-brace-format
+msgid "Problem loading file `{config_file}`: "
+msgstr "Problème de chargement du fichier `{config_file}`: "
+
+#: src/guv/config.py:248
+#, python-format
+msgid "Loading configuration file: `%s`"
+msgstr "Loading configuration file: `%s`"
+
+#: src/guv/tasks/internal.py:105
+#, python-brace-format
+msgid "The step `{name}` failed: {e}"
+msgstr "L'étape `{name}` a échoué : {e}"
+
+#: src/guv/tasks/internal.py:159
+msgid "The DOCS variable must be of type `Documents`: `DOCS = Documents()`"
+msgstr "La variable DOCS doit être de type `Documents`: `DOCS = Documents()`"
+
+#: src/guv/tasks/internal.py:195
+msgid "The `config.py` file must contain a `DOCS` variable"
+msgstr "Le fichier `config.py` doit contenir une variable `DOCS`"
+
+#: src/guv/tasks/internal.py:198
+msgid "The `DOCS` variable must be of type `Documents`"
+msgstr "La variable `DOCS` doit être de type `Documents`"
+
+#: src/guv/tasks/internal.py:201
+msgid "`DOCS` must contain at least one operation"
+msgstr "`DOCS` doit contenir au moins une opération"
+
+#: src/guv/tasks/attendance.py:30 src/guv/tasks/attendance.py:226
+msgid "Attendance sheet"
+msgstr "Feuille de présence"
+
+#: src/guv/tasks/attendance.py:31 src/guv/tasks/attendance.py:227
+#, python-format
+msgid ""
+"Specifies a title that will be used in the attendance sheets and the name of "
+"the generated file. By default, it is ``%(default)s``."
+msgstr ""
+"Spécifie un titre qui sera utilisé dans les feuilles de présence et le nom "
+"du fichier généré. Par défaut, on a ``%(default)s``."
+
+#: src/guv/tasks/attendance.py:36
+msgid ""
+"Allows creating groups to make as many attendance sheets. You must specify a "
+"column from the central file ``effectif.xlsx``."
+msgstr ""
+"Permet de créer des groupes pour faire autant de feuilles de présence. Il "
+"faut spécifier une colonne du fichier central ``effectif.xlsx``."
+
+#: src/guv/tasks/attendance.py:43
+msgid "Do not display the names of the students (useful only with --group)."
+msgstr ""
+"Ne pas faire apparaître le nom des étudiants (utile seulement avec --group)."
+
+#: src/guv/tasks/attendance.py:50
+msgid ""
+"Uses a list of staff instead of ``--group``. The group names can be "
+"specified by ``--names``. Otherwise, the group names are in the form ``Group "
+"1``, ``Group 2``,..."
+msgstr ""
+"Utilise une liste d'effectifs au lieu de ``--group``. Le nom des groupes "
+"peut être spécifié par ``--names``. Sinon, les noms de groupe sont de la "
+"forme ``Groupe 1``, ``Groupe 2``,..."
+
+#: src/guv/tasks/attendance.py:56
+msgid ""
+"Specifies the names of the groups corresponding to ``--count``. The list "
+"must be the same size as ``--count``."
+msgstr ""
+"Spécifie le nom des groupes correspondants à ``--count``. La liste doit être "
+"de même taille que ``--count``."
+
+#: src/guv/tasks/attendance.py:63
+msgid ""
+"Allows adding additional empty lines in addition to those already present "
+"induced by ``--group`` or set by ``--count``."
+msgstr ""
+"Permet de rajouter des lignes supplémentaires vides en plus de celles déjà "
+"présentes induites par ``--group`` ou fixées par ``--count``."
+
+#: src/guv/tasks/attendance.py:68
+msgid "Extra time"
+msgstr "Tiers-temps"
+
+#: src/guv/tasks/attendance.py:70
+#, python-format
+msgid ""
+"Specifies the column for students placed in a dedicated room. If the column "
+"is not specified, ``%(default)s``."
+msgstr ""
+"Spécifie la colonne pour les étudiants placés dans une salle dédiée. Si "
+"colonne non spécifiée, ``%(default)s``."
+
+#: src/guv/tasks/attendance.py:76 src/guv/tasks/attendance.py:251
+msgid "Allows leaving the generated .tex files for possible modification."
+msgstr ""
+"Permet de laisser les fichiers .tex générés pour modification éventuelle."
+
+#: src/guv/tasks/attendance.py:98
+msgid "The options --group and --count are incompatible"
+msgstr "Les options --group et --count sont incompatibles"
+
+#: src/guv/tasks/attendance.py:110
+msgid "The options --count and --names must be of the same length"
+msgstr "Les options --count et --names doivent être de même longueur"
+
+#: src/guv/tasks/attendance.py:112
+#, python-brace-format
+msgid "Group_{i}"
+msgstr "Groupe_{i}"
+
+#: src/guv/tasks/attendance.py:135
+#, python-brace-format
+msgid "The column `{self.tiers_temps}` must contain only Yes/No"
+msgstr "La colonne `{self.tiers_temps}` doit contenir uniquement Oui/Non"
+
+#: src/guv/tasks/attendance.py:139 src/guv/tasks/attendance.py:176
+msgid "Dedicated room"
+msgstr "Salle dédiée"
+
+#: src/guv/tasks/attendance.py:140 src/guv/tasks/attendance.py:179
+msgid "Extra_time"
+msgstr "Tiers_temps"
+
+#: src/guv/tasks/attendance.py:146
+msgid "The cumulative numbers are not sufficient"
+msgstr "Les effectifs cumulés ne suffisent pas"
+
+#: src/guv/tasks/attendance.py:171
+#, python-brace-format
+msgid "The column `{tiers_temps}` must contain only Yes/No"
+msgstr "La colonne `{tiers_temps}` doit contenir uniquement Oui/Non"
+
+#: src/guv/tasks/attendance.py:192
+msgid ""
+"The number of names specified with --names is different from the number of "
+"groups"
+msgstr ""
+"Le nombres de noms spécifiés avec --names est différent du nombre de groupes"
+
+#: src/guv/tasks/attendance.py:232
+msgid "Allows specifying a group column to make attendance sheets by groups."
+msgstr ""
+"Permet de spécifier une colonne de groupes pour faire des feuilles de "
+"présence par groupes."
+
+#: src/guv/tasks/attendance.py:239
+msgid ""
+"Allows specifying the number of sessions for the semester, i.e., the number "
+"of columns in the attendance sheet."
+msgstr ""
+"Permet de spécifier le nombre de séances pour le semestre c'est à dire le "
+"nombre de colonne dans la feuille de présence."
+
+#: src/guv/tasks/attendance.py:245
+#, python-format
+msgid ""
+"Template to set the name of successive sessions in the attendance sheet. By "
+"default, it is ``%(default)s``. The only supported keyword is ``number`` "
+"which starts at 1."
+msgstr ""
+"Modèle permettant de fixer le nom des séances successives dans la feuille de "
+"présence. Par défaut on a ``%(default)s``. Le seul mot-clé supporté est "
+"``number`` qui commence à 1."
+
+#: src/guv/tasks/gradebook.py:137
+msgid "Coefficients"
+msgstr "Coeffs"
+
+#: src/guv/tasks/gradebook.py:146
+msgid "Points"
+msgstr "Points"
+
+#: src/guv/tasks/gradebook.py:163
+msgid "Grade"
+msgstr "Grade"
+
+#: src/guv/tasks/gradebook.py:164
+msgid "Grade /20"
+msgstr "Grade /20"
+
+#: src/guv/tasks/gradebook.py:175
+msgid "Files containing the detailed grading scales"
+msgstr "Fichiers contenant le ou les barèmes détaillés"
+
+#: src/guv/tasks/gradebook.py:177
+msgid "How many grading scales? "
+msgstr "Combien de barèmes ? "
+
+#: src/guv/tasks/gradebook.py:178
+#, python-brace-format
+msgid "Grading scale {i}"
+msgstr "Barème {i}"
+
+#: src/guv/tasks/gradebook.py:187
+#, python-brace-format
+msgid "Name of a sub-part/question of `{item_name}` (nothing if question)? "
+msgstr "Nom d'une sous-partie/question de `{item_name}` (rien si question)? "
+
+#: src/guv/tasks/gradebook.py:190
+msgid "Name of a part/question? "
+msgstr "Nom d'une partie/question ? "
+
+#: src/guv/tasks/gradebook.py:197
+#, python-brace-format
+msgid "Name of another sub-part/question of `{item_name}`? "
+msgstr "Nom d'une autre sous-partie/question de `{item_name}` ? "
+
+#: src/guv/tasks/gradebook.py:199
+msgid "Name of another part/question? "
+msgstr "Nom d'une autre partie/question ? "
+
+#: src/guv/tasks/gradebook.py:209
+#, python-brace-format
+msgid "Points for the question `{item_name}`: "
+msgstr "Points pour la question `{item_name}` : "
+
+#: src/guv/tasks/gradebook.py:210
+#, python-brace-format
+msgid "Coefficient for the question `{item_name}`: "
+msgstr "Coefficient pour la question `{item_name}` : "
+
+#: src/guv/tasks/gradebook.py:217
+msgid "Constructed YAML file:"
+msgstr "Fichier YAML construit :"
+
+#: src/guv/tasks/gradebook.py:219
+msgid "Validate? (y/n) "
+msgstr "Valider ? (y/n) "
+
+#: src/guv/tasks/gradebook.py:272 src/guv/tasks/gradebook.py:413
+msgid "raw"
+msgstr "brut"
+
+#: src/guv/tasks/gradebook.py:278 src/guv/tasks/gradebook.py:279
+msgid "final grade"
+msgstr "final grade"
+
+#: src/guv/tasks/gradebook.py:291
+msgid "Column used to order the names in each sheet"
+msgstr "Colonne utilisée pour ordonner les noms dans chaque feuille"
+
+#: src/guv/tasks/gradebook.py:300
+msgid "Column used to group into multiple sheets"
+msgstr "Colonne utilisée pour grouper en plusieurs feuilles"
+
+#: src/guv/tasks/gradebook.py:308
+msgid "Additional columns to include in the grade sheet"
+msgstr "Colonnes supplémentaires à inclure dans la feuille de notes"
+
+#: src/guv/tasks/gradebook.py:314
+#, python-brace-format
+msgid "part {i}"
+msgstr "partie {i}"
+
+#: src/guv/tasks/gradebook.py:317
+msgid "grade"
+msgstr "grade"
+
+#: src/guv/tasks/gradebook.py:364 src/guv/tasks/gradebook.py:805
+msgid "Min"
+msgstr "Min"
+
+#: src/guv/tasks/gradebook.py:364 src/guv/tasks/gradebook.py:805
+msgid "Q1"
+msgstr "Q1"
+
+#: src/guv/tasks/gradebook.py:364
+msgid "median"
+msgstr "médiane"
+
+#: src/guv/tasks/gradebook.py:364 src/guv/tasks/gradebook.py:805
+msgid "Q3"
+msgstr "Q3"
+
+#: src/guv/tasks/gradebook.py:364 src/guv/tasks/gradebook.py:805
+msgid "Max"
+msgstr "Max"
+
+#: src/guv/tasks/gradebook.py:375
+#, python-brace-format
+msgid "Student {i}"
+msgstr "Étudiant {i}"
+
+#: src/guv/tasks/gradebook.py:466
+msgid "Group column used to grade groups of students"
+msgstr "Colonne de groupes utilisée pour noter des groupes d'étudiants"
+
+#: src/guv/tasks/gradebook.py:522
+#, python-brace-format
+msgid "Group {i}"
+msgstr "Groupe {i}"
+
+#: src/guv/tasks/gradebook.py:598
+msgid "Configuration file specifying the grades to use"
+msgstr "Fichier de configuration spécifiant les notes à utiliser"
+
+#: src/guv/tasks/gradebook.py:601
+msgid "jury"
+msgstr "jury"
+
+#: src/guv/tasks/gradebook.py:607
+#, python-brace-format
+msgid ""
+"\n"
+"        Pour agréger les notes au fichier central `effectif.xlsx`, "
+"ajouter :\n"
+"\n"
+"        DOCS.aggregate_jury(\"{filename}\")\n"
+"\n"
+"        dans le fichier `config.py` de l'UV/UE.\n"
+"\n"
+"        Pour ensuite pouvoir charger les notes ECTS sur l'ENT :\n"
+"\n"
+"        guv csv_for_upload -g \"Note ECTS\" --ects\n"
+"\n"
+"        "
+msgstr ""
+"\n"
+"        Pour agréger les notes au fichier central `effectif.xlsx`, "
+"ajouter :\n"
+"\n"
+"        DOCS.aggregate_jury(\"{filename}\")\n"
+"\n"
+"        dans le fichier `config.py` de l'UV/UE.\n"
+"\n"
+"        Pour ensuite pouvoir charger les notes ECTS sur l'ENT :\n"
+"\n"
+"        guv csv_for_upload -g \"Note ECTS\" --ects\n"
+"\n"
+"        "
+
+#: src/guv/tasks/gradebook.py:626 src/guv/tasks/gradebook.py:871
+#: src/guv/tasks/gradebook.py:873 src/guv/tasks/gradebook.py:875
+#: src/guv/tasks/gradebook.py:942 src/guv/tasks/gradebook.py:949
+#: src/guv/tasks/gradebook.py:962
+msgid "Passed"
+msgstr "Admis"
+
+#: src/guv/tasks/gradebook.py:627 src/guv/tasks/gradebook.py:842
+#: src/guv/tasks/gradebook.py:948
+msgid "Passing grade"
+msgstr "Note admis"
+
+#: src/guv/tasks/gradebook.py:676
+msgid ""
+"Indicate the columns containing grades to use directly for the final grade "
+"(SPACE: select, ENTER: validate):"
+msgstr ""
+"Indiquer les colonnes contenant des notes à utiliser directement pour la "
+"note finale (SPACE: sélectionner, ENTER: valider):"
+
+#: src/guv/tasks/gradebook.py:680
+msgid ""
+"Add intermediate grades to use directly for the final grade and not present "
+"in the file ``effectif.xlsx``? (y/n) "
+msgstr ""
+"Ajouter des notes intermédiaires à utiliser directement pour la note finale "
+"et non présentes dans le fichier ``effectif.xlsx`` ? (y/n) "
+
+#: src/guv/tasks/gradebook.py:685
+msgid "Name of the intermediate grade? (leave blank to finish) "
+msgstr "Nom de la note intermédiaire ? (laisser vide pour terminer) "
+
+#: src/guv/tasks/gradebook.py:691
+msgid "Column already present"
+msgstr "Colonne déjà présente"
+
+#: src/guv/tasks/gradebook.py:696
+#, python-brace-format
+msgid "Coefficient for {grade}: "
+msgstr "Coefficient for {grade}: "
+
+#: src/guv/tasks/gradebook.py:697
+#, python-brace-format
+msgid "Passing grade for {grade}: "
+msgstr "Passing grade for {grade}: "
+
+#: src/guv/tasks/gradebook.py:709
+msgid ""
+"Indicate other columns for information (project group, tutorial group,...):"
+msgstr ""
+"Indiquer d'autres colonnes pour information (groupe de projet, groupe de "
+"TD,...):"
+
+#: src/guv/tasks/gradebook.py:738
+msgid "Percentile A"
+msgstr "Percentile A"
+
+#: src/guv/tasks/gradebook.py:739
+msgid "Percentile grade A"
+msgstr "Percentile note A"
+
+#: src/guv/tasks/gradebook.py:740 src/guv/tasks/gradebook.py:741
+msgid "Percentile grade B"
+msgstr "Percentile note B"
+
+#: src/guv/tasks/gradebook.py:742 src/guv/tasks/gradebook.py:743
+msgid "Percentile grade C"
+msgstr "Percentile note C"
+
+#: src/guv/tasks/gradebook.py:744 src/guv/tasks/gradebook.py:745
+msgid "Percentile grade D"
+msgstr "Percentile note D"
+
+#: src/guv/tasks/gradebook.py:797
+msgid "Parameters"
+msgstr "Paramètres"
+
+#: src/guv/tasks/gradebook.py:805
+msgid "Median"
+msgstr "Médiane"
+
+#: src/guv/tasks/gradebook.py:812
+msgid "passing grade"
+msgstr "passing grade"
+
+#: src/guv/tasks/gradebook.py:812
+msgid "maximum grade"
+msgstr "maximum grade"
+
+#: src/guv/tasks/gradebook.py:831
+msgid "Global options"
+msgstr "Options globales"
+
+#: src/guv/tasks/gradebook.py:838
+msgid "Percentile grade"
+msgstr "Percentile note"
+
+#: src/guv/tasks/gradebook.py:840 src/guv/tasks/gradebook.py:854
+#: src/guv/tasks/gradebook.py:855
+#, python-brace-format
+msgid "{ects} if >="
+msgstr "{ects} si >="
+
+#: src/guv/tasks/gradebook.py:841
+#, python-brace-format
+msgid "=IF(ISERROR(PERCENTILE({a}, {b})), NA(), PERCENTILE({a}, {b}))"
+msgstr "=IF(ISERROR(PERCENTILE({a}, {b})), NA(), PERCENTILE({a}, {b}))"
+
+#: src/guv/tasks/gradebook.py:847
+msgid "Theoretical percentiles"
+msgstr "Percentiles théoriques"
+
+#: src/guv/tasks/gradebook.py:859
+msgid "Used percentiles"
+msgstr "Percentiles utilisés"
+
+#: src/guv/tasks/gradebook.py:867
+#, python-brace-format
+msgid "Number of {ects}"
+msgstr "Nombre de {ects}"
+
+#: src/guv/tasks/gradebook.py:870
+msgid "Number of passed"
+msgstr "Nombre d'admis"
+
+#: src/guv/tasks/gradebook.py:873
+msgid "Total number"
+msgstr "Effectif total"
+
+#: src/guv/tasks/gradebook.py:874
+msgid "Ratio"
+msgstr "Ratio"
+
+#: src/guv/tasks/gradebook.py:878
+msgid "Statistics"
+msgstr "Statistiques"
+
+#: src/guv/tasks/gradebook.py:955
+msgid "A if >="
+msgstr "A si >="
+
+#: src/guv/tasks/gradebook.py:956
+msgid "B if >="
+msgstr "B si >="
+
+#: src/guv/tasks/gradebook.py:957
+msgid "C if >="
+msgstr "C si >="
+
+#: src/guv/tasks/gradebook.py:958
+msgid "D if >="
+msgstr "D si >="
+
+#: src/guv/tasks/moodle.py:56
+msgid "Lecture,Tutorial,Practical work"
+msgstr ""
+
+#: src/guv/tasks/moodle.py:57
+msgid ""
+"List of groupings to consider via a column name. By default, the groupings "
+"``Lecture``, ``Tutorial`` and ``Practical work`` are used."
+msgstr ""
+"Liste des groupements à considérer via un nom de colonne. Par défaut, les "
+"groupements ``Cours``, ``TD`` et ``TP`` sont utilisés."
+
+#: src/guv/tasks/moodle.py:63
+msgid ""
+"Use the names of Lecture/Tutorial/Practical work groups in long format, "
+"i.e., \"TP1\" and \"TD1\" instead of \"T1\" and \"D1\""
+msgstr ""
+"Utiliser les noms de groupes de Cours/TD/TP au format long, c'est à dire "
+"\"TP1\" et \"TD1\" au lieu de \"T1\" et \"D1\""
+
+#: src/guv/tasks/moodle.py:70
+msgid "Create a single file"
+msgstr "Créer un unique fichier"
+
+#: src/guv/tasks/moodle.py:102
+#, python-brace-format
+msgid "Value not defined in the column `{colname}` for the student {stu}"
+msgstr "Valeur non définie dans la colonne `{colname}` pour l'étudiant(e) {stu}"
+
+#: src/guv/tasks/moodle.py:147
+#, python-brace-format
+msgid ""
+"\n"
+"        Charger les groupes sur Moodle à l'adresse {url} en spécifiant :\n"
+"\n"
+"        - Champ utilisateur: \"Nom d'utilisateur\"\n"
+"        - Inscrire dans les groupes : \"Oui\"\n"
+"        - Créer les groupes: \"Oui\" s'il ne sont pas déjà créés\n"
+"\n"
+"        "
+msgstr ""
+"\n"
+"        Charger les groupes sur Moodle à l'adresse {url} en spécifiant :\n"
+"\n"
+"        - Champ utilisateur: \"Nom d'utilisateur\"\n"
+"        - Inscrire dans les groupes : \"Oui\"\n"
+"        - Créer les groupes: \"Oui\" s'il ne sont pas déjà créés\n"
+"\n"
+"        "
+
+#: src/guv/tasks/moodle.py:170
+msgid "Number of groups in each grouping"
+msgstr "Nombre de groupes dans chaque groupement"
+
+#: src/guv/tasks/moodle.py:177
+#, python-format
+msgid "Format of the group name (default: %(default)s)"
+msgstr "Format du nom de groupe (par défaut: %(default)s)"
+
+#: src/guv/tasks/moodle.py:185
+msgid "Number of different groupings"
+msgstr "Nombre de groupements différents"
+
+#: src/guv/tasks/moodle.py:192
+#, python-format
+msgid "Format of the grouping name (default: %(default)s)"
+msgstr "Format du nom de groupement (par défaut: %(default)s)"
+
+#: src/guv/tasks/moodle.py:252
+msgid "Name of the column performing a grouping"
+msgstr "Nom de la colonne réalisant un groupement"
+
+#: src/guv/tasks/moodle.py:339
+msgid ""
+"Name associated with the set of created groups. Included in the name of the "
+"created file and in the name of the created groups following the used "
+"*template*."
+msgstr ""
+"Nom associé à l'ensemble des groupes créés. Repris dans le nom du fichier "
+"créé et dans le nom des groupes créés suivant la *template* utilisée."
+
+#: src/guv/tasks/moodle.py:344
+msgid "Pre-groups in which to make sub-groups"
+msgstr "Pré-groupes dans lesquels faire des sous-groupes"
+
+#: src/guv/tasks/moodle.py:351
+msgid "Number of groups to create (per sub-groups if specified)"
+msgstr "Nombre de groupes à créer (par sous-groupes si spécifié)"
+
+#: src/guv/tasks/moodle.py:358
+msgid "Group size: pairs, trios or more"
+msgstr "Taille des groupes : binômes, trinômes ou plus"
+
+#: src/guv/tasks/moodle.py:366
+msgid "List of proportions to create the groups"
+msgstr "Liste de proportions pour créer les groupes"
+
+#: src/guv/tasks/moodle.py:373
+#, python-brace-format
+msgid ""
+"Template to give names to the groups with `{title}`, `{grouping_name}` or "
+"`{group_name}`"
+msgstr ""
+"Modèle pour donner des noms aux groupes avec `{title}`, `{grouping_name}` ou "
+"`{group_name}`"
+
+#: src/guv/tasks/moodle.py:380
+msgid "List of keywords to build the group names"
+msgstr "Liste de mots clés pour construire les noms des groupes"
+
+#: src/guv/tasks/moodle.py:391
+msgid "Order the list of students alphabetically or by columns"
+msgstr "Ordonner la liste des étudiants par ordre alphabétique ou par colonnes"
+
+#: src/guv/tasks/moodle.py:398
+msgid "Do not reset the sequence of group names between each grouping"
+msgstr ""
+"Ne pas remettre à zéro la suite des noms de groupes entre chaque groupement"
+
+#: src/guv/tasks/moodle.py:405
+msgid "Randomly permute the group names"
+msgstr "Permuter aléatoirement les noms de groupes"
+
+#: src/guv/tasks/moodle.py:413
+msgid "List of columns of already formed groups that should not be reformed."
+msgstr ""
+"Liste de colonnes de groupes déjà formés qui ne doivent plus être reformés."
+
+#: src/guv/tasks/moodle.py:421
+msgid "List of columns of affinity groups."
+msgstr "Liste de colonnes de groupes d'affinité."
+
+#: src/guv/tasks/moodle.py:427
+#, python-format
+msgid ""
+"Maximum number of attempts to find groups with constraints (default "
+"%(default)s)."
+msgstr ""
+"Nombre maximum d'essais pour trouver des groupes avec contraintes (par "
+"défaut %(default)s)."
+
+#: src/guv/tasks/moodle.py:446
+msgid ""
+"The template must contain either '@' or '#' to generate different group names"
+msgstr ""
+"La template doit contenir soit '@' soit '#' pour générer des noms de groupes "
+"différents"
+
+#: src/guv/tasks/moodle.py:458
+msgid "No # or @ in the template to generate different names"
+msgstr "Pas de # ou de @ dans la template pour générer des noms différents"
+
+#: src/guv/tasks/moodle.py:470
+#, python-brace-format
+msgid "The name file `{names}` does not exist"
+msgstr "Le fichier de noms `{names}` n'existe pas"
+
+#: src/guv/tasks/moodle.py:493
+#, python-format
+msgid "No template specified. The default template is `%s`"
+msgstr "Pas de template spécifiée. La template par défaut est `%s`"
+
+#: src/guv/tasks/moodle.py:502
+msgid ""
+"Specify one and only one argument among --proportions, --group-size, --num-"
+"groups"
+msgstr ""
+"Spécifier un et un seul argument parmi --proportions, --group-size, --num-"
+"groups"
+
+#: src/guv/tasks/moodle.py:507
+#, python-brace-format
+msgid ""
+"Specify one and only one replacement in the template among `@`, `#` and "
+"`{group_name}`"
+msgstr ""
+"Spécifier un et un seul remplacement dans la template parmi `@`, `#` et "
+"`{group_name}`"
+
+#: src/guv/tasks/moodle.py:511
+#, python-brace-format
+msgid "The template contains '{group_name}' but --names is not specified"
+msgstr "La template contient '{group_name}' mais --names n'est pas spécifié"
+
+#: src/guv/tasks/moodle.py:515
+#, python-brace-format
+msgid ""
+"The template contains '{grouping_name}' but no grouping is specified with "
+"the --grouping option"
+msgstr ""
+"La template contient '{grouping_name}' mais aucun groupement n'est spécifié "
+"avec l'option --grouping"
+
+#: src/guv/tasks/moodle.py:518
+#, python-brace-format
+msgid ""
+"The template does not contain '{grouping_name}' but the --grouping option is "
+"active with resetting of group names"
+msgstr ""
+"La template ne contient pas '{grouping_name}' mais l'option --grouping est "
+"active avec remise à zéro des noms de groupes"
+
+#: src/guv/tasks/moodle.py:521
+msgid ""
+"The ``ordered`` option is incompatible with the constraints ``other-groups`` "
+"and ``affinity_groups``."
+msgstr ""
+"L'option ``ordered`` est incompatible avec les contraintes ``other-groups`` "
+"et ``affinity_groups``."
+
+#: src/guv/tasks/moodle.py:594
+#, python-format
+msgid ""
+"\n"
+"        Charger les groupes sur Moodle à l'adresse %(url)s en spécifiant :\n"
+"\n"
+"        - Champ utilisateur: \"Nom d'utilisateur\"\n"
+"        - Inscrire dans les groupes : \"Oui\"\n"
+"        - Créer les groupes: \"Oui\" s'il ne sont pas déjà créés\n"
+"\n"
+"        Ajouter les groupes au fichier `effectif.xlsx` avec le code suivant "
+"dans le fichier `config.py` de l'UV :\n"
+"\n"
+"        # Créé avec la commande : %(command_line)s\n"
+"        DOCS.aggregate(\n"
+"            \"%(filename)s\",\n"
+"            on=\"Login\",\n"
+"            kw_read={\"header\": None, \"names\": [\"Login\", "
+"\"%(title)s_group\"]}\n"
+"        )\n"
+"        "
+msgstr ""
+"\n"
+"        Charger les groupes sur Moodle à l'adresse %(url)s en spécifiant :\n"
+"\n"
+"        - Champ utilisateur: \"Nom d'utilisateur\"\n"
+"        - Inscrire dans les groupes : \"Oui\"\n"
+"        - Créer les groupes: \"Oui\" s'il ne sont pas déjà créés\n"
+"\n"
+"        Ajouter les groupes au fichier `effectif.xlsx` avec le code suivant "
+"dans le fichier `config.py` de l'UV :\n"
+"\n"
+"        # Créé avec la commande : %(command_line)s\n"
+"        DOCS.aggregate(\n"
+"            \"%(filename)s\",\n"
+"            on=\"Login\",\n"
+"            kw_read={\"header\": None, \"names\": [\"Login\", "
+"\"%(title)s_group\"]}\n"
+"        )\n"
+"        "
+
+#: src/guv/tasks/moodle.py:659
+msgid ""
+"The available group names are exhausted, use # or @ in the template or add "
+"names in `--names`."
+msgstr ""
+"Les noms de groupes disponibles sont épuisés, utiliser # ou @ dans le modèle "
+"ou rajouter des noms dans `--names`."
+
+#: src/guv/tasks/moodle.py:705
+#, python-brace-format
+msgid ""
+"Optimal partition for the group `{name}` found in {num_variants} attempts."
+msgstr ""
+"Partition optimale pour le groupe `{name}` trouvée en {num_variants} essais."
+
+#: src/guv/tasks/moodle.py:707
+#, python-brace-format
+msgid "Optimal partition found in {num_variants} attempts."
+msgstr "Partition optimale trouvée en {num_variants} essais."
+
+#: src/guv/tasks/moodle.py:710
+#, python-brace-format
+msgid ""
+"No optimal solution found for the group `{name}` in {max_iter} attempts, "
+"best solution:"
+msgstr ""
+"Pas de solution optimale trouvée pour le groupe `{name}` en {max_iter} "
+"essais, meilleure solution :"
+
+#: src/guv/tasks/moodle.py:712
+#, python-brace-format
+msgid "No optimal solution found in {max_iter} attempts, best solution:"
+msgstr ""
+"Pas de solution optimale trouvée en {max_iter} essais, meilleure solution :"
+
+#: src/guv/tasks/moodle.py:720
+#, python-brace-format
+msgid ""
+"- non-membership constraint by the column `{column}` violated {n_errors} "
+"times:"
+msgstr ""
+"- contrainte de non-appartenance par la colonne `{column}` violée {n_errors} "
+"fois :"
+
+#: src/guv/tasks/moodle.py:730
+#, python-brace-format
+msgid "- non-membership constraint by the column `{column}` verified"
+msgstr "- contrainte de non-appartenance par la colonne `{column}` vérifiée"
+
+#: src/guv/tasks/moodle.py:737
+#, python-brace-format
+msgid ""
+"- affinity constraint by the column `{column}` violated {n_errors} times:"
+msgstr ""
+"- contrainte d'affinité par la colonne `{column}` violée {n_errors} fois :"
+
+#: src/guv/tasks/moodle.py:748
+#, python-brace-format
+msgid "- affinity constraint by the column `{column}` verified"
+msgstr "- contrainte d'affinité par la colonne `{column}` vérifiée"
+
+#: src/guv/tasks/students.py:35
+msgid "The name of the group column"
+msgstr "Le nom de la colonne des groupes"
+
+#: src/guv/tasks/students.py:68
+msgid "The path to a Jinja2 template"
+msgstr "Le chemin vers un modèle au format Jinja2"
+
+#: src/guv/tasks/students.py:86
+#, python-brace-format
+msgid "The file {template} does not exist. Create? (y/n) "
+msgstr "Le fichier {template} n'existe pas. Créer ? (y/n) "
+
+#: src/guv/tasks/students.py:91
+msgid ""
+"Subject: subject\n"
+"\n"
+"body"
+msgstr ""
+"Subject: le sujet\n"
+"\n"
+"le corps"
+
+#: src/guv/tasks/students.py:98
+msgid "Message must start with \"Subject:\""
+msgstr "Le message doit commencer par \"Subject:\""
+
+#: src/guv/tasks/students.py:114
+msgid "No message to send"
+msgstr "Pas de message à envoyer"
+
+#: src/guv/tasks/students.py:117
+#, python-brace-format
+msgid ""
+"First message to {email}: \n"
+"{message}"
+msgstr ""
+"Premier message à {email} : \n"
+"{message}"
+
+#: src/guv/tasks/students.py:119
+#, python-brace-format
+msgid "Send the {n} emails? (y/n) "
+msgstr "Envoyer les {n} courriels ? (y/n) "
+
+#: src/guv/tasks/students.py:131
+msgid "Password: "
+msgstr "Mot de passe : "
+
+#: src/guv/tasks/base_gradebook.py:195
+#, python-format
+msgid ""
+"The column `%s` does not exist in the central file, it will be empty in the "
+"created file"
+msgstr ""
+"La colonne `%s` n'existe pas dans le fichier central, elle sera vide dans le "
+"fichier créé"
+
+#: src/guv/tasks/base.py:123
+#, python-brace-format
+msgid "The task `{task_name}` failed: {e}"
+msgstr "La tâche `{task_name}` a échoué : {e}"
+
+#: src/guv/tasks/base.py:333
+msgid "No UV/UE specified in the `UVS` variable"
+msgstr "Aucune UV/UE renseignée dans la variables `UVS`"
+
+#: src/guv/tasks/base.py:405 src/guv/tasks/base.py:412
+msgid "Name of the grade sheet"
+msgstr "Nom de la feuille de notes"
+
+#: src/guv/tasks/base.py:433
+msgid "Configuration file"
+msgstr "Fichier de configuration"
+
+#: src/guv/tasks/base.py:479 src/guv/tasks/base.py:531
+#, python-brace-format
+msgid "{config_help} `{config_file}` not found"
+msgstr "{config_help} `{config_file}` non trouvé"
+
+#: src/guv/tasks/base.py:491
+msgid "Configuration files"
+msgstr "Fichiers de configuration"
+
+#: src/guv/tasks/base.py:493
+msgid "How many configuration files?"
+msgstr "Combien de fichiers de configuration ?"
+
+#: src/guv/tasks/base.py:494
+#, python-brace-format
+msgid "Configuration file {i}"
+msgstr "Fichier de configuration {i}"
+
+msgid "Columns `{name_col}` and `{lastname_col}` are required"
+msgstr "Il faut des colonnes `{name_col}` et `{lastname_col}`"
+
+msgid "The columns {msg} are required and cannot be removed"
+msgstr "Les colonnes {msg} sont nécessaires et ne peuvent pas être supprimées"
+
+msgid "The keys {inter_msg} are required and cannot be renamed"
+msgstr "Les clés {inter_msg} sont requises et ne peuvent pas être renommées"
+
+#~ msgid "Lecture,TD,TP"
+#~ msgstr "Cours,TD,TP"
+
+#~ msgid "List of UV identifiers on Moodle (id=???? in the URL)"
+#~ msgstr "Liste des identifiants des UV sur Moodle (id=???? dans l'url)"
+
+#, fuzzy
+#~ msgid ""
+#~ "\n"
+#~ "Copier le dictionnaire suivant dans le fichier config.py de l'UV. Tous\n"
+#~ "les groupes créés sous Moodle sont présents. Il faut s'assurer que les\n"
+#~ "clés correspondent aux noms des groupes de Cours,TD,TP compris par guv\n"
+#~ "(de la forme \"C\", \"C1\", \"D1\", \"D2\", \"T1\", \"T2\"...)\n"
+#~ "\n"
+#~ "                    "
+#~ msgstr ""
+#~ "\n"
+#~ "Copier le dictionnaire suivant dans le fichier config.py de l'UV. Tous\n"
+#~ "les groupes créés sous Moodle sont présents. Il faut s'assurer que les\n"
+#~ "clés correspondent aux noms des groupes de Cours,TD,TP compris par guv\n"
+#~ "(de la forme \"C\", \"C1\", \"D1\", \"D2\", \"T1\", \"T2\"...)\n"
+#~ "\n"
+#~ "                    "

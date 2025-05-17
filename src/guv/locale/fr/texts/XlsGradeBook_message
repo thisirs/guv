@@ -1,0 +1,10 @@
+Pour agréger les notes au fichier central `effectif.xlsx`, ajouter :
+
+# Créé avec la commande : {command_line}
+DOCS.aggregate(
+    "{filename}",
+    on="{email}",
+    subset={columns}
+)
+
+dans le fichier `config.py` de l'UV/UE.

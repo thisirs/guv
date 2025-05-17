@@ -16,7 +16,7 @@ def test_createsemester_createuv(guv, guvcapfd):
     assert (guv.cwd / "SY09").is_dir()
     assert (guv.cwd / "SY09" / "config.py").is_file()
 
-    guvcapfd.stdout_search("Création")
+    guvcapfd.stdout_search("Creating")
 
 
 @path_dependency

@@ -26,8 +26,8 @@ def test_xls_student_data(guv, xlsx, guvcapfd):
         "First name",
         "Last name",
         "Email",
-        "Cours",
-        "TD",
+        "Lecture",
+        "Tutorial",
         "Login"
     )
 

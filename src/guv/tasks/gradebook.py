@@ -1,16 +1,6 @@
-"""Ce module rassemble les tâches pour la génération de fichier Excel
-pour :
-
-- facilement évaluer un travail par groupe ou non avec un barème ou
-  non,
-- rassembler les notes pour tenir un jury d'UV.
-
-"""
-
 import json
 import math
 import os
-import textwrap
 from collections import OrderedDict
 
 import guv
@@ -29,11 +19,15 @@ from openpyxl.utils import get_column_letter
 from ..openpyxl_utils import (fit_columns_dimension, frame_range, generate_ranges,
                               get_address_of_cell, get_range_from_cells,
                               get_segment, row_and_col)
+from ..translations import _, TaskDocstring, _file
 from ..utils import sort_values, normalize_string, generate_groupby
 from ..utils_ask import checkboxlist_prompt, prompt_number
 from ..utils_config import rel_to_dir, ask_choice
 from . import base
 from . import base_gradebook as baseg
+
+
+__all__ = ["XlsGradeBookGroup", "XlsGradeBookJury", "XlsGradeBookNoGroup"]
 
 
 def walk_tree(tree, depth=None):
@@ -133,7 +127,7 @@ class MarkingScheme:
 
         # Column of coeffs
         ref_coeffs = ref.right(tree_width)
-        ref_coeffs.above().text("Coeffs")
+        ref_coeffs.above().text(_("Coefficients"))
 
         for i, coeff in enumerate(self.coeffs):
             ref_coeffs.below(i).text(coeff)
@@ -142,7 +136,7 @@ class MarkingScheme:
 
         # Column of points
         ref_points = ref_coeffs.right()
-        ref_points.above().text("Points")
+        ref_points.above().text(_("Points"))
 
         for i, points in enumerate(self.points):
             ref_points.below(i).text(points)
@@ -159,8 +153,8 @@ class MarkingScheme:
         )
         self.global_total_rescale = ref_points_last.below(3).text(20)
 
-        ref_points_last.below(2).left().text("Grade")
-        ref_points_last.below(3).left().text("Grade /20")
+        ref_points_last.below(2).left().text(_("Grade"))
+        ref_points_last.below(3).left().text(_("Grade /20"))
 
         self.width = tree_width + 2
         self.height = tree_height
@@ -168,109 +162,13 @@ class MarkingScheme:
 
 
 class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
-    """Fichier Excel de notes individuelles.
-
-    Cette tâche permet de générer un fichier Excel pour rentrer facilement des
-    notes avec un ou plusieurs barèmes détaillés. Le fichier Excel peut aussi
-    être divisé en plusieurs feuilles de calculs selon une colonne du fichier
-    ``effectif.xlsx`` via l'argument ``--worksheets``. Dans chacune de ces
-    feuilles, les étudiants peuvent être ordonnés suivant l'argument
-    ``--order-by``. On peut ajouter des colonnes supplémentaires à faire figurer
-    dans la première feuille avec l'argument ``--extra-cols``. Le ou les chemins
-    vers un fichier de barème détaillé peut être fourni via l'argument
-    ``--marking-scheme``. Si l'argument n'est pas utilisé, les barèmes seront
-    demandés interactivement. Le fichier de barème doit être au format YAML. La
-    structure du devoir est spécifiée de manière arborescente avec une liste
-    finale pour les questions contenant les points accordés à cette question et
-    éventuellement le coefficient (par défaut 1) et des détails (ne figurant pas
-    dans le fichier Excel). Par exemple :
-
-    .. code:: yaml
-
-       Exercice 1:
-         Question 1:
-           - points: 1
-       Problème:
-         Partie 1:
-           Question 1:
-             - points: 2
-           Question 2:
-             - points: 2
-             - coeff: 3
-           Question 3:
-             - points: 2
-             - détails: |
-                 Question difficile, ne pas noter trop sévèrement.
-         Partie 2:
-           Question 1:
-             - points: 2
-           Question 2:
-             - points: 2
-
-
-    Les notes finales peuvent ensuite être facilement incorporées au
-    fichier central en renseignant la variable ``DOCS``.
-
-    {options}
-
-    Examples
-    --------
-
-    - Fichier de notes avec un barème à définir interactivement sur une seule
-      feuille Excel :
-
-      .. code:: bash
-
-         guv xls_grade_book_no_group --name Devoir1
-
-    - Fichier de notes pour un devoir en fournissant un barème et en divisant
-      par groupe de TD :
-
-      .. code:: bash
-
-         guv xls_grade_book_no_group \\
-           --name Devoir1 \\
-           --marking-scheme documents/barème_devoir1.yml \\
-           --worksheets TD
-
-      avec le fichier YAML contenant par exemple :
-
-      .. code:: yaml
-
-         Exercice 1:
-           Question 1:
-             - points: 1
-         Exercice 2:
-           Question 1:
-             - points: 1
-
-    - Fichier de notes pour une soutenance individuelle en divisant
-      par jour de passage (colonne "Jour passage" dans
-      ``effectif.xlsx``) et en ordonnant par ordre de passage
-      (colonne "Ordre passage" dans ``effectif.xlsx``) :
-
-      .. code:: bash
-
-         guv xls_grade_book_no_group \\
-           --name Soutenance1 \\
-           --marking-scheme documents/barème_soutenance1.yml \\
-           --worksheets "Jour passage" \\
-           --order-by "Ordre passage"
-
-      avec le fichier YAML contenant par exemple :
-
-      .. code:: yaml
-
-         Fond:
-         Forme:
-
-    """
+    __doc__ = TaskDocstring()
 
     config_argname = "--marking-scheme"
-    config_help = "Fichiers contenant le ou les barèmes détaillés"
+    config_help = _("Files containing the detailed grading scales")
     config_required = False
-    config_number = "Combien de barèmes ? "
-    config_num = "Barème {i}"
+    config_number = _("How many grading scales? ")
+    config_num = _("Grading scale {i}")
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
@@ -279,19 +177,19 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
         def ask_subitem(item_name=None):
             subitems = {}
             if item_name is not None:
-                prompt = f"Nom d'une sous-partie/question de `{item_name}` (rien si question)? "
+                prompt = _("Name of a sub-part/question of `{item_name}` (nothing if question)? ").format(item_name=item_name)
                 name = input(prompt)
             else:
-                prompt = "Nom d'une partie/question ? "
+                prompt = _("Name of a part/question? ")
                 name = None
                 while not name:
                     name = input(prompt)
 
             if name:
                 if item_name is not None:
-                    prompt = f"Nom d'une autre sous-partie/question de `{item_name}` ? "
+                    prompt = _("Name of another sub-part/question of `{item_name}`? ").format(item_name=item_name)
                 else:
-                    prompt = "Nom d'une autre partie/question ? "
+                    prompt = _("Name of another part/question? ")
 
                 subitems[name] = ask_subitem(item_name=name)
                 while True:
@@ -301,17 +199,17 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
                     else:
                         break
             else:
-                points = prompt_number(f"Points pour la question `{item_name}` : ", default="1")
-                coeff = prompt_number(f"Coefficient pour la question `{item_name}` : ", default="1")
+                points = prompt_number(_("Points for the question `{item_name}`: ").format(item_name=item_name), default="1")
+                coeff = prompt_number(_("Coefficient for the question `{item_name}`: ").format(item_name=item_name), default="1")
                 subitems = [{"points": points, "coeff": coeff}]
 
             return subitems
 
         while True:
             config = ask_subitem()
-            print("Fichier YAML construit :")
+            print(_("Constructed YAML file:"))
             print(yaml.dump(config))
-            result = ask_choice("Valider ? (y/n) ", {"y": True, "n": False})
+            result = ask_choice(_("Validate? (y/n) "), {"y": True, "n": False})
             if result:
                 break
 
@@ -364,14 +262,14 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
             columns.append((self.group_by, "raw", 6))
 
         for i, ms in enumerate(self.marking_schemes):
-            columns.append((ms.name + " brut", "cell", 100+i))
+            columns.append((ms.name + " " + _("raw"), "cell", 100+i))
             columns.append((ms.name, "cell", 200+i))
 
         # Say which columns are to be aggregated
         self.agg_colname = [ms.name for ms in self.marking_schemes]
         if len(self.marking_schemes) > 1:
-            columns.append(("final grade", "cell", 1000))
-            self.agg_colname += ["final grade"]
+            columns.append((_("final grade"), "cell", 1000))
+            self.agg_colname += [_("final grade")]
 
         return columns
 
@@ -383,7 +281,7 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
             "--order-by",
             metavar="colname",
             required=False,
-            help="Colonne utilisée pour ordonner les noms dans chaque feuille"
+            help=_("Column used to order the names in each sheet")
         )
 
         self.add_argument(
@@ -392,7 +290,7 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
             required=False,
             metavar="colname",
             dest="group_by",
-            help="Colonne utilisée pour grouper en plusieurs feuilles"
+            help=_("Column used to group into multiple sheets")
         )
 
         self.add_argument(
@@ -400,16 +298,16 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
             "--extra-cols",
             metavar="COL,[COL,...]",
             type=lambda t: [s.strip() for s in t.split(",")],
-            help="Colonnes supplémentaires à inclure dans la feuille de notes"
+            help=_("Additional columns to include in the grade sheet")
         )
 
     @property
     def marking_schemes(self):
         ms = [
-            MarkingScheme(f"partie {i+1}", conf) for i, conf in enumerate(self.config)
+            MarkingScheme(_("part {i}").format(i=i+1), conf) for i, conf in enumerate(self.config)
         ]
         if len(ms) == 1:
-            ms[0].name = "grade"
+            ms[0].name = _("grade")
         return ms
 
     def create_first_worksheet(self):
@@ -456,7 +354,7 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
         formula = '=IF(ISERROR(QUARTILE({{marks_range}}, {num})), "", QUARTILE({{marks_range}}, {num}))'
         stats = [
             (name, formula.format(num=num))
-            for name, num in (("Min", 0), ("Q1", 1), ("médiane", 2), ("Q3", 3), ("Max", 4))
+            for name, num in ((_("Min"), 0), (_("Q1"), 1), (_("median"), 2), (_("Q3"), 3), (_("Max"), 4))
         ]
         ref_marking_scheme = ref_stats.right(len(stats))
 
@@ -467,7 +365,7 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
         gradesheet.freeze_panes = ref.top()
 
         def insert_record(ref_cell, i, record):
-            index = ref_cell.text(f"Étudiant {i}")
+            index = ref_cell.text(_("Student {i}").format(i=i))
             last_name = index.below().text(record[self.settings.LASTNAME_COLUMN])
             first_name = last_name.below().text(record[self.settings.NAME_COLUMN])
             first_grade = first_name.below()
@@ -505,7 +403,7 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
             )
 
             # Total in first worksheet
-            cell = record[ms.name + " brut"]
+            cell = record[ms.name + " " + _("raw")]
             cell.value = "=" + get_address_of_cell(
                 total, add_worksheet_name=True, absolute=True
             )
@@ -540,78 +438,7 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
 
 
 class XlsGradeBookGroup(XlsGradeBookNoGroup):
-    """Fichier Excel de notes par groupe.
-
-    Cette tâche permet de créer un fichier Excel pour attribuer des notes par
-    groupes évitant ainsi de recopier la note pour chaque membre du groupe. Les
-    groupes d'étudiants sont spécifiés par l'argument ``--group-by``. Un ou
-    plusieurs barèmes détaillés peuvent être fournis via l'argument
-    ``--marking-scheme``. Le fichier Excel peut aussi être divisé en plusieurs
-    feuilles de calculs selon une colonne du fichier ``effectif.xlsx`` via
-    l'argument ``--worksheets``. Dans chacun des groupes, les étudiants peuvent
-    être ordonnés suivant l'argument ``--order-by``. On peut ajouter des
-    colonnes supplémentaires à faire figurer dans la première feuille avec
-    l'argument ``--extra-cols``. Le ou les chemins vers un fichier de barème
-    détaillé peut être fourni via l'argument ``--marking-scheme``. Si l'argument
-    n'est pas utilisé, les barèmes seront demandés interactivement. Le fichier
-    de barème doit être au format YAML. La structure du devoir est spécifiée de
-    manière arborescente avec une liste finale pour les questions contenant les
-    points accordés à cette question et éventuellement le coefficient (par
-    défaut 1) et des détails (ne figurant pas dans le fichier Excel). Par
-    exemple :
-
-    .. code:: yaml
-
-       Exercice 1:
-         Question 1:
-           - points: 1
-       Problème:
-         Partie 1:
-           Question 1:
-             - points: 2
-           Question 2:
-             - points: 2
-             - coeff: 3
-           Question 3:
-             - points: 2
-             - détails: |
-                 Question difficile, ne pas noter trop sévèrement.
-         Partie 2:
-           Question 1:
-             - points: 2
-           Question 2:
-             - points: 2
-
-
-    Les notes finales peuvent ensuite être facilement incorporées au
-    fichier central en renseignant la variable ``DOCS``.
-
-    {options}
-
-    Examples
-    --------
-
-    Fichier de notes par groupe de projet :
-
-    .. code:: bash
-
-       guv xls_grade_book_group \\
-         --name Devoir1 \\
-         --marking-scheme documents/barème_devoir1.yml \\
-         --group-by 'Groupe Projet'
-
-    avec le fichier YAML contenant par exemple :
-
-    .. code:: yaml
-
-       Exercice 1:
-         Question 1:
-           - points: 1
-       Exercice 2:
-         Question 1:
-           - points: 1
-
-    """
+    __doc__ = TaskDocstring()
 
     config_argname = "--marking-scheme"
 
@@ -629,7 +456,7 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
             dest="subgroup_by",
             metavar="colname",
             required=True,
-            help="Colonne de groupes utilisée pour noter des groupes d'étudiants"
+            help=_("Group column used to grade groups of students")
         )
 
     def create_first_worksheet(self):
@@ -685,7 +512,7 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
         group_range = list(get_segment(ref_cell, ref_cell.below(height - 1)))
 
         # Number
-        group_range[0].text(f"Groupe {i+1}")
+        group_range[0].text(_("Group {i}").format(i=i+1))
 
         # Group name
         group_range[1].text(name).merge(group_range[2]).center()
@@ -750,7 +577,7 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
             record[ms.name].value = "=" + get_address_of_cell(
                 stu_total_20, add_worksheet_name=True
             )
-            record[ms.name + " brut"].value = "=" + get_address_of_cell(
+            record[ms.name + " " + _("raw")].value = "=" + get_address_of_cell(
                 stu_total, add_worksheet_name=True
             )
 
@@ -759,125 +586,28 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
 
 
 class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
-    """Fichier Excel pour la gestion d'un jury d'UV
+    __doc__ = TaskDocstring()
 
-    Cette tâche permet de générer un fichier Excel pour la gestion d'un jury
-    d'UV/UE. L'argument optionnel ``--name`` permet de spécifier un nom au
-    fichier (par défaut "jury").
-
-    L'argument optionnel ``--config`` permet de spécifier un fichier pour
-    configurer les données nécessaires au jury. S'il n'est pas fourni, une
-    configuration sera demandée interactivement.
-
-    Plus précisément, le classeur créé contient deux feuilles avec sur la
-    première feuille :
-
-    - les colonnes ``Nom``, ``Prénom``, ``Courriel`` du fichier central
-      ``effectif.xlsx``,
-    - les notes spécifiées dans le fichier de configuration via
-      ``--config`` ou interactivement qui participent à la note finale,
-    - une colonne spéciale nommée "Note agrégée" contenant une note sur 20 avec
-      une formule par défaut utilisant les coefficients et les notes maximales
-      renseignées dans le fichier de configuration ou interactivement,
-    - une note ECTS (ABCDEF) automatiquement calculée représentant la note
-      agrégée en fonction de percentiles,
-    - d'autres colonnes utiles pour le jury et qui ne sont pas des notes.
-
-    La deuxième feuille met à disposition des barres d'admission pour chaque
-    note, les coefficients de chaque note, les notes maximales pour chaque note
-    ainsi que les barres pour la conversion de la note agrégée en note ECTS
-    ainsi que quelques statistiques sur la répartition des notes.
-
-    Le fichier de configuration est un fichier au format YAML. Les notes devant
-    être utilisées sont listées dans la section ``grades``. On doit spécifier le
-    nom de la colonne avec ``name`` et optionnellement :
-
-    - une barre de passage avec ``passing grade``, par défaut -1,
-    - un coefficient avec ``coefficient``, par défaut 1,
-    - une note maximale avec ``maximum grade``, par défaut 20,
-
-    Les colonnes qui ne sont pas des notes peuvent être spécifiées avec
-    ``others``. Par exemple :
-
-    .. code:: yaml
-
-       grades:
-         - name: grade1
-           passing grade: 8
-           coefficient: 2
-         - name: grade2
-         - name: grade3
-       others:
-         - info
-
-    La note ECTS et la note agrégée peuvent ensuite être facilement
-    incorporées au fichier central en renseignant la variable
-    ``DOCS``.
-
-    .. code:: python
-
-       DOCS.aggregate_jury("generated/jury_gradebook.xlsx")
-
-    {options}
-
-    Examples
-    --------
-
-    - Feuille de notes avec la note ``median``, la note ``final`` avec
-      une barre à 6 et l'information ``Branche`` :
-
-      .. code:: bash
-
-         guv xls_grade_book_jury --config documents/config_jury.yml
-
-      avec le fichier YAML contenant par exemple :
-
-      .. code:: yaml
-
-         grades:
-           - name: quiz
-             coefficient: 0.2
-             maximum grade: 10
-           - name: median
-             coefficient: 0.3
-           - name: final
-             coefficient: 0.5
-             passing grade: 6
-         others:
-           - Branche
-
-    """
-
-    config_help = "Fichier de configuration spécifiant les notes à utiliser"
+    config_help = _("Configuration file specifying the grades to use")
     config_required = False
     name_required = False
-    name_default = "jury"
+    name_default = _("jury")
 
     def __init__(self, planning, uv, info):
         super().__init__(planning, uv, info)
 
     def message(self, target):
-        return textwrap.dedent("""\
-
-        Pour agréger les notes au fichier central `effectif.xlsx`, ajouter :
-
-        DOCS.aggregate_jury("{filename}")
-
-        dans le fichier `config.py` de l'UV/UE.
-
-        Pour ensuite pouvoir charger les notes ECTS sur l'ENT :
-
-        guv csv_for_upload -g "Note ECTS" --ects
-
-        """.format(**{"filename": rel_to_dir(target, self.settings.UV_DIR)}))
+        return _file("XlsGradeBookJury_message").format(
+            filename=rel_to_dir(target, self.settings.UV_DIR)
+        )
 
     def get_columns(self, **kwargs):
         # Les colonnes classiques
         columns = [(self.settings.LASTNAME_COLUMN, "raw", 0), (self.settings.NAME_COLUMN, "raw", 0), (self.settings.EMAIL_COLUMN, "raw", 0)]
 
         # Les colonnes nécessaires pour les différents calculs
-        columns.append(("Admis", "cell", 2))
-        columns.append(("Note admis", "cell", 2))
+        columns.append((_("Passed"), "cell", 2))
+        columns.append((_("Passing grade"), "cell", 2))
 
         # Les colonnes spécifiées dans le fichier de configuration
         for grade in self.config["grades"]:
@@ -888,9 +618,9 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
             columns.append((other, "raw", 1))
 
         # La colonne de la note finale : A, B, C, D, E, F
-        columns.append(("Note ECTS", "cell", 4))
+        columns.append((_("ECTS grade"), "cell", 4))
 
-        self.agg_colname = ["Note agrégée", "Note ECTS"]
+        self.agg_colname = [_("Aggregated grade"), _("ECTS grade")]
 
         return columns
 
@@ -904,50 +634,37 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
         # Remove some columns, keep it ordered
         grade_cols = cols.copy()
         for c in [
-            "Nom",
-            "Prénom",
-            "Date de naissance",
-            "Dernier diplôme obtenu",
-            "Courriel",
-            "Login",
-            "Tel. 1",
-            "Tel. 2",
-            "Branche",
-            "Semestre",
-            "Prénom_moodle",
-            "Nom_moodle",
-            "Numéro d'identification",
-            "Adresse de courriel",
-            "Cours",
-            "TD",
-            "TP"
+                self.settings.NAME_COLUMN,
+                self.settings.LASTNAME_COLUMN,
+                self.settings.EMAIL_COLUMN,
+                self.settings.LOGIN_COLUMN
         ]:
             if c in grade_cols:
                 grade_cols.remove(c)
 
         grades = checkboxlist_prompt(
-            "Indiquer les colonnes contenant des notes à utiliser directement pour la note finale (SPACE: sélectionner, ENTER: valider):",
+            _("Indicate the columns containing grades to use directly for the final grade (SPACE: select, ENTER: validate):"),
             [(c, c) for c in grade_cols]
         )
         result = ask_choice(
-            f"Ajouter des notes intermédiaires à utiliser directement pour la note finale et non présentes dans le fichier ``effectif.xlsx`` ? (y/n) ",
+            _("Add intermediate grades to use directly for the final grade and not present in the file ``effectif.xlsx``? (y/n) "),
             {"y": True, "n": False},
         )
         if result:
             while True:
-                choice = input("Nom de la note intermédiaire ? (laisser vide pour terminer) ")
+                choice = input(_("Name of the intermediate grade? (leave blank to finish) "))
                 if not choice:
                     break
                 if choice not in grades:
                     grades.append(choice)
                 else:
-                    print("Colonne déjà présente")
+                    print(_("Column already present"))
 
         grades_props = []
         for grade in grades:
             props = {"name": grade}
-            props["coefficient"] = prompt_number(f"Coefficient for {grade}: ", default="1")
-            props["passing grade"] = prompt_number(f"Passing grade for {grade}: ", default="-1")
+            props["coefficient"] = prompt_number(_("Coefficient for {grade}: ").format(grade=grade), default="1")
+            props["passing grade"] = prompt_number(_("Passing grade for {grade}: ").format(grade=grade), default="-1")
             grades_props.append(props)
 
         other_cols = cols.copy()
@@ -959,7 +676,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
                 other_cols.remove(c)
 
         others = checkboxlist_prompt(
-            "Indiquer d'autres colonnes pour information (groupe de projet, groupe de TD,...):",
+            _("Indicate other columns for information (project group, tutorial group,...):"),
             [(c, c) for c in other_cols]
         )
 
@@ -988,14 +705,14 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
         jsonschema.validate(config, schema)
 
         # Add default value in grades
-        if "Percentile A" not in config:
-            config["Percentile note A"] = .9
-        if "Percentile note B" not in config:
-            config["Percentile note B"] = .65
-        if "Percentile note C" not in config:
-            config["Percentile note C"] = .35
-        if "Percentile note D" not in config:
-            config["Percentile note D"] = .1
+        if _("Percentile A") not in config:
+            config[_("Percentile grade A")] = .9
+        if _("Percentile grade B") not in config:
+            config[_("Percentile grade B")] = .65
+        if _("Percentile grade C") not in config:
+            config[_("Percentile grade C")] = .35
+        if _("Percentile grade D") not in config:
+            config[_("Percentile grade D")] = .1
 
         for grade in config["grades"]:
             if "coefficient" not in grade:
@@ -1006,7 +723,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
                 grade["passing grade"] = -1
 
         config["grades"].append({
-            "name": "Note agrégée",
+            "name": _("Aggregated grade"),
             "passing grade": -1
         })
 
@@ -1047,7 +764,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
 
     def create_second_worksheet(self):
         # Write new gradesheet
-        self.gradesheet = self.workbook.create_sheet(title="Paramètres")
+        self.gradesheet = self.workbook.create_sheet(title=_("Parameters"))
         self.workbook.active = self.gradesheet
         current_cell = self.gradesheet.cell(row=1, column=1)
 
@@ -1055,14 +772,14 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
         self.grades_options = {}
         for name, props in self.grade_columns:
             # Add some stats on marks
-            for stat, q in (("Min", 0), ("Q1", 1), ("Médiane", 2), ("Q3", 3), ("Max", 4)):
+            for stat, q in ((_("Min"), 0), (_("Q1"), 1), (_("Median"), 2), (_("Q3"), 3), (_("Max"), 4)):
                 props[stat] = '=IF(ISERROR(QUARTILE({0}, 0)), NA(), QUARTILE({0}, {1}))'.format(
                     self.get_column_range(name),
                     q
                 )
 
             # Write key-value table
-            keys = ["name", "passing grade", "coefficient", "maximum grade"]
+            keys = ["name", _("passing grade"), "coefficient", _("maximum grade")]
             ordered_props = {k: props[k] for k in keys if k in props}
             rest = {k: props[k] for k in props if k not in keys}
             lower_right, keytocell = self.write_key_value_props(
@@ -1081,35 +798,35 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
         if "others" in options:
             del options["others"]
         lower_right, self.global_options = self.write_key_value_props(
-            current_cell, "Options globales", options
+            current_cell, _("Global options"), options
         )
         current_cell = current_cell.right(3)
 
         # On écrit les seuils des notes correspondants aux percentiles choisis
         props = {}
         for i, ects in enumerate("ABCD"):
-            percentile_cell = self.global_options["Percentile note " + ects]
+            percentile_cell = self.global_options[_("Percentile grade") + " " + ects]
             props[
-                ects + " si >="
-            ] = "=IF(ISERROR(PERCENTILE({0}, {1})), NA(), PERCENTILE({0}, {1}))".format(
-                self.get_column_range("Note admis"),
-                get_address_of_cell(percentile_cell),
+                _("{ects} if >=").format(ects=ects)
+            ] = _("=IF(ISERROR(PERCENTILE({a}, {b})), NA(), PERCENTILE({a}, {b}))").format(
+                a=self.get_column_range(_("Passing grade")),
+                b=get_address_of_cell(percentile_cell),
             )
 
         lower_right, percentiles_theo = self.write_key_value_props(
-            current_cell, "Percentiles théoriques", props
+            current_cell, _("Theoretical percentiles"), props
         )
         current_cell = current_cell.right(3)
 
         # Percentiles effectifs
         props = {}
         for i, ects in enumerate("ABCD"):
-            props[ects + " si >="] = "=" + get_address_of_cell(
-                percentiles_theo[ects + " si >="]
+            props[_("{ects} if >=").format(ects=ects)] = "=" + get_address_of_cell(
+                percentiles_theo[_("{ects} if >=").format(ects=ects)]
             )
 
         lower_right, self.percentiles_used = self.write_key_value_props(
-            current_cell, "Percentiles utilisés", props
+            current_cell, _("Used percentiles"), props
         )
         current_cell = current_cell.right(3)
 
@@ -1117,18 +834,18 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
         # colonne `Admis`
         props = {}
         for ects in "ABCDEF":
-            props["Nombre de " + ects] = ('=COUNTIF({}, "{}")').format(
-                self.get_column_range("Note ECTS"), ects
+            props[_("Number of {ects}").format(ects=ects)] = ('=COUNTIF({}, "{}")').format(
+                self.get_column_range(_("ECTS grade")), ects
             )
-        props["Nombre d'admis"] = '=SUMIF({}, "<>#N/A")'.format(
-            self.get_column_range("Admis")
+        props[_("Number of passed")] = '=SUMIF({}, "<>#N/A")'.format(
+            self.get_column_range(_("Passed"))
         )
-        props["Effectif total"] = "=COUNTA({})".format(self.get_column_range("Admis"))
-        props["Ratio"] = '=IF(ISERROR(AVERAGEIF({0}, "<>#N/A")), NA(), AVERAGEIF({0}, "<>#N/A"))'.format(
-            self.get_column_range("Admis")
+        props[_("Total number")] = "=COUNTA({})".format(self.get_column_range(_("Passed")))
+        props[_("Ratio")] = '=IF(ISERROR(AVERAGEIF({0}, "<>#N/A")), NA(), AVERAGEIF({0}, "<>#N/A"))'.format(
+            self.get_column_range(_("Passed"))
         )
         lower_right, statistiques = self.write_key_value_props(
-            current_cell, "Statistiques", props
+            current_cell, _("Statistics"), props
         )
 
     def update_first_worksheet(self):
@@ -1143,7 +860,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
                 absolute=True,
             )
             for name, props in self.grade_columns
-            if name != "Note agrégée"
+            if name != _("Aggregated grade")
         )
 
         for i, (index, record) in enumerate(self.first_df.iterrows()):
@@ -1160,10 +877,10 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
                     ),
                 )
                 for name, props in self.grade_columns
-                if name != "Note agrégée"
+                if name != _("Aggregated grade")
             ) + f")/({coef_sum})"
 
-            record["Note agrégée"].value = formula
+            record[_("Aggregated grade")].value = formula
 
         # On écrit la colonne "Admis" des admis/refusés basée sur les
         # barres
@@ -1192,28 +909,28 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
 
             # NA() s'il y a un problème, 0 si recalé, 1 si reçu
             formula = f"=IFERROR(IF({any_blank_cell}, NA(), IF({above_all_threshold}, 1, 0)), NA())"
-            record["Admis"].value = formula
+            record[_("Passed")].value = formula
 
         # On écrit la note agrégée des admis dans la colonne "Note
         # admis" pour faciliter le calcul des percentiles sur les
         # admis
         for i, (index, record) in enumerate(self.first_df.iterrows()):
-            record["Note admis"].value = '=IFERROR(IF({}=1, {}, ""), "")'.format(
-                get_address_of_cell(record["Admis"]),
-                get_address_of_cell(record["Note agrégée"]),
+            record[_("Passing grade")].value = '=IFERROR(IF({}=1, {}, ""), "")'.format(
+                get_address_of_cell(record[_("Passed")]),
+                get_address_of_cell(record[_("Aggregated grade")]),
             )
 
         # On écrit la note ECTS en fonction de la note agrégée et des
         # percentiles utilisés
-        perc_A = get_address_of_cell(self.percentiles_used["A si >="], absolute=True)
-        perc_B = get_address_of_cell(self.percentiles_used["B si >="], absolute=True)
-        perc_C = get_address_of_cell(self.percentiles_used["C si >="], absolute=True)
-        perc_D = get_address_of_cell(self.percentiles_used["D si >="], absolute=True)
+        perc_A = get_address_of_cell(self.percentiles_used[_("A if >=")], absolute=True)
+        perc_B = get_address_of_cell(self.percentiles_used[_("B if >=")], absolute=True)
+        perc_C = get_address_of_cell(self.percentiles_used[_("C if >=")], absolute=True)
+        perc_D = get_address_of_cell(self.percentiles_used[_("D if >=")], absolute=True)
         percs = dict(perc_A=perc_A, perc_B=perc_B, perc_C=perc_C, perc_D=perc_D)
 
         for i, (index, record) in enumerate(self.first_df.iterrows()):
-            note_admis = get_address_of_cell(record["Admis"])
-            note_agregee = get_address_of_cell(record["Note agrégée"])
+            note_admis = get_address_of_cell(record[_("Passed")])
+            note_agregee = get_address_of_cell(record[_("Aggregated grade")])
             opts = dict(note_admis=note_admis, note_agregee=note_agregee)
             opts.update(percs)
 
@@ -1244,14 +961,14 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
                 '"E"',
             )
 
-            record["Note ECTS"].value = "=" + formula
+            record[_("ECTS grade")].value = "=" + formula
 
         # On centre les notes ECTS
-        for cell in self.first_df["Note ECTS"]:
+        for cell in self.first_df[_("ECTS grade")]:
             cell.alignment = Alignment(horizontal="center")
 
         # On colore la cellule en fonction de la note ECTS
-        range = self.get_column_range("Note ECTS")
+        range = self.get_column_range(_("ECTS grade"))
         for ects, color in zip(
             "ABCDEF", ["00FF00", "C2FF00", "F7FF00", "FFC100", "FF6900", "FF0000"]
         ):
@@ -1280,5 +997,5 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
         self.first_ws.auto_filter.ref = "A1:{}{}".format(
             get_column_letter(max_column), max_row
         )
-        range = self.get_column_range("Note ECTS")
+        range = self.get_column_range(_("ECTS grade"))
         self.first_ws.auto_filter.add_sort_condition(range)

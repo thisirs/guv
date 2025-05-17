@@ -2,7 +2,9 @@ import argparse
 import re
 import textwrap
 
+from .handlers import get_handlers
 from .tasks.base import CliArgsInheritMixin, CliArgsMixin, ConfigOpt, GroupOpt
+from .translations import _
 from .utils import argument
 
 
@@ -50,24 +52,13 @@ def get_parser(tasks, add_hidden=False):
     parser = argparse.ArgumentParser(prog="guv", description="")
     subparsers = parser.add_subparsers(dest="command")
 
-    createsemester_parser = subparsers.add_parser(
-        "createsemester",
-        description="Crée un dossier de semestre",
-        help="Crée un dossier de semestre",
-    )
-    createsemester_parser.add_argument("directory", help="Nom du dossier à créer")
-    createsemester_parser.add_argument("--semester", help="Nom du semestre")
-    createsemester_parser.add_argument("--uv", nargs="*", default=[], help="Liste des UV/UE à ajouter")
-
-    createuv_parser = subparsers.add_parser(
-        "createuv", description="Crée des dossiers d'UV", help="Crée des dossiers d'UV"
-    )
-    createuv_parser.add_argument("uv", nargs="+")
+    for handler_name, handler in get_handlers().items():
+        handler().add_parser(subparsers)
 
     sp = subparsers.add_parser(
         "doit",
-        description="Permet d'avoir accès aux commandes doit sous-jacentes",
-        help="Permet d'avoir accès aux commandes doit sous-jacentes",
+        description=_("Allows access to underlying sub-commands"),
+        help=_("Allows access to underlying sub-commands"),
     )
     sp.add_argument("args", nargs=argparse.REMAINDER)
 

@@ -1,0 +1,5 @@
+Load the groups on Moodle at the address {url} by specifying:
+
+- User field: "Username"
+- Assign to groups: "Yes"
+- Create groups: "Yes" if they are not already created

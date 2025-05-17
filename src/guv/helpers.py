@@ -17,6 +17,7 @@ from .exceptions import GuvUserError, ImproperlyConfigured
 from .logger import logger
 from .operation import Operation
 from .tasks.internal import Documents
+from .translations import _, TaskDocstring
 from .utils import (check_if_absent, check_if_present, convert_to_numeric,
                     read_dataframe, slugrot_string, get_descriptive_function)
 from .utils_config import check_filename, rel_to_dir
@@ -61,43 +62,7 @@ def concat(*columns):
 
 
 class FillnaColumn(Operation):
-    """Remplace les valeurs non définies dans la colonne ``colname``.
-
-    Une seule des options ``na_value`` et ``group_column`` doit être
-    spécifiée. Si ``na_value`` est spécifiée, on remplace
-    inconditionnellement par la valeur fournie. Si ``group_column`` est
-    spécifiée, on complète en groupant par ``group_column`` et en prenant
-    la seule valeur valide par groupe dans cette colonne.
-
-    Parameters
-    ----------
-
-    colname : :obj:`str`
-        Nom de la colonne où remplacer les ``NA``
-    na_value : :obj:`str`, optional
-        Valeur remplaçant les valeurs non définies
-    group_column : :obj:`str`, optional
-        Nom de la colonne utilisée pour le groupement
-
-    Examples
-    --------
-
-    - Mettre les entrées non définies dans la colonne ``note`` à
-      "ABS" :
-
-      .. code:: python
-
-         DOCS.fillna_column("note", na_value="ABS")
-
-    - Mettre les entrées non définies à l'intérieur de chaque groupe
-      repéré par la colonne ``groupe_projet`` à la seule valeur
-      définie à l'intérieur de ce groupe.
-
-      .. code:: python
-
-         DOCS.fillna_column("note_projet", group_column="groupe_projet")
-
-    """
+    __doc__ = TaskDocstring()
 
     hash_fields = ["colname", "na_value", "group_column"]
 
@@ -115,7 +80,7 @@ class FillnaColumn(Operation):
 
     def apply(self, df):
         if not((self.na_value is None) ^ (self.group_column is None)):
-            raise ImproperlyConfigured("Une seule des options `na_value` et `group_column` doit être spécifiée")
+            raise ImproperlyConfigured(_("Only one of the options `na_value` and `group_column` must be specified"))
 
         if self.na_value is not None:
             check_if_present(df, self.colname)
@@ -124,13 +89,13 @@ class FillnaColumn(Operation):
         else:
             def fill_by_group(g):
                 if not isinstance(g.name, str):
-                    logger.warning("La colonne `%s` contient des entrées vides", self.group_column)
+                    logger.warning(_("The column `%s` contains empty entries"), self.group_column)
                     return g
 
                 valid = g[self.colname].dropna()
 
                 if len(valid) == 0:
-                    logger.warning("Aucune valeur non-NA dans le groupe `%s`", g.name)
+                    logger.warning(_("No non-NA value in the group `%s`"), g.name)
                 elif len(valid) == 1:
                     g[self.colname] = valid.iloc[0]
                 else:
@@ -138,7 +103,7 @@ class FillnaColumn(Operation):
                     if all_equal:
                         g[self.colname] = valid.iloc[0]
                     else:
-                        logger.warning("Plusieurs valeurs non-NA et différentes dans le groupe `%s`", g.name)
+                        logger.warning(_("Multiple non-NA and different values in the group `%s`"), g.name)
 
                 return g
 
@@ -149,49 +114,13 @@ class FillnaColumn(Operation):
 
     def message(self):
         if self.na_value is not None:
-            return f"Remplace les NA dans la colonne `{self.colname}` par la valeur `{self.na_value}`"
+            return _("Replace NAs in the column `{colname}` with the value `{na_value}`").format(colname=self.colname, na_value=self.na_value)
 
-        return f"Remplace les NA dans la colonne `{self.colname}` en groupant par `{self.group_column}`"
+        return _("Replace NAs in the column `{colname}` by grouping by `{group_column}`").format(colname=self.colname, group_column=self.group_column)
 
 
 class ReplaceRegex(Operation):
-    """Remplacements regex dans une colonne.
-
-    Remplace dans la colonne ``colname`` les occurrences de toutes les
-    expressions régulières renseignées dans ``reps``.
-
-    Si l'argument ``backup`` est spécifié, la colonne est sauvegardée
-    avant toute modification (avec un suffixe ``_orig``). Si
-    l'argument ``new_colname`` est fourni la colonne est copiée vers
-    une nouvelle colonne de nom ``new_colname`` et les modifications
-    sont faites sur cette nouvelle colonne.
-
-    Un message ``msg`` peut être spécifié pour décrire ce que fait la
-    fonction, il sera affiché lorsque l'agrégation sera effectuée.
-    Sinon, un message générique sera affiché.
-
-    Parameters
-    ----------
-
-    colname : :obj:`str`
-        Nom de la colonne où effectuer les remplacements
-    *reps : any number of :obj:`tuple`
-        Les couples regex / remplacement
-    new_colname : :obj:`str`
-        Le nom de la nouvelle colonne
-    backup : :obj:`bool`
-        Sauvegarder la colonne avant tout changement
-    msg : :obj:`str`
-        Un message décrivant l'opération
-
-    Examples
-    --------
-
-    .. code:: python
-
-       DOCS.replace_regex("group", (r"group([0-9])", r"G\\1"), (r"g([0-9])", r"G\\1"))
-
-    """
+    __doc__ = TaskDocstring()
 
     hash_fields = ["colname", "reps", "new_colname", "backup"]
 
@@ -213,7 +142,7 @@ class ReplaceRegex(Operation):
     def apply(self, df):
         if self.backup is True and self.new_colname is not None:
             raise ImproperlyConfigured(
-                "Les arguments `backup` et `new_colname` sont incompatibles."
+                _("The arguments `backup` and `new_colname` are incompatible.")
             )
 
         check_if_present(df, self.colname)
@@ -234,61 +163,13 @@ class ReplaceRegex(Operation):
         if self.msg is not None:
             return self.msg
         if self.new_colname is None:
-            return f"Remplacement regex dans colonne `{self.colname}`"
+            return _("Regex replacement in column `{colname}`").format(colname=self.colname)
 
-        return f"Remplacement regex dans colonne `{self.colname}` vers colonne `{self.new_colname}`"
+        return _("Regex replacement in column `{colname}` to column `{new_colname}`").format(colname=self.colname, new_colname=self.new_colname)
 
 
 class ReplaceColumn(Operation):
-    """Remplacements dans une colonne.
-
-    Remplace les valeurs renseignées dans ``rep_dict`` dans la colonne
-    ``colname``.
-
-    Si l'argument ``backup`` est spécifié, la colonne est sauvegardée
-    avant toute modification (avec un suffixe ``_orig``). Si
-    l'argument ``new_colname`` est fourni la colonne est copiée vers
-    une nouvelle colonne de nom ``new_colname`` et les modifications
-    sont faites sur cette nouvelle colonne.
-
-    Un message ``msg`` peut être spécifié pour décrire ce que fait la
-    fonction, il sera affiché lorsque l'agrégation sera effectuée.
-    Sinon, un message générique sera affiché.
-
-    Parameters
-    ----------
-
-    colname : :obj:`str`
-        Nom de la colonne où effectuer les remplacements
-    rep_dict : :obj:`dict`
-        Dictionnaire des remplacements
-    new_colname : :obj:`str`
-        Nom de la nouvelle colonne
-    backup : :obj:`bool`
-        Sauvegarder la colonne avant tout changement
-    msg : :obj:`str`
-        Un message décrivant l'opération
-
-    Examples
-    --------
-
-    .. code:: python
-
-       DOCS.replace_column("group", {"TD 1": "TD1", "TD 2": "TD2"})
-
-    .. code:: python
-
-       ECTS_TO_NUM = {
-           "A": 5,
-           "B": 4,
-           "C": 3,
-           "D": 2,
-           "E": 1,
-           "F": 0
-       }
-       DOCS.replace_column("Note_TP", ECTS_TO_NUM, backup=True)
-
-    """
+    __doc__ = TaskDocstring()
 
     hash_fields = ["colname", "rep_dict", "new_colname", "backup"]
 
@@ -310,7 +191,7 @@ class ReplaceColumn(Operation):
     def apply(self, df):
         if self.backup is True and self.new_colname is not None:
             raise ImproperlyConfigured(
-                "Les arguments `backup` et `new_colname` sont incompatibles."
+                _("The arguments `backup` and `new_colname` are incompatible.")
             )
 
         check_if_present(df, self.colname)
@@ -327,62 +208,13 @@ class ReplaceColumn(Operation):
         if self.msg is not None:
             return self.msg
         if self.new_colname is None:
-            return f"Remplacement dans colonne `{self.colname}`"
+            return _("Replacement in column `{colname}`").format(colname=self.colname)
 
-        return f"Replacement dans colonne `{self.colname}` vers colonne `{self.new_colname}`"
+        return _("Replacement in column `{colname}` to column `{new_colname}`").format(colname=self.colname, new_colname=self.new_colname)
 
 
 class ApplyDf(Operation):
-    """Modifie le fichier central avec une fonction.
-
-    ``func`` est une fonction prenant en argument un *DataFrame*
-    représentant le fichier central et retournant le *DataFrame*
-    modifié.
-
-    Un message ``msg`` peut être spécifié pour décrire ce que fait la
-    fonction, il sera affiché lorsque l'agrégation sera effectuée.
-    Sinon, un message générique sera affiché.
-
-    Parameters
-    ----------
-
-    func : :obj:`callable`
-        Fonction prenant en argument un *DataFrame* et renvoyant un
-        *DataFrame* modifié
-    msg : :obj:`str`
-        Un message décrivant l'opération
-
-    Examples
-    --------
-
-    - Rajouter un étudiant absent de l'effectif officiel :
-
-      .. code:: python
-
-         import pandas as pd
-
-         df_one = (
-             pd.DataFrame(
-                 {
-                     "Nom": ["NICHOLS"],
-                     "Prénom": ["Juliette"],
-                     "Courriel": ["juliette.nichols@silo18.fr"],
-                 }
-             ),
-         )
-
-         DOCS.apply_df(lambda df: pd.concat((df, df_one)))
-
-    - Retirer les étudiants dupliqués :
-
-      .. code:: python
-
-         DOCS.apply_df(
-             lambda df: df.loc[~df["Adresse de courriel"].duplicated(), :],
-             msg="Retirer les étudiants dupliqués"
-         )
-
-    """
+    __doc__ = TaskDocstring()
 
     hash_fields = ["func"]
 
@@ -398,39 +230,11 @@ class ApplyDf(Operation):
         if self.msg is not None:
             return self.msg
 
-        return "Appliquer une fonction au Dataframe"
+        return _("Apply a function to the Dataframe")
 
 
 class ApplyColumn(Operation):
-    """Modifie une colonne existante avec une fonction.
-
-    ``colname`` est un nom de colonne existant et ``func`` une fonction
-    prenant en argument un élément de la colonne et retournant un
-    élément modifié.
-
-    Un message ``msg`` peut être spécifié pour décrire ce que fait la
-    fonction, il sera affiché lorsque l'agrégation sera effectuée.
-    Sinon, un message générique sera affiché.
-
-    Parameters
-    ----------
-
-    colname : :obj:`str`
-        Nom de la colonne où effectuer les remplacements
-    func : :obj:`callable`
-        Fonction prenant en argument un élément et renvoyant l'élément
-        modifié
-    msg : :obj:`str`
-        Un message décrivant l'opération
-
-    Examples
-    --------
-
-    .. code:: python
-
-       DOCS.apply("note", lambda e: float(str(e).replace(",", ".")))
-
-    """
+    __doc__ = TaskDocstring()
 
     hash_fields = ["colname", "func"]
 
@@ -449,71 +253,11 @@ class ApplyColumn(Operation):
         if self.msg is not None:
             return self.msg
 
-        return f"Appliquer une fonction à la colonne `{self.colname}`"
+        return _("Apply a function to the column `{colname}`").format(colname=self.colname)
 
 
 class ComputeNewColumn(Operation):
-    """Création d'une colonne à partir d'autres colonnes.
-
-    Les colonnes nécessaires au calcul sont renseignées dans ``cols``.
-    Au cas où, on voudrait changer la colonne utilisée pour le calcul
-    sans changer la fonction ``func``, il est possible de fournir un
-    tuple ``("col" "other_col")`` où ``col`` est le nom utilisé dans
-    ``func`` et ``other_col`` est la vraie colonne utilisée.
-
-    La fonction ``func`` qui calcule la nouvelle colonne reçoit une
-    *Series* Pandas de toutes les valeurs contenues dans les colonnes
-    spécifiées.
-
-    Parameters
-    ----------
-
-    *cols : list of :obj:`str`
-        Liste des colonnes fournies à la fonction ``func``
-    func : :obj:`callable`
-        Fonction prenant en argument un dictionnaire "nom des
-        colonnes/valeurs" et renvoyant une valeur calculée
-    colname : :obj:`str`
-        Nom de la colonne à créer
-    msg : :obj:`str`
-        Un message décrivant l'opération
-
-    Examples
-    --------
-
-    - Moyenne pondérée de deux notes :
-
-      .. code:: python
-
-         from guv.helpers import compute_new_column
-
-         def moyenne(notes):
-             return .4 * notes["Note_médian"] + .6 * notes["Note_final"]
-
-         DOCS.compute_new_column("Note_médian", "Note_final", func=moyenne, colname="Note_moyenne")
-
-    - Moyenne sans tenir compte des valeurs non définies :
-
-      .. code:: python
-
-         from guv.helpers import compute_new_column
-
-         def moyenne(notes):
-             return notes.mean()
-
-         DOCS.compute_new_column("note1", "note2", "note3", func=moyenne, colname="Note_moyenne")
-
-    - Recalcul avec une note modifiée sans redéfinir la function ``moyenne`` :
-
-      .. code:: python
-
-         from guv.helpers import compute_new_column
-
-         DOCS.compute_new_column(
-             ("note1", "note1_fix"), "note2", "note3", func=moyenne, colname="Note_moyenne (fix)"
-         )
-
-    """
+    __doc__ = TaskDocstring()
 
     hash_fields = ["cols", "func", "colname"]
 
@@ -549,39 +293,11 @@ class ComputeNewColumn(Operation):
         if self.msg is not None:
             return self.msg
 
-        return f"Calcul de la colonne `{self.colname}`"
+        return _("Calculation of the column `{colname}`").format(colname=self.colname)
 
 
 class ApplyCell(Operation):
-    """Remplace la valeur d'une cellule.
-
-    ``name_or_email`` est le nom-prénom de l'étudiant ou son adresse
-    courriel et ``colname`` est le nom de la colonne où faire le
-    changement. La nouvelle valeur est renseignée par ``value``.
-
-    Parameters
-    ----------
-
-    name_or_email : :obj:`str`
-        Le nom-prénom ou l'adresse courriel de l'étudiant.
-
-    colname : :obj:`str`
-        Le nom de la colonne où faire les modifications.
-
-    value :
-        La valeur à affecter.
-
-    msg : :obj:`str`
-        Un message décrivant l'opération
-
-    Examples
-    --------
-
-    .. code:: python
-
-       DOCS.apply_cell("Mark Watney", "Note bricolage", 20)
-
-    """
+    __doc__ = TaskDocstring()
 
     hash_fields = ["name_or_email", "colname", "value"]
 
@@ -600,9 +316,9 @@ class ApplyCell(Operation):
         if '@' in self.name_or_email:
             sturow = df.loc[df[left_on] == self.name_or_email]
             if len(sturow) > 1:
-                raise GuvUserError(f'Adresse courriel `{self.name_or_email}` présente plusieurs fois')
+                raise GuvUserError(_("Email address `{email}` appears multiple times").format(email=self.name_or_email))
             if len(sturow) == 0:
-                raise GuvUserError(f'Adresse courriel `{self.name_or_email}` non présente dans le fichier central')
+                raise GuvUserError(_("Email address `{email}` not present in the central file").format(email=self.name_or_email))
             stuidx = sturow.index[0]
         else:
             # Add slugname column
@@ -612,9 +328,9 @@ class ApplyCell(Operation):
 
             sturow = df.loc[df.fullname_slug == slugrot_string(self.name_or_email)]
             if len(sturow) > 1:
-                raise GuvUserError(f'Étudiant de nom `{self.name_or_email}` présent plusieurs fois')
+                raise GuvUserError(_("Student named `{name}` appears multiple times").format(name=self.name_or_email))
             if len(sturow) == 0:
-                raise GuvUserError(f'Étudiant de nom `{self.name_or_email}` non présent dans le fichier central')
+                raise GuvUserError(_("Student named `{name}` not present or recognized in the central file").format(name=self.name_or_email))
             stuidx = sturow.index[0]
             df = df.drop('fullname_slug', axis=1)
 
@@ -626,7 +342,7 @@ class ApplyCell(Operation):
         if self.msg is not None:
             return self.msg
 
-        return f"Modification de la colonne `{self.colname}` pour l'identifiant `{self.name_or_email}`"
+        return _("Modification of the column `{colname}` for the identifier `{name_or_email}`").format(colname=self.colname, name_or_email=self.name_or_email)
 
 
 class FileOperation(Operation):
@@ -645,45 +361,11 @@ class FileOperation(Operation):
         return [self.filename]
 
     def message(self):
-        return f"Agrégation du fichier `{rel_to_dir(self.filename, self.settings.CWD)}`"
+        return _("Aggregation of the file `{filename}`").format(filename=rel_to_dir(self.filename, self.settings.CWD))
 
 
 class Add(FileOperation):
-    """Déclare une agrégation d'un fichier à l'aide d'une fonction.
-
-    Fonction générale pour déclarer l'agrégation d'un fichier de
-    chemin ``filename`` à l'aide d'une fonction ``func`` prenant
-    en argument le *DataFrame* déjà existant, le chemin vers le
-    fichier et renvoie le *DataFrame* mis à jour.
-
-    Voir fonctions spécialisées pour l'incorporation de documents
-    classiques :
-
-    - :func:`~guv.helpers.Documents.aggregate` : Document csv/Excel
-    - :func:`~guv.helpers.Documents.aggregate_org` : Document Org
-
-    Parameters
-    ----------
-
-    filename : :obj:`str`
-        Le chemin du fichier à agréger.
-
-    func : :obj:`callable`
-        Une fonction de signature *DataFrame*, filename: str ->
-        *DataFrame* qui réalise l'agrégation.
-
-    Examples
-    --------
-
-    .. code:: python
-
-       def fonction_qui_incorpore(df, file_path):
-           # On incorpore le fichier dont le chemin est `file_path` au
-           # DataFrame `df` et on renvoie le DataFrame mis à jour.
-
-       DOCS.add("documents/notes.csv", func=fonction_qui_incorpore)
-
-    """
+    __doc__ = TaskDocstring()
 
     hash_fields = ["_filename", "func"]
 
@@ -693,7 +375,7 @@ class Add(FileOperation):
 
     def apply(self, df):
         if df is not None and self.func is None:
-            raise ImproperlyConfigured("Il faut fournir une fonction d'agrégation")
+            raise ImproperlyConfigured(_("An aggregation function must be provided"))
 
         if self.func is not None:
             return self.func(df, self.filename)
@@ -702,176 +384,7 @@ class Add(FileOperation):
 
 
 class Aggregate(FileOperation):
-    """Agrégation d'un tableau provenant d'un fichier Excel/csv.
-
-    Les arguments ``left_on`` et ``right_on`` sont des noms de colonnes pour
-    réaliser une jointure : ``left_on`` est une colonne présente dans le fichier
-    central ``effectif.xlsx`` et ``right_on`` est une colonne du fichier à
-    agréger. Dans le cas où la jointure est plus complexe, on peut utiliser les
-    fonctions :func:`guv.helpers.id_slug` et :func:`guv.helpers.concat` (voir
-    Exemples) Dans le cas où ``left_on`` et ``right_on`` ont la même valeur, on
-    peut seulement spécifier ``on``.
-
-    ``subset`` est une liste des colonnes à garder si on ne veut pas agréger la
-    totalité des colonnes, ``drop`` une liste des colonnes à enlever. ``rename``
-    est un dictionnaire des colonnes à renommer. ``read_method`` est un
-    *callable* appelé avec ``kw_read`` pour lire le fichier contenant le
-    *DataFrame* à agréger. ``preprocessing`` et ``postprocessing`` sont des
-    *callable* qui prennent en argument un *DataFrame* et en renvoie un et qui
-    réalise respectivement un pré-traitement sur le fichier à agréger ou un
-    post-traitement sur l'agrégation. ``merge_policy`` indique si on doit tenter
-    de fusionner des colonnes qui portent le même nom dans ``effectif.xlsx`` et
-    le fichier à agréger.
-
-    Parameters
-    ----------
-
-    filename : :obj:`str`
-        Le chemin du fichier csv/Excel à agréger.
-
-    left_on : :obj:`str`
-        Le nom de colonne présent dans le fichier ``effectif.xlsx`` pour
-        réaliser la jointure. On peut également utiliser les fonctions
-        :func:`guv.helpers.id_slug` et :func:`guv.helpers.concat` pour une
-        jointure prenant en compte plusieurs colonnes.
-
-    right_on : :obj:`str`
-        Le nom de colonne présent dans le fichier à incorporer pour
-        réaliser la jointure. On peut également utiliser les fonctions
-        :func:`guv.helpers.id_slug` et :func:`guv.helpers.concat` pour une
-        jointure prenant en compte plusieurs colonnes.
-
-    on : :obj:`str`
-        Raccourci lorsque ``left_on`` et ``right_on`` ont la même
-        valeur.
-
-    subset : :obj:`list`, optional
-        Permet de sélectionner un nombre restreint de colonnes en
-        spécifiant la liste. Par défaut, toutes les colonnes sont
-        incorporées.
-
-    drop : :obj:`list`, optional
-        Permet d'enlever des colonnes de l'agrégation.
-
-    rename : :obj:`dict`, optional
-        Permet de renommer des colonnes après incorporation.
-
-    read_method : :obj:`callable`, optional
-        Spécifie la fonction à appeler pour charger le fichier. Les
-        fonctions Pandas ``pd.read_csv`` et ``pd.read_excel`` sont
-        automatiquement sélectionnées pour les fichiers ayant pour
-        extension ".csv" ou ".xlsx".
-
-    kw_read : :obj:`dict`, optional
-        Les arguments nommés à utiliser avec la fonction
-        ``read_method``. Par exemple, pour un fichier ".csv" on peut
-        spécifier :
-
-        .. code:: python
-
-           kw_read={"header": None, "names": ["Courriel", "TP_pres"]}
-           kw_read={"na_values": "-"}
-
-    preprocessing : :obj:`callable`, optional
-        Pré-traitement à appliquer au *DataFrame* avant de l'intégrer.
-
-    postprocessing : :obj:`callable`, optional
-        Post-traitement à appliquer au *DataFrame* après intégration du fichier.
-
-    merge_policy : :obj:`str`, optional
-        Stratégie de fusion de colonnes lorsqu'elles portent le même nom.
-
-        - ``merge``: On fusionne uniquement si les colonnes se complètent par
-          rapport au valeurs NA
-        - ``replace``: Toutes les valeurs non-NA provenant du fichier à agréger
-          sont utilisées.
-        - ``fill_na``: Seules les valeurs NA de la colonne ``effectif.xlsx``
-          sont remplacées
-        - ``keep``: On garde la colonne provenant de ``effectif.xlsx`` sans
-          aucun changement
-        - ``erase``: On écrase la colonne avec la colonne provenant du fichier à
-          agréger
-
-    Examples
-    --------
-
-    - Agrégation des colonnes d'un fichier csv suivant la colonne
-      ``email`` du fichier csv et ``Courriel`` du fichier central :
-
-      .. code:: python
-
-         DOCS.aggregate(
-             "documents/notes.csv",
-             left_on="Courriel",
-             right_on="email"
-         )
-
-    - Agrégation de la colonne ``Note`` d'un fichier csv suivant la
-      colonne ``email`` du fichier csv et ``Courriel`` du fichier
-      central :
-
-      .. code:: python
-
-         DOCS.aggregate(
-             "documents/notes.csv",
-             left_on="Courriel",
-             right_on="email",
-             subset="Note"
-         )
-
-    - Agrégation de la colonne ``Note`` renommée en ``Note_médian``
-      d'un fichier csv suivant la colonne ``email`` du fichier csv et
-      ``Courriel`` du fichier central :
-
-      .. code:: python
-
-         DOCS.aggregate(
-             "documents/notes.csv",
-             left_on="Courriel",
-             right_on="email",
-             subset="Note",
-             rename={"Note": "Note_médian"}
-         )
-
-    - Agrégation de la colonne ``Note`` suivant ``Courriel`` en
-      spécifiant l'en-tête absente du fichier csv :
-
-      .. code:: python
-
-         DOCS.aggregate(
-             "documents/notes.csv",
-             on="Courriel",
-             kw_read={"header": None, "names": ["Courriel", "Note"]},
-         )
-
-    - Agrégation d'un fichier csv de notes suivant les colonnes ``Nom`` et
-      ``Prénom`` en calculant un identifiant (slug) sur ces deux colonnes pour
-      une mise en correspondance plus souple (robuste par rapport aux accents,
-      majuscules, tirets,...) :
-
-      .. code:: python
-
-         from guv.helpers import id_slug
-         DOCS.aggregate(
-             "documents/notes.csv",
-             left_on=id_slug("Nom", "Prénom"),
-             right_on=id_slug("Nom", "Prénom")
-         )
-
-    - Agrégation d'un fichier csv de notes suivant les colonnes ``Nom`` et
-      ``Prénom`` en les concaténant car le fichier à agréger contient seulement
-      une colonne avec ``Nom`` et ``Prénom`` :
-
-      .. code:: python
-
-         from guv.helpers import concat
-         DOCS.aggregate(
-             "documents/notes.csv",
-             left_on=concat("Nom", "Prénom"),
-             right_on="Nom_Prénom"
-         )
-
-    """
+    __doc__ = TaskDocstring()
 
     hash_fields = ["_filename", "left_on", "right_on", "on", "subset", "drop", "rename", "merge_policy", "preprocessing", "postprocessing", "read_method", "kw_read"]
 
@@ -910,7 +423,7 @@ class Aggregate(FileOperation):
 
         if self.on is not None:
             if self.left_on is not None or self.right_on is not None:
-                raise ImproperlyConfigured("On doit spécifier soit `on`, soit `left_on` et `right_on`.")
+                raise ImproperlyConfigured(_("Either `on`, or `left_on` and `right_on` must be specified."))
 
             left_on = self.on
             right_on = copy.copy(self.on) # Duplicate because left_on and right_on must be different
@@ -920,7 +433,7 @@ class Aggregate(FileOperation):
 
         # Warn if only one of left_on right_on is id_slug
         if isinstance(left_on, SlugRotMerger) ^ isinstance(right_on, SlugRotMerger):
-            logger.warning("`left_on` et `right_on` doivent être simultanément issus de `id_slug`")
+            logger.warning(_("`left_on` and `right_on` must both be from `id_slug`"))
 
         agg = Aggregator(
             left_df,
@@ -943,22 +456,7 @@ class Aggregate(FileOperation):
 
 
 class AggregateSelf(Operation):
-    """Agrégation du fichier central ``effectif.xlsx`` lui-même.
-
-    Il est parfois plus pratique d'ajouter soi-même des colonnes dans le fichier
-    central ``effectif.xlsx`` ou d'en modifier d'autres au lieu d'en ajouter
-    programmatiquement via ``DOCS.aggregate(...)`` par exemple. Comme *guv* ne
-    peut pas détecter de façon fiable les colonnes ajoutées ou modifiées, il
-    faut lui indiquer lesquelles via l'argument ``*columns``.
-
-    Parameters
-    ----------
-
-    *columns : any number of :obj:`str`
-        Les colonnes manuellement ajoutées ou modifiées à garder lors de la mise
-        à jour du fichier central.
-
-    """
+    __doc__ = TaskDocstring()
 
     hash_fields = ["columns"]
 
@@ -973,7 +471,7 @@ class AggregateSelf(Operation):
 
         login_col = self.settings.LOGIN_COLUMN
         if login_col in left_df and login_col in right_df:
-            left_on = right_on = "Login"
+            left_on = right_on = login_col
         else:
             names = [self.settings.NAME_COLUMN, self.settings.LASTNAME_COLUMN]
             names_set = set(names)
@@ -981,7 +479,11 @@ class AggregateSelf(Operation):
                 left_on = id_slug(*names)
                 right_on = id_slug(*names)
             else:
-                raise GuvUserError("Une colonne de login ou de Nom/Prénom est requise")
+                raise GuvUserError(_("The `{login_col}` column or the `{lastname_column}` and `{name_column}` columns are required").format(
+                    login_col=login_col,
+                    lastname_column=self.settings.LASTNAME_COLUMN,
+                    name_column=self.settings.NAME_COLUMN,
+                ))
 
         agg = Aggregator(
             left_df,
@@ -997,75 +499,11 @@ class AggregateSelf(Operation):
 
     def message(self):
         msg = ", ".join(f"`{e}`" for e in self.columns)
-        return f"Ajoute les colonnes manuelles : {msg}"
+        return _("Add manual columns: {msg}").format(msg=msg)
 
 
 class AggregateOrg(FileOperation):
-    """Agrégation d'un fichier au format Org.
-
-    Le document à agréger est au format Org. Les titres servent de clé
-    pour l'agrégation et le contenu de ces titres est agrégé.
-
-    Parameters
-    ----------
-
-    filename : :obj:`str`
-        Le chemin du fichier Org à agréger.
-
-    colname : :obj:`str`
-        Nom de la colonne dans lequel stocker les informations
-        présentes dans le fichier Org.
-
-    on : :obj:`str`, optional
-        Colonne du fichier ``effectif.xlsx`` servant de clé pour
-        agréger avec les titres du fichier Org. Par défaut, les titres
-        doivent contenir les nom et prénom des étudiants.
-
-    postprocessing : :obj:`callable`, optional
-        Post-traitement à appliquer au *DataFrame* après intégration
-        du fichier Org.
-
-    Examples
-    --------
-
-    - Agrégation d'un fichier avec les noms des étudiants pour titre :
-
-      Le fichier Org :
-
-      .. code:: text
-
-         * Bob Morane
-           Souvent absent
-         * Untel
-           Voir email d'excuse
-
-      L'instruction d'agrégation :
-
-      .. code:: python
-
-         DOCS.aggregate_org("documents/infos.org", colname="Informations")
-
-    - Agrégation d'un fichier avec pour titres les éléments d'une
-      colonne existante. Par exemple, on peut agréger les notes par
-      groupe de projet prises dans le fichier Org. On spécifie la
-      colonne contenant les groupes de projet "Projet1_Group".
-
-      Le fichier Org :
-
-      .. code:: text
-
-         * Projet1_Group1
-           A
-         * Projet1_Group2
-           B
-
-      L'instruction d'agrégation :
-
-      .. code:: python
-
-         DOCS.aggregate_org("documents/infos.org", colname="Note projet 1", on="Project1_group")
-
-    """
+    __doc__ = TaskDocstring()
 
     hash_fields = ["_filename", "colname", "on", "postprocessing"]
 
@@ -1122,8 +560,8 @@ class AggregateOrg(FileOperation):
 
 
 class FileStringOperation(FileOperation):
-    msg_file = "Agrégation du fichier `{filename}`"
-    msg_string = "Agrégation directe de \"{string}\""
+    msg_file = _("Aggregation of the file `{filename}`")
+    msg_string = _("Direct aggregation of `{string}`")
 
     def __init__(self, filename_or_string):
         super().__init__(filename_or_string)
@@ -1169,45 +607,7 @@ class FileStringOperation(FileOperation):
 
 
 class Flag(FileStringOperation):
-    """Signaler une liste d'étudiants dans une nouvelle colonne.
-
-    Le document à agréger est une liste de noms d'étudiants affichés
-    ligne par ligne.
-
-    Parameters
-    ----------
-
-    filename_or_string : :obj:`str`
-        Le chemin du fichier à agréger ou directement le texte du fichier.
-
-    colname : :obj:`str`
-        Nom de la colonne dans laquelle mettre le drapeau.
-
-    flags : :obj:`str`, optional
-        Les deux drapeaux utilisés, par défaut "Oui" et vide.
-
-    Examples
-    --------
-
-    Agrégation d'un fichier avec les noms des étudiants pour titre :
-
-    Le fichier "tiers_temps.txt" :
-
-    .. code:: text
-
-       # Des commentaires
-       Bob Morane
-
-       # Robuste à la permutation circulaire et à la casse
-       aRcTor BoB
-
-    L'instruction d'agrégation :
-
-    .. code:: python
-
-       DOCS.flag("documents/tiers_temps.txt", colname="Tiers-temps")
-
-    """
+    __doc__ = TaskDocstring()
 
     hash_fields = ["_filename", "colname", "flags"]
 
@@ -1223,7 +623,10 @@ class Flag(FileStringOperation):
 
         names = [self.settings.NAME_COLUMN, self.settings.LASTNAME_COLUMN]
         if not set(names).issubset(df):
-            raise ImproperlyConfigured("Il faut des colonnes de Nom/Prénom")
+            raise ImproperlyConfigured(_("Columns `{name_col}` and `{lastname_col}` are required").format(
+                name_col=self.settings.NAME_COLUMN,
+                lastname_col=self.settings.LASTNAME_COLUMN
+            ))
 
         # Add column that acts as a primary key
         df["fullname_slug"] = slugrot(df, *names)
@@ -1240,9 +643,9 @@ class Flag(FileStringOperation):
 
             res = df.loc[df.fullname_slug == slugname]
             if len(res) == 0:
-                raise GuvUserError('Pas de correspondance pour `{:s}`'.format(line))
+                raise GuvUserError(_("No match for `{:s}`").format(line))
             if len(res) > 1:
-                raise GuvUserError('Plusieurs correspondances pour `{:s}`'.format(line))
+                raise GuvUserError(_("Multiple matches for `{:s}`").format(line))
             df.loc[res.index[0], self.colname] = self.flags[0]
 
         df = df.drop('fullname_slug', axis=1)
@@ -1250,42 +653,10 @@ class Flag(FileStringOperation):
 
 
 class Switch(FileStringOperation):
-    """Réalise des échanges de valeurs dans une colonne.
+    __doc__ = TaskDocstring()
 
-    L'argument ``colname`` est la colonne dans laquelle opérer les
-    échanges. Si l'argument ``backup`` est spécifié, la colonne est
-    sauvegardée avant toute modification (avec un suffixe ``_orig``).
-    Si l'argument ``new_colname`` est fourni la colonne est copiée
-    vers une nouvelle colonne de nom ``new_colname`` et les
-    modifications sont faites sur cette nouvelle colonne.
-
-    Parameters
-    ----------
-
-    filename_or_string : :obj:`str`
-        Le chemin du fichier à agréger ou directement le texte du fichier.
-    colname : :obj:`str`
-        Nom de la colonne où opérer les changements
-    backup : :obj:`bool`
-        Sauvegarder la colonne avant tout changement
-    new_colname : :obj:`str`
-        Le nom de la nouvelle colonne
-
-    Examples
-    --------
-
-    .. code:: python
-
-       DOCS.switch("fichier_échange_TP", colname="TP")
-
-    .. code:: python
-
-       DOCS.switch("Dupont --- Dupond", colname="TP")
-
-    """
-
-    msg_file = "Agrégation du fichier d'échanges `{filename}`"
-    msg_string = "Agrégation directe des échanges \"{string}\""
+    msg_file = _("Aggregation of the exchange file `{filename}`")
+    msg_string = _("Direct aggregation of exchanges `{string}`")
     hash_fields = ["_filename", "colname", "backup", "new_colname"]
 
     def __init__(
@@ -1304,7 +675,7 @@ class Switch(FileStringOperation):
     def apply(self, df):
         if self.backup is True and self.new_colname is not None:
             raise ImproperlyConfigured(
-                "Les arguments `backup` et `new_colname` sont incompatibles."
+                _("The arguments `backup` and `new_colname` are incompatible.")
             )
 
         # Check that column exist
@@ -1363,10 +734,10 @@ def read_pairs(lines):
             parts = [e.strip() for e in line.split("---")]
             stu1, stu2 = parts
             if not stu1 or not stu2:
-                raise GuvUserError(f"Ligne incorrecte: `{line.strip()}`. Format `etu1 --- etu2` attendu.")
+                raise GuvUserError(_("Incorrect line: `{line}`. Expected format `etu1 --- etu2`.").format(line=line.strip()))
             yield stu1, stu2
         except ValueError:
-            raise GuvUserError(f"Ligne incorrecte: `{line.strip()}`. Format `etu1 --- etu2` attendu.")
+            raise GuvUserError(_("Incorrect line: `{line}`. Expected format `etu1 --- etu2`.").format(line=line.strip()))
 
 
 def validate_pair(df, colname, part1, part2, email_column):
@@ -1379,14 +750,14 @@ def validate_pair(df, colname, part1, part2, email_column):
         stu1row = df.loc[df[email_column] == part1]
         if len(stu1row) != 1:
             raise GuvUserError(
-                f"Adresse courriel `{part1}` non présente dans le fichier central"
+                _("Email address `{email}` not present in the central file").format(email=part1)
             )
         stu1idx = stu1row.index[0]
     else:
         stu1row = df.loc[df.fullname_slug == slugrot_string(part1)]
         if len(stu1row) != 1:
             raise GuvUserError(
-                f"Étudiant de nom `{part1}` non présent ou reconnu dans le fichier central"
+                _("Student named `{name}` not present or recognized in the central file").format(name=part1)
             )
         stu1idx = stu1row.index[0]
 
@@ -1398,7 +769,7 @@ def validate_pair(df, colname, part1, part2, email_column):
         stu2row = df.loc[df[email_column] == part2]
         if len(stu2row) != 1:
             raise GuvUserError(
-                f"Adresse courriel `{part2}` non présente dans le fichier central"
+                _("Email address `{email}` not present in the central file").format(email=part2)
             )
         stu2idx = stu2row.index[0]
         return "swap", stu1idx, stu2idx
@@ -1406,7 +777,7 @@ def validate_pair(df, colname, part1, part2, email_column):
         stu2row = df.loc[df.fullname_slug == slugrot_string(part2)]
         if len(stu2row) != 1:
             raise GuvUserError(
-                f"Étudiant ou nom de séance `{part2}` non reconnu dans le fichier central"
+                _("Student named `{name}` not present or recognized in the central file").format(name=part2)
             )
         stu2idx = stu2row.index[0]
         return "swap", stu1idx, stu2idx
@@ -1424,19 +795,19 @@ def swap_column(df, lines, colname, email_column):
         if type == "swap":
             nom1 = desc(df.loc[idx1, :])
             nom2 = desc(df.loc[idx2, :])
-            logger.info("Échange de `%s` et `%s` dans la colonne `%s`", nom1, nom2, colname)
+            logger.info(_("Exchange of `{nom1}` and `{nom2}` in the column `{colname}`").format(nom1=nom1, nom2=nom2, colname=colname))
 
             tmp = new_column[idx1]
             new_column[idx1] = new_column[idx2]
             new_column[idx2] = tmp
         elif type == "move":
             nom = desc(df.loc[idx1, :])
-            logger.info("Étudiant(e) `%s` affecté(e) au groupe `%s`", nom, idx2)
+            logger.info(_("Student `{nom}` assigned to group `{idx}`").format(nom=nom, idx=idx2))
 
             new_column[idx1] = idx2
         elif type == "quit":
             nom = desc(df.loc[idx1, :])
-            logger.info("Abandon étudiant(e) `%s`", nom)
+            logger.info(_("Abandon student `%s`"), nom)
 
             new_column[idx1] = np.nan
 
@@ -1456,21 +827,7 @@ class MoodleFileOperation(FileOperation):
 
 
 class AggregateMoodleGroups(MoodleFileOperation):
-    """Agrège des données de groupes issue de l'activité "Choix de Groupe".
-
-    Le nom de la colonne des groupes étant toujours "Groupe", l'argument
-    ``colname`` permet d'en spécifier un nouveau. Si la colonne existe déjà dans
-    le fichier central, il est possible de la sauvegarder avec l'option
-    ``backup``.
-
-    Examples
-    --------
-
-    .. code:: python
-
-       DOCS.aggregate_moodle_groups("documents/Paper study groups.xlsx", "Paper")
-
-    """
+    __doc__ = TaskDocstring()
 
     hash_fields = ["_filename", "colname", "backup"]
 
@@ -1486,7 +843,7 @@ class AggregateMoodleGroups(MoodleFileOperation):
             suffixes = ("_orig", "")
             merge_policy = "keep"
             if self.colname not in df.columns:
-                logger.warning("Le backup de la colonne `%s` est activé mais elle n'est pas présente dans le fichier central", self.colname)
+                logger.warning(_("The backup of the column `%s` is activated but it is not present in the central file"), self.colname)
         else:
             suffixes = ("_orig", "")
             merge_policy = "erase"
@@ -1517,26 +874,11 @@ class AggregateMoodleGroups(MoodleFileOperation):
         return df_merge
 
     def message(self):
-        return f"Agrégation du fichier de groupes `{rel_to_dir(self.filename, self.settings.CWD)}`"
+        return _("Aggregation of the group file `{filename}`").format(filename=rel_to_dir(self.filename, self.settings.CWD))
 
 
 class AggregateMoodleGrades(MoodleFileOperation):
-    """Agrège des feuilles de notes provenant de Moodle.
-
-    La feuille de notes doit être un export d'une ou plusieurs notes du carnet
-    de notes de Moodle sous la forme d'un fichier Excel ou csv.
-
-    Les colonnes inutiles seront éliminées. Un renommage des colonnes peut être
-    effectué en renseignant ``rename``.
-
-    Examples
-    --------
-
-    .. code:: python
-
-       DOCS.aggregate_moodle_grades("documents/SY02 Notes.xlsx")
-
-    """
+    __doc__ = TaskDocstring()
 
     hash_fields = ["_filename", "rename"]
 
@@ -1589,27 +931,7 @@ class AggregateMoodleGrades(MoodleFileOperation):
 
 
 class AggregateJury(FileOperation):
-    """Agrège le résultat d'un jury provenant de la tâche
-    :class:`~guv.tasks.gradebook.XlsGradeBookJury`.
-
-    L'équivalent avec :func:`~guv.helpers.Documents.aggregate` s'écrit :
-
-    .. code:: python
-
-       DOCS.aggregate(
-           "generated/jury_gradebook.xlsx",
-           on="Courriel",
-           subset=["Note agrégée", "Note ECTS"]
-       )
-
-    Examples
-    --------
-
-    .. code:: python
-
-       DOCS.aggregate_jury("generated/jury_gradebook.xlsx")
-
-    """
+    __doc__ = TaskDocstring()
 
     def __init__(self, filename: str):
         super().__init__(filename)
@@ -1617,8 +939,8 @@ class AggregateJury(FileOperation):
     def apply(self, df):
         op = Aggregate(
             self.filename,
-            on="Courriel",
-            subset=["Note agrégée", "Note ECTS"]
+            on=self.settings.EMAIL_COLUMN,
+            subset=[_("Aggregated grade"), _("ECTS grade")]
         )
         return op.apply(df)
 

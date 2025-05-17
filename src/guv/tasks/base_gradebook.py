@@ -1,6 +1,5 @@
 import shlex
 import sys
-import textwrap
 
 import openpyxl
 import pandas as pd
@@ -9,6 +8,7 @@ from ..logger import logger
 from ..openpyxl_patched import fixit
 from ..utils import normalize_string
 from ..utils_config import Output, rel_to_dir
+from ..translations import _, _file
 from .base import CliArgsInheritMixin, UVTask
 from .internal import XlsStudentData
 
@@ -97,23 +97,12 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
         else:
             columns = f'"{self.agg_colname}"'
 
-        return textwrap.dedent("""\
-
-        Pour agréger les notes au fichier central `effectif.xlsx`, ajouter :
-
-        # Créé avec la commande : {command_line}
-        DOCS.aggregate(
-            "{filename}",
-            on="Courriel",
-            subset={columns}
+        return _file("XlsGradeBook_message").format(
+            filename=rel_to_dir(target, self.settings.UV_DIR),
+            columns=columns,
+            email=self.settings.EMAIL_COLUMN,
+            command_line="guv " + " ".join(map(shlex.quote, sys.argv[1:]))
         )
-
-        dans le fichier `config.py` de l'UV/UE.
-        """.format(**{
-            "filename": rel_to_dir(target, self.settings.UV_DIR),
-            "columns": columns,
-            "command_line": "guv " + " ".join(map(shlex.quote, sys.argv[1:]))
-        }))
 
     def get_sorted_columns(self):
         """Return list of columns sorted by priority."""
@@ -191,7 +180,7 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
                 if type in ["grade", "cell"]:
                     self.first_df[name] = cells
                 elif type in ["hide", "raw"]:
-                    logger.warning("La colonne `%s` n'existe pas dans le fichier central, elle sera vide dans le fichier créé", name)
+                    logger.warning(_("The column `%s` does not exist in the central file, it will be empty in the created file"), name)
                     self.first_df[name] = pd.Series(dtype=str)
                 else:
                     raise ValueError("Unknown type of column ", type)

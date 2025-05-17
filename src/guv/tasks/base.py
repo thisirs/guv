@@ -14,6 +14,7 @@ from ..config import Settings, settings
 from ..exceptions import (DependentTaskParserError, ImproperlyConfigured,
                           NotUVDirectory, CommonColumns, MissingColumns)
 from ..logger import logger
+from ..translations import _
 from ..utils import pformat, check_if_absent, check_if_present
 from ..utils_ask import prompt_number
 from ..utils_config import get_unique_uv, selected_uv, configured_uv, rel_to_dir
@@ -119,7 +120,7 @@ class TaskBase:
                 except Exception as e:
                     if settings.DEBUG <= logging.DEBUG:
                         raise e from e
-                    return TaskFailed(f"La tâche `{self.task_name()}` a échoué : {str(e)}")
+                    return TaskFailed(_("The task `{task_name}` failed: {e}").format(task_name=self.task_name(), e=str(e)))
 
             doit_task["actions"] = [action]
 
@@ -209,7 +210,7 @@ class SemesterTask(TaskBase):
         # La tâche n'est pas liée à une UV. On vérifie qu'on
         # est dans un dossier d'UV ou de semestre.
         if "SEMESTER_DIR" not in settings:
-            raise NotUVDirectory("Pas dans un dossier d'UV/semestre")
+            raise NotUVDirectory(_("Not in a UV/semester folder"))
         instance = cls()
         return instance.to_doit_task()
 
@@ -329,7 +330,7 @@ class UVTask(TaskBase):
             ]
 
             if not tasks:
-                raise ImproperlyConfigured("Aucune UV/UE renseignée dans la variables `UVS`")
+                raise ImproperlyConfigured(_("No UV/UE specified in the `UVS` variable"))
 
             return (t for t in tasks)
 
@@ -401,14 +402,14 @@ class CliArgsInheritMixin(CliArgsMixin):
         self._parser = argparse.ArgumentParser()
         if self.name_required:
             self.add_argument(
-                "--name", required=True, help="Nom de la feuille de notes"
+                "--name", required=True, help=_("Name of the grade sheet")
             )
         else:
             self.add_argument(
                 "--name",
                 required=False,
                 default=self.name_default,
-                help="Nom de la feuille de notes",
+                help=_("Name of the grade sheet"),
             )
 
     def add_argument(self, *args, **kwargs):
@@ -429,7 +430,7 @@ class ConfigOpt(CliArgsInheritMixin):
     """Add a config option"""
 
     config_argname = "--config"
-    config_help = "Fichier de configuration"
+    config_help = _("Configuration file")
     config_required = True
 
     def add_arguments(self):
@@ -475,7 +476,7 @@ class ConfigOpt(CliArgsInheritMixin):
 
     def parse_config(self, config_file):
         if not os.path.exists(config_file):
-            raise FileNotFoundError(f"{self.config_help} `{config_file}` non trouvé")
+            raise FileNotFoundError(_("{config_help} `{config_file}` not found").format(config_help=self.config_help, config_file=config_file))
 
         with open(config_file, "r") as stream:
             config = list(yaml.load_all(stream, Loader=yaml.SafeLoader))[0]
@@ -487,10 +488,10 @@ class MultipleConfigOpt(CliArgsInheritMixin):
     """Add a config option"""
 
     config_argname = "--config"
-    config_help = "Fichiers de configuration"
+    config_help = _("Configuration files")
     config_required = True
-    config_number = "Combien de fichiers de configuration ?"
-    config_num = "Fichier de configuration {i}"
+    config_number = _("How many configuration files?")
+    config_num = _("Configuration file {i}")
 
     def add_arguments(self):
         super().add_arguments()
@@ -527,7 +528,7 @@ class MultipleConfigOpt(CliArgsInheritMixin):
 
         for config_file in config_files:
             if not os.path.exists(config_file):
-                raise FileNotFoundError(f"{self.config_help} `{config_file}` non trouvé")
+                raise FileNotFoundError(_("{config_help} `{config_file}` not found").format(config_help=self.config_help, config_file=config_file))
 
             configs = []
             with open(config_file, "r") as stream:

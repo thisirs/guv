@@ -1,0 +1,7 @@
+Pour agréger les notes au fichier central `effectif.xlsx`, ajouter :
+
+DOCS.aggregate_jury("{filename}")
+
+dans le fichier `config.py` de l'UV/UE. Pour ensuite pouvoir charger les notes ECTS sur l'ENT :
+
+guv csv_for_upload -g "Note ECTS" --ects

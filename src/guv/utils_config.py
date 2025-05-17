@@ -8,6 +8,7 @@ from .config import settings
 from .exceptions import (AbortWithBody, GuvUserError, ImproperlyConfigured,
                          NotUVDirectory)
 from .logger import logger
+from .translations import _
 from .utils import render_latex_template, compile_latex_file, rel_to_dir_aux
 
 
@@ -26,7 +27,7 @@ def check_filename(filename, errors="raise", **kwargs):
         return True
 
     fn = rel_to_dir(filename, kwargs["base_dir"])
-    msg = f"Le fichier `{fn}` n'existe pas"
+    msg = _("The file `{fn}` does not exist").format(fn=fn)
 
     if errors == "raise":
         raise ImproperlyConfigured(msg)
@@ -43,7 +44,7 @@ def configured_uv(uvs):
     uv2plannings = defaultdict(list)
     for plng, props in settings.PLANNINGS.items():
         if "UVS" not in props and "UES" not in props:
-            raise ImproperlyConfigured(f"Le planning `{plng}` n'a pas de clé `UVS` ou `UES`.")
+            raise ImproperlyConfigured(_("The planning `{plng}` does not have a key `UVS` or `UES`.").format(plng=plng))
         for uv in props.get("UVS", []) + props.get("UES", []):
             uv2plannings[uv].append(plng)
 
@@ -51,21 +52,21 @@ def configured_uv(uvs):
         # Check that all uv are in UVS
         if uv not in settings.UVS:
             raise NotUVDirectory(
-                f"L'UV `{uv}` n'est pas reconnue car elle n'est pas enregistrée dans la variable `UVS`."
+                _("The UV `{uv}` is not recognized because it is not registered in the `UVS` variable.").format(uv=uv)
             )
 
         # Check that UV directory exists
         if not os.path.exists(os.path.join(settings.SEMESTER_DIR, uv)):
             raise ImproperlyConfigured(
-                f"Le dossier pour l'UV {uv} n'existe pas."
+                _("The folder for the UV {uv} does not exist.").format(uv=uv)
             )
 
         if uv not in uv2plannings:
-            raise ImproperlyConfigured(f"L'UV `{uv}` n'a pas de planning associé dans `PLANNINGS`")
+            raise ImproperlyConfigured(_("The UV `{uv}` does not have an associated planning in `PLANNINGS`").format(uv=uv))
 
         plannings = uv2plannings[uv]
         if len(plannings) > 1:
-            raise ImproperlyConfigured(f"L'UV `{uv}` a plusieurs plannings associés dans `PLANNINGS`")
+            raise ImproperlyConfigured(_("The UV `{uv}` has multiple associated plannings in `PLANNINGS`").format(uv=uv))
 
         yield [plannings[0], uv, {"uv": uv, "planning": plannings[0]}]
 
@@ -74,7 +75,7 @@ def selected_uv():
     """Génère les UV configurées dans le fichier config.py du semestre suivant le dossier courant."""
 
     if "SEMESTER" not in settings:
-        raise NotUVDirectory("La tâche doit être exécutée dans un dossier d'UV/semestre")
+        raise NotUVDirectory(_("The task must be executed in a UV/semester folder"))
 
     if settings.UV_DIR is not None:
         yield get_unique_uv()
@@ -88,7 +89,7 @@ def get_unique_uv():
     """Return only one UV if in UV directory."""
 
     if "UV_DIR" not in settings or settings.UV_DIR is None:
-        raise NotUVDirectory("La tâche doit être exécutée dans un dossier d'UV")
+        raise NotUVDirectory(_("The task must be executed in a UV folder"))
 
     uv = os.path.basename(settings.UV_DIR)
     conf_uvs = configured_uv([uv])
@@ -120,13 +121,12 @@ class Output:
         if os.path.exists(self._target):
             if self.protected:
                 self.action = ask_choice(
-                    f"Le fichier `{rel_to_dir(self._target, settings.SEMESTER_DIR)}` existe déjà. "
-                    "Écraser (d), garder (g), sauvegarder (s), annuler (a) ? ",
+                    _("The file `{fn}` already exists. ").format(fn=rel_to_dir(self._target, settings.SEMESTER_DIR)) + _("Overwrite (d), keep (g), save (s), cancel (a)? "),
                     choices={
-                        "d": "overwrite",
-                        "g": "keep",
-                        "s": "backup",
-                        "a": "abort",
+                        _("d"): "overwrite",
+                        _("g"): "keep",
+                        _("s"): "backup",
+                        _("a"): "abort",
                     },
                 )
             else:
@@ -138,7 +138,7 @@ class Output:
 
     def _prepare(self):
         if self.action == "abort":
-            raise GuvUserError("Annulation")
+            raise GuvUserError(_("Cancellation"))
         if self.action == "keep":
             raise AbortWithBody
         if self.action == "backup":
@@ -146,14 +146,14 @@ class Output:
             timestr = time.strftime("_%Y%m%d-%H%M%S")
             target0 = parts[0] + timestr + parts[1]
             os.rename(self._target, target0)
-            logger.info("Sauvegarde vers `%s`", rel_to_dir(target0))
+            logger.info(_("Backup to `%s`"), rel_to_dir(target0))
         elif self.action == "overwrite":
-            logger.info("Écrasement du fichier `%s`", rel_to_dir(self._target))
+            logger.info(_("Overwriting the file `%s`"), rel_to_dir(self._target))
         elif self.action == "write":
             dirname = os.path.dirname(self._target)
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
-            logger.info("Écriture du fichier `%s`", rel_to_dir(self._target))
+            logger.info(_("Writing the file `%s`"), rel_to_dir(self._target))
 
     @property
     def target(self):
@@ -169,7 +169,7 @@ class Output:
             return False
 
 
-def render_from_contexts(tmpl_dir, template, contexts, save_tex=False, target=None):
+def render_from_contexts(template, contexts, save_tex=False, target=None):
     """Render `template` with different `contexts` and save using `target`.
 
     Rendered in a temporary directory by `render_latex_template`.
@@ -182,16 +182,16 @@ def render_from_contexts(tmpl_dir, template, contexts, save_tex=False, target=No
     texs = []
     for context in contexts:
         try:
-            tex_filepath = render_latex_template(tmpl_dir, template, context)
+            tex_filepath = render_latex_template(template, context)
             texs.append(tex_filepath)
         except Exception as e:
-            raise GuvUserError("Erreur dans la création du fichier .tex :", str(e))
+            raise GuvUserError(_("Error in creating the .tex file:"), str(e))
 
         try:
             pdf_filepath = compile_latex_file(tex_filepath)
             pdfs.append(pdf_filepath)
         except Exception as e:
-            raise GuvUserError("Erreur dans la création du fichier .tex :", str(e))
+            raise GuvUserError(_("Error in creating the .tex file:"), str(e))
 
     # Écriture du pdf dans un zip si plusieurs
     if len(pdfs) == 1:

@@ -44,14 +44,15 @@ doc = [
     "sphinx",
     "furo",
     "schema",
-    "myst_parser"
+    "myst_parser",
+    "pydata-sphinx-theme"
 ]
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-guv = ["schemas/*", "data/*", "images/*", "data/templates/*"]
+guv = ["schemas/*", "data/*", "images/*", "data/templates/*", "locale/*/LC_MESSAGES/*.mo"]
 
 [tool.setuptools.dynamic]
 version = {attr = "guv.__version__"}

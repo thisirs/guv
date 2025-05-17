@@ -13,6 +13,7 @@ import unidecode
 
 from .exceptions import CommonColumns, MissingColumns
 from .logger import logger
+from .translations import _, ngettext, get_localized_template_directories
 
 
 def argument(*args, **kwargs):
@@ -176,6 +177,7 @@ class LaTeXEnvironment(jinja2.Environment):
     def __init__(self, tmpl_dir):
         super().__init__(
             loader=jinja2.FileSystemLoader(tmpl_dir),
+            extensions=['jinja2.ext.i18n'],
             block_start_string="((*",
             block_end_string="*))",
             variable_start_string="(((",
@@ -183,10 +185,23 @@ class LaTeXEnvironment(jinja2.Environment):
             comment_start_string="((=",
             comment_end_string="=))",
         )
+        self.install_gettext_callables(gettext=_, ngettext=ngettext)
         self.filters["escape_tex"] = escape_tex
 
 
-def render_latex_template(tmpl_dir, template, context):
+def get_latex_template(template):
+    dirs = get_localized_template_directories()
+    latex_env = LaTeXEnvironment(dirs)
+    return latex_env.get_template(template)
+
+
+def get_template(template):
+    dirs = get_localized_template_directories()
+    env = jinja2.Environment(dirs)
+    return env.get_template(template)
+
+
+def render_latex_template(template, context):
     """Render template with context.
 
     Dictionary `context` must contain `filename_no_ext`. Return path
@@ -194,10 +209,7 @@ def render_latex_template(tmpl_dir, template, context):
 
     """
 
-    latex_env = LaTeXEnvironment(tmpl_dir)
-    tmpl = latex_env.get_template(template)
-
-    tex = tmpl.render(**context)
+    tex = template.render(**context)
     temp_dir = tempfile.mkdtemp()
     filename_no_ext = context["filename_no_ext"]
 
@@ -224,13 +236,13 @@ def normalize_string(name, type="excel"):
     elif type == "file":
         name = re.sub(r"(?u)[^-\w. ]", "", name)
         if name in {"", ".", ".."}:
-            raise ValueError(f"L'identifiant `{name}` ne permet pas d'avoir un nom de fichier valide")
+            raise ValueError(_("The identifier `{name}` does not allow for a valid filename").format(name=name))
         return name
     elif type == "file_no_space":
         name = re.sub(r"(?u)[^-_\w. ]", "", name)
         name = name.replace(" ", "_")
         if name in {"", ".", ".."}:
-            raise ValueError(f"L'identifiant `{name}` ne permet pas d'avoir un nom de fichier valide")
+            raise ValueError(_("The identifier `{name}` does not allow for a valid filename").format(name=name))
         return name
     else:
         return TypeError("Unknown type", type)
@@ -246,7 +258,7 @@ def read_dataframe(filename, read_method=None, kw_read=None):
         elif filename.endswith('.xlsx') or filename.endswith('.xls'):
             df = pd.read_excel(filename, engine="openpyxl", **kw_read)
         else:
-            raise ValueError("Fichier Excel ou csv seulement")
+            raise ValueError(_("Excel or CSV file only"))
     else:
         df = read_method(filename, **kw_read)
 

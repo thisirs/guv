@@ -11,7 +11,7 @@ from doit.cmd_base import NamespaceTaskLoader
 from doit.doit_cmd import DoitMain
 
 from . import tasks
-from .handlers import CreateSemesterHandler, CreateUvHandler
+from .handlers import get_handlers
 from .config import settings
 from .logger import logger
 from .parser import get_parser
@@ -42,23 +42,6 @@ def get_task_loader():
     task_loader.namespace.update(dict(plugin_tasks))
 
     return task_loader
-
-
-def get_handlers():
-    plugin_handlers = []
-    for entry_point in importlib.metadata.entry_points(group="guv_handlers"):
-        name = entry_point.name
-        func = entry_point.load()
-        plugin_handlers.append((name, func))
-
-    logger.debug("%s handlers loaded from plugins", len(plugin_handlers))
-
-    core_handlers = {
-        "createsemester": CreateSemesterHandler,
-        "createuv": CreateUvHandler
-    }
-    core_handlers.update(plugin_handlers)
-    return core_handlers
 
 
 def print_completer(shell="zsh"):

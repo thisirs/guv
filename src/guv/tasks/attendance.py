@@ -1,55 +1,17 @@
-"""
-Ce module rassemble les tâches liées à la création de fiches de
-présence.
-"""
-
-import os
-import guv
-
 from ..exceptions import GuvUserError
-from ..utils import (LaTeXEnvironment, argument, generate_groupby, make_groups,
-                     normalize_string, pformat, sort_values)
+from ..translations import _, TaskDocstring
+from ..utils import (argument, generate_groupby, make_groups,
+                     normalize_string, pformat, sort_values, get_latex_template)
 from ..utils_config import render_from_contexts
 from .base import CliArgsMixin, UVTask
 from .internal import XlsStudentData
 
 
+__all__ = ["PdfAttendance", "PdfAttendanceFull"]
+
+
 class PdfAttendance(UVTask, CliArgsMixin):
-    """Fichier pdf de feuilles de présence.
-
-    Cette tâche génère un fichier pdf ou un fichier zip de fichiers
-    pdf contenant des feuilles de présence.
-
-    {options}
-
-    Examples
-    --------
-
-    - Feuille de présence nominative :
-
-      .. code:: bash
-
-         guv pdf_attendance --title "Examen"
-
-    - Feuilles de présence nominative par groupe de TP :
-
-      .. code:: bash
-
-         guv pdf_attendance --title "Examen de TP" --group TP
-
-    - Feuilles de présence sans les noms par groupe de TP :
-
-      .. code:: bash
-
-         guv pdf_attendance --title "Examen de TP" --group TP --blank
-
-    - Feuilles de présence nominative découpées pour trois salles :
-
-      .. code:: bash
-
-         guv pdf_attendance --title "Examen de TP" --count 24 24 24 --name \"Salle 1\" \"Salle 2\" \"Salle 3\"
-
-    """
+    __doc__ = TaskDocstring()
 
     uptodate = False
     target_dir = "generated"
@@ -60,53 +22,53 @@ class PdfAttendance(UVTask, CliArgsMixin):
         argument(
             "-t",
             "--title",
-            default="Feuille de présence",
-            help="Spécifie un titre qui sera utilisé dans les feuilles de présence et le nom du fichier généré. Par défaut, on a ``%(default)s``."
+            default=_("Attendance sheet"),
+            help=_("Specifies a title that will be used in the attendance sheets and the name of the generated file. By default, it is ``%(default)s``.")
         ),
         argument(
             "-g",
             "--group",
-            help="Permet de créer des groupes pour faire autant de feuilles de présence. Il faut spécifier une colonne du fichier central ``effectif.xlsx``.",
+            help=_("Allows creating groups to make as many attendance sheets. You must specify a column from the central file ``effectif.xlsx``."),
         ),
         argument(
             "-b",
             "--blank",
             action="store_true",
             default=False,
-            help="Ne pas faire apparaître le nom des étudiants (utile seulement avec --group)."
+            help=_("Do not display the names of the students (useful only with --group).")
         ),
         argument(
             "-c",
             "--count",
             type=int,
             nargs="*",
-            help="Utilise une liste d'effectifs au lieu de ``--group``. Le nom des groupes peut être spécifié par ``--names``. Sinon, les noms de groupe sont de la forme ``Groupe 1``, ``Groupe 2``,..."
+            help=_("Uses a list of staff instead of ``--group``. The group names can be specified by ``--names``. Otherwise, the group names are in the form ``Group 1``, ``Group 2``,...")
         ),
         argument(
             "-n",
             "--names",
             nargs="*",
-            help="Spécifie le nom des groupes correspondants à ``--count``. La liste doit être de même taille que ``--count``."
+            help=_("Specifies the names of the groups corresponding to ``--count``. The list must be the same size as ``--count``.")
         ),
         argument(
             "-e",
             "--extra",
             type=int,
             default=0,
-            help="Permet de rajouter des lignes supplémentaires vides en plus de celles déjà présentes induites par ``--group`` ou fixées par ``--count``."
+            help=_("Allows adding additional empty lines in addition to those already present induced by ``--group`` or set by ``--count``.")
         ),
         argument(
             "--tiers-temps",
             nargs="?",
-            const="Tiers-temps",
+            const=_("Extra time"),
             default=None,
-            help="Spécifie la colonne pour les étudiants placés dans une salle dédiée. Si colonne non spécifiée, ``%(default)s``."
+            help=_("Specifies the column for students placed in a dedicated room. If the column is not specified, ``%(default)s``.")
         ),
         argument(
             "--save-tex",
             action="store_true",
             default=False,
-            help="Permet de laisser les fichiers .tex générés pour modification éventuelle."
+            help=_("Allows leaving the generated .tex files for possible modification.")
         )
     )
 
@@ -120,15 +82,12 @@ class PdfAttendance(UVTask, CliArgsMixin):
             group=normalize_string(self.group, type="file_no_space") if self.group else "all",
             title=normalize_string(self.title, type="file_no_space")
         )
-        tmpl_dir = os.path.join(guv.__path__[0], "data", "templates")
-        latex_env = LaTeXEnvironment(tmpl_dir)
-        self.template = latex_env.get_template(self.template_file)
 
     def generate_contexts(self):
         "Generate contexts to pass to Jinja2 templates."
 
         if self.group and self.count:
-            self.parser.error("Les options --group et --count sont incompatibles")
+            self.parser.error(_("The options --group and --count are incompatible"))
 
         # Common context
         context = {
@@ -140,9 +99,9 @@ class PdfAttendance(UVTask, CliArgsMixin):
         if self.count:
             if self.names:
                 if len(self.count) != len(self.names):
-                    self.parser.error("Les options --count et --names doivent être de même longueur")
+                    self.parser.error(_("The options --count and --names must be of the same length"))
             else:
-                self.names = [f"Groupe_{i+1}" for i in range(len(self.count))]
+                self.names = [_("Group_{i}").format(i=i+1) for i in range(len(self.count))]
 
             if self.blank:
                 context["blank"] = True
@@ -165,18 +124,18 @@ class PdfAttendance(UVTask, CliArgsMixin):
                         df, self.tiers_temps, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
                     )
                     if not df[self.tiers_temps].isin(["Oui", "Non"]).all():
-                        raise GuvUserError(f"La colonne `{self.tiers_temps}` doit contenir uniquement Oui/Non")
+                        raise GuvUserError(_("The column `{self.tiers_temps}` must contain only Yes/No").format(tiers_temps=self.tiers_temps))
 
                     df_tt = df[df[self.tiers_temps] == "Oui"]
                     df = df[df[self.tiers_temps] != "Oui"]
-                    context["group"] = "Salle dédiée"
-                    context["filename_no_ext"] = "Tiers_temps"
+                    context["group"] = _("Dedicated room")
+                    context["filename_no_ext"] = _("Extra_time")
                     students = [{"name": f'{row[self.settings.LASTNAME_COLUMN]} {row[self.settings.NAME_COLUMN]}'} for _, row in df_tt.iterrows()]
                     context["students"] = students
                     yield context
 
                 if sum(self.count) < len(df.index):
-                    raise GuvUserError("Les effectifs cumulés ne suffisent pas")
+                    raise GuvUserError(_("The cumulative numbers are not sufficient"))
 
                 groups = make_groups(df.index, self.count)
                 for name, idxs in zip(self.names, groups):
@@ -201,15 +160,15 @@ class PdfAttendance(UVTask, CliArgsMixin):
                     df, self.tiers_temps, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
                 )
                 if not df[self.tiers_temps].isin(["Oui", "Non"]).all():
-                    raise GuvUserError(f"La colonne `{self.tiers_temps}` doit contenir uniquement Oui/Non")
+                    raise GuvUserError(_("The column `{tiers_temps}` must contain only Yes/No").format(tiers_temps=self.tiers_temps))
 
                 df_tt = df[df[self.tiers_temps] == "Oui"]
                 df = df[df[self.tiers_temps] != "Oui"]
 
-                context["group"] = "Salle dédiée"
+                context["group"] = _("Dedicated room")
                 context["blank"] = self.blank
                 context["num"] = len(df_tt)
-                context["filename_no_ext"] = "Tiers_temps"
+                context["filename_no_ext"] = _("Extra_time")
                 students = [{"name": f'{row[self.settings.LASTNAME_COLUMN]} {row[self.settings.NAME_COLUMN]}'} for _, row in df_tt.iterrows()]
                 context["students"] = students
                 yield context
@@ -222,7 +181,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
             groups = list(generate_groupby(df, self.group, ascending=True))
 
             if self.names and len(groups) != len(self.names):
-                raise GuvUserError("Le nombres de noms spécifiés avec --names est différent du nombre de groupes")
+                raise GuvUserError(_("The number of names specified with --names is different from the number of groups"))
 
             for i, (gn, group) in enumerate(groups):
                 # Override group name if self.names
@@ -240,28 +199,14 @@ class PdfAttendance(UVTask, CliArgsMixin):
     def run(self):
         contexts = self.generate_contexts()
 
-        tmpl_dir = os.path.join(guv.__path__[0], "data", "templates")
+        template = get_latex_template(self.template_file)
         render_from_contexts(
-            tmpl_dir, self.template, contexts, save_tex=self.save_tex, target=self.target
+            template, contexts, save_tex=self.save_tex, target=self.target
         )
 
 
 class PdfAttendanceFull(UVTask, CliArgsMixin):
-    """Fichier zip de feuilles de présence nominatives par groupe et par semestre.
-
-    Permet d'avoir un seule feuille de présence pour tout le semestre.
-
-    {options}
-
-    Examples
-    --------
-
-    .. code:: bash
-
-       guv pdf_attendance_full -n 7
-       guv pdf_attendance_full --group TP --template "Séance {number}"
-
-    """
+    __doc__ = TaskDocstring()
 
     target_dir = "generated"
     target_name = "{title}_{group}_full"
@@ -270,32 +215,32 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
     cli_args = (
         argument(
             "--title",
-            default="Feuille de présence",
-            help="Spécifie un titre qui sera utilisé dans les feuilles de présence et le nom du fichier généré. Par défaut, on a ``%(default)s``."
+            default=_("Attendance sheet"),
+            help=_("Specifies a title that will be used in the attendance sheets and the name of the generated file. By default, it is ``%(default)s``.")
         ),
         argument(
             "-g",
             "--group",
-            help="Permet de spécifier une colonne de groupes pour faire des feuilles de présence par groupes.",
+            help=_("Allows specifying a group column to make attendance sheets by groups."),
         ),
         argument(
             "-n",
             "--slots",
             required=True,
             type=int,
-            help="Permet de spécifier le nombre de séances pour le semestre c'est à dire le nombre de colonne dans la feuille de présence.",
+            help=_("Allows specifying the number of sessions for the semester, i.e., the number of columns in the attendance sheet."),
         ),
         argument(
             "-t",
             "--template",
             default="S{number}",
-            help="Modèle permettant de fixer le nom des séances successives dans la feuille de présence. Par défaut on a ``%(default)s``. Le seul mot-clé supporté est ``number`` qui commence à 1.",
+            help=_("Template to set the name of successive sessions in the attendance sheet. By default, it is ``%(default)s``. The only supported keyword is ``number`` which starts at 1."),
         ),
         argument(
             "--save-tex",
             action="store_true",
             default=False,
-            help="Permet de laisser les fichiers .tex générés pour modification éventuelle."
+            help=_("Allows leaving the generated .tex files for possible modification.")
         )
     )
 
@@ -318,9 +263,9 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
 
         contexts = self.generate_contexts(df)
 
-        tmpl_dir = os.path.join(guv.__path__[0], "data", "templates")
+        template = get_latex_template(self.template_file)
         render_from_contexts(
-            tmpl_dir, self.template_file, contexts, save_tex=self.save_tex, target=self.target
+            template, contexts, save_tex=self.save_tex, target=self.target
         )
 
     def generate_contexts(self, df):

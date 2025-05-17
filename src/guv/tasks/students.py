@@ -1,8 +1,3 @@
-"""
-Ce module rassemble les tâches de création d'un fichier Excel central
-sur l'effectif d'une UV.
-"""
-
 import getpass
 import os
 import smtplib
@@ -17,21 +12,25 @@ fixit(openpyxl)
 
 from ..exceptions import GuvUserError
 from ..logger import logger
+from ..translations import _, TaskDocstring
 from ..utils import argument, normalize_string
 from ..utils_config import Output, ask_choice
 from .base import CliArgsMixin, UVTask
 from .internal import XlsStudentData
 
 
+__all__ = ["SendEmail", "ZoomBreakoutRooms"]
+
+
 class ZoomBreakoutRooms(UVTask, CliArgsMixin):
-    """Crée un fichier csv prêt à charger sur Zoom pour faire des groupes"""
+    __doc__ = TaskDocstring()
 
     target_dir = "generated"
     target_name = "zoom_breakout_rooms_{group}.csv"
     cli_args = (
         argument(
             "group",
-            help="Le nom de la colonne des groupes",
+            help=_("The name of the group column"),
         ),
     )
 
@@ -48,9 +47,10 @@ class ZoomBreakoutRooms(UVTask, CliArgsMixin):
             df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
         )
 
+        email_column = self.settings.EMAIL_COLUMN
         df_group = pd.DataFrame({
             "Pre-assign Room Name": df[self.group],
-            "Email Address": df["Courriel"]
+            "Email Address": df[email_column]
         })
         df_group = df_group.sort_values("Pre-assign Room Name")
         with Output(self.target, protected=True) as out:
@@ -58,49 +58,13 @@ class ZoomBreakoutRooms(UVTask, CliArgsMixin):
 
 
 class SendEmail(UVTask, CliArgsMixin):
-    """Envoie de courriel à chaque étudiant.
-
-    Le seul argument à fournir est un chemin vers un fichier servant
-    de modèle pour les courriels. Si le fichier n'existe pas, un
-    modèle par défaut est créé. Le modèle est au format Jinja2 et les
-    variables de remplacement disponibles pour chaque étudiant sont
-    les noms de colonnes dans le fichier ``effectif.xlsx``. Pour
-    permettre l'envoi des courriels, il faut renseigner les variables
-    ``LOGIN`` (login de connexion au serveur SMTP), ``FROM_EMAIL``
-    l'adresse courriel d'envoi dans le fichier ``config.py``. Les
-    variables ``SMTP_SERVER`` et ``PORT`` (par défaut smtps.utc.fr et
-    587).
-
-    {options}
-
-    Exemples
-    --------
-
-    .. code:: bash
-
-       guv send_email documents/email_body
-
-    avec ``documents/email_body`` qui contient :
-
-    .. code:: text
-
-       Subject: Note
-
-       Bonjour {{ Prénom }},
-
-       Vous faites partie du groupe {{ group_projet }}.
-
-       Cordialement,
-
-       guv
-
-    """
+    __doc__ = TaskDocstring()
 
     uptodate = False
     cli_args = (
         argument(
             "template",
-            help="Le chemin vers un modèle au format Jinja2",
+            help=_("The path to a Jinja2 template"),
         ),
     )
 
@@ -118,40 +82,41 @@ class SendEmail(UVTask, CliArgsMixin):
 
     def create_template(self):
         result = ask_choice(
-            f"Le fichier {self.template} n'existe pas. Créer ? (y/n) ",
+            _("The file {template} does not exist. Create? (y/n) ").format(template=self.template),
             {"y": True, "n": False},
         )
         if result:
             with open(self.template, "w") as file_:
-                file_.write("Subject: le sujet\n\nle corps")
+                file_.write(_("Subject: subject\n\nbody"))
 
     def send_emails(self):
         df = XlsStudentData.read_target(self.xls_merge)
 
         with open(self.template, "r") as file_:
             if not file_.readline().startswith("Subject:"):
-                raise GuvUserError("Le message doit commencer par \"Subject:\"")
+                raise GuvUserError(_("Message must start with \"Subject:\""))
 
-        jinja_env = jinja2.Environment(
-            loader=jinja2.FileSystemLoader("./"), undefined=jinja2.StrictUndefined
-        )
+        jinja_env = jinja2.Environment(loader=jinja2.BaseLoader(), undefined=jinja2.StrictUndefined)
+        with open(self.template) as f:
+            template_str = f.read()
+        message_tmpl = jinja_env.from_string(template_str)
         message_tmpl = jinja_env.get_template(self.template)
 
         try:
             email_and_message = [
-                (row["Courriel"], message_tmpl.render(row.to_dict()))
+                (row[self.settings["EMAIL_COLUMN"]], message_tmpl.render(row.to_dict()))
                 for index, row in df.iterrows()
             ]
         except jinja2.exceptions.UndefinedError as e:
             raise e
 
         if len(email_and_message) == 0:
-            raise GuvUserError("Pas de message à envoyer")
+            raise GuvUserError(_("No message to send"))
 
         email, message = email_and_message[0]
-        logger.info("Premier message à %s : \n%s", email, message)
+        logger.info(_("First message to {email}: \n{message}").format(email=email, message=message))
         result = ask_choice(
-            f"Envoyer les {len(email_and_message)} courriels ? (y/n) ",
+            _("Send the {n} emails? (y/n) ").format(n=len(email_and_message)),
             {"y": True, "n": False},
         )
 
@@ -163,7 +128,7 @@ class SendEmail(UVTask, CliArgsMixin):
             ) as smtp:
                 smtp.starttls()
 
-                password = getpass.getpass("Mot de passe : ")
+                password = getpass.getpass(_("Password: "))
                 smtp.login(self.settings.LOGIN, password)
                 for email, message in email_and_message:
                     smtp.sendmail(from_addr=from_email, to_addrs=email, msg=message)

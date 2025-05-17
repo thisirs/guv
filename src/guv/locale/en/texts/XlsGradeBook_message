@@ -1,0 +1,10 @@
+To aggregate grades into the central file `effectif.xlsx`, add:
+
+# Created with the command: {command_line}
+DOCS.aggregate(
+    "{filename}",
+    on="{email}",
+    subset={columns}
+)
+
+to the `config.py` file of the UV/UE.

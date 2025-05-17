@@ -5,36 +5,17 @@
 
 _shtab_guv_commands() {
   local _commands=(
-    "cal_inst:Calendrier hebdomadaire par intervenant."
-    "cal_uv:Calendrier PDF de la semaine par UV."
-    "createsemester:Crée un dossier de semestre"
-    "createuv:Crée des dossiers d\'UV"
-    "csv_amc_list:Crée un fichier csv à réutiliser directement dans AMC"
     "csv_create_groups:Création aléatoire de groupes d\'étudiants prêt à charger sous Moodle."
-    "csv_for_upload:Fichier csv de notes prêtes à être chargées sur l\'ENT."
     "csv_groups:Fichiers csv de groupes présents dans \`\`effectif.xlsx\`\` pour Moodle."
     "csv_groups_groupings:Fichier csv de groupes et groupements à charger sur Moodle pour les créer."
     "doit:Permet d\'avoir accès aux commandes doit sous-jacentes"
-    "fetch_group_id:Crée un fichier de correspondance entre le nom et l\'id des groupes Moodle."
-    "html_inst:Génère la description des intervenants pour Moodle."
-    "html_table:Table HTML des Cours\/TD\/TP à charger sur Moodle"
-    "ical_inst:Fichier iCal de tous les créneaux par intervenant."
-    "ical_uv:Fichiers iCal de tous les créneaux sur le semestre."
-    "json_group:Fichier json des restrictions d\'accès aux ressources sur Moodle par adresse courriel"
-    "json_restriction:Fichier json de restrictions d\'accès aux ressources Moodle basées sur le début\/fin des séances"
-    "maggle_teams:Crée un fichier csv prêt à charger sur django-maggle pour faire des groupes"
     "pdf_attendance:Fichier pdf de feuilles de présence."
     "pdf_attendance_full:Fichier zip de feuilles de présence nominatives par groupe et par semestre."
-    "pdf_trombinoscope:Fichier PDF des trombinoscopes par groupes et\/ou sous-groupes."
     "send_email:Envoie de courriel à chaque étudiant."
-    "xls_assignment_grade:Création d\'un fichier Excel pour remplissage des notes par les intervenants"
     "xls_grade_book_group:Fichier Excel de notes par groupe."
     "xls_grade_book_jury:Fichier Excel pour la gestion d\'un jury d\'UV"
     "xls_grade_book_no_group:Fichier Excel de notes individuelles."
-    "xls_merge_final_grade:Fichier Excel des notes finales attribuées"
-    "xls_remplacements:Crée un fichier Excel pour enregistrer les remplacements."
-    "xls_utp:Crée un fichier Excel de prévisions des UTP globales."
-    "yaml_qcm:Génère un fichier yaml prérempli pour noter un QCM"
+    "xls_student_data:Agrège les informations spécifiées dans la variable \`\`DOCS\`\`"
     "zoom_breakout_rooms:Crée un fichier csv prêt à charger sur Zoom pour faire des groupes"
   )
   _describe 'guv commands' _commands
@@ -44,41 +25,13 @@ _shtab_guv_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
 )
 
-_shtab_guv_cal_inst_options=(
-  "(- : *)"{-h,--help}"[show this help message and exit]"
-  {-p,--plannings}"[Spécifie les UV\/UE concernées via les plannings. Par défaut, toutes les UV\/UE des plannings configurées dans \`\`PLANNINGS\`\` sont concernées.]:plannings:"
-  {-i,--insts}"[Spécifie la liste des intervenants pour qui créer le calendrier. Par défaut, la liste se limite à \`\`DEFAULT_INSTRUCTOR\`\`.]:insts:"
-  "--save-tex[Permet de laisser les fichiers .tex générés pour modification éventuelle.]"
-)
-
-_shtab_guv_cal_uv_options=(
-  "(- : *)"{-h,--help}"[show this help message and exit]"
-  "--save-tex[Permet de laisser les fichiers .tex générés pour modification éventuelle.]"
-)
-
-_shtab_guv_createsemester_options=(
-  "(- : *)"{-h,--help}"[show this help message and exit]"
-  "--semester[Nom du semestre]:semester:"
-  "--uv[Liste des UV\/UE à ajouter]:uv:"
-  ":Nom du dossier à créer:"
-)
-
-_shtab_guv_createuv_options=(
-  "(- : *)"{-h,--help}"[show this help message and exit]"
-  "(*):uv:"
-)
-
-_shtab_guv_csv_amc_list_options=(
-  "(- : *)"{-h,--help}"[show this help message and exit]"
-)
-
 _shtab_guv_csv_create_groups_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
   {-G,--grouping}"[Pré-groupes dans lesquels faire des sous-groupes]:grouping:_guv_column"
   {-n,--num-groups}"[Nombre de groupes à créer (par sous-groupes si spécifié)]:num_groups:"
   {-s,--group-size}"[Taille des groupes \: binômes, trinômes ou plus]:group_size:"
   {-p,--proportions}"[Liste de proportions pour créer les groupes]:proportions:"
-  {-t,--template}"[Modèle pour donner des noms aux groupes avec \`\{title\}\`, \`\{grouping_name\}\` ou \`\{group_name\}\`]:template:"
+  {-t,--template}"[Modèle pour donner des noms aux groupes avec \`\{title\}\`, \`\{grouping_name\}\` ou \`\{group_name\}\`]:_template:"
   {-l,--names}"[Liste de mots clés pour construire les noms des groupes]:names:"
   {-o,--ordered}"[Ordonner la liste des étudiants par ordre alphabétique ou par colonnes]:ordered:_guv_columns"
   {-g,--global}"[Ne pas remettre à zéro la suite des noms de groupes entre chaque groupement]"
@@ -89,18 +42,10 @@ _shtab_guv_csv_create_groups_options=(
   ":Nom associé à l\'ensemble des groupes créés. Repris dans le nom du fichier créé et dans le nom des groupes créés suivant la \*template\* utilisée.:"
 )
 
-_shtab_guv_csv_for_upload_options=(
-  "(- : *)"{-h,--help}"[show this help message and exit]"
-  {-g,--grade-colname}"[Nom de la colonne contenant la note à exporter.]:grade_colname:_guv_column"
-  "--ects[Précise si la note à exporter est une note ECTS. D\'après l\'ENT, il ne faut alors pas de colonne de commentaires et la note n\'est pas arrondie (l\'ENT n\'aime pas quand il y a trop de décimales).]"
-  {-c,--comment-colname}"[Nom de la colonne contenant un commentaire à ajouter dans le fichier exporté.]:comment_colname:_guv_column"
-  {-f,--format}"[Modèle permettant de formatter plus précisément le commentaire. Le mot-clé \`\`msg\`\` représente la donnée présente dans la colonne \`\`--comment-colname\`\`. Par défaut, on a \`\`\{msg\}\`\`.]:format:"
-)
-
 _shtab_guv_csv_groups_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
-  {-g,--groups}"[Liste des groupements à considérer via un nom de colonne. Par défaut, les groupements \`\`Cours\`\`, \`\`TD\`\` et \`\`TP\`\` sont utilisés.]:groups:_guv_columns"
-  {-l,--long}"[Utiliser les noms de groupes de Cours\/TD\/TP au format long, c\'est à dire \"TP1\" et \"TD1\" au lieu de \"T1\" et \"D1\"]"
+  {-g,--groups}"[List of groupings to consider via a column name. By default, the groupings \`\`Lecture\`\`, \`\`Tutorial\`\` and \`\`Practical work\`\` are used.]:groups:_guv_columns"
+  {-l,--long}"[Use the names of Lecture\/Tutorial\/Practical work groups in long format, i.e., \"TP1\" and \"TD1\" instead of \"T1\" and \"D1\"]"
   {-s,--single}"[Créer un unique fichier]"
 )
 
@@ -115,50 +60,6 @@ _shtab_guv_csv_groups_groupings_options=(
 _shtab_guv_doit_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
   "(-)*:args:"
-)
-
-_shtab_guv_fetch_group_id_options=(
-  "(- : *)"{-h,--help}"[show this help message and exit]"
-  "(*):Liste des identifiants des UV sur Moodle (id\=\?\?\?\? dans l\'url):"
-)
-
-_shtab_guv_html_inst_options=(
-  "(- : *)"{-h,--help}"[show this help message and exit]"
-)
-
-_shtab_guv_html_table_options=(
-  "(- : *)"{-h,--help}"[show this help message and exit]"
-  {-c,--courses}"[Liste des types de créneaux pour lequel faire un tableau. Par défaut des tableaux sont créés pour les Cours, TD et TP.]:courses:"
-  {-g,--grouped}"[Grouper les cours dans le même tableau ou faire des fichiers distincts.]"
-  {-a,--num-AB}"[Permet de préciser si la numérotation des séances dans le tableau doit être en semaine A\/B (A1, B1, A2, B2,...) ou normal (1, 2, 3, 4,...). Valable uniquement pour les TP. Pour les autres types la numérotation classique est toujours utilisée.]"
-  {-n,--names}"[Liste ou fichier contenant les intitulés des cours à la place de \`\`C1\`\`, \`\`C2\`\`,...]:names:"
-)
-
-_shtab_guv_ical_inst_options=(
-  "(- : *)"{-h,--help}"[show this help message and exit]"
-  {-i,--insts}"[Liste des intervenants à inclure dans les fichiers iCal. Par défaut, \`\`DEFAULT_INSTRUCTOR\`\` est utilisé. Mettre \`\`all\`\` pour tous les intervenants.]:insts:"
-)
-
-_shtab_guv_ical_uv_options=(
-  "(- : *)"{-h,--help}"[show this help message and exit]"
-)
-
-_shtab_guv_json_group_options=(
-  "(- : *)"{-h,--help}"[show this help message and exit]"
-  {-g,--group}"[Nom de la colonne réalisant un groupement]:group:_guv_column"
-)
-
-_shtab_guv_json_restriction_options=(
-  "(- : *)"{-h,--help}"[show this help message and exit]"
-  {-c,--course}"[Type de séances considérées parmi \`\`Cours\`\`, \`\`TD\`\` ou \`\`TP\`\`.]:course:"
-  {-a,--num-AB}"[Permet de prendre en compte les semaines A\/B. Ainsi, la fin d\'une séance est à la fin de la semaine B.]"
-  {-l,--long}"[Utilise les noms de groupes de Cours\/TD\/TP au format long, c\'est à dire \"TP1\" et \"TD1\" au lieu de \"T1\" et \"D1\"]"
-  {-v,--visible}"[Rend les restrictions visibles des étudiants]"
-)
-
-_shtab_guv_maggle_teams_options=(
-  "(- : *)"{-h,--help}"[show this help message and exit]"
-  ":Le nom de la colonne des groupes:"
 )
 
 _shtab_guv_pdf_attendance_options=(
@@ -182,21 +83,9 @@ _shtab_guv_pdf_attendance_full_options=(
   "--save-tex[Permet de laisser les fichiers .tex générés pour modification éventuelle.]"
 )
 
-_shtab_guv_pdf_trombinoscope_options=(
-  "(- : *)"{-h,--help}"[show this help message and exit]"
-  {-g,--group}"[Nom de colonne utilisée pour réaliser le groupement. Un fichier pdf est généré pour chaque groupe. Lorsque le nom de groupe est \`\`all\`\`, il y a un seul groupe (donc un seul fichier pdf) comportant la totalité des étudiants.]:groupby:_guv_column"
-  {-s,--subgroup}"[Nom de colonne utilisée pour faire des sous-groupes (binômes, trinômes) parmi le groupement déjà existant.]:subgroupby:_guv_column"
-  "--save-tex[Permet de laisser les fichiers .tex générés pour modification éventuelle.]"
-)
-
 _shtab_guv_send_email_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
   ":Le chemin vers un modèle au format Jinja2:"
-)
-
-_shtab_guv_xls_assignment_grade_options=(
-  "(- : *)"{-h,--help}"[show this help message and exit]"
-  {-e,--exam}"[Nom de l\'examen]:exam:"
 )
 
 _shtab_guv_xls_grade_book_group_options=(
@@ -224,20 +113,7 @@ _shtab_guv_xls_grade_book_no_group_options=(
   {-e,--extra-cols}"[Colonnes supplémentaires à inclure dans la feuille de notes]:extra_cols:_guv_columns"
 )
 
-_shtab_guv_xls_merge_final_grade_options=(
-  "(- : *)"{-h,--help}"[show this help message and exit]"
-  {-e,--exam}"[Nom de l\'examen]:exam:"
-)
-
-_shtab_guv_xls_remplacements_options=(
-  "(- : *)"{-h,--help}"[show this help message and exit]"
-)
-
-_shtab_guv_xls_utp_options=(
-  "(- : *)"{-h,--help}"[show this help message and exit]"
-)
-
-_shtab_guv_yaml_qcm_options=(
+_shtab_guv_xls_student_data_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
 )
 
@@ -261,36 +137,17 @@ _shtab_guv() {
       (( CURRENT += 1 ))
       curcontext="${curcontext%:*:*}:_shtab_guv-$line[1]:"
       case $line[1] in
-        cal_inst) _arguments -C -s $_shtab_guv_cal_inst_options ;;
-        cal_uv) _arguments -C -s $_shtab_guv_cal_uv_options ;;
-        createsemester) _arguments -C -s $_shtab_guv_createsemester_options ;;
-        createuv) _arguments -C -s $_shtab_guv_createuv_options ;;
-        csv_amc_list) _arguments -C -s $_shtab_guv_csv_amc_list_options ;;
         csv_create_groups) _arguments -C -s $_shtab_guv_csv_create_groups_options ;;
-        csv_for_upload) _arguments -C -s $_shtab_guv_csv_for_upload_options ;;
         csv_groups) _arguments -C -s $_shtab_guv_csv_groups_options ;;
         csv_groups_groupings) _arguments -C -s $_shtab_guv_csv_groups_groupings_options ;;
         doit) _arguments -C -s $_shtab_guv_doit_options ;;
-        fetch_group_id) _arguments -C -s $_shtab_guv_fetch_group_id_options ;;
-        html_inst) _arguments -C -s $_shtab_guv_html_inst_options ;;
-        html_table) _arguments -C -s $_shtab_guv_html_table_options ;;
-        ical_inst) _arguments -C -s $_shtab_guv_ical_inst_options ;;
-        ical_uv) _arguments -C -s $_shtab_guv_ical_uv_options ;;
-        json_group) _arguments -C -s $_shtab_guv_json_group_options ;;
-        json_restriction) _arguments -C -s $_shtab_guv_json_restriction_options ;;
-        maggle_teams) _arguments -C -s $_shtab_guv_maggle_teams_options ;;
         pdf_attendance) _arguments -C -s $_shtab_guv_pdf_attendance_options ;;
         pdf_attendance_full) _arguments -C -s $_shtab_guv_pdf_attendance_full_options ;;
-        pdf_trombinoscope) _arguments -C -s $_shtab_guv_pdf_trombinoscope_options ;;
         send_email) _arguments -C -s $_shtab_guv_send_email_options ;;
-        xls_assignment_grade) _arguments -C -s $_shtab_guv_xls_assignment_grade_options ;;
         xls_grade_book_group) _arguments -C -s $_shtab_guv_xls_grade_book_group_options ;;
         xls_grade_book_jury) _arguments -C -s $_shtab_guv_xls_grade_book_jury_options ;;
         xls_grade_book_no_group) _arguments -C -s $_shtab_guv_xls_grade_book_no_group_options ;;
-        xls_merge_final_grade) _arguments -C -s $_shtab_guv_xls_merge_final_grade_options ;;
-        xls_remplacements) _arguments -C -s $_shtab_guv_xls_remplacements_options ;;
-        xls_utp) _arguments -C -s $_shtab_guv_xls_utp_options ;;
-        yaml_qcm) _arguments -C -s $_shtab_guv_yaml_qcm_options ;;
+        xls_student_data) _arguments -C -s $_shtab_guv_xls_student_data_options ;;
         zoom_breakout_rooms) _arguments -C -s $_shtab_guv_zoom_breakout_rooms_options ;;
       esac
   esac

@@ -5,7 +5,8 @@ import pandas as pd
 from .exceptions import GuvUserError, ImpossibleMerge
 from .logger import logger
 from .operation import Operation
-from .utils import check_if_present, get_descriptive_function, plural, ps
+from .translations import _, ngettext
+from .utils import check_if_present
 from .utils_config import ask_choice
 
 
@@ -181,7 +182,8 @@ def _apply_processing(df, processing_type, processing):
                 try:
                     df = op(df)
                 except Exception as e:
-                    raise Exception(f"Erreur dans `{processing_type.lower()}` :", repr(e)) from e
+                    msg = _("Error in `{m}`:".format(m=processing_type.lower()))
+                    raise Exception(msg, repr(e)) from e
             else:
                 raise TypeError(f"Unsupported {processing_type} operation", op)
     return df
@@ -268,12 +270,11 @@ class Aggregator:
 
             n = len(errors.index)
             logger.error(
-                "L%senregistrement%s suivant%s n%s pas unique%s",
-                plural(n, "es ", "'"),
-                ps(n),
-                ps(n),
-                plural(n, "e sont", "'est"),
-                ps(n),
+                ngettext(
+                    "The following record is not unique",
+                    "The following records are not unique",
+                    n
+                )
             )
             print(errors.to_string(index=False))
             raise GuvUserError
@@ -308,7 +309,7 @@ class Aggregator:
             inter = list(set(drop).intersection(set(self.right_merger.required_columns)))
             if inter:
                 msg = ", ".join(f"`{c}`" for c in inter)
-                raise GuvUserError(f"Les colonnes {msg} sont nécessaires et ne peuvent pas être supprimées")
+                raise GuvUserError(_("The columns {msg} are required and cannot be removed").format(msg=msg))
 
             self._right_df = self._right_df.drop(drop, axis=1, errors="ignore")
 
@@ -316,7 +317,7 @@ class Aggregator:
             check_if_present(self._right_df, self.rename.keys())
             if (inter := set(self.rename.keys()).intersection(self.right_merger.required_columns)):
                 inter_msg = ", ".join(f"`{c}`" for c in inter)
-                raise GuvUserError(f"Les clés {inter_msg} sont requises et ne peuvent pas être renommées")
+                raise GuvUserError(_("The keys {inter_msg} are required and cannot be renamed").format(inter_msg=inter_msg))
 
             self._right_df = self._right_df.rename(columns=self.rename)
 
@@ -333,34 +334,32 @@ class Aggregator:
         lo = self._df_outer.loc[self._df_outer["_merge"] == "left_only"]
         lo_index_column = self.left_merger.index_column
         origin_lo = self._left_df.loc[lo[lo_index_column]]
-        desc_lo = get_descriptive_function(origin_lo, self.left_merger.descriptive_columns)
 
         for row in origin_lo.itertuples(index=True):
-            description = desc_lo(row)
-            logger.warning("`%s` n'est pas présent dans les données Moodle", description)
+            description = ", ".join(row[e] for e in self.left_merger.descriptive_columns)
+            logger.warning(_("The record `{desc}` is missing from the data to be aggregated").format(desc=description))
 
         ro = self._df_outer.loc[self._df_outer["_merge"] == "right_only"]
         ro_index_column = self.right_merger.index_column
         origin_ro = self._right_df.loc[ro[ro_index_column]]
-        desc_ro = get_descriptive_function(origin_ro, self.right_merger.descriptive_columns)
 
         for row in origin_ro.itertuples(index=True):
-            description = desc_ro(row)
-            logger.warning("`%s` n'est pas présent dans les données Moodle", description)
+            description = ", ".join(row[e] for e in self.right_merger.descriptive_columns)
+            logger.warning(_("The record `{desc}` is missing from base data").format(desc=description))
 
         for row in lo.itertuples(index=True):
             if len(ro.index != 0):
                 origin_lo_row = origin_lo.loc[getattr(row, lo_index_column)]
-                description = desc_lo(origin_lo_row)
-                logger.info("Recherche de correspondance pour `%s` :", description)
+                description = ", ".join(origin_lo_row[e] for e in self.left_merger.descriptive_columns)
+                logger.info(_("Searching for match for `%s` :"), description)
 
                 for i, row_ro in enumerate(ro.itertuples(index=True)):
                     origin_ro_row = origin_ro.loc[getattr(row_ro, ro_index_column)]
-                    description = desc_ro(origin_ro_row)
+                    description = ", ".join(origin_ro_row[e] for e in self.right_merger.descriptive_columns)
                     print(f"  ({i}) {description}")
 
                 choice = ask_choice(
-                    "Choix ? (entrée si pas de correspondance) ",
+                    _("Choice? (enter if no match) "),
                     {**{str(i): i for i in range(len(origin_ro.index))}, "": None}
                 )
 
@@ -400,11 +399,11 @@ class Aggregator:
             n = len(errors.index)
             if n > 0:
                 logger.warning(
-                    "%s enregistrement%s n'%s pas pu être incorporé%s au fichier central",
-                    n,
-                    ps(n),
-                    plural(n, "ont", "a"),
-                    ps(n),
+                    ngettext(
+                        "{n} record could not be incorporated into the central file",
+                        "{n} records could not be incorporated into the central file",
+                        n
+                    ).format(n=n)
                 )
                 print(errors.to_string(index=False))
 
@@ -461,7 +460,7 @@ def make_column_merger(policy):
         for k, v in policy.items():
             if v == "error":
                 if any(mask_V_V):
-                    raise ImpossibleMerge("Fusion impossible")
+                    raise ImpossibleMerge(_("Merge impossible"))
             elif v == "replace":
                 mask = policy_mask[k]
                 df.loc[mask, column] = df.loc[mask, column_y]
@@ -515,10 +514,10 @@ def merge_columns(df, policy="merge"):
 
     for c in duplicated_columns:
         if policy == "merge":
-            logger.warning("Tentative de fusion des colonnes `%s` et `%s`", c, c + "_y")
+            logger.warning(_("Attempting to merge columns `{col1}` and `{col2}`").format(col1=c, col2=c + "_y"))
         try:
             df = func(df, c)
         except ImpossibleMerge:
-            logger.warning("Fusion impossible, on garde les colonnes `%s` et `%s`", c, c + "_y")
+            logger.warning(_("Merge impossible, keeping columns `{col1}` and `{col2}`").format(col1=c, col2=c + "_y"))
 
     return df

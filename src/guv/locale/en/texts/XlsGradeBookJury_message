@@ -1,0 +1,7 @@
+To aggregate grades into the central file `effectif.xlsx`, add:
+
+DOCS.aggregate_jury("{filename}")
+
+to the `config.py` file of the UV/UE. Then, to upload the ECTS grades to the ENT:
+
+guv csv_for_upload -g "Note ECTS" --ects

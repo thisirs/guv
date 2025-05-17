@@ -4,6 +4,8 @@ DSL to express Moodle constraints
 
 from datetime import date, datetime
 
+from ..translations import _
+
 
 class Cond:
     def __init__(self, sts=[], visible=False):
@@ -82,7 +84,7 @@ class CondGroup(Cond):
 
     def group_id(self, **info):
         if self.grp not in info["groups"]:
-            raise ValueError(f"Le groupe nommé {self.grp} n'a pas de correspondance Moodle dans la variable MOODLE_GROUPS")
+            raise ValueError(_("The group named {grp} does not have a Moodle match in the MOODLE_GROUPS variable").format(grp=self.grp))
         return info["groups"][self.grp]["moodle_id"]
 
     def to_PHP_inner(self, **info):

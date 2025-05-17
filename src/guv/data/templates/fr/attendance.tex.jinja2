@@ -1,0 +1,66 @@
+% -*- mode: latex; -*-
+% Template de feuilles de présence par groupe
+
+\documentclass[12pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[french]{babel}
+\usepackage[left=2cm,right=2cm,top=1cm,bottom=2cm]{geometry}
+
+% See https://tex.stackexchange.com/q/85335
+\makeatletter
+\renewcommand \dotfill {\leavevmode \cleaders \hb@xt@ 1em{\hss .\hss }\hfill \kern \z@}
+\makeatother
+
+\newcommand{\name}[2]{\makebox[4.5in][l]{#1\dotfill}\makebox[2in][l]{#2}}
+
+\begin{document}
+
+\noindent\hrulefill
+\begin{center}
+  \begin{Huge}
+    \textbf{(((title | escape_tex)))}
+  \end{Huge}
+  ((* if group *))
+  \smallskip
+  \textbf{(((group | escape_tex)))}
+  ((* endif *))
+\end{center}
+\noindent\hrulefill\bigskip
+
+\noindent\hfill\textbf{Semestre:} \makebox[3cm][l]{((* if planning *))(((planning | escape_tex)))((* else *))\hrulefill((* endif *))}\par
+\noindent\hfill\textbf{UV:} \makebox[3cm][l]{((* if uv *))(((uv | escape_tex)))((* else *))\hrulefill((* endif *))}\par
+\noindent\hfill\textbf{Date:} \makebox[3cm][l]{((* if date *))(((date | escape_tex)))((* else *))\hrulefill((* endif *))}\par
+\noindent\hfill\textbf{Examen:} \makebox[3cm][l]{((* if exam *))(((exam | escape_tex)))((* else *))\hrulefill((* endif *))}\par
+
+\newcounter{stunum}
+\begin{list}{\arabic{stunum}.}{\usecounter{stunum}}
+  \setlength\itemsep{1em}
+  \item[] \makebox[4.5in][l]{\textbf{Last name,\quad Name}}\quad \textbf{Signature}
+  ((* if blank *))
+  ((* for i in range(num) *))
+  \item \hrulefill
+  ((* endfor *))
+  ((* else *))
+  ((* for student in students *))
+  \item \name{(((student['name'] | escape_tex)))}{\hrulefill}
+  ((* endfor *))
+  ((* endif *))
+  ((* for i in range(extra) *))
+  \item \hrulefill
+  ((* endfor *))
+\end{list}
+
+\vfill
+\paragraph{Surveillants}
+\begin{list}{}{\usecounter{stunum}}
+  \setlength\itemsep{1em}
+  \item[] \makebox[4.5in][l]{\textbf{Last name,\quad Name}}\quad \textbf{Signature}
+  \item\makebox[4.5in][l]{\hrulefill}\quad\hrulefill
+  \item\makebox[4.5in][l]{\hrulefill}\quad\hrulefill
+  \item\makebox[4.5in][l]{\hrulefill}\quad\hrulefill
+\end{list}
+
+\end{document}

@@ -1,0 +1,14 @@
+Load the groups on Moodle at the address {url} by specifying:
+
+- User field: "Username"
+- Assing to groups: "Yes"
+- Create groups: "Yes" if they are not already created
+
+Add the groups to the file `effectif.xlsx` with the following code in the UV's `config.py` file:
+
+# Created with the command: {command_line}
+DOCS.aggregate(
+    "{filename}",
+    on="{login}",
+    kw_read={{"header": None, "names": ["Login", "{title}_group"]}}
+)

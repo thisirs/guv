@@ -10,6 +10,7 @@ from ..config import settings
 from ..exceptions import ImproperlyConfigured
 from ..logger import logger
 from ..openpyxl_patched import fixit
+from ..translations import _, TaskDocstring
 from ..utils import (sort_values, pformat)
 from ..utils_config import Output, selected_uv
 from .base import UVTask
@@ -19,6 +20,9 @@ fixit(openpyxl)
 from openpyxl import Workbook, load_workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.utils.dataframe import dataframe_to_rows
+
+
+__all__ = ["XlsStudentData"]
 
 
 def split_list_by_token_inclusive(lst):
@@ -101,7 +105,7 @@ class Documents:
                         except Exception as e:
                             if settings.DEBUG <= logging.DEBUG:
                                 raise e from e
-                            return TaskFailed(f"L'étape `{a.name()}` a échoué : {str(e)}")
+                            return TaskFailed(_("The step `{name}` failed: {e}").format(name=a.name(), e=str(e)))
 
                     df.to_csv(target, index=False)
                 return func
@@ -136,12 +140,7 @@ class Documents:
 
 
 class XlsStudentData(UVTask):
-    """Agrège les informations spécifiées dans la variable ``DOCS``
-
-    Agrège les informations spécifiées dans la variable ``DOCS`` du fichier
-    ``config.py`` d'une UV dans un seul fichier ``effectif.xlsx``.
-
-    """
+    __doc__ = TaskDocstring()
 
     target_name = "effectif.xlsx"
     target_dir = "."
@@ -160,7 +159,7 @@ class XlsStudentData(UVTask):
 
             docs = instance.settings.DOCS
             if not isinstance(docs, Documents):
-                raise ImproperlyConfigured("La variable DOCS doit être de type `Documents`: `DOCS = Documents()`")
+                raise ImproperlyConfigured(_("The DOCS variable must be of type `Documents`: `DOCS = Documents()`"))
 
             docs.setup(settings=instance.settings, info=info)
 
@@ -196,13 +195,13 @@ class XlsStudentData(UVTask):
 
     def run(self):
         if "DOCS" not in self.settings:
-            raise ImproperlyConfigured("Le fichier `config.py` doit contenir une variable `DOCS`")
+            raise ImproperlyConfigured(_("The `config.py` file must contain a `DOCS` variable"))
 
         if not isinstance(self.settings.DOCS, Documents):
-            raise ImproperlyConfigured("La variable `DOCS` doit être de type `Documents`")
+            raise ImproperlyConfigured(_("The `DOCS` variable must be of type `Documents`"))
 
         if len(self.settings.DOCS.actions) == 0:
-            raise ImproperlyConfigured("`DOCS` doit contenir au moins une opération")
+            raise ImproperlyConfigured(_("`DOCS` must contain at least one operation"))
 
         df = pd.read_csv(self.student_data)
 

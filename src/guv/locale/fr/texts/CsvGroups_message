@@ -1,0 +1,5 @@
+Charger les groupes sur Moodle à l'adresse {url} en spécifiant :
+
+- Champ utilisateur: "Nom d'utilisateur"
+- Inscrire dans les groupes : "Oui"
+- Créer les groupes: "Oui" s'il ne sont pas déjà créés

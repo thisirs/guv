@@ -8,6 +8,8 @@ from prompt_toolkit.layout import Layout
 from prompt_toolkit.widgets import Label, CheckboxList
 from prompt_toolkit.layout.containers import HSplit
 
+from .translations import _
+
 
 def checkboxlist_prompt(
     title,
@@ -65,7 +67,7 @@ def is_number(text):
 def prompt_number(message, **kwargs):
     validator = Validator.from_callable(
         is_number,
-        error_message="Nombre ou fraction pas reconnu",
+        error_message=_("Number or fraction not recognized"),
         move_cursor_to_end=True)
     number = float(Fraction(prompt(message, validator=validator, **kwargs)))
     return int(number) if number.is_integer() else number

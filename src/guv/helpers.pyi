@@ -98,7 +98,3 @@ class Documents:
         new_colname: str | None = None,
     ) -> None:
         ...
-
-    def add_moodle_listing(self, filename: str) -> None:
-        ...
-

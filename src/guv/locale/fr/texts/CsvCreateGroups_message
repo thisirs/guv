@@ -1,0 +1,14 @@
+Charger les groupes sur Moodle à l'adresse {url} en spécifiant :
+
+- Champ utilisateur: "Nom d'utilisateur"
+- Inscrire dans les groupes : "Oui"
+- Créer les groupes: "Oui" s'il ne sont pas déjà créés
+
+Ajouter les groupes au fichier `effectif.xlsx` avec le code suivant dans le fichier `config.py` de l'UV :
+
+# Créé avec la commande : {command_line}
+DOCS.aggregate(
+    "{filename}",
+    on="{login}",
+    kw_read={{"header": None, "names": ["Login", "{title}_group"]}}
+)

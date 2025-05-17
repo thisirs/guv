@@ -1,0 +1,30 @@
+"""Fichier de configuration du semestre"""
+
+
+# Sous-dossiers représentant les UV gérées lors du semestre
+UVS = [{{ UVS }}]
+
+# Available columns (set to None if not available)
+NAME_COLUMN = "First name"
+LASTNAME_COLUMN = "Last name"
+EMAIL_COLUMN = "Email"
+LOGIN_COLUMN = "Login"
+
+
+# Un dictionnaire listant des plannings (A2020, Master2Sem1,
+# Master2Sem2...) et leurs caractéristiques correspondantes
+PLANNINGS = {
+    "{{ SEMESTER }}": {
+        "UVS": [{{ UVS }}],
+    }
+}
+
+# Utilisé par la tâche `send_email` pour envoyer des courriels à l'effectif
+# entier
+LOGIN = None
+FROM_EMAIL = None
+PORT = None
+SMTP_SERVER = None
+
+# If using Moodle
+MOODLE_EMAIL_COLUMN = "Adresse de courriel"

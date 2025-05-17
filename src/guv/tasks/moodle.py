@@ -1,20 +1,9 @@
-"""
-Ce module rassemble les tâches pour interagir avec Moodle : création
-de fichiers de groupes officiels de Cours/TD/TP où aléatoires
-(binômes, trinômes par groupes) prêt à charger, descriptif de l'UV et
-des intervenants sous forme de code HTML à copier-coller dans Moodle,
-tableau des créneaux de l'UV sous forme de tableau HTML, création de
-fichier Json pour copier-coller des restrictions d'accès en fonction
-de l'appartenance à un groupe.
-"""
-
 import json
 import math
 import os
 import random
 import shlex
 import sys
-import textwrap
 
 import numpy as np
 import pandas as pd
@@ -22,6 +11,7 @@ import pandas as pd
 from ..exceptions import GuvUserError
 from ..logger import logger
 from ..scripts.moodle_date import CondOr, CondProfil
+from ..translations import _, TaskDocstring, _file
 from ..utils import (
     argument,
     generate_groupby,
@@ -35,32 +25,16 @@ from .base import CliArgsMixin, UVTask
 from .evolutionary_algorithm import evolutionary_algorithm
 from .internal import XlsStudentData
 
+
+__all__ = ["CsvCreateGroups", "CsvGroups", "CsvGroupsGroupings"]
+
+
 DATE_FORMAT = "%Y-%m-%d"
 TIME_FORMAT = "%H:%M"
 
 
 class CsvGroups(UVTask, CliArgsMixin):
-    """Fichiers csv de groupes présents dans ``effectif.xlsx`` pour Moodle.
-
-    L'option ``--groups`` permet de sélectionner les colonnes de groupes à
-    exporter sous Moodle. Par défaut, les colonnes exportées sont les colonnes
-    ``Cours``, ``TD`` et ``TP``.
-
-    L'option ``--long`` permet d'exporter les noms de groupes de TD/TP au format
-    long c'est à dire ``TP1`` et ``TD1`` au lieu de ``T1`` et ``D1``
-
-    L'option ``--single`` permet de ne générer qu'un seul fichier.
-
-    {options}
-
-    Examples
-    --------
-
-    .. code:: bash
-
-       guv csv_groups --groups Groupe_Projet
-
-    """
+    __doc__ = TaskDocstring()
 
     uptodate = False
     target_dir = "generated"
@@ -72,20 +46,21 @@ class CsvGroups(UVTask, CliArgsMixin):
             "--groups",
             metavar="COL,[COL,...]",
             type=lambda t: [s.strip() for s in t.split(",")],
-            default="Cours,TD,TP",
-            help="Liste des groupements à considérer via un nom de colonne. Par défaut, les groupements ``Cours``, ``TD`` et ``TP`` sont utilisés.",
+            default=_("Lecture,Tutorial,Practical work"),
+            help=_("List of groupings to consider via a column name. By default, the groupings ``Lecture``, ``Tutorial`` and ``Practical work`` are used."),
         ),
         argument(
             "-l",
             "--long",
             action="store_true",
-            help="Utiliser les noms de groupes de Cours/TD/TP au format long, c'est à dire \"TP1\" et \"TD1\" au lieu de \"T1\" et \"D1\""
+            help=_("Use the names of Lecture/Tutorial/Practical work groups in long format, i.e., \"TP1\" and "
+                   "\"TD1\" instead of \"T1\" and \"D1\"")
         ),
         argument(
             "-s",
             "--single",
             action="store_true",
-            help="Créer un unique fichier"
+            help=_("Create a single file")
         )
     )
 
@@ -117,7 +92,7 @@ class CsvGroups(UVTask, CliArgsMixin):
                 if null.any():
                     for index, row in df.loc[null].iterrows():
                         stu = row[self.settings.LASTNAME_COLUMN] + " " + row[self.settings.NAME]
-                        logger.warning("Valeur non définie dans la colonne `%s` pour l'étudiant(e) %s", column_name, stu)
+                        logger.warning(_("Value not defined in the column `{colname}` for the student {stu}").format(colname=column_name, stu=stu))
 
                 dff = df.loc[~null][["Login", column_name]]
 
@@ -160,53 +135,17 @@ class CsvGroups(UVTask, CliArgsMixin):
         else:
             id = "<MOODLE_ID>"
 
-        url = f"https://moodle.utc.fr/local/userenrols/import.php?id={id}"
+        if "MOODLE_URL" in self.settings:
+            url = str(self.settings.MOODLE_URL)
+        else:
+            url = "<MOODLE_URL>"
 
-        logger.info(textwrap.dedent(f"""\
-
-        Charger les groupes sur Moodle à l'adresse {url} en spécifiant :
-
-        - Champ utilisateur: "Nom d'utilisateur"
-        - Inscrire dans les groupes : "Oui"
-        - Créer les groupes: "Oui" s'il ne sont pas déjà créés
-
-        """))
+        url = f"{url}/local/userenrols/import.php?id={id}"
+        logger.info(_file("CsvGroups_message").format(url=url))
 
 
 class CsvGroupsGroupings(UVTask, CliArgsMixin):
-    """Fichier csv de groupes et groupements à charger sur Moodle pour les créer.
-
-    Il faut spécifier le nombre de groupes dans chaque groupement avec
-    l'argument ``-g`` et le nombre de groupements dans
-    ``-G``.
-
-    Le nom des groupements est contrôlé par un modèle spécifié par
-    l'argument ``-F`` (par défaut "D##_P1"). Les remplacements
-    disponibles sont :
-
-    - ## : remplacé par des nombres
-    - @@ : remplacé par des lettres
-
-    Le nom des groupes est contrôlé par un modèle spécifié par
-    l'argument ``-f`` (par défaut "D##_P1_@"). Les remplacements
-    disponibles sont :
-
-    - # : remplacé par des nombres
-    - @ : remplacé par des lettres
-
-    {options}
-
-    Examples
-    --------
-
-    .. code:: bash
-
-       guv csv_groups_groupings -G 3 -F Groupement_P1 -g 14 -f D##_P1_@
-       guv csv_groups_groupings -G 2 -F Groupement_D1 -g 14 -f D1_P##_@
-       guv csv_groups_groupings -G 2 -F Groupement_D2 -g 14 -f D2_P##_@
-       guv csv_groups_groupings -G 2 -F Groupement_D3 -g 14 -f D3_P##_@
-
-    """
+    __doc__ = TaskDocstring()
 
     target_dir = "generated"
     target_name = "groups_groupings.csv"
@@ -217,14 +156,14 @@ class CsvGroupsGroupings(UVTask, CliArgsMixin):
             metavar="N_GROUPS",
             dest="ngroups",
             required=True,
-            help="Nombre de groupes dans chaque groupement",
+            help=_("Number of groups in each grouping"),
         ),
         argument(
             "-f",
             dest="ngroupsf",
             metavar="FORMAT",
             default="D##_P1_@",
-            help="Format du nom de groupe (par défaut: %(default)s)",
+            help=_("Format of the group name (default: %(default)s)"),
         ),
         argument(
             "-G",
@@ -232,14 +171,14 @@ class CsvGroupsGroupings(UVTask, CliArgsMixin):
             metavar="N_GROUPINGS",
             type=int,
             required=True,
-            help="Nombre de groupements différents",
+            help=_("Number of different groupings"),
         ),
         argument(
             "-F",
             dest="ngroupingsf",
             metavar="FORMAT",
             default="D##_P1",
-            help="Format du nom de groupement (par défaut: %(default)s)",
+            help=_("Format of the grouping name (default: %(default)s)"),
         ),
     )
 
@@ -279,18 +218,7 @@ class CsvGroupsGroupings(UVTask, CliArgsMixin):
 
 
 class JsonGroup(UVTask, CliArgsMixin):
-    """Fichier json des restrictions d'accès aux ressources sur Moodle par adresse courriel
-
-    Le fichier Json contient des restrictions d'accès à copier dans
-    Moodle. L'argument ``group`` permet de construire des restrictions
-    par groupe. L'intérêt par rapport à une restriction classique à
-    base d'appartenance à un groupe dans Moodle est qu'il n'est pas
-    nécessaire de charger ce groupe sur Moodle et que l'étudiant ne
-    peut pas savoir à quel groupe il appartient.
-
-    {options}
-
-    """
+    __doc__ = TaskDocstring()
 
     target_dir = "generated"
     target_name = "{group}_group_moodle.json"
@@ -299,7 +227,7 @@ class JsonGroup(UVTask, CliArgsMixin):
             "-g",
             "--group",
             required=True,
-            help="Nom de la colonne réalisant un groupement",
+            help=_("Name of the column performing a grouping"),
         ),
     )
 
@@ -380,133 +308,32 @@ def get_coocurrence_dict(df, columns, nan_policy="same"):
 
 
 class CsvCreateGroups(UVTask, CliArgsMixin):
-    """Création aléatoire de groupes d'étudiants prêt à charger sous Moodle.
-
-    Cette tâche crée un fichier csv d'affectation des étudiants à un
-    groupe directement chargeable sous Moodle. Si l'option
-    ``--grouping`` est spécifiée les groupes sont créés à l'intérieur
-    de chaque sous-groupe (de TP ou TD par exemple).
-
-    Le nombre de groupes créés (au total ou par sous-groupes suivant
-    ``--grouping``) est contrôlé par une des options mutuellement
-    exclusives ``--proportions``, ``--group-size`` et
-    ``--num-groups``. L'option ``--proportions`` permet de spécifier
-    un nombre de groupes via une liste de proportions. L'option
-    ``--group-size`` permet de spécifier la taille maximale de chaque
-    groupe. L'option ``--num-groups`` permet de spécifier le nombre de
-    sous-groupes désirés.
-
-    Le nom des groupes est contrôlé par l'option ``--template``. Les
-    remplacements suivants sont disponibles à l'intérieur de
-    ``--template`` :
-
-    - ``{title}`` : remplacé par le titre (premier argument)
-    - ``{grouping_name}`` : remplacé par le nom du sous-groupe à
-      l'intérieur duquel on construit des groupes (si on a spécifié
-      ``--grouping``)
-    - ``{group_name}`` : nom du groupe en construction (si on a
-      spécifié ``--names``)
-    - ``#`` : numérotation séquentielle du groupe en construction (si
-      ``--names`` n'est pas spécifié)
-    - ``@`` : lettre séquentielle du groupe en construction (si
-      ``--names`` n'est pas spécifié)
-
-    L'option ``--names`` peut être une liste de noms à utiliser ou un
-    fichier contenant une liste de noms ligne par ligne. Il sont pris
-    aléatoirement si on spécifie le drapeau ``--random``.
-
-    Le drapeau ``--global`` permet de ne pas remettre à zéro la
-    génération des noms de groupes lorsqu'on change le groupement à
-    l'intérieur duquel on construit des groupes (utile seulement si on
-    a spécifié ``--grouping``).
-
-    Par défaut, la liste des étudiants est triée aléatoirement avant
-    de créer des groupes de manière contiguë. Si on veut créer des
-    groupes par ordre alphabétique, on peut utiliser ``--ordered``. On
-    peut également fournir une liste de colonnes selon lesquelles
-    trier.
-
-    On peut indiquer des contraintes dans la création des groupes avec l'option
-    ``--other-groups`` qui spécifie des noms de colonnes de groupes déjà formés
-    qu'on va s'efforcer de ne pas reformer. On peut également indiquer des
-    affinités dans la création des groupes avec l'option ``--affinity-groups``
-    qui spécifie des noms de colonnes de groupes déjà formés qu'on va s'efforcer
-    de reformer à nouveau.
-
-    {options}
-
-    Examples
-    --------
-
-    - Faire des trinômes à l'intérieur de chaque sous-groupe de TD :
-
-      .. code:: bash
-
-         guv csv_create_groups Projet1 -G TD --group-size 3
-
-    - Faire des trinômes à l'intérieur de chaque sous-groupe de TD en
-      s'efforçant de choisir des nouveaux trinômes par rapport à la colonne
-      ``Projet1`` :
-
-      .. code:: bash
-
-         guv csv_create_groups Projet2 -G TD --group-size 3 --other-groups Projet1
-
-    - Partager en deux chaque sous-groupe de TD avec des noms de groupes
-      de la forme D1i, D1ii, D2i, D2ii... :
-
-      .. code:: bash
-
-         guv csv_create_groups HalfGroup -G TD --proportions .5 .5 --template '{grouping_name}{group_name}' --names i ii
-
-    - Partager l'effectif en deux parties selon l'ordre alphabétique
-      avec les noms de groupes ``First`` et ``Second`` :
-
-      .. code:: bash
-
-         guv csv_create_groups Half --proportions .5 .5 --ordered --names First Second --template '{group_name}'
-
-    .. rubric:: Remarques
-
-    Afin qu'il soit correctement chargé par Moodle, le fichier ne
-    contient pas d'en-tête spécifiant le nom des colonnes. Pour
-    agréger ce fichier de groupes au fichier central, il faut donc
-    utiliser l'argument ``kw_read`` comme suit :
-
-    .. code:: python
-
-       DOCS.aggregate(
-           "generated/Projet1_groups.csv",
-           on="Courriel",
-           kw_read={"header": None, "names": ["Courriel", "Groupe P1"]},
-       )
-
-    """
+    __doc__ = TaskDocstring()
 
     uptodate = False
     target_dir = "generated"
     target_name = "{title}_groups.csv"
     cli_args = (
-        argument("title", help="Nom associé à l'ensemble des groupes créés. Repris dans le nom du fichier créé et dans le nom des groupes créés suivant la *template* utilisée."),
+        argument("title", help=_("Name associated with the set of created groups. Included in the name of the created file and in the name of the created groups following the used *template*.")),
         argument(
             "-G",
             "--grouping",
             required=False,
-            help="Pré-groupes dans lesquels faire des sous-groupes",
+            help=_("Pre-groups in which to make sub-groups"),
         ),
         argument(
             "-n",
             "--num-groups",
             type=int,
             required=False,
-            help="Nombre de groupes à créer (par sous-groupes si spécifié)",
+            help=_("Number of groups to create (per sub-groups if specified)"),
         ),
         argument(
             "-s",
             "--group-size",
             type=int,
             required=False,
-            help="Taille des groupes : binômes, trinômes ou plus",
+            help=_("Group size: pairs, trios or more"),
         ),
         argument(
             "-p",
@@ -514,21 +341,21 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             nargs="+",
             type=float,
             required=False,
-            help="Liste de proportions pour créer les groupes",
+            help=_("List of proportions to create the groups"),
         ),
         argument(
             "-t",
             "--template",
             dest="_template",
             required=False,
-            help="Modèle pour donner des noms aux groupes avec `{title}`, `{grouping_name}` ou `{group_name}`",
+            help=_("Template to give names to the groups with `{title}`, `{grouping_name}` or `{group_name}`"),
         ),
         argument(
             "-l",
             "--names",
             nargs="+",
             required=False,
-            help="Liste de mots clés pour construire les noms des groupes",
+            help=_("List of keywords to build the group names"),
         ),
         argument(
             "-o",
@@ -539,21 +366,21 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             metavar="COL,...",
             type=lambda t: [s.strip() for s in t.split(",")],
             required=False,
-            help="Ordonner la liste des étudiants par ordre alphabétique ou par colonnes",
+            help=_("Order the list of students alphabetically or by columns"),
         ),
         argument(
             "-g",
             "--global",
             dest="global_",
             action="store_true",
-            help="Ne pas remettre à zéro la suite des noms de groupes entre chaque groupement",
+            help=_("Do not reset the sequence of group names between each grouping"),
         ),
         argument(
             "-r",
             "--random",
             dest="random",
             action="store_true",
-            help="Permuter aléatoirement les noms de groupes",
+            help=_("Randomly permute the group names"),
         ),
         argument(
             "--other-groups",
@@ -561,7 +388,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             metavar="COL,[COL,...]",
             default=[],
             type=lambda t: [s.strip() for s in t.split(",")],
-            help="Liste de colonnes de groupes déjà formés qui ne doivent plus être reformés."
+            help=_("List of columns of already formed groups that should not be reformed.")
         ),
         argument(
             "--affinity-groups",
@@ -569,13 +396,13 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             metavar="COL,[COL,...]",
             default=[],
             type=lambda t: [s.strip() for s in t.split(",")],
-            help="Liste de colonnes de groupes d'affinité."
+            help=_("List of columns of affinity groups.")
         ),
         argument(
             "--max-iter",
             type=int,
             default=1000,
-            help="Nombre maximum d'essais pour trouver des groupes avec contraintes (par défaut %(default)s)."
+            help=_("Maximum number of attempts to find groups with constraints (default %(default)s).")
         )
     )
 
@@ -594,7 +421,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         if self.names is None:
             if "@" in tmpl and "#" in tmpl:
                 raise self.parser.error(
-                    "La template doit contenir soit '@' soit '#' pour générer des noms de groupes différents"
+                    _("The template must contain either '@' or '#' to generate different group names")
                 )
             if "@" in tmpl:
                 for letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
@@ -606,7 +433,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                     i += 1
             else:
                 raise self.parser.error(
-                    "Pas de # ou de @ dans la template pour générer des noms différents"
+                    _("No # or @ in the template to generate different names")
                 )
         elif len(self.names) == 1:
             path = self.names[0]
@@ -618,7 +445,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                 for l in lines:
                     yield pformat(tmpl, group_name=l.strip())
             else:
-                raise FileNotFoundError(f"Le fichier de noms `{self.names[0]}` n'existe pas")
+                raise FileNotFoundError(_("The name file `{names}` does not exist").format(names=self.names[0]))
         else:
             names = self.names.copy()
             if self.random:
@@ -641,7 +468,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                 else:
                     self._template = "{title}_{grouping_name}_{group_name}"
 
-            logger.info("Pas de template spécifiée. La template par défaut est `%s`", self._template)
+            logger.info(_("No template specified. The default template is `%s`"), self._template)
 
         return self._template
 
@@ -650,26 +477,26 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             self.num_groups is not None
         ) != 1:
             raise self.parser.error(
-                "Spécifier un et un seul argument parmi --proportions, --group-size, --num-groups",
+                _("Specify one and only one argument among --proportions, --group-size, --num-groups"),
             )
 
         num_placeholders = ("{group_name}" in self.template) + ("@" in self.template) + ("#" in self.template)
         if num_placeholders != 1:
-            raise self.parser.error("Spécifier un et un seul remplacement dans la template parmi `@`, `#` et `{group_name}`")
+            raise self.parser.error(_("Specify one and only one replacement in the template among `@`, `#` and `{group_name}`"))
 
         if "{group_name}" in self.template and self.names is None:
             raise self.parser.error(
-                "La template contient '{group_name}' mais --names n'est pas spécifié"
+                _("The template contains '{group_name}' but --names is not specified")
             )
 
         if "{grouping_name}" in self.template and self.grouping is None:
-            raise self.parser.error("La template contient '{grouping_name}' mais aucun groupement n'est spécifié avec l'option --grouping")
+            raise self.parser.error(_("The template contains '{grouping_name}' but no grouping is specified with the --grouping option"))
 
         if "{grouping_name}" not in self.template and self.grouping is not None and not self.global_:
-            raise self.parser.error("La template ne contient pas '{grouping_name}' mais l'option --grouping est active avec remise à zéro des noms de groupes")
+            raise self.parser.error(_("The template does not contain '{grouping_name}' but the --grouping option is active with resetting of group names"))
 
         if self.ordered is not None and (self.affinity_groups or self.other_groups):
-            raise self.parser.error("L'option ``ordered`` est incompatible avec les contraintes ``other-groups`` et ``affinity_groups``.")
+            raise self.parser.error(_("The ``ordered`` option is incompatible with the constraints ``other-groups`` and ``affinity_groups``."))
 
         df = XlsStudentData.read_target(self.xls_merge)
 
@@ -721,14 +548,14 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         # Concatenate sub-groups for each grouping
         s_groups = pd.concat(df_gen())
 
-        # Add Courriel column, use index to merge
-        df_out = pd.DataFrame({"Login": df["Login"], "group": s_groups})
+        # Add Login column, use index to merge
+        df_out = pd.DataFrame({"Login": df[self.settings.LOGIN_COLUMN], "group": s_groups})
         df_out = df_out.sort_values(["group", "Login"])
 
         with Output(self.target) as out:
             df_out.to_csv(out.target, index=False, header=False)
 
-        df_groups = pd.DataFrame({"groupname": df["Login"], 'groupingname': s_groups})
+        df_groups = pd.DataFrame({"groupname": df[self.settings.LOGIN_COLUMN], 'groupingname': s_groups})
         df_groups = df_groups.sort_values(["groupingname", "groupname"])
 
         csv_target = os.path.splitext(self.target)[0] + '_secret.csv'
@@ -742,28 +569,13 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
 
         url = f"https://moodle.utc.fr/local/userenrols/import.php?id={id}"
 
-        logger.info(textwrap.dedent("""\
-
-        Charger les groupes sur Moodle à l'adresse %(url)s en spécifiant :
-
-        - Champ utilisateur: "Nom d'utilisateur"
-        - Inscrire dans les groupes : "Oui"
-        - Créer les groupes: "Oui" s'il ne sont pas déjà créés
-
-        Ajouter les groupes au fichier `effectif.xlsx` avec le code suivant dans le fichier `config.py` de l'UV :
-
-        # Créé avec la commande : %(command_line)s
-        DOCS.aggregate(
-            "%(filename)s",
-            on="Login",
-            kw_read={"header": None, "names": ["Login", "%(title)s_group"]}
-        )
-        """ % {
-            "url": url,
-            "filename": rel_to_dir(self.target, self.settings.UV_DIR),
-            "title": self.title,
-            "command_line": "guv " + " ".join(map(shlex.quote, sys.argv[1:]))
-        }))
+        logger.info(_file("CsvCreateGroups_message").format(
+            url=url,
+            filename=rel_to_dir(self.target, self.settings.UV_DIR),
+            title=self.title,
+            login=self.settings.LOGIN_COLUMN,
+            command_line="guv " + " ".join(map(shlex.quote, sys.argv[1:]))
+        ))
 
     def make_groups(self, name, df, name_gen):
         """Try to make subgroups in dataframe `df`.
@@ -807,7 +619,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         try:
             templates = [next(name_gen) for _ in range(num_groups)]
         except StopIteration as e:
-            raise GuvUserError("Les noms de groupes disponibles sont épuisés, utiliser # ou @ dans le modèle ou rajouter des noms dans `--names`.") from e
+            raise GuvUserError(_("The available group names are exhausted, use # or @ in the template or add names in `--names`.")) from e
 
         names = np.array([pformat(tmpl, group_name=name) for tmpl in templates])
         return names[partition]
@@ -853,14 +665,14 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
 
         if best_score == cooc_data["min_cost"]:
             if name is not None:
-                logger.info(f"Partition optimale pour le groupe `{name}` trouvée en {num_variants} essais.")
+                logger.info(_("Optimal partition for the group `{name}` found in {num_variants} attempts.").format(name=name, num_variants=num_variants))
             else:
-                logger.info(f"Partition optimale trouvée en {num_variants} essais.")
+                logger.info(_("Optimal partition found in {num_variants} attempts.").format(num_variants=num_variants))
         else:
             if name is not None:
-                logger.warning(f"Pas de solution optimale trouvée pour le groupe `{name}` en {self.max_iter} essais, meilleure solution :")
+                logger.warning(_("No optimal solution found for the group `{name}` in {max_iter} attempts, best solution:").format(name=name, max_iter=self.max_iter))
             else:
-                logger.warning(f"Pas de solution optimale trouvée en {self.max_iter} essais, meilleure solution :")
+                logger.warning(_("No optimal solution found in {max_iter} attempts, best solution:").format(max_iter=self.max_iter))
 
             best_coocurrence = get_coocurrence_matrix_from_array(best_partition)
 
@@ -868,7 +680,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                 scores = weight_coocurrence * best_coocurrence
                 n_errors = (np.sum(scores) - N) // 2
                 if n_errors > 0:
-                    logger.warning(f"- contrainte de non-appartenance par la colonne `{column}` violée {n_errors} fois :")
+                    logger.warning(_("- non-membership constraint by the column `{column}` violated {n_errors} times:").format(column=column, n_errors=n_errors))
 
                     for i, j in np.column_stack(np.where(scores > 0)):
                         if i >= j:
@@ -878,14 +690,14 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                         stu2 = " ".join(df[columns].iloc[j])
                         logger.warning(f"  - {stu1} -- {stu2}")
                 else:
-                    logger.warning(f"- contrainte de non-appartenance par la colonne `{column}` vérifiée")
+                    logger.warning(_("- non-membership constraint by the column `{column}` verified").format(column=column))
 
             for column, weight_coocurrence in cooc_data["cooc_affinity_dict"].items():
                 scores = (1 - weight_coocurrence) * best_coocurrence
                 n_errors = np.sum(scores) // 2
 
                 if n_errors > 0:
-                    logger.warning(f"- contrainte d'affinité par la colonne `{column}` violée {n_errors} fois :")
+                    logger.warning(_("- affinity constraint by the column `{column}` violated {n_errors} times:").format(column=column, n_errors=n_errors))
 
                     for i, j in np.column_stack(np.where(scores > 0)):
                         if i >= j:
@@ -896,7 +708,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                         stu2 = " ".join(df[columns].iloc[j])
                         logger.warning(f"  - {stu1} -- {stu2}")
                 else:
-                    logger.warning(f"- contrainte d'affinité par la colonne `{column}` vérifiée")
+                    logger.warning(_("- affinity constraint by the column `{column}` verified").format(column=column))
 
         return best_partition
 
