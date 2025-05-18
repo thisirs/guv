@@ -971,13 +971,17 @@ class AggregateSelf(Operation):
         uv = self.info["uv"]
         right_df = XlsStudentData.read_target(XlsStudentData.target_from(uv=uv))
 
-        if "Login" in left_df and "Login" in right_df:
+        login_col = self.settings.LOGIN_COLUMN
+        if login_col in left_df and login_col in right_df:
             left_on = right_on = "Login"
-        elif {"Nom", "Prénom"}.issubset(set(left_df.columns)) and {"Nom", "Prénom"}.issubset(set(right_df.columns)):
-            left_on=id_slug("Nom", "Prénom"),
-            right_on=id_slug("Nom", "Prénom"),
         else:
-            raise GuvUserError("La colonne `Login` ou les colonnes `Nom` et `Prénom` sont requises")
+            names = [self.settings.NAME_COLUMN, self.settings.LASTNAME_COLUMN]
+            names_set = set(names)
+            if names_set.issubset(set(left_df.columns)) and names_set.issubset(set(right_df.columns)):
+                left_on = id_slug(*names)
+                right_on = id_slug(*names)
+            else:
+                raise GuvUserError("Une colonne de login ou de Nom/Prénom est requise")
 
         agg = Aggregator(
             left_df,
@@ -1217,8 +1221,12 @@ class Flag(FileStringOperation):
 
         df[self.colname] = self.flags[1]
 
+        names = [self.settings.NAME_COLUMN, self.settings.LASTNAME_COLUMN]
+        if not set(names).issubset(df):
+            raise ImproperlyConfigured("Il faut des colonnes de Nom/Prénom")
+
         # Add column that acts as a primary key
-        df["fullname_slug"] = slugrot(df, "Nom", "Prénom")
+        df["fullname_slug"] = slugrot(df, *names)
 
         for line in self.lines:
             # Saute commentaire ou ligne vide
