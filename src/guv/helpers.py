@@ -1551,8 +1551,9 @@ class AggregateMoodleGrades(MoodleFileOperation):
     def get_arguments(self, df):
         if df is not None:
             email_column = self.settings.EMAIL_COLUMN
-            if email_column in df.columns:
-                left_on = email_column
+            if email_column not in df.columns:
+                raise ImproperlyConfigured("Email column is required to aggregate Moodle grades")
+            left_on = email_column
         else:
             left_on = None
 
