@@ -1,34 +1,25 @@
-"""Fichier de configuration du semestre"""
+"""Semester configuration file"""
 
-# Sous-dossiers représentant les UV gérées lors du semestre
+# Subfolders representing the UVs (course units) managed during the semester
 UVS = [{{ UVS }}]
 
-# Un dictionnaire listant des plannings (A2020, Master2Sem1,
-# Master2Sem2...) et leurs caractéristiques correspondantes (UV en
-# faisant partie, début et fin...)
-# Par exemple :
-# from datetime import date
-# PLANNINGS = {
-#     "P2020": {
-#         "UVS": ["SY09", "SY02"],
-#         "PL_BEG": date(2020, 2, 24),
-#         "PL_END": date(2020, 6, 27)
-#     }
-# }
+# Available columns (set to None if not available)
+NAME_COLUMN = "First Name"
+LASTNAME_COLUMN = "Last Name"
+EMAIL_COLUMN = "Email"
+LOGIN_COLUMN = "Login"
+
+# A dictionary listing schedules (A2020, Master2Sem1, Master2Sem2, etc.)
+# and their corresponding course units
 PLANNINGS = {
     "{{ SEMESTER }}": {
         "UVS": [{{ UVS }}],
     }
 }
 
-# Utilisé par la tâche `send_email` pour envoyer des courriels à l'effectif
-# entier
+# Used by the `send_email` task to send emails to the entire group
 LOGIN = None
 FROM_EMAIL = None
 PORT = None
 SMTP_SERVER = None
 
-NAME_COLUMN = "Prénom"
-LASTNAME_COLUMN = "Nom"
-EMAIL_COLUMN = "Courriel"
-LOGIN_COLUMN = "Login"

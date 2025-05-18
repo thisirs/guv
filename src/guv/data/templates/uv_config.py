@@ -1,37 +1,35 @@
-"""Fichier de configuration de l'UV"""
+"""UV (course unit) configuration file"""
 
-
-# Mode débogage
+# Debug mode
 # DEBUG = "INFO"
 
 from guv.helpers import Documents
 
 DOCS = Documents()
 
-# Chemin relatif vers le listing provenant de Moodle
+# Relative path to the listing from Moodle
 # DOCS.add_moodle_listing("...")
 
-# Fichier des changements de Cours
-# Il s'agit d'un fichier de prise en compte des changements de groupes
-# de Cours. Chaque ligne repère un changement qui est de la forme
+# Course group change file
+# This file handles changes in course groups.
+# Each line indicates a change in the form:
 # id1 --- id2
-# Les identifiants peuvent être des adresses email ou des nom prénom
+# The identifiers can be email addresses or full names
 # DOCS.switch("...", colname="Cours")
 
-# Fichier des changements de TD
-# Il s'agit d'un fichier de prise en compte des changements de groupes
-# de TD. Chaque ligne repère un changement qui est de la forme
+# Tutorial (TD) group change file
+# This file handles changes in TD groups.
+# Each line indicates a change in the form:
 # id1 --- id2
-# Les identifiants peuvent être des adresses email ou des nom prénom
+# The identifiers can be email addresses or full names
 # DOCS.switch("...", colname="TD")
 
-# Fichier des changements de TP
-# Il s'agit d'un fichier de prise en compte des changements de groupes
-# de TP. Chaque ligne repère un changement qui est de la forme
+# Lab (TP) group change file
+# This file handles changes in TP groups.
+# Each line indicates a change in the form:
 # id1 --- id2
-# Les identifiants peuvent être des adresses email ou des nom prénom
+# The identifiers can be email addresses or full names
 # DOCS.switch("...", colname="TP")
 
-# Correspondance entre le noms des groupes de Cours/TD/TP et leur
-# identifiant Moodle
+# Mapping between the names of the Cours/TD/TP groups and their Moodle identifiers
 MOODLE_GROUPS = None
