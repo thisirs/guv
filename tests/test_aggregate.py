@@ -3,20 +3,17 @@ from tests.plugins.test_path import path_dependency
 
 
 data = [
-    ("Adresse de courriel", "moodle_export_choicegroup_v1_fr.xlsx"),
-    ("Adresse de courriel", "moodle_export_choicegroup_v2_fr.xlsx"),
-    ("Email address", "moodle_export_choicegroup_en.xlsx")
+    ("moodle_export_choicegroup_en.xlsx")
 ]
 
 @path_dependency("test_xls_student_data")
-@pytest.mark.parametrize("moodle_email_column,filename", data)
-def test_aggregate_moodle_groups(guv, xlsx, guvcapfd, moodle_email_column, filename):
+@pytest.mark.parametrize("filename", data)
+def test_aggregate_moodle_groups(guv, xlsx, guvcapfd, filename):
     uv = guv.uvs[0]
     guv.cd(guv.semester, uv)
     guv.copy_file(filename, "documents")
 
     guv.change_config(f"""
-    MOODLE_EMAIL_COLUMN = "{moodle_email_column}"
     DOCS.aggregate_moodle_groups("documents/{filename}", "Projet")
     """)
 
@@ -31,20 +28,18 @@ def test_aggregate_moodle_groups(guv, xlsx, guvcapfd, moodle_email_column, filen
     assert(columns_after - columns_before == {"Projet"})
 
 
-data = [("Adresse de courriel", "moodle_export_gradebook_v1_fr.xlsx", ("Test Quiz (Brut)",)),
-        ("Adresse de courriel", "moodle_export_gradebook_v2_fr.xlsx", ("Test Quiz (Feedback)", "Test Quiz (Brut)")),
-        ("Adresse de courriel", "moodle_export_gradebook_v3_fr.xlsx", ("Test Quiz (Feedback)", "Suspendu", "Test Quiz (Brut)")),
-        ("Email address", "moodle_export_gradebook_en.xlsx", ("Note de médian (Real)", "Quiz: Quiz semaine 14 (Real)", "Assignment: Rendu du chapitre 1 : Modélisation (Real)"))]
+data = [
+        ("moodle_export_gradebook_en.xlsx", ("Note de médian (Real)", "Quiz: Quiz semaine 14 (Real)", "Assignment: Rendu du chapitre 1 : Modélisation (Real)"))
+]
 
 @path_dependency("test_xls_student_data")
-@pytest.mark.parametrize("moodle_email_column,filename,keep", data)
-def test_aggregate_moodle_grades(guv, xlsx, guvcapfd, moodle_email_column, filename, keep):
+@pytest.mark.parametrize("filename,keep", data)
+def test_aggregate_moodle_grades(guv, xlsx, guvcapfd, filename, keep):
     uv = guv.uvs[0]
     guv.cd(guv.semester, uv)
     guv.copy_file(filename, "documents")
 
     guv.change_config(f"""
-    MOODLE_EMAIL_COLUMN = "{moodle_email_column}"
     DOCS.aggregate_moodle_grades("documents/{filename}")
     """)
 

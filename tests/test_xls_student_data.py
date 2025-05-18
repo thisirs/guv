@@ -23,9 +23,9 @@ def test_xls_student_data(guv, xlsx, guvcapfd):
 
     doc = xlsx.tabular(guv.cwd / "effectif.xlsx")
     doc.check_columns(
-        "Prénom",
-        "Nom",
-        "Courriel",
+        "First name",
+        "Last name",
+        "Email",
         "Cours",
         "TD",
         "Login"
