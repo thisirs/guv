@@ -37,7 +37,8 @@ dependencies = [
 dev = [
     "pytest>=8.3.5",
     "pytest-dependency",
-    "pytest-order"
+    "pytest-order",
+    "shtab"
 ]
 doc = [
     "tox",
