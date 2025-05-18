@@ -107,7 +107,7 @@ def print_completer(shell="zsh"):
         }
     }
 
-    parser = get_parser(task_loader.tasks)
+    parser = get_parser(task_loader.namespace)
 
     preamble = {"zsh": """
 _guv_column() {
