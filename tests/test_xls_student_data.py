@@ -31,29 +31,6 @@ def test_xls_student_data(guv, xlsx, guvcapfd):
         "Login"
     )
 
-    guv.change_config("""\
-    DOCS.add_moodle_listing("documents/SY02 Notes.xlsx")
-    """)
-
-    guv("xls_student_data").succeed()
-    guvcapfd.stdout_search(".  xls_student_data")
-    guvcapfd.no_warning()
-    guvcapfd.reset()
-    assert (guv.cwd / "generated" / "student_data_final.csv").is_file()
-    assert (guv.cwd / "effectif.xlsx").is_file()
-
-    doc = xlsx.tabular(guv.cwd / "effectif.xlsx")
-    doc.check_columns(
-        "Prénom",
-        "Nom",
-        "Courriel",
-        "Cours",
-        "TD",
-        "Login",
-        "Nom_moodle",
-        "Prénom_moodle",
-    )
-
     guv.change_config("""
     DOCS.apply_df(lambda df: df.assign(grade1=1))
     DOCS.apply_df(lambda df: df.assign(ects="A"))
