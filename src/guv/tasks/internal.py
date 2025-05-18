@@ -212,14 +212,14 @@ class XlsStudentData(UVTask):
             file.write("\n".join(f"{e}" for e in df.columns.values))
 
         # Keep dataframe ordered the same as original effectif.xlsx
-        if os.path.exists(self.target):
-            df_ordered = XlsStudentData.read_target(self.target)
-            if len(df_ordered.index) == len(df.index):
-                if "Login" in df.columns and "Login" in df_ordered.columns:
-                    if set(df["Login"]) == set(df_ordered["Login"]):
-                        df = df.set_index("Login", drop=False).loc[df_ordered["Login"]].reset_index(drop=True)
-        else:
-            df = sort_values(df, ["Nom", "Prénom"])
+        # if os.path.exists(self.target):
+        #     df_ordered = XlsStudentData.read_target(self.target)
+        #     if len(df_ordered.index) == len(df.index):
+        #         for colname in ["Login", "Courriel", "Adresse de courriel"]:
+        #             if colname in df.columns and colname in df_ordered.columns:
+        #                 if set(df[colname]) == set(df_ordered[colname]):
+        #                     df = df.set_index("Login", drop=False).loc[df_ordered["Login"]].reset_index(drop=True)
+        #                 break
 
         # Get column dimensions of original effectif.xlsx
         column_dimensions = self.get_column_dimensions()
