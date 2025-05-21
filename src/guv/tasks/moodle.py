@@ -8,20 +8,16 @@ fichier Json pour copier-coller des restrictions d'accès en fonction
 de l'appartenance à un groupe.
 """
 
-import getpass
 import json
 import math
 import os
-import pprint
 import random
 import shlex
 import sys
 import textwrap
 
-import mechanicalsoup
 import numpy as np
 import pandas as pd
-import yapf.yapflib.yapf_api as yapf
 
 from ..exceptions import GuvUserError
 from ..logger import logger
@@ -35,38 +31,12 @@ from ..utils import (
     sort_values,
 )
 from ..utils_config import Output, rel_to_dir
-from .base import CliArgsMixin, SemesterTask, UVTask
+from .base import CliArgsMixin, UVTask
 from .evolutionary_algorithm import evolutionary_algorithm
 from .internal import XlsStudentData
 
 DATE_FORMAT = "%Y-%m-%d"
 TIME_FORMAT = "%H:%M"
-
-
-class MoodleBrowser():
-    def __init__(self):
-        self.browser = mechanicalsoup.Browser(soup_config={'features': 'lxml'})
-        self.is_authenticated = False
-
-    def _authenticate(self):
-        login_page = self.browser.get("https://moodle.utc.fr/login/index.php?authCAS=CAS")
-
-        # Ask for the username
-        username = input("Entrer votre login Moodle : ")
-
-        # Safely ask for the password without showing it in the console
-        password = getpass.getpass("Entrer votre mot de passe : ")
-
-        login_form = mechanicalsoup.Form(login_page.soup.select_one("#fm1"))
-        login_form.input({"username": username, "password": password})
-
-        self.browser.submit(login_form, login_page.url)
-        self.is_authenticated = True
-
-    def get(self, url):
-        if not self.is_authenticated:
-            self._authenticate()
-        return self.browser.get(url)
 
 
 class CsvGroups(UVTask, CliArgsMixin):
@@ -957,76 +927,3 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
             "cooc_affinity_dict": cooc_affinity_dict
         }
 
-
-class FetchGroupId(SemesterTask, CliArgsMixin):
-    """Crée un fichier de correspondance entre le nom et l'id des groupes Moodle.
-
-    Pour utiliser certaines fonctionnalités de **guv** (notamment
-    :class:`~guv.tasks.moodle.JsonRestriction` et
-    :class:`~guv.tasks.moodle.JsonGroup`), il faut connaître la
-    correspondance entre le nom des groupes et leur identifiant dans
-    Moodle. Cette tâche permet de télécharger la correspondance en
-    indiquant l'identifiant de l'UV/UE sous Moodle. Par exemple, l'id
-    de l'url suivante :
-
-        https://moodle.utc.fr/course/view.php?id=1718
-
-    est 1718. La correspondance est téléchargée dans le sous-dossier
-    ``document/`` du dossier du semestre. Il suffit ensuite de copier
-    son contenu dans le fichier ``config.py`` de l'UV/UE
-    correspondante.
-
-    {options}
-
-    """
-
-    target_dir = "documents"
-    target_name = "group_id_{id}.py"
-    url = "https://moodle.utc.fr/group/overview.php?id={id}"
-    cli_args = (
-        argument(
-            "ident_list",
-            nargs="+",
-            help="Liste des identifiants des UV sur Moodle (id=???? dans l'url)"
-        ),
-    )
-
-    def setup(self):
-        super().setup()
-        self.parse_args()
-
-    def groups(self, page):
-        groups = {}
-        for select in page.soup.find_all("select"):
-            if select["name"] in ["group", "grouping"]:
-                for option in select.find_all("option"):
-                    value = option["value"]
-                    if int(value) > 0:
-                        groups[option.text] = {
-                            "moodle_id": int(value),
-                            "moodle_name": option.text
-                        }
-
-        return groups
-
-    def run(self):
-        browser = MoodleBrowser()
-
-        for id in self.ident_list:
-            page = browser.get(self.url.format(id=id))
-            groups = self.groups(page)
-
-            with Output(self.build_target(id=id)) as out:
-                with open(out.target, "w") as f:
-                    msg = """\
-
-Copier le dictionnaire suivant dans le fichier config.py de l'UV. Tous
-les groupes créés sous Moodle sont présents. Il faut s'assurer que les
-clés correspondent aux noms des groupes de Cours,TD,TP compris par guv
-(de la forme "C", "C1", "D1", "D2", "T1", "T2"...)
-
-                    """
-
-                    f.write(textwrap.indent(msg.strip(), "# "))
-                    f.write("\n\n")
-                    f.write(yapf.FormatCode("MOODLE_GROUPS = " + pprint.pformat(groups))[0])

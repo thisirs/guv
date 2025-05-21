@@ -11,6 +11,5 @@ la classe. Par exemple
 from .attendance import PdfAttendance, PdfAttendanceFull
 from .gradebook import XlsGradeBookGroup, XlsGradeBookJury, XlsGradeBookNoGroup
 from .internal import XlsStudentData
-from .moodle import (CsvCreateGroups, CsvGroups, CsvGroupsGroupings,
-                     FetchGroupId)
+from .moodle import CsvCreateGroups, CsvGroups, CsvGroupsGroupings
 from .students import SendEmail, ZoomBreakoutRooms
