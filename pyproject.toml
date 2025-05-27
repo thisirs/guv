@@ -15,21 +15,16 @@ license = {text = "MIT"}
 scripts = {guv = "guv.runner:main"}
 dependencies = [
   "doit",
-  "jinja2",
+  "Jinja2",
   "jsonschema",
   "latex",
-  "markdown",
   "numpy",
   "openpyxl",
-  "oyaml",
   "pandas",
   "prompt_toolkit",
-  "pynliner",
-  "requests",
+  "PyYAML",
   "schema",
-  "unidecode",
-  "xlrd",
-  "yapf",
+  "Unidecode",
 ]
 
 [dependency-groups]
@@ -40,12 +35,9 @@ dev = [
     "shtab"
 ]
 doc = [
-    "tox",
     "sphinx",
     "furo",
-    "schema",
     "myst_parser",
-    "pydata-sphinx-theme"
 ]
 
 [tool.setuptools.packages.find]
