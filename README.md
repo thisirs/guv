@@ -20,7 +20,7 @@ attendance sheets, grade and jury spreadsheets, and much more!
 Install `guv` directly via `pip`:
 
 ```shell
-pip install https://github.com/thisirs/guv.git
+pip install git+https://github.com/thisirs/guv.git
 ```
 
 ---
