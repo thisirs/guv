@@ -44,7 +44,7 @@ doc = [
 where = ["src"]
 
 [tool.setuptools.package-data]
-guv = ["schemas/*", "data/*", "images/*", "data/templates/*", "locale/*/LC_MESSAGES/*.mo"]
+guv = ["schemas/*", "data/*", "images/*", "data/templates/*", "locale/*/LC_MESSAGES/*.mo", "locale/*/texts/*"]
 
 [tool.setuptools.dynamic]
 version = {attr = "guv.__version__"}
