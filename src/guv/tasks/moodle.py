@@ -46,7 +46,7 @@ class CsvGroups(UVTask, CliArgsMixin):
             "--groups",
             metavar="COL,[COL,...]",
             type=lambda t: [s.strip() for s in t.split(",")],
-            default=_("Lecture,Tutorial,Practical work"),
+            default=[_("Lecture"), _("Tutorial"), _("Practical work")],
             help=_("List of groupings to consider via a column name. By default, the groupings ``Lecture``, ``Tutorial`` and ``Practical work`` are used."),
         ),
         argument(
