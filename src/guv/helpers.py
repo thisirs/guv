@@ -377,7 +377,10 @@ class Add(FileOperation):
         if df is not None and self.func is None:
             raise ImproperlyConfigured(_("An aggregation function must be provided"))
 
-        if self.func is not None:
+        if df is None and self.func is not None:
+            logger.warning(_("No pre-existing dataframe, the provided function is ignored"))
+
+        if self.func is not None and df is not None:
             return self.func(df, self.filename)
         else:
             return read_dataframe(self.filename)
