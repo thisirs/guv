@@ -15,7 +15,7 @@ colname : :obj:`str`
 func : :obj:`callable`
     Function that takes an element and returns the modified element.
 
-msg : :obj:`str`
+msg : :obj:`str`, optional
     A message describing the operation.
 
 Examples

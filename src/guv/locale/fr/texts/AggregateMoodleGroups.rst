@@ -5,6 +5,19 @@ Le nom de la colonne des groupes étant toujours "Groupe", l'argument
 le fichier central, il est possible de la sauvegarder avec l'option
 ``backup``.
 
+Parameters
+----------
+
+filename : :obj:`str`
+    Le chemin du fichier à agréger.
+
+colname: :obj:`str`
+    Le nom de la colonne de groupe où stocker les informations
+
+backup : :obj:`bool`
+    Sauvegarder la colonne avant tout changement
+
+
 Examples
 --------
 

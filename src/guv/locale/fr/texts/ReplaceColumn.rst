@@ -24,7 +24,7 @@ new_colname : :obj:`str`
     Nom de la nouvelle colonne
 backup : :obj:`bool`
     Sauvegarder la colonne avant tout changement
-msg : :obj:`str`
+msg : :obj:`str`, optional
     Un message décrivant l'opération
 
 Examples

@@ -16,7 +16,7 @@ colname : :obj:`str`
 value :
     La valeur à affecter.
 
-msg : :obj:`str`
+msg : :obj:`str`, optional
     Un message décrivant l'opération
 
 Examples

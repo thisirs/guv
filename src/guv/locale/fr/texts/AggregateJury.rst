@@ -11,6 +11,12 @@ L'équivalent avec :func:`~guv.helpers.Documents.aggregate` s'écrit :
        subset=["Note agrégée", "Note ECTS"]
    )
 
+Parameters
+----------
+
+filename : :obj:`str`
+    Le chemin du fichier à agréger.
+
 Examples
 --------
 

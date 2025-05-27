@@ -14,7 +14,7 @@ Parameters
 func : :obj:`callable`
     Fonction prenant en argument un *DataFrame* et renvoyant un
     *DataFrame* modifié
-msg : :obj:`str`
+msg : :obj:`str`, optional
     Un message décrivant l'opération
 
 Examples

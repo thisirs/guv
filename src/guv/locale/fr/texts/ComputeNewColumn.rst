@@ -20,7 +20,7 @@ func : :obj:`callable`
     colonnes/valeurs" et renvoyant une valeur calculée
 colname : :obj:`str`
     Nom de la colonne à créer
-msg : :obj:`str`
+msg : :obj:`str`, optional
     Un message décrivant l'opération
 
 Examples

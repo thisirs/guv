@@ -19,7 +19,7 @@ func : :obj:`callable`
     as input and returns a computed value
 colname : :obj:`str`
     Name of the column to create
-msg : :obj:`str`
+msg : :obj:`str`, optional
     A message describing the operation
 
 Examples

@@ -16,7 +16,7 @@ colname : :obj:`str`
 func : :obj:`callable`
     Fonction prenant en argument un élément et renvoyant l'élément
     modifié
-msg : :obj:`str`
+msg : :obj:`str`, optional
     Un message décrivant l'opération
 
 Examples

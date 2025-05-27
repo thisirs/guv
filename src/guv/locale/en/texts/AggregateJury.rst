@@ -10,6 +10,12 @@ The equivalent using :func:`~guv.helpers.Documents.aggregate` is written as:
        subset=["Aggregated grade", "ECTS grade"]
    )
 
+Parameters
+----------
+
+filename : :obj:`str`
+    The path to the file to aggregate.
+
 Examples
 --------
 

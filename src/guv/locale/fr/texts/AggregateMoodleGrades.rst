@@ -6,6 +6,15 @@ de notes de Moodle sous la forme d'un fichier Excel ou csv.
 Les colonnes inutiles seront éliminées. Un renommage des colonnes peut être
 effectué en renseignant ``rename``.
 
+Parameters
+----------
+
+filename : :obj:`str`
+    Le chemin du fichier à agréger.
+
+rename : :obj:`dict`, optional
+    Permet de renommer des colonnes après incorporation.
+
 Examples
 --------
 

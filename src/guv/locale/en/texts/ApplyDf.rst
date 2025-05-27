@@ -13,7 +13,7 @@ Parameters
 func : :obj:`callable`
     Function that takes a *DataFrame* and returns a modified *DataFrame*.
 
-msg : :obj:`str`
+msg : :obj:`str`, optional
     A message describing the operation.
 
 Examples
