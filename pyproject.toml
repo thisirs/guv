@@ -8,7 +8,7 @@ authors = [
   {name = "Sylvain Rousseau", email = "sylvain.rousseau@hds.utc.fr"},
 ]
 readme = "README.md"
-description = "Programme d'aide à la gestion d'UV"
+description = "Tool for managing course units"
 dynamic = ["version"]
 requires-python = ">=3.8"
 license = {text = "MIT"}
