@@ -33,30 +33,38 @@ Follow the steps below to get started with `guv`:
 
     ```shell
     guv createsemester Fall2024 --uv CS042 CS314
-    cd Fall2024
     ```
+
+    This creates a semester directory `Fall2024` containing to courses `CS314`
+    and `CS042`.
 
 2. **Provide a base listing file and add it in `config.py`**.
 
-    ```shell
-    cd CS042
-    edit config.py
-    ```
+    Place the csv/Excel file of a listing of students under
+    `Fall2024/CS042/documents` and tell `guv` to add it in
+    `Fall2024/CS042/config.py`:
 
     ```python
+    DOCS = Documents()
     DOCS.add("documents/base_listing.xlsx")
     ```
 
 3. **Use tasks**
 
-    Generate a gradebook
+    Now go to `CS314` subdirectory:
 
     ```shell
-    guv xls_gradebook
+    cd Fall2024/CS042
     ```
 
-    Generate attendance sheets
+    You can now generate attendance sheets:
 
     ```shell
     guv pdf_attendance --title "Exam"
+    ```
+
+    Generate a gradebook (you will be asked for a marking scheme):
+
+    ```shell
+    guv xls_gradebook_no_group --name Exam1
     ```
