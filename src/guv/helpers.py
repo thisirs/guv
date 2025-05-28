@@ -19,7 +19,7 @@ from .operation import Operation
 from .tasks.internal import Documents
 from .translations import _, TaskDocstring
 from .utils import (check_if_absent, check_if_present, convert_to_numeric,
-                    read_dataframe, slugrot_string, get_descriptive_function)
+                    read_dataframe, slugrot_string)
 from .utils_config import check_filename, rel_to_dir
 
 
@@ -790,27 +790,22 @@ def swap_column(df, lines, colname, email_column):
     """Return copy of column `colname` modified by swaps from `lines`. """
 
     new_column = df[colname].copy()
-    desc = get_descriptive_function(df)
 
     for part1, part2 in read_pairs(lines):
         type, idx1, idx2 = validate_pair(df, colname, part1, part2, email_column)
 
         if type == "swap":
-            nom1 = desc(df.loc[idx1, :])
-            nom2 = desc(df.loc[idx2, :])
-            logger.info(_("Exchange of `{nom1}` and `{nom2}` in the column `{colname}`").format(nom1=nom1, nom2=nom2, colname=colname))
+            logger.info(_("Exchange of `{nom1}` and `{nom2}` in the column `{colname}`").format(nom1=part1, nom2=part2, colname=colname))
 
             tmp = new_column[idx1]
             new_column[idx1] = new_column[idx2]
             new_column[idx2] = tmp
         elif type == "move":
-            nom = desc(df.loc[idx1, :])
-            logger.info(_("Student `{nom}` assigned to group `{idx}`").format(nom=nom, idx=idx2))
+            logger.info(_("Student `{nom}` assigned to group `{idx}`").format(nom=part1, idx=idx2))
 
             new_column[idx1] = idx2
         elif type == "quit":
-            nom = desc(df.loc[idx1, :])
-            logger.info(_("Abandon student `%s`"), nom)
+            logger.info(_("Abandon student `%s`"), part1)
 
             new_column[idx1] = np.nan
 

@@ -319,34 +319,3 @@ def rel_to_dir_aux(path, ref_dir, root_dir):
         return os.path.relpath(path, ref_dir)
 
     return path
-
-
-def get_descriptive_function(df, columns=[]):
-    if "Nom" in df.columns and "Prénom" in df.columns:
-        def func(row):
-            return str(getattr(row, "Nom")) + " " + str(getattr(row, "Prénom"))
-    elif "Nom de famille" in df.columns and "Prénom" in df.columns:
-        def func(row):
-            return str(getattr(row, "Nom de famille")) + " " + str(getattr(row, "Prénom"))
-    elif "Nom_moodle" in df.columns and "Prénom_moodle" in df.columns:
-        def func(row):
-            return str(getattr(row, "Nom")) + " " + str(getattr(row, "Prénom"))
-    elif "Nom de famille" in df.columns and "Prénom_moodle" in df.columns:
-        def func(row):
-            return str(getattr(row, "Nom")) + " " + str(getattr(row, "Prénom"))
-    elif "Courriel" in df.columns:
-        def func(row):
-            return str(getattr(row, "Courriel"))
-    elif "Adresse de courriel" in df.columns:
-        def func(row):
-            return str(getattr(row, "Adresse de courriel"))
-    elif len(columns) > 0:
-        def func(row):
-            return ", ".join(str(getattr(row, e)) for e in columns)
-    else:
-        def func(row):
-            if hasattr(row, "Index"):
-                return f"L'enregistrement `{getattr(row, 'Index')}`"
-            else:
-                return str(row[0])
-    return func
