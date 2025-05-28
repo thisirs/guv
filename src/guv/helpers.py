@@ -939,6 +939,7 @@ class AggregateJury(FileOperation):
             on=self.settings.EMAIL_COLUMN,
             subset=[_("Aggregated grade"), _("ECTS grade")]
         )
+        op.setup(settings=self.settings, info=self.info)
         return op.apply(df)
 
 
