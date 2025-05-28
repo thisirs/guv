@@ -50,6 +50,11 @@ class Guv:
         cache = self.request.config.cache
         return cache.get(key)
 
+    def create_file(self, dest, content):
+        dest = self.cwd / dest
+        with open(dest, "w") as f:
+            f.write(content)
+
     def copy_file(self, source, dest):
         """Copy file from data directory to `dest`"""
 
@@ -148,9 +153,11 @@ class Tabular:
     @property
     def df(self):
         if self._df is None:
-            self._df = pd.read_excel(
-                str(self.file_path), sheet_name=self.sheet_name, engine="openpyxl"
-            )
+            excel_file = pd.ExcelFile(str(self.file_path))
+            if not isinstance(self.sheet_name, str):
+                sheet_name = excel_file.sheet_names[int(self.sheet_name)]
+                self.sheet_name = sheet_name
+            self._df = pd.read_excel(excel_file, sheet_name=self.sheet_name, engine="openpyxl")
         return self._df
 
     @df.setter
@@ -159,6 +166,10 @@ class Tabular:
 
     def __enter__(self):
         return self
+
+    def contains(self, *cols):
+        for col in cols:
+            assert col in self.df.columns
 
     def check_columns(self, *cols):
         assert not set(self.df.columns.values).symmetric_difference(set(cols))

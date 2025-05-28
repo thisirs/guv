@@ -14,7 +14,7 @@ def test_aggregate_moodle_groups(guv, xlsx, guvcapfd, filename):
     guv.copy_file(filename, "documents")
 
     guv.change_config(f"""
-    DOCS.aggregate_moodle_groups("documents/{filename}", "Projet")
+    DOCS.aggregate_moodle_groups("documents/{filename}", "Project")
     """)
 
     doc = xlsx.tabular(guv.cwd / "effectif.xlsx")
@@ -25,7 +25,7 @@ def test_aggregate_moodle_groups(guv, xlsx, guvcapfd, filename):
     doc = xlsx.tabular(guv.cwd / "effectif.xlsx")
     columns_after = set(doc.df.columns)
 
-    assert(columns_after - columns_before == {"Projet"})
+    assert(columns_after - columns_before == {"Project"})
 
 
 data = [
@@ -146,50 +146,108 @@ def test_docs_aggregate(guv, xlsx):
 
 @path_dependency("test_xls_student_data")
 def test_docs_aggregate_self(guv, xlsx):
-    pass
+    uv = guv.uvs[0]
+    guv.cd(guv.semester, uv)
 
+    with xlsx.tabular(guv.cwd / "effectif.xlsx") as tab:
+        tab.df["Manual"] = 1
 
-@path_dependency("test_xls_student_data")
-def test_docs_aggregate_moodle_grades(guv, xlsx):
-    pass
+    guv.change_config("""DOCS.aggregate_self("Manual")""")
 
-
-@path_dependency("test_xls_student_data")
-def test_docs_aggregate_moodle_groups(guv, xlsx):
-    pass
-
-
-@path_dependency("test_xls_student_data")
-def test_docs_aggregate_wexam_grades(guv, xlsx):
-    pass
+    guv().succeed()
+    xlsx.tabular(guv.cwd / "effectif.xlsx").contains("Manual")
 
 
 @path_dependency("test_xls_student_data")
 def test_docs_aggregate_jury(guv, xlsx):
-    pass
+    uv = guv.uvs[0]
+    guv.cd(guv.semester, uv)
+
+    guv.copy_file("config_jury_test.yaml", "documents")
+    guv(
+        "xls_grade_book_jury --name Jury --config documents/config_jury_test.yaml"
+    ).succeed()
+    filename = "generated/Jury_gradebook.xlsx"
+
+    assert (guv.cwd / filename).is_file()
+
+    guv.change_config(f"""
+    DOCS.aggregate_jury("{filename}")
+    """)
+
+    guv().succeed()
+
+    xlsx.tabular(guv.cwd / "effectif.xlsx").contains("ECTS grade", "Aggregated grade")
 
 
 @path_dependency("test_xls_student_data")
 def test_docs_aggregate_org(guv, xlsx):
-    pass
+    uv = guv.uvs[0]
+    guv.cd(guv.semester, uv)
 
+    filename = "documents/org"
+    guv.create_file(filename, """\
+* Marco Bla
+  Some remark
+* Pierre Blahblahfoo
+  Some other remark
+""")
 
-@path_dependency("test_xls_student_data")
-def test_docs_aggregate_amenagements(guv, xlsx):
-    pass
+    guv.change_config(f"""
+    DOCS.aggregate_org("{filename}", colname="Org")
+    """)
+
+    guv().succeed()
+    xlsx.tabular(guv.cwd / "effectif.xlsx").contains("Org")
+
 
 
 @path_dependency("test_xls_student_data")
 def test_docs_flag(guv, xlsx):
-    pass
+    uv = guv.uvs[0]
+    guv.cd(guv.semester, uv)
+
+    filename = "documents/flag"
+    guv.create_file(filename, """\
+Marco Bla
+Pierre Blahblahfoo
+Michel Barbarbar
+Mathilde Barbarbar
+""")
+
+    guv.change_config(f"""
+    DOCS.flag("{filename}", colname="Flag")
+    """)
+
+    guv().succeed()
+    xlsx.tabular(guv.cwd / "effectif.xlsx").contains("Flag")
 
 
 @path_dependency("test_xls_student_data")
 def test_docs_apply_cell(guv, xlsx):
-    pass
+    uv = guv.uvs[0]
+    guv.cd(guv.semester, uv)
+
+    guv.change_config("""
+    DOCS.apply_cell("marco.bla@etu.utc.fr", "Tutorial", "D4")
+    """)
+
+    guv().succeed()
 
 
 @path_dependency("test_xls_student_data")
 def test_docs_switch(guv, xlsx):
-    pass
+    uv = guv.uvs[0]
+    guv.cd(guv.semester, uv)
 
+    filename = "documents/swaps"
+    guv.create_file(filename, """\
+marco.bla@etu.utc.fr --- pierre.blahblahfoo@etu.utc.fr
+michel.barbarbar@etu.utc.fr --- mathilde.barbarbar@etu.utc.fr
+""")
+
+    guv.change_config(f"""
+    DOCS.switch("{filename}", colname="Tutorial")
+    """)
+
+    guv().succeed()
