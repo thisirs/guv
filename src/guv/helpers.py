@@ -309,8 +309,7 @@ class ApplyCell(Operation):
         self.msg = msg
 
     def apply(self, df):
-        check_if_present(df, self.colname)
-        check_if_absent(df, self.settings.EMAIL_COLUMN)
+        check_if_present(df, [self.colname, self.settings.EMAIL_COLUMN])
         left_on = self.settings.EMAIL_COLUMN
 
         if '@' in self.name_or_email:
