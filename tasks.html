@@ -1,0 +1,876 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Aggregating functions for DOCS" href="operations.html" /><link rel="prev" title="guv" href="index.html" />
+
+    <!-- Generated with Sphinx 8.2.3 and Furo 2024.08.06 -->
+        <title>Tasks - guv documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=354aac6f" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=302659d7" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">guv  documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  
+  <span class="sidebar-brand-text">guv  documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="index.html">guv</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Tasks</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="operations.html">Aggregating functions for <code class="docutils literal notranslate"><span class="pre">DOCS</span></code></a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="_sources/tasks.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="tasks">
+<h1>Tasks<a class="headerlink" href="#tasks" title="Link to this heading">¶</a></h1>
+<section id="attendance">
+<h2>Attendance<a class="headerlink" href="#attendance" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="guv.tasks.attendance.PdfAttendance">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">guv.tasks.attendance.</span></span><span class="sig-name descname"><span class="pre">PdfAttendance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">planning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#guv.tasks.attendance.PdfAttendance" title="Link to this definition">¶</a></dt>
+<dd><p>PDF file of attendance sheets</p>
+<p>This task generates a PDF file or a zip archive of PDF files containing
+attendance sheets.</p>
+<section id="options">
+<h3>Options<a class="headerlink" href="#options" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">-h</span></code>, <code class="docutils literal notranslate"><span class="pre">--help</span></code> : show this help message and exit</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-t</span> <span class="pre">TITLE</span></code>, <code class="docutils literal notranslate"><span class="pre">--title</span> <span class="pre">TITLE</span></code> : Specifies a title that will be used in the attendance sheets and the name of the generated file. By default, it is <code class="docutils literal notranslate"><span class="pre">Attendance</span> <span class="pre">sheet</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-g</span> <span class="pre">GROUP</span></code>, <code class="docutils literal notranslate"><span class="pre">--group</span> <span class="pre">GROUP</span></code> : Allows creating groups to make as many attendance sheets. You must specify a column from the central file <code class="docutils literal notranslate"><span class="pre">effectif.xlsx</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-b</span></code>, <code class="docutils literal notranslate"><span class="pre">--blank</span></code> : Do not display the names of the students (useful only with –group).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-c</span> <span class="pre">[COUNT</span> <span class="pre">...]</span></code>, <code class="docutils literal notranslate"><span class="pre">--count</span> <span class="pre">[COUNT</span> <span class="pre">...]</span></code> : Uses a list of staff instead of <code class="docutils literal notranslate"><span class="pre">--group</span></code>. The group names can be specified by <code class="docutils literal notranslate"><span class="pre">--names</span></code>. Otherwise, the group names are in the form <code class="docutils literal notranslate"><span class="pre">Group</span> <span class="pre">1</span></code>, <code class="docutils literal notranslate"><span class="pre">Group</span> <span class="pre">2</span></code>,…</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-n</span> <span class="pre">[NAMES</span> <span class="pre">...]</span></code>, <code class="docutils literal notranslate"><span class="pre">--names</span> <span class="pre">[NAMES</span> <span class="pre">...]</span></code> : Specifies the names of the groups corresponding to <code class="docutils literal notranslate"><span class="pre">--count</span></code>. The list must be the same size as <code class="docutils literal notranslate"><span class="pre">--count</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-e</span> <span class="pre">EXTRA</span></code>, <code class="docutils literal notranslate"><span class="pre">--extra</span> <span class="pre">EXTRA</span></code> : Allows adding additional empty lines in addition to those already present induced by <code class="docutils literal notranslate"><span class="pre">--group</span></code> or set by <code class="docutils literal notranslate"><span class="pre">--count</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--tiers-temps</span> <span class="pre">[TIERS_TEMPS]</span></code> : Specifies the column for students placed in a dedicated room. If the column is not specified, <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--save-tex</span></code> : Allows leaving the generated .tex files for possible modification.</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<ul>
+<li><p>Named attendance sheet:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>pdf_attendance<span class="w"> </span>--title<span class="w"> </span><span class="s2">&quot;Exam&quot;</span>
+</pre></div>
+</div>
+</li>
+<li><p>Named attendance sheets by TP group:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>pdf_attendance<span class="w"> </span>--title<span class="w"> </span><span class="s2">&quot;Examen de TP&quot;</span><span class="w"> </span>--group<span class="w"> </span>TP
+</pre></div>
+</div>
+</li>
+<li><p>Blank attendance sheets by TP group:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>pdf_attendance<span class="w"> </span>--title<span class="w"> </span><span class="s2">&quot;Examen de TP&quot;</span><span class="w"> </span>--group<span class="w"> </span>TP<span class="w"> </span>--blank
+</pre></div>
+</div>
+</li>
+<li><p>Named attendance sheets divided across three rooms:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>pdf_attendance<span class="w"> </span>--title<span class="w"> </span><span class="s2">&quot;Examen de TP&quot;</span><span class="w"> </span>--count<span class="w"> </span><span class="m">24</span><span class="w"> </span><span class="m">24</span><span class="w"> </span><span class="m">24</span><span class="w"> </span>--name<span class="w"> </span><span class="s2">&quot;Salle 1&quot;</span><span class="w"> </span><span class="s2">&quot;Salle 2&quot;</span><span class="w"> </span><span class="s2">&quot;Salle 3&quot;</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="guv.tasks.attendance.PdfAttendanceFull">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">guv.tasks.attendance.</span></span><span class="sig-name descname"><span class="pre">PdfAttendanceFull</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">planning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#guv.tasks.attendance.PdfAttendanceFull" title="Link to this definition">¶</a></dt>
+<dd><p>Zip file of personalized attendance sheets by group and semester</p>
+<p>Generates a zip file containing one attendance sheet per group for the entire
+semester. This makes it possible to have a single document for attendance
+tracking over the semester.</p>
+<section id="id1">
+<h3>Options<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">-h</span></code>, <code class="docutils literal notranslate"><span class="pre">--help</span></code> : show this help message and exit</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--title</span> <span class="pre">TITLE</span></code> : Specifies a title that will be used in the attendance sheets and the name of the generated file. By default, it is <code class="docutils literal notranslate"><span class="pre">Attendance</span> <span class="pre">sheet</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-g</span> <span class="pre">GROUP</span></code>, <code class="docutils literal notranslate"><span class="pre">--group</span> <span class="pre">GROUP</span></code> : Allows specifying a group column to make attendance sheets by groups.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-n</span> <span class="pre">SLOTS</span></code>, <code class="docutils literal notranslate"><span class="pre">--slots</span> <span class="pre">SLOTS</span></code> : Allows specifying the number of sessions for the semester, i.e., the number of columns in the attendance sheet.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-t</span> <span class="pre">TEMPLATE</span></code>, <code class="docutils literal notranslate"><span class="pre">--template</span> <span class="pre">TEMPLATE</span></code> : Template to set the name of successive sessions in the attendance sheet. By default, it is <code class="docutils literal notranslate"><span class="pre">S{number}</span></code>. The only supported keyword is <code class="docutils literal notranslate"><span class="pre">number</span></code> which starts at 1.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--save-tex</span></code> : Allows leaving the generated .tex files for possible modification.</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>pdf_attendance_full<span class="w"> </span>-n<span class="w"> </span><span class="m">7</span>
+guv<span class="w"> </span>pdf_attendance_full<span class="w"> </span>--group<span class="w"> </span>TP<span class="w"> </span>--template<span class="w"> </span><span class="s2">&quot;Séance {number}&quot;</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+</section>
+<section id="grades">
+<h2>Grades<a class="headerlink" href="#grades" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="guv.tasks.gradebook.XlsGradeBookGroup">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">guv.tasks.gradebook.</span></span><span class="sig-name descname"><span class="pre">XlsGradeBookGroup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">planning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#guv.tasks.gradebook.XlsGradeBookGroup" title="Link to this definition">¶</a></dt>
+<dd><p>Excel grade file by group</p>
+<p>This task generates an Excel file for grading by groups, avoiding the need to
+copy the same grade for each member of a group. Student groups are specified
+using the <code class="docutils literal notranslate"><span class="pre">--group-by</span></code> argument. One or more detailed marking schemes can be
+provided with the <code class="docutils literal notranslate"><span class="pre">--marking-scheme</span></code> argument.</p>
+<p>The Excel file can also be split into multiple worksheets based on a column from
+the <code class="docutils literal notranslate"><span class="pre">effectif.xlsx</span></code> file, using the <code class="docutils literal notranslate"><span class="pre">--worksheets</span></code> argument. Within each
+group, students can be ordered according to the <code class="docutils literal notranslate"><span class="pre">--order-by</span></code> argument.</p>
+<p>You can add extra columns to the first worksheet using the <code class="docutils literal notranslate"><span class="pre">--extra-cols</span></code>
+argument.</p>
+<p>The path(s) to a detailed marking scheme file can be specified via
+<code class="docutils literal notranslate"><span class="pre">--marking-scheme</span></code>. If this argument is not used, the marking schemes will be
+requested interactively. The marking scheme file must be in YAML format.</p>
+<p>The assignment structure is defined hierarchically, ending with a list of
+questions specifying the number of points awarded and optionally a coefficient
+(default is 1) and details (not included in the Excel file).</p>
+<p>For example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Exercise 1</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">Question 1</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">points</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="nt">Problem</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">Part 1</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">Question 1</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">points</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">Question 2</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">points</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">coeff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">    </span><span class="nt">Question 3</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">points</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">details</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">          </span><span class="no">Difficult question, don&#39;t grade too harshly.</span>
+<span class="w">  </span><span class="nt">Part 2</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">Question 1</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">points</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">Question 2</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">points</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+</pre></div>
+</div>
+<p>Final grades can then be easily merged into the central file using the <code class="docutils literal notranslate"><span class="pre">DOCS</span></code>
+variable.</p>
+<section id="id2">
+<h3>Options<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">-h</span></code>, <code class="docutils literal notranslate"><span class="pre">--help</span></code> : show this help message and exit</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--name</span> <span class="pre">NAME</span></code> : Name of the grade sheet</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--marking-scheme</span> <span class="pre">MARKING_SCHEME,[MARKING_SCHEME,...]</span></code> : Files containing the detailed grading scales</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-o</span> <span class="pre">colname</span></code>, <code class="docutils literal notranslate"><span class="pre">--order-by</span> <span class="pre">colname</span></code> : Column used to order the names in each sheet</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-w</span> <span class="pre">colname</span></code>, <code class="docutils literal notranslate"><span class="pre">--worksheets</span> <span class="pre">colname</span></code> : Column used to group into multiple sheets</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-e</span> <span class="pre">COL,[COL,...]</span></code>, <code class="docutils literal notranslate"><span class="pre">--extra-cols</span> <span class="pre">COL,[COL,...]</span></code> : Additional columns to include in the grade sheet</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-g</span> <span class="pre">colname</span></code>, <code class="docutils literal notranslate"><span class="pre">--group-by</span> <span class="pre">colname</span></code> : Group column used to grade groups of students</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<p>Grade file by project group:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>xls_grade_book_group<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--name<span class="w"> </span>Devoir1<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--marking-scheme<span class="w"> </span>documents/barème_devoir1.yml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--group-by<span class="w"> </span><span class="s1">&#39;Groupe Project&#39;</span>
+</pre></div>
+</div>
+<p>With the YAML file containing, for example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Exercise 1</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">Question 1</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">points</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="nt">Exercise 2</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">Question 1</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">points</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="guv.tasks.gradebook.XlsGradeBookJury">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">guv.tasks.gradebook.</span></span><span class="sig-name descname"><span class="pre">XlsGradeBookJury</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">planning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#guv.tasks.gradebook.XlsGradeBookJury" title="Link to this definition">¶</a></dt>
+<dd><p>Excel file for managing a UV jury</p>
+<p>This task generates an Excel file for managing a UV/UE jury. The optional
+<code class="docutils literal notranslate"><span class="pre">--name</span></code> argument allows you to specify a name for the file (default is
+<code class="docutils literal notranslate"><span class="pre">jury</span></code>).</p>
+<p>The optional <code class="docutils literal notranslate"><span class="pre">--config</span></code> argument allows you to provide a configuration file
+with the data needed for the jury. If not provided, the configuration will be
+requested interactively.</p>
+<p>More specifically, the created workbook contains two sheets. The first sheet
+includes:</p>
+<ul class="simple">
+<li><p>the name, last name and email columns as specified in <code class="docutils literal notranslate"><span class="pre">config.py``from</span> <span class="pre">the</span> <span class="pre">central</span>
+<span class="pre">``effectif.xlsx</span></code> file,</p></li>
+<li><p>the grades specified in the configuration file (via <code class="docutils literal notranslate"><span class="pre">--config</span></code> or
+interactively) that contribute to the final grade,</p></li>
+<li><p>a special column named “Aggregated Grade” containing a grade out of 20, with a
+default formula using the weights and maximum scores from the configuration,</p></li>
+<li><p>an automatically calculated ECTS grade (A–F) representing the aggregated grade
+based on percentiles,</p></li>
+<li><p>other useful columns for the jury that are not grades.</p></li>
+</ul>
+<p>The second sheet provides admission thresholds for each grade, the coefficients
+of each grade, the maximum scores, the thresholds used to convert the aggregated
+grade to an ECTS grade, and some statistics on grade distribution.</p>
+<p>The configuration file must be in YAML format. The grades to be included are
+listed under the <code class="docutils literal notranslate"><span class="pre">grades</span></code> section. For each grade, you must specify a column
+<code class="docutils literal notranslate"><span class="pre">name</span></code> and optionally:</p>
+<ul class="simple">
+<li><p>a <code class="docutils literal notranslate"><span class="pre">passing</span> <span class="pre">grade</span></code> (default: -1),</p></li>
+<li><p>a <code class="docutils literal notranslate"><span class="pre">coefficient</span></code> (default: 1),</p></li>
+<li><p>a <code class="docutils literal notranslate"><span class="pre">maximum</span> <span class="pre">grade</span></code> (default: 20),</p></li>
+</ul>
+<p>Columns that are not grades can be listed under <code class="docutils literal notranslate"><span class="pre">others</span></code>. For example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">grades</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">grade1</span>
+<span class="w">    </span><span class="nt">passing grade</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8</span>
+<span class="w">    </span><span class="nt">coefficient</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">grade2</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">grade3</span>
+<span class="nt">others</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">info</span>
+</pre></div>
+</div>
+<p>The ECTS grade and aggregated grade can then be easily merged into the central
+file using the <code class="docutils literal notranslate"><span class="pre">DOCS</span></code> variable:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">DOCS</span><span class="o">.</span><span class="n">aggregate_jury</span><span class="p">(</span><span class="s2">&quot;generated/jury_gradebook.xlsx&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<section id="id3">
+<h3>Options<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">-h</span></code>, <code class="docutils literal notranslate"><span class="pre">--help</span></code> : show this help message and exit</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--name</span> <span class="pre">NAME</span></code> : Name of the grade sheet</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--config</span> <span class="pre">CONFIG</span></code> : Configuration file specifying the grades to use</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<ul>
+<li><p>Grade sheet with the <code class="docutils literal notranslate"><span class="pre">quiz</span></code>, <code class="docutils literal notranslate"><span class="pre">median</span></code> and <code class="docutils literal notranslate"><span class="pre">final</span></code> grade (with a
+threshold of 6), and the <code class="docutils literal notranslate"><span class="pre">Branche</span></code> info column:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>xls_grade_book_jury<span class="w"> </span>--config<span class="w"> </span>documents/config_jury.yml
+</pre></div>
+</div>
+<p>with the YAML file containing, for example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">grades</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">quiz</span>
+<span class="w">    </span><span class="nt">coefficient</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.2</span>
+<span class="w">    </span><span class="nt">maximum grade</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">median</span>
+<span class="w">    </span><span class="nt">coefficient</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.3</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">final</span>
+<span class="w">    </span><span class="nt">coefficient</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span>
+<span class="w">    </span><span class="nt">passing grade</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6</span>
+<span class="nt">others</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Branche</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="guv.tasks.gradebook.XlsGradeBookNoGroup">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">guv.tasks.gradebook.</span></span><span class="sig-name descname"><span class="pre">XlsGradeBookNoGroup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">planning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#guv.tasks.gradebook.XlsGradeBookNoGroup" title="Link to this definition">¶</a></dt>
+<dd><p>Excel file for individual grading</p>
+<p>This task generates an Excel file to easily input individual grades using one or
+more detailed marking schemes.</p>
+<p>The Excel file can also be split into multiple worksheets based on a column in
+the <code class="docutils literal notranslate"><span class="pre">effectif.xlsx</span></code> file using the <code class="docutils literal notranslate"><span class="pre">--worksheets</span></code> argument. Within each
+worksheet, students can be ordered using the <code class="docutils literal notranslate"><span class="pre">--order-by</span></code> argument. Additional
+columns can be included in the first sheet using the <code class="docutils literal notranslate"><span class="pre">--extra-cols</span></code> argument.
+The path(s) to one or more detailed marking schemes can be provided via the
+<code class="docutils literal notranslate"><span class="pre">--marking-scheme</span></code> argument. If this argument is not provided, the marking
+scheme(s) will be requested interactively.</p>
+<p>The marking scheme file must be in YAML format. The structure of the assignment
+is specified hierarchically, with final-level lists containing the number of
+points assigned to each question, optionally followed by a coefficient (default
+is 1), and optional details (not shown in the Excel file).
+For example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Exercise 1</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">Question 1</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">points</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="nt">Problème</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">Partie 1</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">Question 1</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">points</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">Question 2</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">points</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">coeff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">    </span><span class="nt">Question 3</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">points</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">détails</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">          </span><span class="no">Difficult question, don&#39;t grade too harshly.</span>
+<span class="w">  </span><span class="nt">Partie 2</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">Question 1</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">points</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">Question 2</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">points</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+</pre></div>
+</div>
+<p>Final grades can then be easily merged into the central file by configuring the
+<code class="docutils literal notranslate"><span class="pre">DOCS</span></code> variable.</p>
+<section id="id4">
+<h3>Options<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">-h</span></code>, <code class="docutils literal notranslate"><span class="pre">--help</span></code> : show this help message and exit</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--name</span> <span class="pre">NAME</span></code> : Name of the grade sheet</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--marking-scheme</span> <span class="pre">MARKING_SCHEME,[MARKING_SCHEME,...]</span></code> : Files containing the detailed grading scales</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-o</span> <span class="pre">colname</span></code>, <code class="docutils literal notranslate"><span class="pre">--order-by</span> <span class="pre">colname</span></code> : Column used to order the names in each sheet</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-w</span> <span class="pre">colname</span></code>, <code class="docutils literal notranslate"><span class="pre">--worksheets</span> <span class="pre">colname</span></code> : Column used to group into multiple sheets</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-e</span> <span class="pre">COL,[COL,...]</span></code>, <code class="docutils literal notranslate"><span class="pre">--extra-cols</span> <span class="pre">COL,[COL,...]</span></code> : Additional columns to include in the grade sheet</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<ul>
+<li><p>Grade file with a marking scheme defined interactively, on a single Excel
+sheet:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>xls_grade_book_no_group<span class="w"> </span>--name<span class="w"> </span>Exam1
+</pre></div>
+</div>
+</li>
+<li><p>Grade file for an assignment using a provided marking scheme, split by
+tutorial groups:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>xls_grade_book_no_group<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--name<span class="w"> </span>Exam1<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--marking-scheme<span class="w"> </span>documents/marking_scheme_exam1.yml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--worksheets<span class="w"> </span><span class="s2">&quot;tutorial_groups&quot;</span>
+</pre></div>
+</div>
+<p>with the YAML file containing, for example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Exercise 1</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">Question 1</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">points</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="nt">Exercise 2</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">Question 1</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">points</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</pre></div>
+</div>
+</li>
+<li><p>Grade file for an individual oral exam, split by exam day (column <code class="docutils literal notranslate"><span class="pre">Exam</span> <span class="pre">day</span></code>
+in <code class="docutils literal notranslate"><span class="pre">effectif.xlsx</span></code>), and ordered by speaking order (column <code class="docutils literal notranslate"><span class="pre">Speaking</span>
+<span class="pre">order</span></code> in <code class="docutils literal notranslate"><span class="pre">effectif.xlsx</span></code>):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>xls_grade_book_no_group<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--name<span class="w"> </span>OralExam1<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--marking-scheme<span class="w"> </span>documents/marking_scheme.yml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--worksheets<span class="w"> </span><span class="s2">&quot;Exam day&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--order-by<span class="w"> </span><span class="s2">&quot;Speaking order&quot;</span>
+</pre></div>
+</div>
+<p>with the YAML file containing, for example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Content</span><span class="p">:</span>
+<span class="nt">Form</span><span class="p">:</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</section>
+</dd></dl>
+
+</section>
+<section id="groups">
+<h2>Groups<a class="headerlink" href="#groups" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="guv.tasks.moodle.CsvCreateGroups">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">guv.tasks.moodle.</span></span><span class="sig-name descname"><span class="pre">CsvCreateGroups</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">planning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#guv.tasks.moodle.CsvCreateGroups" title="Link to this definition">¶</a></dt>
+<dd><p>Random creation of student groups</p>
+<p>This task creates a CSV file assigning students to groups, ready to be uploaded to Moodle.
+If the <code class="docutils literal notranslate"><span class="pre">--grouping</span></code> option is provided, groups are created within each subgroup.</p>
+<p>The number of groups created (globally or per subgroup depending on <code class="docutils literal notranslate"><span class="pre">--grouping</span></code>) is controlled by one of the mutually exclusive options:
+<code class="docutils literal notranslate"><span class="pre">--proportions</span></code>, <code class="docutils literal notranslate"><span class="pre">--group-size</span></code>, or <code class="docutils literal notranslate"><span class="pre">--num-groups</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--proportions</span></code>: specify the group count via a list of proportions.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--group-size</span></code>: specify the maximum size of each group.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--num-groups</span></code>: specify the desired number of groups.</p></li>
+</ul>
+<p>Group names are controlled using the <code class="docutils literal notranslate"><span class="pre">--template</span></code> option. The following substitutions are available in <code class="docutils literal notranslate"><span class="pre">--template</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">{title}</span></code>: replaced by the title (first argument)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">{grouping_name}</span></code>: replaced by the subgroup name (if <code class="docutils literal notranslate"><span class="pre">--grouping</span></code> is used)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">{group_name}</span></code>: name of the current group (if <code class="docutils literal notranslate"><span class="pre">--names</span></code> is used)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">#</span></code>: sequential group number (used if <code class="docutils literal notranslate"><span class="pre">--names</span></code> is not specified)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&#64;</span></code>: sequential group letter (used if <code class="docutils literal notranslate"><span class="pre">--names</span></code> is not specified)</p></li>
+</ul>
+<p>The <code class="docutils literal notranslate"><span class="pre">--names</span></code> option may be a list of names to use or a file containing names line by line.
+These are selected randomly if the <code class="docutils literal notranslate"><span class="pre">--random</span></code> flag is set.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">--global</span></code> flag prevents the group name generation from resetting when switching subgroup (useful with <code class="docutils literal notranslate"><span class="pre">--grouping</span></code>).</p>
+<p>By default, the student list is shuffled before creating contiguous groups.
+Use <code class="docutils literal notranslate"><span class="pre">--ordered</span></code> to create groups alphabetically. You may also provide a list of columns for sorting.</p>
+<p>Group creation constraints:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--other-groups</span></code>: names of existing group columns to avoid re-forming</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--affinity-groups</span></code>: names of group columns to try to preserve</p></li>
+</ul>
+<section id="id5">
+<h3>Options<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">-h</span></code>, <code class="docutils literal notranslate"><span class="pre">--help</span></code> : show this help message and exit</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">title</span></code> : Name associated with the set of created groups. Included in the name of the created file and in the name of the created groups following the used <em>template</em>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-G</span> <span class="pre">GROUPING</span></code>, <code class="docutils literal notranslate"><span class="pre">--grouping</span> <span class="pre">GROUPING</span></code> : Pre-groups in which to make sub-groups</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-n</span> <span class="pre">NUM_GROUPS</span></code>, <code class="docutils literal notranslate"><span class="pre">--num-groups</span> <span class="pre">NUM_GROUPS</span></code> : Number of groups to create (per sub-groups if specified)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-s</span> <span class="pre">GROUP_SIZE</span></code>, <code class="docutils literal notranslate"><span class="pre">--group-size</span> <span class="pre">GROUP_SIZE</span></code> : Group size: pairs, trios or more</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-p</span> <span class="pre">PROPORTIONS</span> <span class="pre">[PROPORTIONS</span> <span class="pre">...]</span></code>, <code class="docutils literal notranslate"><span class="pre">--proportions</span> <span class="pre">PROPORTIONS</span> <span class="pre">[PROPORTIONS</span> <span class="pre">...]</span></code> : List of proportions to create the groups</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-t</span> <span class="pre">_TEMPLATE</span></code>, <code class="docutils literal notranslate"><span class="pre">--template</span> <span class="pre">_TEMPLATE</span></code> : Template to give names to the groups with <cite>{title}</cite>, <cite>{grouping_name}</cite> or <cite>{group_name}</cite></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-l</span> <span class="pre">NAMES</span> <span class="pre">[NAMES</span> <span class="pre">...]</span></code>, <code class="docutils literal notranslate"><span class="pre">--names</span> <span class="pre">NAMES</span> <span class="pre">[NAMES</span> <span class="pre">...]</span></code> : List of keywords to build the group names</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-o</span> <span class="pre">[COL,...]</span></code>, <code class="docutils literal notranslate"><span class="pre">--ordered</span> <span class="pre">[COL,...]</span></code> : Order the list of students alphabetically or by columns</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-g</span></code>, <code class="docutils literal notranslate"><span class="pre">--global</span></code> : Do not reset the sequence of group names between each grouping</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-r</span></code>, <code class="docutils literal notranslate"><span class="pre">--random</span></code> : Randomly permute the group names</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--other-groups</span> <span class="pre">COL,[COL,...]</span></code> : List of columns of already formed groups that should not be reformed.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--affinity-groups</span> <span class="pre">COL,[COL,...]</span></code> : List of columns of affinity groups.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--max-iter</span> <span class="pre">MAX_ITER</span></code> : Maximum number of attempts to find groups with constraints (default 1000).</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<ul>
+<li><p>Create groups of 3 within each TD subgroup:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>csv_create_groups<span class="w"> </span>Project1<span class="w"> </span>-G<span class="w"> </span>TD<span class="w"> </span>--group-size<span class="w"> </span><span class="m">3</span>
+</pre></div>
+</div>
+</li>
+<li><p>Create new trios in each TD subgroup, avoiding those already grouped in <code class="docutils literal notranslate"><span class="pre">Project1</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>csv_create_groups<span class="w"> </span>Project2<span class="w"> </span>-G<span class="w"> </span>TD<span class="w"> </span>--group-size<span class="w"> </span><span class="m">3</span><span class="w"> </span>--other-groups<span class="w"> </span>Project1
+</pre></div>
+</div>
+</li>
+<li><p>Split each TD subgroup in half using group names like D1i, D1ii, D2i, D2ii:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>csv_create_groups<span class="w"> </span>HalfGroup<span class="w"> </span>-G<span class="w"> </span>TD<span class="w"> </span>--proportions<span class="w"> </span>.5<span class="w"> </span>.5<span class="w"> </span>--template<span class="w"> </span><span class="s1">&#39;{grouping_name}{group_name}&#39;</span><span class="w"> </span>--names<span class="w"> </span>i<span class="w"> </span>ii
+</pre></div>
+</div>
+</li>
+<li><p>Divide the class into two parts alphabetically with group names <code class="docutils literal notranslate"><span class="pre">First</span></code> and <code class="docutils literal notranslate"><span class="pre">Second</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>csv_create_groups<span class="w"> </span>Half<span class="w"> </span>--proportions<span class="w"> </span>.5<span class="w"> </span>.5<span class="w"> </span>--ordered<span class="w"> </span>--names<span class="w"> </span>First<span class="w"> </span>Second<span class="w"> </span>--template<span class="w"> </span><span class="s1">&#39;{group_name}&#39;</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p class="rubric">Notes</p>
+<p>To be Moodle-compatible, the generated file does not include a column header.
+To merge this group file with the main dataset, use the <code class="docutils literal notranslate"><span class="pre">kw_read</span></code> argument as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">DOCS</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span>
+    <span class="s2">&quot;generated/Project1_groups.csv&quot;</span><span class="p">,</span>
+    <span class="n">on</span><span class="o">=</span><span class="s2">&quot;Email&quot;</span><span class="p">,</span>
+    <span class="n">kw_read</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;header&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;names&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Email&quot;</span><span class="p">,</span> <span class="s2">&quot;Group&quot;</span><span class="p">]},</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="guv.tasks.moodle.CsvGroups">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">guv.tasks.moodle.</span></span><span class="sig-name descname"><span class="pre">CsvGroups</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">planning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#guv.tasks.moodle.CsvGroups" title="Link to this definition">¶</a></dt>
+<dd><p>CSV files of groups from <code class="docutils literal notranslate"><span class="pre">effectif.xlsx</span></code> for Moodle</p>
+<p>This task generates CSV files containing group assignments based on the data
+from <code class="docutils literal notranslate"><span class="pre">effectif.xlsx</span></code>, suitable for import into Moodle.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">--groups</span></code> option allows you to select which group columns to export.
+By default, the exported columns are <code class="docutils literal notranslate"><span class="pre">Cours</span></code>, <code class="docutils literal notranslate"><span class="pre">TD</span></code>, and <code class="docutils literal notranslate"><span class="pre">TP</span></code>.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">--long</span></code> option enables exporting TD/TP group names in a long format,
+i.e., <code class="docutils literal notranslate"><span class="pre">TP1</span></code>, <code class="docutils literal notranslate"><span class="pre">TD1</span></code> instead of <code class="docutils literal notranslate"><span class="pre">T1</span></code>, <code class="docutils literal notranslate"><span class="pre">D1</span></code>.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">--single</span></code> option allows generating a single combined file.</p>
+<section id="id6">
+<h3>Options<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">-h</span></code>, <code class="docutils literal notranslate"><span class="pre">--help</span></code> : show this help message and exit</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-g</span> <span class="pre">COL,[COL,...]</span></code>, <code class="docutils literal notranslate"><span class="pre">--groups</span> <span class="pre">COL,[COL,...]</span></code> : List of groupings to consider via a column name. By default, the groupings <code class="docutils literal notranslate"><span class="pre">Lecture</span></code>, <code class="docutils literal notranslate"><span class="pre">Tutorial</span></code> and <code class="docutils literal notranslate"><span class="pre">Practical</span> <span class="pre">work</span></code> are used.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-l</span></code>, <code class="docutils literal notranslate"><span class="pre">--long</span></code> : Use the names of Lecture/Tutorial/Practical work groups in long format, i.e., “TP1” and “TD1” instead of “T1” and “D1”</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-s</span></code>, <code class="docutils literal notranslate"><span class="pre">--single</span></code> : Create a single file</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>csv_groups<span class="w"> </span>--groups<span class="w"> </span>Groupe_Project
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="guv.tasks.moodle.CsvGroupsGroupings">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">guv.tasks.moodle.</span></span><span class="sig-name descname"><span class="pre">CsvGroupsGroupings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">planning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#guv.tasks.moodle.CsvGroupsGroupings" title="Link to this definition">¶</a></dt>
+<dd><p>CSV file of groups and groupings for Moodle import</p>
+<p>This task generates a CSV file to create groups and groupings directly in Moodle.</p>
+<p>You must specify:</p>
+<ul class="simple">
+<li><p>the number of groups per grouping using the <code class="docutils literal notranslate"><span class="pre">-g</span></code> option,</p></li>
+<li><p>the number of groupings using the <code class="docutils literal notranslate"><span class="pre">-G</span></code> option.</p></li>
+</ul>
+<p>The name of the groupings is controlled by a pattern given via <code class="docutils literal notranslate"><span class="pre">-F</span></code>
+(default: <code class="docutils literal notranslate"><span class="pre">D##_P1</span></code>). The available substitutions are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">##</span></code>: replaced by numbers,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&#64;&#64;</span></code>: replaced by letters.</p></li>
+</ul>
+<p>The name of the groups is controlled by a pattern given via <code class="docutils literal notranslate"><span class="pre">-f</span></code>
+(default: <code class="docutils literal notranslate"><span class="pre">D##_P1_&#64;</span></code>). The available substitutions are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">#</span></code>: replaced by numbers,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&#64;</span></code>: replaced by letters.</p></li>
+</ul>
+<section id="id7">
+<h3>Options<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">-h</span></code>, <code class="docutils literal notranslate"><span class="pre">--help</span></code> : show this help message and exit</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-g</span> <span class="pre">N_GROUPS</span></code> : Number of groups in each grouping</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-f</span> <span class="pre">FORMAT</span></code> : Format of the group name (default: D##_P1_&#64;)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-G</span> <span class="pre">N_GROUPINGS</span></code> : Number of different groupings</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-F</span> <span class="pre">FORMAT</span></code> : Format of the grouping name (default: D##_P1)</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>csv_groups_groupings<span class="w"> </span>-G<span class="w"> </span><span class="m">3</span><span class="w"> </span>-F<span class="w"> </span>Groupement_P1<span class="w"> </span>-g<span class="w"> </span><span class="m">14</span><span class="w"> </span>-f<span class="w"> </span>D##_P1_@
+guv<span class="w"> </span>csv_groups_groupings<span class="w"> </span>-G<span class="w"> </span><span class="m">2</span><span class="w"> </span>-F<span class="w"> </span>Groupement_D1<span class="w"> </span>-g<span class="w"> </span><span class="m">14</span><span class="w"> </span>-f<span class="w"> </span>D1_P##_@
+guv<span class="w"> </span>csv_groups_groupings<span class="w"> </span>-G<span class="w"> </span><span class="m">2</span><span class="w"> </span>-F<span class="w"> </span>Groupement_D2<span class="w"> </span>-g<span class="w"> </span><span class="m">14</span><span class="w"> </span>-f<span class="w"> </span>D2_P##_@
+guv<span class="w"> </span>csv_groups_groupings<span class="w"> </span>-G<span class="w"> </span><span class="m">2</span><span class="w"> </span>-F<span class="w"> </span>Groupement_D3<span class="w"> </span>-g<span class="w"> </span><span class="m">14</span><span class="w"> </span>-f<span class="w"> </span>D3_P##_@
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+</section>
+<section id="students">
+<h2>Students<a class="headerlink" href="#students" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="guv.tasks.students.SendEmail">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">guv.tasks.students.</span></span><span class="sig-name descname"><span class="pre">SendEmail</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">planning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#guv.tasks.students.SendEmail" title="Link to this definition">¶</a></dt>
+<dd><p>Send an email to each student.</p>
+<p>The only required argument is a path to a file used as the email template.
+If the file does not exist, a default template is created. The template
+follows the Jinja2 format, and the available replacement variables for
+each student correspond to the column names in the <code class="docutils literal notranslate"><span class="pre">effectif.xlsx</span></code> file.</p>
+<p>To enable email sending, you must set the <code class="docutils literal notranslate"><span class="pre">LOGIN</span></code> (SMTP server login)
+and <code class="docutils literal notranslate"><span class="pre">FROM_EMAIL</span></code> (sender email address) variables in the <code class="docutils literal notranslate"><span class="pre">config.py</span></code> file.
+You can also configure <code class="docutils literal notranslate"><span class="pre">SMTP_SERVER</span></code> and <code class="docutils literal notranslate"><span class="pre">PORT</span></code> (default: smtps.utc.fr and 587).</p>
+<section id="id8">
+<h3>Options<a class="headerlink" href="#id8" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">-h</span></code>, <code class="docutils literal notranslate"><span class="pre">--help</span></code> : show this help message and exit</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">template</span></code> : The path to a Jinja2 template</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>send_email<span class="w"> </span>documents/email_body
+</pre></div>
+</div>
+<p>with <code class="docutils literal notranslate"><span class="pre">documents/email_body</span></code> containing:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Subject: Note
+
+Hello {{ Name }},
+
+You are part of the group {{ group_project }}.
+
+Cheers,
+
+guv
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="guv.tasks.students.ZoomBreakoutRooms">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">guv.tasks.students.</span></span><span class="sig-name descname"><span class="pre">ZoomBreakoutRooms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">planning</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#guv.tasks.students.ZoomBreakoutRooms" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="operations.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Aggregating functions for <code class="docutils literal notranslate"><span class="pre">DOCS</span></code></div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="index.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Home</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2025, Sylvain Rousseau
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Tasks</a><ul>
+<li><a class="reference internal" href="#attendance">Attendance</a><ul>
+<li><a class="reference internal" href="#guv.tasks.attendance.PdfAttendance"><code class="docutils literal notranslate"><span class="pre">PdfAttendance</span></code></a></li>
+<li><a class="reference internal" href="#guv.tasks.attendance.PdfAttendanceFull"><code class="docutils literal notranslate"><span class="pre">PdfAttendanceFull</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#grades">Grades</a><ul>
+<li><a class="reference internal" href="#guv.tasks.gradebook.XlsGradeBookGroup"><code class="docutils literal notranslate"><span class="pre">XlsGradeBookGroup</span></code></a></li>
+<li><a class="reference internal" href="#guv.tasks.gradebook.XlsGradeBookJury"><code class="docutils literal notranslate"><span class="pre">XlsGradeBookJury</span></code></a></li>
+<li><a class="reference internal" href="#guv.tasks.gradebook.XlsGradeBookNoGroup"><code class="docutils literal notranslate"><span class="pre">XlsGradeBookNoGroup</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#groups">Groups</a><ul>
+<li><a class="reference internal" href="#guv.tasks.moodle.CsvCreateGroups"><code class="docutils literal notranslate"><span class="pre">CsvCreateGroups</span></code></a></li>
+<li><a class="reference internal" href="#guv.tasks.moodle.CsvGroups"><code class="docutils literal notranslate"><span class="pre">CsvGroups</span></code></a></li>
+<li><a class="reference internal" href="#guv.tasks.moodle.CsvGroupsGroupings"><code class="docutils literal notranslate"><span class="pre">CsvGroupsGroupings</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#students">Students</a><ul>
+<li><a class="reference internal" href="#guv.tasks.students.SendEmail"><code class="docutils literal notranslate"><span class="pre">SendEmail</span></code></a></li>
+<li><a class="reference internal" href="#guv.tasks.students.ZoomBreakoutRooms"><code class="docutils literal notranslate"><span class="pre">ZoomBreakoutRooms</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/furo.js?v=5fa4622c"></script>
+    </body>
+</html>
