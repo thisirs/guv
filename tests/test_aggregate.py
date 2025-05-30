@@ -121,7 +121,13 @@ def test_docs_replace_column(guv, xlsx):
 
 @path_dependency("test_xls_student_data")
 def test_docs_apply_df(guv, xlsx):
-    pass
+    uv = guv.uvs[0]
+    guv.cd(guv.semester, uv)
+
+    guv.change_config(r"""
+    DOCS.apply_df(lambda df: df.assign(new_column=1))
+    """)
+    guv().succeed()
 
 
 @path_dependency("test_xls_student_data")
