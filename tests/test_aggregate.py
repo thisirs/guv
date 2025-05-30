@@ -8,7 +8,7 @@ data = [
 
 @path_dependency("test_xls_student_data")
 @pytest.mark.parametrize("filename", data)
-def test_aggregate_moodle_groups(guv, xlsx, guvcapfd, filename):
+def test_docs_aggregate_moodle_groups(guv, xlsx, guvcapfd, filename):
     uv = guv.uvs[0]
     guv.cd(guv.semester, uv)
     guv.copy_file(filename, "documents")
@@ -34,7 +34,7 @@ data = [
 
 @path_dependency("test_xls_student_data")
 @pytest.mark.parametrize("filename,keep", data)
-def test_aggregate_moodle_grades(guv, xlsx, guvcapfd, filename, keep):
+def test_docs_aggregate_moodle_grades(guv, xlsx, guvcapfd, filename, keep):
     uv = guv.uvs[0]
     guv.cd(guv.semester, uv)
     guv.copy_file(filename, "documents")
