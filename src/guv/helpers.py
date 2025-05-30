@@ -896,13 +896,15 @@ class AggregateMoodleGrades(MoodleFileOperation):
         else:
             left_on = None
 
-        return left_on, self.settings.MOODLE_EMAIL_COLUMN
+        drop = [0, 1, 2, 3, 4, len(self.moodle_df.columns)-1]
+
+        return left_on, self.settings.MOODLE_EMAIL_COLUMN, drop
 
     def apply(self, left_df):
         right_df = self.moodle_df
-        left_on, right_on = self.get_arguments(left_df)
+        left_on, right_on, drop = self.get_arguments(left_df)
 
-        right_df = right_df.drop(columns=right_df.columns[[0, 1, 2, 3, 4, len(right_df.columns)-1]])
+        right_df = right_df.drop(columns=right_df.columns[drop])
 
 
         # Convert columns into numeric if possible
