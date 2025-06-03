@@ -526,11 +526,11 @@ class MultipleConfigOpt(CliArgsInheritMixin):
     def parse_config(self, config_files):
         configs = []
 
+        configs = []
         for config_file in config_files:
             if not os.path.exists(config_file):
                 raise FileNotFoundError(_("{config_help} `{config_file}` not found").format(config_help=self.config_help, config_file=config_file))
 
-            configs = []
             with open(config_file, "r") as stream:
                 loaded_yaml = yaml.load_all(stream, Loader=yaml.SafeLoader)
                 configs.extend([self.validate_config(c) for c in loaded_yaml])
