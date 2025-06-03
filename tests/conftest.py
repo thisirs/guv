@@ -16,11 +16,12 @@ BASE_DIR = Path(__file__).parent
 
 
 class Guv:
-    def __init__(self, base_dir, request, data):
+    def __init__(self, base_dir, request, data, collection_dir):
         self.base_dir = base_dir
         self.cwd = base_dir
         self.request = request
         self.data = data
+        self.collection_dir = collection_dir
 
     def __getattr__(self, name):
         if name.startswith("__"):  # for copy to succeed ignore __getattr__
@@ -61,6 +62,10 @@ class Guv:
         source = BASE_DIR / "data" / source
         dest = self.cwd / dest
         shutil.copy(source, dest)
+
+    def check_output_file(self, source):
+        assert source.exists()
+        shutil.copy(source, self.collection_dir)
 
     def cd(self, *path):
         self.cwd = self.base_dir / Path(*path)
@@ -103,14 +108,19 @@ def guv_data_current(request):
         "uvs": ["SY09", "SY02"],
     }
 
+@pytest.fixture(scope="session")
+def collection_dir(tmp_path_factory):
+    """Central place to collect all test-created files."""
+    return tmp_path_factory.mktemp("collected_test_outputs")
+
 
 from tests.plugins.test_path import _TestPath
 
 
 @pytest.fixture(scope="class")
-def guv(request, tmp_path_factory, guv_data_current):
+def guv(request, tmp_path_factory, guv_data_current, collection_dir):
     path = _TestPath(request, tmp_path_factory).path
-    g = Guv(path, request, guv_data_current)
+    g = Guv(path, request, guv_data_current, collection_dir)
     g.update_db()
     return g
 

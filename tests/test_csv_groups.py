@@ -9,5 +9,5 @@ def test_csv_groups(guv, guvcapfd):
 
     guv("csv_groups").succeed()
 
-    assert (guv.cwd / "generated" / "Lecture_group_moodle.csv").is_file()
-    assert (guv.cwd / "generated" / "Tutorial_group_moodle.csv").is_file()
+    guv.check_output_file(guv.cwd / "generated" / "Lecture_group_moodle.csv")
+    guv.check_output_file(guv.cwd / "generated" / "Tutorial_group_moodle.csv")

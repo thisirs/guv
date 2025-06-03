@@ -10,4 +10,4 @@ def test_xls_grade_book_jury(guv):
     guv(
         "xls_grade_book_jury --name Jury --config documents/config_jury_test.yaml"
     ).succeed()
-    assert (guv.cwd / "generated" / "Jury_gradebook.xlsx").is_file()
+    guv.check_output_file(guv.cwd / "generated" / "Jury_gradebook.xlsx")

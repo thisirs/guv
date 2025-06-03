@@ -10,4 +10,4 @@ def test_xls_grade_book_group(guv):
     guv(
         "xls_grade_book_group --name Test -g Tutorial --marking-scheme documents/config_gradebook_test1.yaml"
     ).succeed()
-    assert (guv.cwd / "generated" / "Test_gradebook.xlsx").is_file()
+    guv.check_output_file(guv.cwd / "generated" / "Test_gradebook.xlsx")

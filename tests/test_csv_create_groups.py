@@ -10,20 +10,20 @@ def test_csv_create_groups(guv, guvcapfd):
     guv("csv_create_groups").failed()
 
     guv("csv_create_groups Projet1 --group-size 3").succeed()
-    assert (guv.cwd / "generated" / "Projet1_groups.csv").is_file()
+    guv.check_output_file(guv.cwd / "generated" / "Projet1_groups.csv")
 
     guv("csv_create_groups Projet2 --proportions 2 2").succeed()
-    assert (guv.cwd / "generated" / "Projet2_groups.csv").is_file()
+    guv.check_output_file(guv.cwd / "generated" / "Projet2_groups.csv")
 
     guv("csv_create_groups Projet3 --proportions .5 .5 --names First Second")
-    assert (guv.cwd / "generated" / "Projet3_groups.csv").is_file()
+    guv.check_output_file(guv.cwd / "generated" / "Projet3_groups.csv")
 
     guv("csv_create_groups Projet4 --group-size 3 --grouping group_1")
-    assert (guv.cwd / "generated" / "Projet4_groups.csv").is_file()
+    guv.check_output_file(guv.cwd / "generated" / "Projet4_groups.csv")
 
     guv("csv_create_groups Projet5 --proportions .5 .5 --names First Second --affinity-groups group_1")
-    assert (guv.cwd / "generated" / "Projet5_groups.csv").is_file()
+    guv.check_output_file(guv.cwd / "generated" / "Projet5_groups.csv")
 
     guv("csv_create_groups Projet6 --proportions .5 .5 --names First Second --other-groups group_2")
-    assert (guv.cwd / "generated" / "Projet6_groups.csv").is_file()
+    guv.check_output_file(guv.cwd / "generated" / "Projet6_groups.csv")
 

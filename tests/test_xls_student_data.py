@@ -18,8 +18,8 @@ def test_xls_student_data(guv, xlsx, guvcapfd):
     guvcapfd.stdout_search(".  xls_student_data")
     guvcapfd.no_warning()
     guvcapfd.reset()
-    assert (guv.cwd / "generated" / "student_data_final.csv").is_file()
-    assert (guv.cwd / "effectif.xlsx").is_file()
+    guv.check_output_file(guv.cwd / "generated" / "student_data_final.csv")
+    guv.check_output_file(guv.cwd / "effectif.xlsx")
 
     doc = xlsx.tabular(guv.cwd / "effectif.xlsx")
     doc.check_columns(
