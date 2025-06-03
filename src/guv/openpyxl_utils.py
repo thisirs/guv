@@ -164,19 +164,21 @@ def fit_cells_at_col(*cells):
             worksheet.column_dimensions[utils.get_column_letter(k)].width = 1.3*max_len
 
 
-def generate_ranges(ref_cell, by="col", length=None, nranges=None):
-    if by == "col":
+def generate_ranges(start_cell, end_cell, nranges=None):
+    if start_cell.row == end_cell.row:
+        if start_cell.column > end_cell.column:
+            start_cell, end_cell = end_cell, start_cell
+
         for i in range(nranges):
-            yield list(
-                get_segment(ref_cell.right(i), ref_cell.right(i).below(length - 1))
-            )
-    elif by == "row":
+            yield list(get_segment(start_cell.below(i), end_cell.below(i)))
+    elif start_cell.column == end_cell.column:
+        if start_cell.row > end_cell.row:
+            start_cell, end_cell = end_cell, start_cell
+
         for i in range(nranges):
-            yield list(
-                get_segment(ref_cell.below(i), ref_cell.below(i).right(length - 1))
-            )
+            yield list(get_segment(start_cell.right(i), end_cell.right(i)))
     else:
-        raise RuntimeError("Wrong 'by' argument")
+        raise RuntimeError(f'Must have same row or column: {start_cell.coordinate} -- {end_cell.coordinate}')
 
 
 def get_row_cells(ref_cell, i, *keywords):

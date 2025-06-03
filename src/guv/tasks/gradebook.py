@@ -30,46 +30,43 @@ from . import base_gradebook as baseg
 __all__ = ["XlsGradeBookGroup", "XlsGradeBookJury", "XlsGradeBookNoGroup"]
 
 
-def walk_tree(tree, depth=None):
-    "Generate coordinates of cells to represent a tree"
+def generate_tree_blocks_coordinates(tree):
+    """Generate coordinates of rectangles according to a tree"""
 
     def compute_depth(tree):
-        if isinstance(tree, (OrderedDict, dict)):
+        if isinstance(tree, dict):
             return 1 + max(compute_depth(child) for child in tree.values())
         else:
             return 1
 
-    if depth is None:
-        depth = compute_depth(tree)
+    def compute_n_leaves(tree):
+        if isinstance(tree, dict):
+            return sum(compute_n_leaves(child) for child in tree.values())
+        else:
+            return 1
 
-    class RunOut(Exception):
-        pass
+    depth = compute_depth(tree) - 1
 
-    def walk_tree0(name, tree, current_depth, nleaves):
-        if isinstance(tree, (OrderedDict, dict)):  # Inner node
-            current_leaves = 0
-            sdepth = None
-            x_span = None
-            for key, child in tree.items():
-                try:
-                    yield from walk_tree0(
-                        key, child, current_depth + 1, nleaves + current_leaves
-                    )
-                except RunOut as e:
-                    nleaf, sdepth = e.args
-                    current_leaves += nleaf
-                    x_span = math.ceil(sdepth // (current_depth + 1))
-                    sdepth = sdepth - x_span
-            if current_depth != 0:
-                yield name, nleaves, sdepth, current_leaves, x_span
-                raise RunOut(current_leaves, sdepth)
-        else:  # Leaf
-            x_span = math.ceil((depth + 1) // (current_depth + 1))
-            sdepth = depth - x_span
-            yield name, nleaves, sdepth, 1, x_span
-            raise RunOut(1, sdepth)
+    def generate_tree_blocks_coordinates_aux(name, tree, i, j):
+        remaining_width = depth - j
+        tree_depth = compute_depth(tree)
+        width = int(remaining_width / tree_depth)
 
-    yield from walk_tree0("root", tree, 0, 0)
+        if not isinstance(tree, dict):
+            yield name, i, j, 1, width
+        else:
+            if name != "root":
+                height = compute_n_leaves(tree)
+                yield name, i, j, height, width
+            else:
+                width = 0
+
+            acc_height = 0
+            for child_name, child in tree.items():
+                yield from generate_tree_blocks_coordinates_aux(child_name, child, i + acc_height, j + width)
+                acc_height += compute_n_leaves(child)
+
+    yield from generate_tree_blocks_coordinates_aux("root", tree, 0, 0)
 
 
 def get_values(tree, prop, default=1):
@@ -89,8 +86,6 @@ class MarkingScheme:
     def __init__(self, name, tree):
         self.name = name
         self.tree = tree
-        self.width = None
-        self.height = None
         self.coeff_cells = None
         self.points_cells = None
 
@@ -104,12 +99,18 @@ class MarkingScheme:
         "Return depth-first list of coeffs"
         return get_values(self.tree, "coeff")
 
-    def write(self, worksheet, ref):
+    @property
+    def n_grades(self):
+        return len(self.points)
+
+    def write_marking_scheme(self, worksheet, ref):
+        """Write marking scheme, return lower-right cell"""
+
         row = ref.row
         col = ref.col_idx
         maxi = maxj = -1
 
-        for name, i, j, di, dj in walk_tree(self.tree):
+        for name, i, j, di, dj in generate_tree_blocks_coordinates(self.tree):
             maxi = max(maxi, i + di)
             maxj = max(maxj, j + dj)
             worksheet.merge_cells(
@@ -122,27 +123,44 @@ class MarkingScheme:
             al = Alignment(horizontal="center", vertical="center")
             worksheet.cell(row=row + i, column=col + j).alignment = al
 
-        tree_height = maxi
-        tree_width = maxj
+        return worksheet.cell(row=row + maxi - 1, column=col + maxj - 1)
 
+    def write(self, worksheet, ref):
+        self.top_left = ref
+
+        # Write marking scheme
+        bottom_right = self.write_marking_scheme(worksheet, ref)
+
+        # Write coeffs column
+        ref_coeffs = row_and_col(ref, bottom_right).right()
+        self.write_coeffs_column(ref_coeffs)
+
+        # Write points column
+        ref_points = ref_coeffs.right()
+        self.write_points_column(ref_points)
+
+        self.bottom_right = row_and_col(bottom_right, ref_points)
+
+    def write_coeffs_column(self, ref):
         # Column of coeffs
-        ref_coeffs = ref.right(tree_width)
-        ref_coeffs.above().text(_("Coefficients"))
+        ref.above().text(_("Coefficients"))
 
         for i, coeff in enumerate(self.coeffs):
-            ref_coeffs.below(i).text(coeff)
+            ref.below(i).text(coeff)
         self.sum_coeffs = sum(self.coeffs)
-        self.coeff_cells = [ref_coeffs.below(i) for i in range(len(self.coeffs))]
+        self.coeff_cells = [ref.below(i) for i in range(len(self.coeffs))]
+        self.coeff_first_cell = self.coeff_cells[0]
+        self.coeff_last_cell = self.coeff_cells[-1]
 
+    def write_points_column(self, ref):
         # Column of points
-        ref_points = ref_coeffs.right()
-        ref_points.above().text(_("Points"))
+        ref.above().text(_("Points"))
 
         for i, points in enumerate(self.points):
-            ref_points.below(i).text(points)
-        self.points_cells = [ref_points.below(i) for i in range(len(self.points))]
+            ref.below(i).text(points)
+        self.points_cells = [ref.below(i) for i in range(len(self.points))]
 
-        ref_points_last = ref_points.below(len(self.points) - 1)
+        ref_points_last = ref.below(len(self.points) - 1)
 
         self.global_total = ref_points_last.below(2).text(
             "="
@@ -156,9 +174,6 @@ class MarkingScheme:
         ref_points_last.below(2).left().text(_("Grade"))
         ref_points_last.below(3).left().text(_("Grade /20"))
 
-        self.width = tree_width + 2
-        self.height = tree_height
-        self.bottom_right = worksheet.cell(row + self.height, col + self.width)
 
 
 class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
@@ -359,7 +374,7 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
         ref_marking_scheme = ref_stats.right(len(stats))
 
         ms.write(gradesheet, ref_marking_scheme)
-        ref = row_and_col(ref_marking_scheme, ms.bottom_right)
+        ref = row_and_col(ref_marking_scheme, ms.bottom_right).right()
 
         # Freeze the structure
         gradesheet.freeze_panes = ref.top()
@@ -369,7 +384,7 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
             last_name = index.below().text(record[self.settings.LASTNAME_COLUMN])
             first_name = last_name.below().text(record[self.settings.NAME_COLUMN])
             first_grade = first_name.below()
-            last_grade = first_grade.below(ms.height - 1)
+            last_grade = row_and_col(ms.bottom_right, first_grade)
             total = last_grade.below(2)
             total_20 = total.below()
 
@@ -434,7 +449,7 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
         frame_range(ref.above(3), last_cell.above(3))
 
         # Around totals
-        frame_range(ref.below(ms.height + 1), last_cell)
+        frame_range(row_and_col(last_cell, ref).above(), last_cell)
 
 
 class XlsGradeBookGroup(XlsGradeBookNoGroup):
@@ -476,15 +491,12 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
         worksheet_name = normalize_string(worksheet_name, type="excel")
         gradesheet = self.workbook.create_sheet(title=worksheet_name)
 
-        # Write marking scheme
+        # Write marking scheme and points/coeffs
         ref = gradesheet.cell(4, 2)
         ms.write(gradesheet, ref)
 
-        # Add room for name and total
-        height = ms.height + 6
-
-        # Write each block with write_group_block
-        ref = ref.right(ms.width).above(3)
+        # Write group block
+        ref = row_and_col(ref, ms.bottom_right).right().above(3)
 
         # Freeze the structure
         gradesheet.freeze_panes = ref.top()
@@ -492,58 +504,68 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
         for i, (subname, subgroup) in enumerate(group.groupby(self.subgroup_by)):
             if self.order_by is not None:
                 group = group.sort_values(self.order_by)
-            bottom_right = self.write_group_block(
-                gradesheet, ref, i, subname, subgroup, height, ms
+
+            header = _("Group {i}").format(i=i+1)
+
+            block = GroupBlock(
+                marking_scheme=ms,
+                group_name=subname,
+                group=subgroup,
+                header=header,
+                settings=self.settings
             )
+            block.write(ref)
 
-            # Around grades
-            frame_range(ref, bottom_right.above(3))
+            ref = row_and_col(ref, block.bottom_right.right())
 
-            # Around totals
-            frame_range(ref.below(height - 2), bottom_right)
 
-            ref = row_and_col(ref, bottom_right.right())
+class GroupBlock:
+    def __init__(self, marking_scheme, group_name, group, header, settings):
+        self.marking_scheme = marking_scheme
+        self.header = header
+        self.group_name = group_name
+        self.group = group
+        self.settings = settings
 
-    def write_group_block(self, gradesheet, ref_cell, i, name, group, height, ms):
-        # Make current worksheet the default one, useful for get_address_of_cell
-        self.workbook.active = gradesheet
+    @property
+    def total_height(self):
+        return 3 + self.marking_scheme.n_grades + 1 + 2
 
-        # First column is group column
-        group_range = list(get_segment(ref_cell, ref_cell.below(height - 1)))
+    def write(self, ref_cell):
+        N = len(self.group)  # Number of students
 
-        # Number
-        group_range[0].text(_("Group {i}").format(i=i+1))
+        first_student = ref_cell.right()
+        last_student = ref_cell.right(N)
 
-        # Group name
-        group_range[1].text(name).merge(group_range[2]).center()
+        # First column
+        group_range = list(get_segment(ref_cell, ref_cell.below(self.total_height-1)))
+        group_range[0].text(self.header).merge(last_student).center()
+        group_range[1].text(self.group_name).merge(group_range[2]).center()
 
-        # Total of column group
-        group_total = group_range[-2]
-
+        self.group_total = group_range[-2]
         formula = '=IFERROR({0},"")'.format(
             "+".join(
                 "{1} * IF(ISBLANK({0}), 1/0, {0})".format(
                     get_address_of_cell(group_cell, absolute=True),
                     get_address_of_cell(coeff_cell, absolute=True),
                 )
-                for group_cell, coeff_cell in zip(group_range[3:-2], ms.coeff_cells)
+                for group_cell, coeff_cell in zip(group_range[3:-2], self.marking_scheme.coeff_cells)
             )
         )
-        group_total.value = formula
+        self.group_total.value = formula
 
-        group_total_20 = group_range[-1].text(
+        group_range[-1].text(
             '=IF(ISTEXT({0}),"",{0}/{1}*20)'.format(
-                get_address_of_cell(group_total),
-                get_address_of_cell(ms.global_total, absolute=True),
+                get_address_of_cell(self.group_total),
+                get_address_of_cell(self.marking_scheme.global_total, absolute=True),
             )
         )
 
         # Next columns are per-student columns
-        N = len(group)  # Number of students
-        gen = generate_ranges(ref_cell.right(), by="col", length=height, nranges=N)
+        gen = generate_ranges(first_student, first_student.below(self.total_height-1), nranges=N)
 
         # Group student dataframe record and corresponding column range
-        for stu_range, (index, record) in zip(gen, group.iterrows()):
+        for stu_range, (index, record) in zip(gen, self.group.iterrows()):
             stu_range[1].value = record[self.settings.LASTNAME_COLUMN]
             stu_range[2].value = record[self.settings.NAME_COLUMN]
 
@@ -557,7 +579,7 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
                         get_address_of_cell(coeff_cell, absolute=True),
                     )
                     for group_cell, stu_cell, coeff_cell in zip(
-                        group_range[3:-3], stu_range[3:-3], ms.coeff_cells
+                        group_range[3:-3], stu_range[3:-3], self.marking_scheme.coeff_cells
                     )
                 )
             )
@@ -570,19 +592,25 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
                 % (
                     get_address_of_cell(stu_total),
                     get_address_of_cell(stu_total),
-                    get_address_of_cell(ms.global_total, absolute=True),
+                    get_address_of_cell(self.marking_scheme.global_total, absolute=True),
                 )
             )
 
-            record[ms.name].value = "=" + get_address_of_cell(
+            record[self.marking_scheme.name].value = "=" + get_address_of_cell(
                 stu_total_20, add_worksheet_name=True
             )
-            record[ms.name + " " + _("raw")].value = "=" + get_address_of_cell(
+            record[self.marking_scheme.name + " " + _("raw")].value = "=" + get_address_of_cell(
                 stu_total, add_worksheet_name=True
             )
 
-        return_cell = ref_cell.below(height - 1).right(N)
-        return return_cell
+        bottom_right = ref_cell.below(self.total_height - 1).right(N)
+        self.bottom_right = bottom_right
+
+        # Around grades
+        frame_range(ref_cell, self.bottom_right.above(3))
+
+        # Around totals
+        frame_range(ref_cell.below(self.total_height - 2), self.bottom_right)
 
 
 class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
