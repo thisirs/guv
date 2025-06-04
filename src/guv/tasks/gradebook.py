@@ -1,7 +1,5 @@
 import json
-import math
 import os
-from collections import OrderedDict
 
 import guv
 import jsonschema
