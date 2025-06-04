@@ -489,6 +489,9 @@ class XlsGradeBookGroup(XlsGradeBookNoGroup):
         worksheet_name = normalize_string(worksheet_name, type="excel")
         gradesheet = self.workbook.create_sheet(title=worksheet_name)
 
+        # Make current worksheet the default one, useful for get_address_of_cell
+        self.workbook.active = gradesheet
+
         # Write marking scheme and points/coeffs
         ref = gradesheet.cell(4, 2)
         ms.write(gradesheet, ref)
