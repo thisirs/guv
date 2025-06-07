@@ -421,7 +421,7 @@ class Aggregate(FileOperation):
         self.kw_read = kw_read
 
     def apply(self, left_df):
-        right_df = read_dataframe(self.filename, kw_read=self.kw_read)
+        right_df = read_dataframe(self.filename, kw_read=self.kw_read, read_method=self.read_method)
 
         if self.on is not None:
             if self.left_on is not None or self.right_on is not None:
