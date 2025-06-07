@@ -336,7 +336,7 @@ class Aggregator:
         origin_lo = self._left_df.loc[lo[lo_index_column]]
 
         for row in origin_lo.itertuples(index=True):
-            description = ", ".join(row[e] for e in self.left_merger.descriptive_columns)
+            description = ", ".join(str(getattr(row, e)) for e in self.left_merger.descriptive_columns)
             logger.warning(_("The record `{desc}` is missing from the data to be aggregated").format(desc=description))
 
         ro = self._df_outer.loc[self._df_outer["_merge"] == "right_only"]
@@ -344,7 +344,7 @@ class Aggregator:
         origin_ro = self._right_df.loc[ro[ro_index_column]]
 
         for row in origin_ro.itertuples(index=True):
-            description = ", ".join(row[e] for e in self.right_merger.descriptive_columns)
+            description = ", ".join(str(getattr(row, e)) for e in self.right_merger.descriptive_columns)
             logger.warning(_("The record `{desc}` is missing from base data").format(desc=description))
 
         for row in lo.itertuples(index=True):
