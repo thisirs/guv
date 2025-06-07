@@ -7,8 +7,7 @@ chaque étudiant sont les noms de colonnes dans le fichier ``effectif.xlsx``.
 
 Pour permettre l'envoi des courriels, il faut renseigner les variables ``LOGIN``
 (login de connexion au serveur SMTP), ``FROM_EMAIL`` l'adresse courriel d'envoi
-dans le fichier ``config.py``. Les variables ``SMTP_SERVER`` et ``PORT`` (par
-défaut smtps.utc.fr et 587).
+dans le fichier ``config.py``, ``SMTP_SERVER`` et ``PORT`` (par défaut 587).
 
 {options}
 

@@ -102,7 +102,6 @@ _SETTING_LIST = [
         "SMTP_SERVER",
         schema=Schema(str),
         help=_("SMTP server for sending email"),
-        default="smtps.utc.fr"
     ),
     Setting(
         "FROM_EMAIL",

@@ -5,9 +5,9 @@ If the file does not exist, a default template is created. The template
 follows the Jinja2 format, and the available replacement variables for
 each student correspond to the column names in the ``effectif.xlsx`` file.
 
-To enable email sending, you must set the ``LOGIN`` (SMTP server login)
-and ``FROM_EMAIL`` (sender email address) variables in the ``config.py`` file.
-You can also configure ``SMTP_SERVER`` and ``PORT`` (default: smtps.utc.fr and 587).
+To enable email sending, you must set the ``LOGIN`` (SMTP server login),
+``FROM_EMAIL`` (sender email address), ``SMTP_SERVER`` and ``PORT``
+(default: 587) variables in the ``config.py`` file.
 
 {options}
 
