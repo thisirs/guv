@@ -11,8 +11,8 @@ requested interactively.
 More specifically, the created workbook contains two sheets. The first sheet
 includes:
 
-- the name, last name and email columns as specified in ``config.py``from the central
-  ``effectif.xlsx`` file,
+- the name, last name and email columns as specified in ``config.py`` from the
+  central ``effectif.xlsx`` file,
 - the grades specified in the configuration file (via ``--config`` or
   interactively) that contribute to the final grade,
 - a special column named "Aggregated Grade" containing a grade out of 20, with a
