@@ -28,6 +28,7 @@ def test_xls_student_data(guv, xlsx, guvcapfd):
         "Email",
         "Lecture",
         "Tutorial",
+        "Practical work",
         "Login"
     )
 
@@ -46,11 +47,9 @@ def test_xls_student_data(guv, xlsx, guvcapfd):
 
     def add_groups(df):
         g = np.tile(["g1", "g2"], len(df))[: len(df)]
-        np.random.shuffle(g)
         df = df.assign(group_1=g)
 
-        g = np.repeat(["g1", "g2", "g3", "g4"], len(df) // 4 + 1)[: len(df)]
-        np.random.shuffle(g)
+        g = np.repeat(["g1", "g2", "g3", "g4"], len(df) // 4)[: len(df)]
         df = df.assign(group_2=g)
 
         return df
