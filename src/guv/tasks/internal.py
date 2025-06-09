@@ -52,6 +52,9 @@ class check_file_and_config_unchanged:
         self.check_timestamp_unchanged = check_timestamp_unchanged(filename)
         self.config_changed = config_changed(value)
 
+    def configure_task(self, task):
+        task.value_savers.append(lambda: {'_config_changed': self.config_changed.config_digest})
+
     def __call__(self, task, values):
         try:
             res = self.check_timestamp_unchanged(task, values)
