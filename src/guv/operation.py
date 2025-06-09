@@ -59,6 +59,9 @@ def fingerprint(obj):
         return [fingerprint(e) for e in obj]
     elif hasattr(obj, "fingerprint"):
         return obj.fingerprint()
+    elif callable(obj):
+        bytecode = obj.__code__.co_code
+        return hashlib.sha256(bytecode).hexdigest()
     else:
         try:
             return json.dumps(obj, sort_keys=True)
