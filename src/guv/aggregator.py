@@ -350,12 +350,12 @@ class Aggregator:
         for row in lo.itertuples(index=True):
             if len(ro.index != 0):
                 origin_lo_row = origin_lo.loc[getattr(row, lo_index_column)]
-                description = ", ".join(origin_lo_row[e] for e in self.left_merger.descriptive_columns)
+                description = ", ".join(str(origin_lo_row[e]) for e in self.left_merger.descriptive_columns)
                 logger.info(_("Searching for match for `%s` :"), description)
 
                 for i, row_ro in enumerate(ro.itertuples(index=True)):
                     origin_ro_row = origin_ro.loc[getattr(row_ro, ro_index_column)]
-                    description = ", ".join(origin_ro_row[e] for e in self.right_merger.descriptive_columns)
+                    description = ", ".join(str(origin_ro_row[e]) for e in self.right_merger.descriptive_columns)
                     print(f"  ({i}) {description}")
 
                 choice = ask_choice(
