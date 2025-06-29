@@ -812,6 +812,8 @@ def swap_column(df, lines, colname, email_column):
 
 
 class MoodleFileOperation(FileOperation):
+    read_dataframe_kwargs = {}
+
     def __init__(self, filename):
         super().__init__(filename)
         self._moodle_df = None
@@ -819,7 +821,7 @@ class MoodleFileOperation(FileOperation):
     @property
     def moodle_df(self):
         if self._moodle_df is None:
-            self._moodle_df = read_dataframe(self.filename)
+            self._moodle_df = read_dataframe(self.filename, kw_read=type(self).read_dataframe_kwargs)
         return self._moodle_df
 
 
@@ -878,6 +880,7 @@ class AggregateMoodleGrades(MoodleFileOperation):
     __doc__ = TaskDocstring()
 
     hash_fields = ["_filename", "rename"]
+    read_dataframe_kwargs = {"na_values": "-"}
 
     def __init__(
         self,
