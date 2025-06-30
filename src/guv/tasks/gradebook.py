@@ -391,7 +391,7 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
             first_grade = first_name.below()
             last_grade = row_and_col(ms.bottom_right, first_grade)
             total = last_grade.below(2)
-            total_20 = total.below()
+            total_rescaled = total.below()
 
             # Formula to compute grade with points/scale
             cells = get_segment(first_grade, last_grade)
@@ -405,7 +405,7 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
             )
             total.value = formula
 
-            total_20.text(
+            total_rescaled.text(
                 '=IF(ISTEXT({stu_total}),"",{stu_total}/{global_total}*{rescaling})'.format(
                     stu_total=get_address_of_cell(total),
                     global_total=get_address_of_cell(ms.global_total, absolute=True),
@@ -413,10 +413,10 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
                 )
             )
 
-            # Link total_20 to cell in first worksheet
+            # Link total_rescaled to cell in first worksheet
             cell = record[ms.name]
             cell.value = "=" + get_address_of_cell(
-                total_20, add_worksheet_name=True, absolute=True
+                total_rescaled, add_worksheet_name=True, absolute=True
             )
 
             # Link total to cell in first worksheet
@@ -425,7 +425,7 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
                 total, add_worksheet_name=True, absolute=True
             )
 
-            return total_20
+            return total_rescaled
 
         ref_cells = []
         for j, (index, record) in enumerate(group.iterrows()):
@@ -559,26 +559,37 @@ class GroupBlock:
 
         # First column is group column
         group_range = list(get_segment(ref_cell, ref_cell.below(self.total_height-1)))
-        group_range[0].text(self.header).merge(self.last_student).center()
-        group_range[1].text(self.group_name).merge(group_range[2]).center()
 
-        self.group_total = group_range[-2]
-        formula = '=IFERROR({0},"")'.format(
-            "+".join(
-                "{1} * IF(ISBLANK({0}), 1/0, {0})".format(
-                    get_address_of_cell(group_cell, absolute=True),
-                    get_address_of_cell(scale_cell, absolute=True),
-                )
-                for group_cell, scale_cell in zip(group_range[3:-2], self.marking_scheme.scale_cells)
-            )
+        # Important cells
+        group_idx = group_range[0]
+        group_name = group_range[1]
+        group_first_grade = group_range[3]
+        group_last_grade = group_range[-4]
+        group_total = group_range[-2]
+        group_total_rescaled = group_range[-1]
+
+        # Header
+        group_idx.text(self.header).merge(self.last_student).center()
+
+        # Group name
+        group_name.text(self.group_name).merge(group_name.below()).center()
+
+        group_grade_cells = list(get_segment(group_first_grade, group_last_grade))
+        subformula = self.marking_scheme.get_formula(group_grade_cells)
+
+        # Use COUNTBLANK to display total grades once every grade is available
+        marks_range = get_range_from_cells(group_first_grade, group_last_grade)
+        formula = '=IF(COUNTBLANK({marks_range}) > 0, "", {subformula})'.format(
+            marks_range=marks_range,
+            subformula=subformula
         )
-        self.group_total.value = formula
+        group_total.value = formula
 
-        group_total_20 = group_range[-1]
-        group_total_20.text(
-            '=IF(ISTEXT({0}),"",{0}/{1}*20)'.format(
-                get_address_of_cell(self.group_total),
-                get_address_of_cell(self.marking_scheme.global_total, absolute=True),
+        group_total_rescaled.text(
+            '=IF(ISTEXT({group_total}),"",{group_total}/{global_total}*{rescaling})'.format(
+                group_total=get_address_of_cell(group_total),
+                global_total=get_address_of_cell(self.marking_scheme.global_total, absolute=True),
+                rescaling=get_address_of_cell(self.marking_scheme.global_total_rescale, absolute=True)
             )
         )
 
@@ -587,39 +598,47 @@ class GroupBlock:
 
         # Group student dataframe record and corresponding column range
         for stu_range, (index, record) in zip(gen, self.group.iterrows()):
-            stu_range[1].value = record[self.settings.LASTNAME_COLUMN]
-            stu_range[2].value = record[self.settings.NAME_COLUMN]
+            # Important cells
+            idx_cell = stu_range[0]
+            lastname_cell = stu_range[1]
+            name_cell = stu_range[2]
+            stu_first_grade = stu_range[3]
+            stu_last_grade = stu_range[-4]
+            stu_total = stu_range[-2]
+            stu_total_rescaled = stu_range[-1]
+
+            lastname_cell.value = record[self.settings.LASTNAME_COLUMN]
+            name_cell.value = record[self.settings.NAME_COLUMN]
 
             # Mirror group grade
-            for group_cell, stu_cell in zip(group_range[3:-3], stu_range[3:-3]):
-                stu_cell.value = '=IF(ISBLANK({addr}),"",{addr})'.format(addr=get_address_of_cell(group_cell))
+            stu_grade_cells = list(get_segment(stu_first_grade, stu_last_grade))
+            for group_cell, stu_cell in zip(group_grade_cells, stu_grade_cells):
+                stu_cell.value = '=IF(ISBLANK({addr}),"",{addr})'.format(
+                    addr=get_address_of_cell(group_cell)
+                )
 
             # Total of student
-            stu_total = stu_range[-2]
-            formula = '=IFERROR({0},"")'.format(
-                "+".join(
-                    "{1} * IF(ISBLANK({0}), 1/0, {0})".format(
-                        get_address_of_cell(stu_cell, absolute=True),
-                        get_address_of_cell(scale_cell, absolute=True),
-                    )
-                    for stu_cell, scale_cell in zip(stu_range[3:-2], self.marking_scheme.scale_cells)
-                )
+            subformula = self.marking_scheme.get_formula(stu_grade_cells)
+
+            # Use COUNTBLANK to display grade once every points is available
+            marks_range = get_range_from_cells(stu_first_grade, stu_last_grade)
+            formula = '=IF(COUNTBLANK({marks_range}) > 0, "", {subformula})'.format(
+                marks_range=marks_range,
+                subformula=subformula
             )
             stu_total.value = formula
 
-            # Total of student over 20
-            stu_total_20 = stu_range[-1]
-            stu_total_20.text(
-                '=IF(ISTEXT(%s),"",%s/%s*20)'
-                % (
-                    get_address_of_cell(stu_total),
-                    get_address_of_cell(stu_total),
-                    get_address_of_cell(self.marking_scheme.global_total, absolute=True),
+            # Total of student rescaled
+            stu_total_rescaled.text(
+                '=IF(ISTEXT({stu_total}),"",{stu_total}/{global_total}*{rescaling})'.format(
+                    stu_total=get_address_of_cell(stu_total),
+                    global_total=get_address_of_cell(self.marking_scheme.global_total, absolute=True),
+                    rescaling=get_address_of_cell(self.marking_scheme.global_total_rescale, absolute=True)
                 )
             )
 
             record[self.marking_scheme.name].value = "=" + get_address_of_cell(
-                stu_total_20, add_worksheet_name=True
+                stu_total_rescaled, add_worksheet_name=True
             )
             record[self.marking_scheme.name + " " + _("raw")].value = "=" + get_address_of_cell(
                 stu_total, add_worksheet_name=True
@@ -629,10 +648,10 @@ class GroupBlock:
         self.bottom_right = bottom_right
 
         # Around grades
-        frame_range(ref_cell, self.bottom_right.above(3))
+        frame_range(ref_cell, stu_last_grade)
 
         # Around totals
-        frame_range(ref_cell.below(self.total_height - 2), self.bottom_right)
+        frame_range(group_total, stu_total_rescaled)
 
 
 class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
