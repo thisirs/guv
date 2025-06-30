@@ -14,20 +14,20 @@ Examples
 
      guv pdf_attendance --title "Exam"
 
-- Named attendance sheets by TP group:
+- Named attendance sheets by lab group:
 
   .. code:: bash
 
-     guv pdf_attendance --title "Examen de TP" --group TP
+     guv pdf_attendance --title "Lab exam" --group "Lab group"
 
-- Blank attendance sheets by TP group:
+- Blank attendance sheets by lab group:
 
   .. code:: bash
 
-     guv pdf_attendance --title "Examen de TP" --group TP --blank
+     guv pdf_attendance --title "Lab exam" --group "Lab group" --blank
 
 - Named attendance sheets divided across three rooms:
 
   .. code:: bash
 
-     guv pdf_attendance --title "Examen de TP" --count 24 24 24 --name "Salle 1" "Salle 2" "Salle 3"
+     guv pdf_attendance --title "Lab exam" --count 24 24 24 --name "Room 1" "Room 2" "Room 3"

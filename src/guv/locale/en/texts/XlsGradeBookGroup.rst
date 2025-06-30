@@ -17,7 +17,7 @@ The path(s) to a detailed marking scheme file can be specified via
 requested interactively. The marking scheme file must be in YAML format.
 
 The assignment structure is defined hierarchically, ending with a list of
-questions specifying the number of points awarded and optionally a coefficient
+questions specifying the number of points awarded and optionally a scale
 (default is 1) and details (not included in the Excel file).
 
 For example:
@@ -52,14 +52,14 @@ variable.
 Examples
 --------
 
-Grade file by project group:
+Grade file by lab group:
 
 .. code:: bash
 
    guv xls_grade_book_group \
-     --name Devoir1 \
-     --marking-scheme documents/barème_devoir1.yml \
-     --group-by 'Groupe Project'
+     --name Assignment1 \
+     --marking-scheme documents/marking_scheme1.yml \
+     --group-by 'Lab group'
 
 With the YAML file containing, for example:
 

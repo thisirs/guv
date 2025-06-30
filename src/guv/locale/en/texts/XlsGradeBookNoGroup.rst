@@ -13,8 +13,9 @@ scheme(s) will be requested interactively.
 
 The marking scheme file must be in YAML format. The structure of the assignment
 is specified hierarchically, with final-level lists containing the number of
-points assigned to each question, optionally followed by a coefficient (default
+points assigned to each question, optionally followed by a scale (default
 is 1), and optional details (not shown in the Excel file).
+
 For example:
 
 .. code:: yaml
@@ -22,18 +23,18 @@ For example:
    Exercise 1:
      Question 1:
        - points: 1
-   Problème:
-     Partie 1:
+   Problem:
+     Part 1:
        Question 1:
          - points: 2
        Question 2:
          - points: 2
-         - coeff: 3
+         - scale: 3
        Question 3:
          - points: 2
-         - détails: |
+         - details: |
              Difficult question, don't grade too harshly.
-     Partie 2:
+     Part 2:
        Question 1:
          - points: 2
        Question 2:
