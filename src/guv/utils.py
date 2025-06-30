@@ -20,35 +20,35 @@ def argument(*args, **kwargs):
     return SimpleNamespace(args=args, kwargs=kwargs)
 
 
-def hexxor(a, b):  # xor two hex strings of the same length
-    return "".join(["%x" % (int(x, 16) ^ int(y, 16)) for (x, y) in zip(a, b)])
+def rotation_invariant_hash(s: str) -> str:
+    # Generate all rotations
+    rotations = [s[i:] + s[:i] for i in range(len(s))]
+
+    # Get the lexicographically smallest rotation
+    min_rotation = min(rotations)
+
+    # Compute hash (e.g., SHA-256)
+    return hashlib.sha256(min_rotation.encode()).hexdigest()
 
 
-def md5(fname):
-    hash_md5 = hashlib.md5()
-    hash_md5.update(fname.encode('utf8'))
-    return hash_md5.hexdigest()
+def slugrot_string(original: str) -> str:
+    """Computes a rotation-invariant hash on a string.
 
+    The process involves:
+    - Unicode normalization
+    - Lowercasing
+    - Removing all whitespace
+    - Applying rotation-invariant hashing
+    """
 
-def hash_rot_md5(a):
-    """Return a hash invariant by rotation"""
+    # Normalize Unicode characters (e.g., é -> e), and convert to lowercase
+    normalized = unidecode.unidecode(original).lower()
 
-    b = a + a
-    subseqs = np.unique(np.array([b[i : (i + len(a))] for i in range(len(a))]))
-    s0 = "0" * len(a)
-    s0 = md5(s0)
-    for s in subseqs:
-        s0 = hexxor(s0, md5(s))
+    # Remove all whitespace characters
+    compact = "".join(normalized.split())
 
-    return s0
-
-
-def slugrot_string(e):
-    """Rotation-invariant hash on a string"""
-
-    e0 = unidecode.unidecode(e).lower()
-    e0 = ''.join(e0.split())
-    return hash_rot_md5(e0)
+    # Return the rotation-invariant hash
+    return rotation_invariant_hash(compact)
 
 
 def convert_to_numeric(series):
