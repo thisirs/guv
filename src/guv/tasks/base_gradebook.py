@@ -6,7 +6,7 @@ import pandas as pd
 
 from ..logger import logger
 from ..openpyxl_patched import fixit
-from ..utils import normalize_string
+from ..utils import normalize_string, smart_cast
 from ..utils_config import Output, rel_to_dir
 from ..translations import _, _file
 from .base import CliArgsInheritMixin, UVTask
@@ -151,6 +151,9 @@ class AbstractGradeBook(UVTask, CliArgsInheritMixin):
                 # worksheet
                 if name in self.data_df.columns:
                     for i, value in enumerate(self.data_df[name]):
+                        # Try to convert to number from string to avoid leading
+                        # quote in Excel/LibreOffice
+                        value = smart_cast(value)
                         self.first_ws.cell(i + 2, idx).value = value
 
                 # Get cells

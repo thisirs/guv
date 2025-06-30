@@ -64,6 +64,28 @@ def convert_to_numeric(series):
     raise ValueError
 
 
+def smart_cast(value):
+    if isinstance(value, int):
+        return value
+    elif isinstance(value, float):
+        if value.is_integer():
+            return int(value)
+        else:
+            return value
+    elif isinstance(value, str):
+        try:
+            int_val = int(value)
+            return int_val
+        except ValueError:
+            try:
+                float_val = float(value)
+                return float_val
+            except ValueError:
+                return value
+    else:
+        return value
+
+
 def plural(num, plural, singular):
     if num > 1:
         return plural
