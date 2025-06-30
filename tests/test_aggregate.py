@@ -162,6 +162,7 @@ def test_docs_aggregate_self(guv, xlsx):
 
     guv().succeed()
     xlsx.tabular(guv.cwd / "effectif.xlsx").contains("Manual")
+    xlsx.tabular(guv.cwd / "generated"/ ".aggregate_self.xlsx").contains("Manual")
 
 
 @path_dependency("test_xls_student_data")

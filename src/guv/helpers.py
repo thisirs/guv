@@ -464,7 +464,7 @@ class AggregateSelf(Operation):
 
     def __init__(self, *columns):
         super().__init__()
-        self.columns = columns
+        self.columns = list(columns)
 
     def apply(self, left_df):
         from .tasks.internal import XlsStudentData  # Circular deps
@@ -473,11 +473,13 @@ class AggregateSelf(Operation):
 
         login_col = self.settings.LOGIN_COLUMN
         if login_col in left_df and login_col in right_df:
+            id_cols = [login_col]
             left_on = right_on = login_col
         else:
             names = [self.settings.NAME_COLUMN, self.settings.LASTNAME_COLUMN]
             names_set = set(names)
             if names_set.issubset(set(left_df.columns)) and names_set.issubset(set(right_df.columns)):
+                id_cols = names
                 left_on = id_slug(*names)
                 right_on = id_slug(*names)
             else:
@@ -496,8 +498,14 @@ class AggregateSelf(Operation):
             how="left",
             merge_policy="erase"
         )
+        merge = agg.merge()
 
-        return agg.merge()
+        # Backup manually added columns
+        df = right_df[id_cols + self.columns]
+        filename = os.path.join(self.settings.UV_DIR, "generated", ".aggregate_self.xlsx")
+        df.to_excel(filename, index=False)
+
+        return merge
 
     def message(self):
         msg = ", ".join(f"`{e}`" for e in self.columns)
