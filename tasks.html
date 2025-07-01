@@ -276,18 +276,18 @@ attendance sheets.</p>
 </pre></div>
 </div>
 </li>
-<li><p>Named attendance sheets by TP group:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>pdf_attendance<span class="w"> </span>--title<span class="w"> </span><span class="s2">&quot;Examen de TP&quot;</span><span class="w"> </span>--group<span class="w"> </span>TP
+<li><p>Named attendance sheets by lab group:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>pdf_attendance<span class="w"> </span>--title<span class="w"> </span><span class="s2">&quot;Lab exam&quot;</span><span class="w"> </span>--group<span class="w"> </span><span class="s2">&quot;Lab group&quot;</span>
 </pre></div>
 </div>
 </li>
-<li><p>Blank attendance sheets by TP group:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>pdf_attendance<span class="w"> </span>--title<span class="w"> </span><span class="s2">&quot;Examen de TP&quot;</span><span class="w"> </span>--group<span class="w"> </span>TP<span class="w"> </span>--blank
+<li><p>Blank attendance sheets by lab group:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>pdf_attendance<span class="w"> </span>--title<span class="w"> </span><span class="s2">&quot;Lab exam&quot;</span><span class="w"> </span>--group<span class="w"> </span><span class="s2">&quot;Lab group&quot;</span><span class="w"> </span>--blank
 </pre></div>
 </div>
 </li>
 <li><p>Named attendance sheets divided across three rooms:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>pdf_attendance<span class="w"> </span>--title<span class="w"> </span><span class="s2">&quot;Examen de TP&quot;</span><span class="w"> </span>--count<span class="w"> </span><span class="m">24</span><span class="w"> </span><span class="m">24</span><span class="w"> </span><span class="m">24</span><span class="w"> </span>--name<span class="w"> </span><span class="s2">&quot;Salle 1&quot;</span><span class="w"> </span><span class="s2">&quot;Salle 2&quot;</span><span class="w"> </span><span class="s2">&quot;Salle 3&quot;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>pdf_attendance<span class="w"> </span>--title<span class="w"> </span><span class="s2">&quot;Lab exam&quot;</span><span class="w"> </span>--count<span class="w"> </span><span class="m">24</span><span class="w"> </span><span class="m">24</span><span class="w"> </span><span class="m">24</span><span class="w"> </span>--name<span class="w"> </span><span class="s2">&quot;Room 1&quot;</span><span class="w"> </span><span class="s2">&quot;Room 2&quot;</span><span class="w"> </span><span class="s2">&quot;Room 3&quot;</span>
 </pre></div>
 </div>
 </li>
@@ -314,7 +314,7 @@ tracking over the semester.</p>
 </ul>
 <p class="rubric">Examples</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>pdf_attendance_full<span class="w"> </span>-n<span class="w"> </span><span class="m">7</span>
-guv<span class="w"> </span>pdf_attendance_full<span class="w"> </span>--group<span class="w"> </span>TP<span class="w"> </span>--template<span class="w"> </span><span class="s2">&quot;Séance {number}&quot;</span>
+guv<span class="w"> </span>pdf_attendance_full<span class="w"> </span>--group<span class="w"> </span><span class="s2">&quot;Lab work&quot;</span><span class="w"> </span>--template<span class="w"> </span><span class="s2">&quot;Session {number}&quot;</span>
 </pre></div>
 </div>
 </section>
@@ -340,7 +340,7 @@ argument.</p>
 <code class="docutils literal notranslate"><span class="pre">--marking-scheme</span></code>. If this argument is not used, the marking schemes will be
 requested interactively. The marking scheme file must be in YAML format.</p>
 <p>The assignment structure is defined hierarchically, ending with a list of
-questions specifying the number of points awarded and optionally a coefficient
+questions specifying the number of points awarded and optionally a scale
 (default is 1) and details (not included in the Excel file).</p>
 <p>For example:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Exercise 1</span><span class="p">:</span>
@@ -378,11 +378,11 @@ variable.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">-g</span> <span class="pre">colname</span></code>, <code class="docutils literal notranslate"><span class="pre">--group-by</span> <span class="pre">colname</span></code> : Group column used to grade groups of students</p></li>
 </ul>
 <p class="rubric">Examples</p>
-<p>Grade file by project group:</p>
+<p>Grade file by lab group:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>xls_grade_book_group<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--name<span class="w"> </span>Devoir1<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--marking-scheme<span class="w"> </span>documents/barème_devoir1.yml<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--group-by<span class="w"> </span><span class="s1">&#39;Groupe Project&#39;</span>
+<span class="w">  </span>--name<span class="w"> </span>Assignment1<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--marking-scheme<span class="w"> </span>documents/marking_scheme1.yml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--group-by<span class="w"> </span><span class="s1">&#39;Lab group&#39;</span>
 </pre></div>
 </div>
 <p>With the YAML file containing, for example:</p>
@@ -495,24 +495,24 @@ The path(s) to one or more detailed marking schemes can be provided via the
 scheme(s) will be requested interactively.</p>
 <p>The marking scheme file must be in YAML format. The structure of the assignment
 is specified hierarchically, with final-level lists containing the number of
-points assigned to each question, optionally followed by a coefficient (default
-is 1), and optional details (not shown in the Excel file).
-For example:</p>
+points assigned to each question, optionally followed by a scale (default
+is 1), and optional details (not shown in the Excel file).</p>
+<p>For example:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Exercise 1</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">Question 1</span><span class="p">:</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">points</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
-<span class="nt">Problème</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">Partie 1</span><span class="p">:</span>
+<span class="nt">Problem</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">Part 1</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">Question 1</span><span class="p">:</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">points</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
 <span class="w">    </span><span class="nt">Question 2</span><span class="p">:</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">points</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">coeff</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">scale</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
 <span class="w">    </span><span class="nt">Question 3</span><span class="p">:</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">points</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">détails</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">details</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
 <span class="w">          </span><span class="no">Difficult question, don&#39;t grade too harshly.</span>
-<span class="w">  </span><span class="nt">Partie 2</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">Part 2</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">Question 1</span><span class="p">:</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">points</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
 <span class="w">    </span><span class="nt">Question 2</span><span class="p">:</span>
@@ -671,8 +671,9 @@ To merge this group file with the main dataset, use the <code class="docutils li
 <dd><p>CSV files of groups from <code class="docutils literal notranslate"><span class="pre">effectif.xlsx</span></code> for Moodle</p>
 <p>This task generates CSV files containing group assignments based on the data
 from <code class="docutils literal notranslate"><span class="pre">effectif.xlsx</span></code>, suitable for import into Moodle.</p>
-<p>The <code class="docutils literal notranslate"><span class="pre">--groups</span></code> option allows you to select which group columns to export.
-By default, the exported columns are <code class="docutils literal notranslate"><span class="pre">Cours</span></code>, <code class="docutils literal notranslate"><span class="pre">TD</span></code>, and <code class="docutils literal notranslate"><span class="pre">TP</span></code>.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">--groups</span></code> option allows you to select which group columns to export. By
+default, the exported columns are <code class="docutils literal notranslate"><span class="pre">Lecture</span></code>, <code class="docutils literal notranslate"><span class="pre">Tutorial</span></code>, and <code class="docutils literal notranslate"><span class="pre">Practical</span>
+<span class="pre">work</span></code>.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">--long</span></code> option enables exporting TD/TP group names in a long format,
 i.e., <code class="docutils literal notranslate"><span class="pre">TP1</span></code>, <code class="docutils literal notranslate"><span class="pre">TD1</span></code> instead of <code class="docutils literal notranslate"><span class="pre">T1</span></code>, <code class="docutils literal notranslate"><span class="pre">D1</span></code>.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">--single</span></code> option allows generating a single combined file.</p>
@@ -685,7 +686,7 @@ i.e., <code class="docutils literal notranslate"><span class="pre">TP1</span></c
 <li><p><code class="docutils literal notranslate"><span class="pre">-s</span></code>, <code class="docutils literal notranslate"><span class="pre">--single</span></code> : Create a single file</p></li>
 </ul>
 <p class="rubric">Examples</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>csv_groups<span class="w"> </span>--groups<span class="w"> </span>Groupe_Project
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>csv_groups<span class="w"> </span>--groups<span class="w"> </span>Project_Group
 </pre></div>
 </div>
 </section>
@@ -723,10 +724,10 @@ i.e., <code class="docutils literal notranslate"><span class="pre">TP1</span></c
 <li><p><code class="docutils literal notranslate"><span class="pre">-F</span> <span class="pre">FORMAT</span></code> : Format of the grouping name (default: D##_P1)</p></li>
 </ul>
 <p class="rubric">Examples</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>csv_groups_groupings<span class="w"> </span>-G<span class="w"> </span><span class="m">3</span><span class="w"> </span>-F<span class="w"> </span>Groupement_P1<span class="w"> </span>-g<span class="w"> </span><span class="m">14</span><span class="w"> </span>-f<span class="w"> </span>D##_P1_@
-guv<span class="w"> </span>csv_groups_groupings<span class="w"> </span>-G<span class="w"> </span><span class="m">2</span><span class="w"> </span>-F<span class="w"> </span>Groupement_D1<span class="w"> </span>-g<span class="w"> </span><span class="m">14</span><span class="w"> </span>-f<span class="w"> </span>D1_P##_@
-guv<span class="w"> </span>csv_groups_groupings<span class="w"> </span>-G<span class="w"> </span><span class="m">2</span><span class="w"> </span>-F<span class="w"> </span>Groupement_D2<span class="w"> </span>-g<span class="w"> </span><span class="m">14</span><span class="w"> </span>-f<span class="w"> </span>D2_P##_@
-guv<span class="w"> </span>csv_groups_groupings<span class="w"> </span>-G<span class="w"> </span><span class="m">2</span><span class="w"> </span>-F<span class="w"> </span>Groupement_D3<span class="w"> </span>-g<span class="w"> </span><span class="m">14</span><span class="w"> </span>-f<span class="w"> </span>D3_P##_@
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>csv_groups_groupings<span class="w"> </span>-G<span class="w"> </span><span class="m">3</span><span class="w"> </span>-F<span class="w"> </span>Grouping_P1<span class="w"> </span>-g<span class="w"> </span><span class="m">14</span><span class="w"> </span>-f<span class="w"> </span>D##_P1_@
+guv<span class="w"> </span>csv_groups_groupings<span class="w"> </span>-G<span class="w"> </span><span class="m">2</span><span class="w"> </span>-F<span class="w"> </span>Grouping_D1<span class="w"> </span>-g<span class="w"> </span><span class="m">14</span><span class="w"> </span>-f<span class="w"> </span>D1_P##_@
+guv<span class="w"> </span>csv_groups_groupings<span class="w"> </span>-G<span class="w"> </span><span class="m">2</span><span class="w"> </span>-F<span class="w"> </span>Grouping_D2<span class="w"> </span>-g<span class="w"> </span><span class="m">14</span><span class="w"> </span>-f<span class="w"> </span>D2_P##_@
+guv<span class="w"> </span>csv_groups_groupings<span class="w"> </span>-G<span class="w"> </span><span class="m">2</span><span class="w"> </span>-F<span class="w"> </span>Grouping_D3<span class="w"> </span>-g<span class="w"> </span><span class="m">14</span><span class="w"> </span>-f<span class="w"> </span>D3_P##_@
 </pre></div>
 </div>
 </section>
