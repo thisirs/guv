@@ -12,10 +12,10 @@ class Cond:
         self.visible = visible
         self.sts = sts
 
-    def to_PHP(self, **info):
-        return CondAnd(sts=[self]).to_PHP(**info)
+    def to_json(self, **info):
+        return CondAnd(sts=[self]).to_json(**info)
 
-    def to_PHP_inner(self, **info):
+    def to_json_inner(self, **info):
         raise NotImplementedError('Abstract method')
 
     def __and__(self, other):
@@ -61,7 +61,7 @@ class CondDate(Cond):
         else:
             raise TypeError
 
-    def to_PHP_inner(self, **info):
+    def to_json_inner(self, **info):
         if type(self.dt) == date:
             dt = datetime.combine(self.dt, datetime.min.time())
         else:
@@ -87,7 +87,7 @@ class CondGroup(Cond):
             raise ValueError(_("The group named {grp} does not have a Moodle match in the MOODLE_GROUPS variable").format(grp=self.grp))
         return info["groups"][self.grp]["moodle_id"]
 
-    def to_PHP_inner(self, **info):
+    def to_json_inner(self, **info):
         return {'type': 'group', 'id': self.group_id(**info)}
 
 
@@ -106,7 +106,7 @@ class CondProfil(Cond):
         else:
             raise TypeError
 
-    def to_PHP_inner(self, **info):
+    def to_json_inner(self, **info):
         return {
             "type": "profile",
             "sf": self.field,
@@ -124,8 +124,8 @@ class CondCompound(Cond):
         self.negate = not self.negate
         return self
 
-    def to_PHP(self, **info):
-        e = self.to_PHP_inner(**info)
+    def to_json(self, **info):
+        e = self.to_json_inner(**info)
         if (isinstance(self, CondAnd) and not self.negate) or \
            (isinstance(self, CondOr) and self.negate):
             key = 'showc'
@@ -140,14 +140,14 @@ class CondCompound(Cond):
 
 
 class CondOr(CondCompound):
-    def to_PHP_inner(self, **info):
-        sts_PHP = [e.to_PHP_inner(**info) for e in self.sts]
+    def to_json_inner(self, **info):
+        sts_json = [e.to_json_inner(**info) for e in self.sts]
         op = '!|' if self.negate else '|'
-        return {'op': op, 'c': sts_PHP}
+        return {'op': op, 'c': sts_json}
 
 
 class CondAnd(CondCompound):
-    def to_PHP_inner(self, **info):
+    def to_json_inner(self, **info):
         op = '!&' if self.negate else '&'
-        sts_PHP = [e.to_PHP_inner(**info) for e in self.sts]
-        return {'op': op, 'c': sts_PHP}
+        sts_json = [e.to_json_inner(**info) for e in self.sts]
+        return {'op': op, 'c': sts_json}

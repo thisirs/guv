@@ -255,7 +255,7 @@ class JsonGroup(UVTask, CliArgsMixin):
                     CondProfil("email") == row["Adresse de courriel"]
                     for index, row in group.iterrows()
                 ]
-            ).to_PHP()
+            ).to_json()
             for group_name, group in dff.groupby(self.group)
         }
 
