@@ -14,6 +14,7 @@ def generate_tasks(tasks):
             doc = None
             full_doc = None
         else:
+            ref.__dict__["__doc__"].replace_options = False
             doc, *rest = ref.__doc__.split("\n", maxsplit=1)
             if rest:
                 # Remove {options} section from Sphinx
