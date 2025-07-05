@@ -245,14 +245,14 @@ class JsonGroup(UVTask, CliArgsMixin):
         self.check_if_present(
             df, self.group, file=self.xls_merge, base_dir=self.settings.SEMESTER_DIR
         )
-        dff = df[["Adresse de courriel", self.group]]
+        dff = df[[self.settings.MOODLE_EMAIL_COLUMN, self.group]]
 
         # Dictionary of group in GROUP and corresponding Cond
         # object for that group.
         json_dict = {
             group_name: CondOr(
                 [
-                    CondProfil("email") == row["Adresse de courriel"]
+                    CondProfil("email") == row[self.settings.MOODLE_EMAIL_COLUMN]
                     for index, row in group.iterrows()
                 ]
             ).to_json()
