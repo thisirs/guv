@@ -51,7 +51,7 @@ Follow the steps below to get started with `guv`:
 
 3. **Use tasks**
 
-    Now go to `CS314` subdirectory:
+    Now go to `CS042` subdirectory:
 
     ```shell
     cd Fall2024/CS042
