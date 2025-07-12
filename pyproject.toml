@@ -1,18 +1,19 @@
 [build-system]
-requires = ["setuptools>=45"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "guv"
 authors = [
-  {name = "Sylvain Rousseau", email = "sylvain.rousseau@hds.utc.fr"},
+  { name = "Sylvain Rousseau", email = "sylvain.rousseau@hds.utc.fr" },
 ]
 readme = "README.md"
 description = "Tool for managing course units"
 dynamic = ["version"]
 requires-python = ">=3.8"
-license = {text = "MIT"}
-scripts = {guv = "guv.runner:main"}
+license = { text = "MIT" }
+scripts = { guv = "guv.runner:main" }
+
 dependencies = [
   "doit",
   "Jinja2",
@@ -27,24 +28,32 @@ dependencies = [
   "Unidecode",
 ]
 
-[dependency-groups]
+[project.optional-dependencies]
 dev = [
-    "pytest>=8.3.5",
-    "pytest-dependency",
-    "pytest-order",
-    "shtab"
+  "pytest>=8.3.5",
+  "pytest-dependency",
+  "pytest-order",
+  "shtab",
 ]
 doc = [
-    "sphinx",
-    "furo",
-    "myst_parser",
+  "sphinx",
+  "furo",
+  "myst_parser",
 ]
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.hatch.version]
+source = "code"
+path = "src/guv/__init__.py"
+pattern = "__version__ = ['\"](?P<version>[^'\"]+)['\"]"
 
-[tool.setuptools.package-data]
-guv = ["schemas/*", "data/*", "images/*", "data/templates/*", "locale/*/LC_MESSAGES/*.mo", "locale/*/texts/*"]
-
-[tool.setuptools.dynamic]
-version = {attr = "guv.__version__"}
+[tool.hatch.build]
+sources = ["src"]
+include = [
+  "src/guv",
+  "src/guv/schemas/*",
+  "src/guv/data/*",
+  "src/guv/images/*",
+  "src/guv/data/templates/*",
+  "src/guv/locale/*/LC_MESSAGES/*.mo",
+  "src/guv/locale/*/texts/*",
+]
