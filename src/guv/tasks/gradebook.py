@@ -877,7 +877,7 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
             percentile_cell = self.global_options[_("Percentile grade") + " " + ects]
             props[
                 _("{ects} if >=").format(ects=ects)
-            ] = _("=IF(ISERROR(PERCENTILE({a}, {b})), NA(), PERCENTILE({a}, {b}))").format(
+            ] = "=IF(ISERROR(PERCENTILE({a}, {b})), NA(), PERCENTILE({a}, {b}))".format(
                 a=self.get_column_range(_("Passing grade")),
                 b=get_address_of_cell(percentile_cell),
             )
