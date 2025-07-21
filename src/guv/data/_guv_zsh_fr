@@ -44,8 +44,8 @@ _shtab_guv_csv_create_groups_options=(
 
 _shtab_guv_csv_groups_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
-  {-g,--groups}"[List of groupings to consider via a column name. By default, the groupings \`\`Lecture\`\`, \`\`Tutorial\`\` and \`\`Practical work\`\` are used.]:groups:_guv_columns"
-  {-l,--long}"[Use the names of Lecture\/Tutorial\/Practical work groups in long format, i.e., \"TP1\" and \"TD1\" instead of \"T1\" and \"D1\"]"
+  {-g,--groups}"[Liste des groupements à considérer via un nom de colonne. Par défaut, les groupements \`\`Cours\`\`, \`\`TD\`\` et \`\`TP\`\` sont utilisés.]:groups:_guv_columns"
+  {-l,--long}"[Utiliser les noms de groupes de Cours\/TD\/TP au format long, c\'est à dire \"TP1\" et \"TD1\" au lieu de \"T1\" et \"D1\"]"
   {-s,--single}"[Créer un unique fichier]"
 )
 
