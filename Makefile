@@ -1,6 +1,6 @@
 DOMAIN = guv
 LOCALEDIR = src/guv/locale
-PYFILES = $(shell find src/guv -name '*.py')
+PYFILES = $(shell find src/guv -name '*.py' | sort)
 
 test:
 	uv run pytest -v -rA --cache-clear
