@@ -3,7 +3,7 @@ LOCALEDIR = src/guv/locale
 PYFILES = $(shell find src/guv -name '*.py' | sort)
 
 test:
-	uv run pytest -v -rA --cache-clear
+	uv run --no-editable pytest -v -rA --cache-clear
 
 doc:
 	uv run --group doc sphinx-build --builder html --fail-on-warning docs public
