@@ -1,23 +1,18 @@
 import shlex
 import sys
 
-import openpyxl
 import pandas as pd
-
-from ..logger import logger
-from ..openpyxl_patched import fixit
-from ..utils import normalize_string, smart_cast
-from ..utils_config import Output, rel_to_dir
-from ..translations import _, _file
-from .base import CliArgsInheritMixin, UVTask
-from .internal import XlsStudentData
-
-fixit(openpyxl)
-
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 
+from .. import openpyxl_patched
+from ..logger import logger
 from ..openpyxl_utils import fit_cells_at_col, get_range_from_cells
+from ..translations import _, _file
+from ..utils import normalize_string, smart_cast
+from ..utils_config import Output, rel_to_dir
+from .base import CliArgsInheritMixin, UVTask
+from .internal import XlsStudentData
 
 
 class AbstractGradeBook(UVTask, CliArgsInheritMixin):

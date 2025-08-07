@@ -1,3 +1,6 @@
+import openpyxl
+
+
 def fixit(openpyxl):
     from openpyxl.cell import Cell as _Cell
     from openpyxl.cell import MergedCell as _MergedCell
@@ -97,3 +100,8 @@ def fixit(openpyxl):
 
 
     _Worksheet.merge_cells2 = _merge_cells2
+
+
+fixit(openpyxl)
+
+__all__ = ['openpyxl']

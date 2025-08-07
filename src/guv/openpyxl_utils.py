@@ -3,6 +3,7 @@ from itertools import groupby
 from operator import attrgetter
 from types import SimpleNamespace
 
+from guv import openpyxl_patched as openpyxl
 from openpyxl import utils
 from openpyxl.styles import Border, Side
 from openpyxl.utils.cell import absolute_coordinate

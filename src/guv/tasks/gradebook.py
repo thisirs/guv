@@ -3,24 +3,19 @@ import os
 
 import guv
 import jsonschema
-import openpyxl
 import yaml
-
-from ..openpyxl_patched import fixit
-
-fixit(openpyxl)
-
 from openpyxl.formatting.rule import CellIsRule
 from openpyxl.styles import Alignment, PatternFill
 from openpyxl.utils import get_column_letter
 
-from ..openpyxl_utils import (fit_columns_dimension, frame_range, generate_ranges,
-                              get_address_of_cell, get_range_from_cells,
-                              get_segment, row_and_col)
-from ..translations import _, TaskDocstring, _file
-from ..utils import sort_values, normalize_string, generate_groupby
+from .. import openpyxl_patched
+from ..openpyxl_utils import (fit_columns_dimension, frame_range,
+                              generate_ranges, get_address_of_cell,
+                              get_range_from_cells, get_segment, row_and_col)
+from ..translations import TaskDocstring, _, _file
+from ..utils import generate_groupby, normalize_string, sort_values
 from ..utils_ask import checkboxlist_prompt, prompt_number
-from ..utils_config import rel_to_dir, ask_choice
+from ..utils_config import ask_choice, rel_to_dir
 from . import base
 from . import base_gradebook as baseg
 

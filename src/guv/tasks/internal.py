@@ -1,25 +1,21 @@
+import logging
 import os
 
-import openpyxl
 import pandas as pd
-from doit.tools import config_changed, check_timestamp_unchanged
 from doit.exceptions import TaskFailed
-import logging
-
-from ..config import settings
-from ..exceptions import ImproperlyConfigured
-from ..logger import logger
-from ..openpyxl_patched import fixit
-from ..translations import _, TaskDocstring
-from ..utils import (sort_values, pformat)
-from ..utils_config import Output, selected_uv
-from .base import UVTask
-
-fixit(openpyxl)
-
+from doit.tools import check_timestamp_unchanged, config_changed
 from openpyxl import Workbook, load_workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.utils.dataframe import dataframe_to_rows
+
+from .. import openpyxl_patched
+from ..config import settings
+from ..exceptions import ImproperlyConfigured
+from ..logger import logger
+from ..translations import TaskDocstring, _
+from ..utils import pformat
+from ..utils_config import Output, selected_uv
+from .base import UVTask
 
 
 __all__ = ["XlsStudentData"]

@@ -3,16 +3,11 @@ import os
 import smtplib
 
 import jinja2
-import openpyxl
 import pandas as pd
-
-from ..openpyxl_patched import fixit
-
-fixit(openpyxl)
 
 from ..exceptions import GuvUserError
 from ..logger import logger
-from ..translations import _, TaskDocstring
+from ..translations import TaskDocstring, _
 from ..utils import argument, normalize_string
 from ..utils_config import Output, ask_choice
 from .base import CliArgsMixin, UVTask
