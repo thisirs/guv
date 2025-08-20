@@ -43,7 +43,7 @@ doc = [
 
 [tool.hatch.version]
 source = "code"
-path = "src/guv_utc/__init__.py"
+path = "src/guv/__init__.py"
 pattern = "__version__ = ['\"](?P<version>[^'\"]+)['\"]"
 
 [tool.hatch.build]
