@@ -6,13 +6,14 @@ import logging
 import os
 import shlex
 import sys
+from datetime import datetime
 
 from doit.cmd_base import NamespaceTaskLoader
 from doit.doit_cmd import DoitMain
 
 from . import tasks
-from .handlers import get_handlers
 from .config import settings
+from .handlers import get_handlers
 from .logger import logger
 from .parser import get_parser
 from .tasks.base import SemesterTask, TaskBase, UVTask
@@ -173,16 +174,18 @@ def main(argv=sys.argv[1:]):
             and "SEMESTER_DIR" in settings._settings
             and sys.argv[1:]
         ):
-            command_line = "guv " + " ".join(map(shlex.quote, sys.argv[1:])) + "\n"
+            command_line = "guv " + " ".join(map(shlex.quote, sys.argv[1:]))
             if "UV_DIR" in settings._settings and settings._settings["UV_DIR"] is not None:
                 directory = settings._settings["UV_DIR"]
             else:
                 directory = settings._settings["SEMESTER_DIR"]
 
             fp = os.path.join(directory, ".history")
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            entry = f"[{timestamp}] {command_line}\n"
 
             with open(fp, "a") as file:
-                file.write(command_line)
+                file.write(entry)
 
     return ret
 
