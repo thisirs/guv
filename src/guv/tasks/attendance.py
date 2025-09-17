@@ -1,7 +1,9 @@
+from jinja2 import Template
+
 from ..exceptions import GuvUserError
 from ..translations import _, TaskDocstring
 from ..utils import (argument, generate_groupby, make_groups,
-                     normalize_string, pformat, sort_values, get_latex_template)
+                     normalize_string, sort_values, get_latex_template)
 from ..utils_config import render_from_contexts
 from .base import CliArgsMixin, UVTask
 from .internal import XlsStudentData
@@ -233,7 +235,7 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
         argument(
             "-t",
             "--template",
-            default="S{number}",
+            default="S{{number}}",
             help=_("Template to set the name of successive sessions in the attendance sheet. By default, it is ``%(default)s``. The only supported keyword is ``number`` which starts at 1."),
         ),
         argument(
@@ -271,7 +273,7 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
     def generate_contexts(self, df):
         base_context = {
             "slots_name": [
-                pformat(self.template, number=i+1)
+                Template(self.template).render(number=i+1)
                 for i in range(self.slots)
             ],
             **self.info,

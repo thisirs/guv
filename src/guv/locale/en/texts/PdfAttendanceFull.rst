@@ -12,4 +12,4 @@ Examples
 .. code:: bash
 
    guv pdf_attendance_full -n 7
-   guv pdf_attendance_full --group "Lab work" --template "Session {number}"
+   guv pdf_attendance_full --group "Lab work" --template "Session {{number}}"
