@@ -621,7 +621,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         except StopIteration as e:
             raise GuvUserError(_("The available group names are exhausted, use # or @ in the template or add names in `--names`.")) from e
 
-        names = np.array([pformat(tmpl, group_name=name) for tmpl in templates])
+        names = np.array([pformat(tmpl, grouping_name=name) for tmpl in templates])
         return names[partition]
 
     def make_partition(self, n):
