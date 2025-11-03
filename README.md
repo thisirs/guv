@@ -38,35 +38,51 @@ Follow the steps below to get started with `guv`:
     This creates a semester directory `Fall2024` containing to courses `CS314`
     and `CS042`.
 
-2. **Provide a base listing file and add it in `config.py`**.
+2. **Provide a base listing file**:
 
-    Place the csv/Excel file of a listing of students under
-    `Fall2024/CS042/documents` and tell `guv` to add it in
-    `Fall2024/CS042/config.py`:
+    Place the csv/Excel file of a listing of students under some directory, for
+    example `Fall2024/CS042/documents` and declare it in
+    `Fall2024/CS042/config.py` like this:
 
     ```python
     DOCS = Documents()
     DOCS.add("documents/base_listing.xlsx")
     ```
 
-3. **Use tasks**
+    Now go to `CS042` subdirectory and run `guv` without arguments. The result
+    is in a file called `effectif.xlsx` under `Fall2024/CS042`.
 
-    Now go to `CS042` subdirectory:
+    Depending on the column names of your listing, you might need to update
+    the column mappings in the `config.py` file located in `Fall2024`.
 
-    ```shell
-    cd Fall2024/CS042
-    ```
+3. **Use tasks to generate files**
 
-    You can now generate attendance sheets:
+    If `CS042` directory, you can now generate attendance sheets:
 
     ```shell
     guv pdf_attendance --title "Exam"
     ```
 
-    Generate a gradebook (you will be asked for a marking scheme):
+    or generate a gradebook (you will be asked for a marking scheme):
 
     ```shell
     guv xls_gradebook_no_group --name Exam1
     ```
 
-See documentation [here](https://thisirs.github.io/guv/).
+    See other tasks [here](tasks.rst).
+
+4. **Aggregate more files to the base listing**
+
+    If you want to add more information to the base listing:
+
+    ```python
+    DOCS = Documents()
+    DOCS.add("documents/base_listing.xlsx")
+    DOCS.aggregate("documents/grades.xlsx", on="Email")
+    ```
+
+    and see the result in `effectif.xlsx` under `Fall2024/CS042`.
+
+    See other aggregating functions [here](operations.rst).
+
+See all available tasks and aggregating functions [here](https://thisirs.github.io/guv/).
