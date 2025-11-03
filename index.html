@@ -271,31 +271,42 @@ attendance sheets, grade and jury spreadsheets, and much more!</p>
 <p>This creates a semester directory <code class="docutils literal notranslate"><span class="pre">Fall2024</span></code> containing to courses <code class="docutils literal notranslate"><span class="pre">CS314</span></code>
 and <code class="docutils literal notranslate"><span class="pre">CS042</span></code>.</p>
 </li>
-<li><p><strong>Provide a base listing file and add it in <code class="docutils literal notranslate"><span class="pre">config.py</span></code></strong>.</p>
-<p>Place the csv/Excel file of a listing of students under
-<code class="docutils literal notranslate"><span class="pre">Fall2024/CS042/documents</span></code> and tell <code class="docutils literal notranslate"><span class="pre">guv</span></code> to add it in
-<code class="docutils literal notranslate"><span class="pre">Fall2024/CS042/config.py</span></code>:</p>
+<li><p><strong>Provide a base listing file</strong>:</p>
+<p>Place the csv/Excel file of a listing of students under some directory, for
+example <code class="docutils literal notranslate"><span class="pre">Fall2024/CS042/documents</span></code> and declare it in
+<code class="docutils literal notranslate"><span class="pre">Fall2024/CS042/config.py</span></code> like this:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">DOCS</span> <span class="o">=</span> <span class="n">Documents</span><span class="p">()</span>
 <span class="n">DOCS</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;documents/base_listing.xlsx&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>Now go to <code class="docutils literal notranslate"><span class="pre">CS042</span></code> subdirectory and run <code class="docutils literal notranslate"><span class="pre">guv</span></code> without arguments. The result
+is in a file called <code class="docutils literal notranslate"><span class="pre">effectif.xlsx</span></code> under <code class="docutils literal notranslate"><span class="pre">Fall2024/CS042</span></code>.</p>
+<p>Depending on the column names of your listing, you might need to update
+the column mappings in the <code class="docutils literal notranslate"><span class="pre">config.py</span></code> file located in <code class="docutils literal notranslate"><span class="pre">Fall2024</span></code>.</p>
 </li>
-<li><p><strong>Use tasks</strong></p>
-<p>Now go to <code class="docutils literal notranslate"><span class="pre">CS042</span></code> subdirectory:</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>Fall2024/CS042
-</pre></div>
-</div>
-<p>You can now generate attendance sheets:</p>
+<li><p><strong>Use tasks to generate files</strong></p>
+<p>If <code class="docutils literal notranslate"><span class="pre">CS042</span></code> directory, you can now generate attendance sheets:</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>pdf_attendance<span class="w"> </span>--title<span class="w"> </span><span class="s2">&quot;Exam&quot;</span>
 </pre></div>
 </div>
-<p>Generate a gradebook (you will be asked for a marking scheme):</p>
+<p>or generate a gradebook (you will be asked for a marking scheme):</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>xls_gradebook_no_group<span class="w"> </span>--name<span class="w"> </span>Exam1
 </pre></div>
 </div>
+<p>See other tasks <a class="reference internal" href="tasks.html"><span class="std std-doc">here</span></a>.</p>
+</li>
+<li><p><strong>Aggregate more files to the base listing</strong></p>
+<p>If you want to add more information to the base listing:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">DOCS</span> <span class="o">=</span> <span class="n">Documents</span><span class="p">()</span>
+<span class="n">DOCS</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;documents/base_listing.xlsx&quot;</span><span class="p">)</span>
+<span class="n">DOCS</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="s2">&quot;documents/grades.xlsx&quot;</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s2">&quot;Email&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>and see the result in <code class="docutils literal notranslate"><span class="pre">effectif.xlsx</span></code> under <code class="docutils literal notranslate"><span class="pre">Fall2024/CS042</span></code>.</p>
+<p>See other aggregating functions <a class="reference internal" href="operations.html"><span class="std std-doc">here</span></a>.</p>
 </li>
 </ol>
-<p>See documentation <a class="reference external" href="https://thisirs.github.io/guv/">here</a>.</p>
+<p>See all available tasks and aggregating functions <a class="reference external" href="https://thisirs.github.io/guv/">here</a>.</p>
 <div class="toctree-wrapper compound">
 </div>
 <div class="toctree-wrapper compound">

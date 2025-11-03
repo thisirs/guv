@@ -503,12 +503,16 @@ central file.</p>
 <h2>Directly modify base <code class="docutils literal notranslate"><span class="pre">DOCS</span></code> file<a class="headerlink" href="#directly-modify-base-docs-file" title="Link to this heading">¶</a></h2>
 <dl class="py method">
 <dt class="sig sig-object py" id="guv.helpers.Documents.add">
-<span class="sig-prename descclassname"><span class="pre">Documents.</span></span><span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#guv.helpers.Documents.add" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">Documents.</span></span><span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kw_func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#guv.helpers.Documents.add" title="Link to this definition">¶</a></dt>
 <dd><p>Adds a file to the central file</p>
-<p>Simply adds the file if the central file does not yet exist. Otherwise,
-uses the function <code class="docutils literal notranslate"><span class="pre">func</span></code> to perform the aggregation. The function <code class="docutils literal notranslate"><span class="pre">func</span></code>
-takes as arguments the existing <em>DataFrame</em> and the path to the file, and
-returns the updated <em>DataFrame</em>.</p>
+<p>Simply adds the file if the central file does not yet exist. Otherwise, uses the
+function <code class="docutils literal notranslate"><span class="pre">func</span></code> to perform the aggregation. The function <code class="docutils literal notranslate"><span class="pre">func</span></code> takes as
+arguments the existing <em>DataFrame</em> and the path to the file, and returns the
+updated <em>DataFrame</em>. Keywords arguments can be given to <code class="docutils literal notranslate"><span class="pre">func</span></code> using
+<code class="docutils literal notranslate"><span class="pre">kw_func</span></code>.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">func</span></code> is not provided, use either <code class="docutils literal notranslate"><span class="pre">pd.read_csv</span></code> or
+<code class="docutils literal notranslate"><span class="pre">pd_read_excel</span></code> based on the extension of the file. Keywords arguments can be
+given to <code class="docutils literal notranslate"><span class="pre">pd.read_csv</span></code> or <code class="docutils literal notranslate"><span class="pre">pd_read_excel</span></code> using <code class="docutils literal notranslate"><span class="pre">kw_func</span></code>.</p>
 <p>See specialized functions for incorporating standard documents:</p>
 <ul class="simple">
 <li><p><a class="reference internal" href="#guv.helpers.Documents.aggregate" title="guv.helpers.Documents.aggregate"><code class="xref py py-func docutils literal notranslate"><span class="pre">aggregate()</span></code></a>: CSV/Excel document</p></li>
@@ -520,13 +524,20 @@ returns the updated <em>DataFrame</em>.</p>
 <li><p><strong>filename</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">str</span></code>) – The path to the file to aggregate.</p></li>
 <li><p><strong>func</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">callable</span></code>, optional) – A function with signature <em>DataFrame</em>, filename: str -&gt;
 <em>DataFrame</em> that performs the aggregation.</p></li>
+<li><p><strong>kw_func</strong> (<code class="xref py py-obj docutils literal notranslate"><span class="pre">dict</span></code>, optional) – Keyword arguments to use with <code class="docutils literal notranslate"><span class="pre">func</span></code> or <code class="docutils literal notranslate"><span class="pre">pd.read_csv</span></code> or
+<code class="docutils literal notranslate"><span class="pre">pd.read_excel</span></code>.</p></li>
 </ul>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
 <ul>
 <li><p>Adding data when there is nothing yet:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">DOCS</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;documents/base_listing.xlsx)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">DOCS</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;documents/base_listing.xlsx&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p>Adding data when there is nothing yet with extra keyword arguments:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">DOCS</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;documents/base_listing.xlsx&quot;</span><span class="p">,</span> <span class="n">kw_func</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;encoding&quot;</span><span class="p">:</span> <span class="s2">&quot;ISO_8859_1&quot;</span><span class="p">})</span>
 </pre></div>
 </div>
 </li>
