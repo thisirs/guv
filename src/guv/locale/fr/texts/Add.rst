@@ -1,41 +1,56 @@
 Ajoute un fichier au fichier central
 
-Ajoute simplement le fichier s'il n'y a pas encore de fichier central. Sinon
-utilise la fonction ``func`` pour réaliser l'agrégation. La fonction ``func``
-prend en argument le *DataFrame* déjà existant, le chemin vers le fichier et
-renvoie le *DataFrame* mis à jour.
+Ajoute simplement le fichier si le fichier central n'existe pas encore.
+Sinon, utilise la fonction ``func`` pour effectuer l'agrégation.
+La fonction ``func`` prend en arguments le *DataFrame* existant et le chemin
+vers le fichier, et retourne le *DataFrame* mis à jour.
+Des arguments nommés peuvent être passés à ``func`` via ``kw_func``.
 
-Voir fonctions spécialisées pour l'incorporation de documents classiques :
+Si ``func`` n'est pas fournie, utilise soit ``pd.read_csv`` soit
+``pd.read_excel`` en fonction de l'extension du fichier.
+Des arguments nommés peuvent être passés à ``pd.read_csv`` ou
+``pd.read_excel`` via ``kw_func``.
 
-- :func:`~guv.helpers.Documents.aggregate` : Document csv/Excel
-- :func:`~guv.helpers.Documents.aggregate_org` : Document Org
+Voir les fonctions spécialisées pour incorporer des documents standards :
 
-Parameters
+- :func:`~guv.helpers.Documents.aggregate` : Document CSV/Excel
+- :func:`~guv.helpers.Documents.aggregate_org` : Document Org
+
+Paramètres
 ----------
 
 filename : :obj:`str`
-    Le chemin du fichier à agréger.
+    Le chemin vers le fichier à agréger.
 
-func : :obj:`callable`, optional
-    Une fonction de signature *DataFrame*, filename: str ->
-    *DataFrame* qui réalise l'agrégation.
+func : :obj:`callable`, optionnel
+    Une fonction avec la signature *DataFrame*, filename: str ->
+    *DataFrame* qui effectue l'agrégation.
 
-Examples
+kw_func : :obj:`dict`, optionnel
+    Arguments nommés à utiliser avec ``func``, ``pd.read_csv`` ou
+    ``pd.read_excel``.
+
+Exemples
 --------
 
-- Agrégation en utilisant une fonction :
+- Ajout de données lorsqu'il n'y a encore rien :
 
   .. code:: python
 
-     DOCS.add("documents/liste_de_base.xlsx)
+     DOCS.add("documents/base_listing.xlsx")
 
-- Agrégation en utilisant une fonction :
+- Ajout de données lorsqu'il n'y a encore rien, avec des arguments nommés supplémentaires :
 
   .. code:: python
 
-     def fonction_qui_incorpore(df, file_path):
-         # On incorpore le fichier dont le chemin est `file_path` au
-         # DataFrame `df` et on renvoie le DataFrame mis à jour.
+     DOCS.add("documents/base_listing.xlsx", kw_func={"encoding": "ISO_8859_1"})
 
-     DOCS.add("documents/notes.csv", func=fonction_qui_incorpore)
+- Agrégation en utilisant une fonction :
 
+  .. code:: python
+
+     def function_that_incorporates(df, file_path):
+         # Incorpore le fichier à `file_path` dans le DataFrame `df`
+         # et retourne le DataFrame mis à jour.
+
+     DOCS.add("documents/notes.csv", func=function_that_incorporates)
