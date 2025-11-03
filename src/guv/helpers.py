@@ -366,11 +366,12 @@ class FileOperation(Operation):
 class Add(FileOperation):
     __doc__ = TaskDocstring()
 
-    hash_fields = ["_filename", "func"]
+    hash_fields = ["_filename", "func", "kw_func"]
 
-    def __init__(self, filename, func=None):
+    def __init__(self, filename, func=None, kw_func=None):
         super().__init__(filename)
         self.func = func
+        self.kw_func = kw_func
 
     def apply(self, df):
         if df is not None and self.func is None:
@@ -380,9 +381,9 @@ class Add(FileOperation):
             logger.warning(_("No pre-existing dataframe, the provided function is ignored"))
 
         if self.func is not None and df is not None:
-            return self.func(df, self.filename)
+            return self.func(df, self.filename, **self.kw_func)
         else:
-            return read_dataframe(self.filename)
+            return read_dataframe(self.filename, kw_read=self.kw_func)
 
 
 class Aggregate(FileOperation):
