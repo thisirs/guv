@@ -166,6 +166,11 @@ class XlsStudentData(UVTask):
                 name=f"{instance.planning}_{instance.uv}",
                 uv=instance.uv
             )
+
+            # Remove dependency to student_data_final.csv
+            if len(docs.actions) == 0:
+                task["file_dep"] = []
+
             tasks.append(task)
             generators.append(docs.generate_doit_tasks())
 
@@ -200,7 +205,8 @@ class XlsStudentData(UVTask):
             raise ImproperlyConfigured(_("The `DOCS` variable must be of type `Documents`"))
 
         if len(self.settings.DOCS.actions) == 0:
-            raise ImproperlyConfigured(_("`DOCS` must contain at least one operation"))
+            logger.warning("`DOCS` does not contain any operation")
+            return
 
         df = pd.read_csv(self.student_data)
 

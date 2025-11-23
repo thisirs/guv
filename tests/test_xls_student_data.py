@@ -1,6 +1,18 @@
 import pytest
 from tests.plugins.test_path import path_dependency
 
+@path_dependency("test_createsemester")
+def test_cls_studente_data_no_documents_semester(guv):
+    guv.cd(guv.semester)
+    guv().succeed()
+
+
+@path_dependency("test_createsemester")
+def test_cls_studente_data_no_documents_uv(guv):
+    for uv in guv.uvs:
+        guv.cd(guv.semester, uv)
+        guv().succeed()
+
 
 @path_dependency("test_createsemester", cache=True)
 def test_xls_student_data(guv, xlsx, guvcapfd):
