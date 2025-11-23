@@ -205,7 +205,7 @@ class XlsStudentData(UVTask):
             raise ImproperlyConfigured(_("The `DOCS` variable must be of type `Documents`"))
 
         if len(self.settings.DOCS.actions) == 0:
-            logger.warning("`DOCS` does not contain any operation")
+            logger.warning(_("`DOCS` does not contain any operation"))
             return
 
         df = pd.read_csv(self.student_data)
