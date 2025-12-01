@@ -697,14 +697,11 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
 
         # Remove some columns, keep it ordered
         grade_cols = cols.copy()
-        for c in [
-                self.settings.NAME_COLUMN,
-                self.settings.LASTNAME_COLUMN,
-                self.settings.EMAIL_COLUMN,
-                self.settings.LOGIN_COLUMN
-        ]:
-            if c in grade_cols:
-                grade_cols.remove(c)
+        for var_name in ["NAME_COLUMN", "LASTNAME_COLUMN", "EMAIL_COLUMN", "LOGIN_COLUMN"]:
+            if var_name in self.settings:
+                col_name = self.settings[var_name]
+                if col_name in grade_cols:
+                    grade_cols.remove(col_name)
 
         grades = checkboxlist_prompt(
             _("Indicate the columns containing grades to use directly for the final grade (SPACE: select, ENTER: validate):"),
