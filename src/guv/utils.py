@@ -6,7 +6,6 @@ import tempfile
 from types import SimpleNamespace
 
 import jinja2
-import latex
 import numpy as np
 import pandas as pd
 import unidecode
@@ -241,15 +240,6 @@ def render_latex_template(template, context):
         fd.write(tex)
 
     return tex_filepath
-
-
-def compile_latex_file(tex_file):
-    # Write pdf
-    pdf = latex.build_pdf(open(tex_file))
-    pdf_file = os.path.splitext(tex_file)[0] + ".pdf"
-    pdf.save_to(pdf_file)
-
-    return pdf_file
 
 
 def normalize_string(name, type="excel"):

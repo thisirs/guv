@@ -18,7 +18,6 @@ dependencies = [
   "doit",
   "Jinja2",
   "jsonschema",
-  "latex",
   "numpy",
   "openpyxl",
   "pandas",

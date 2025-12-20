@@ -9,7 +9,8 @@ from .exceptions import (AbortWithBody, GuvUserError, ImproperlyConfigured,
                          NotUVDirectory)
 from .logger import logger
 from .translations import _
-from .utils import render_latex_template, compile_latex_file, rel_to_dir_aux
+from .utils import render_latex_template, rel_to_dir_aux
+from .latex_compiler import LaTeXCompiler
 
 
 def rel_to_dir(path, ref_dir=None):
@@ -188,7 +189,8 @@ def render_from_contexts(template, contexts, save_tex=False, target=None):
             raise GuvUserError(_("Error in creating the .tex file:"), str(e))
 
         try:
-            pdf_filepath = compile_latex_file(tex_filepath)
+            compiler = LaTeXCompiler()
+            pdf_filepath = compiler.compile(tex_filepath)
             pdfs.append(pdf_filepath)
         except Exception as e:
             raise GuvUserError(_("Error in creating the .tex file:"), str(e))
