@@ -1,19 +1,19 @@
 % -*- mode: latex; -*-
-% Template de feuilles de présence par groupe
-
 \documentclass[12pt]{article}
 
 \usepackage{libertinus}
 \usepackage{libertinust1math} % For math support
 \usepackage[english]{babel}
+\usepackage{longtable}
 \usepackage[left=2cm,right=2cm,top=1cm,bottom=2cm]{geometry}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{array}
 
 % See https://tex.stackexchange.com/q/85335
 \makeatletter
 \renewcommand \dotfill {\leavevmode \cleaders \hb@xt@ 1em{\hss .\hss }\hfill \kern \z@}
 \makeatother
-
-\newcommand{\name}[2]{\makebox[4.5in][l]{#1\dotfill}\makebox[2in][l]{#2}}
 
 \begin{document}
 
@@ -29,37 +29,41 @@
 \end{center}
 \noindent\hrulefill\bigskip
 
-\noindent\hfill\textbf{Semester:} \makebox[3cm][l]{((* if planning *))(((planning | escape_tex)))((* else *))\hrulefill((* endif *))}\par
-\noindent\hfill\textbf{UV:} \makebox[3cm][l]{((* if uv *))(((uv | escape_tex)))((* else *))\hrulefill((* endif *))}\par
-\noindent\hfill\textbf{Date:} \makebox[3cm][l]{((* if date *))(((date | escape_tex)))((* else *))\hrulefill((* endif *))}\par
-\noindent\hfill\textbf{Exam:} \makebox[3cm][l]{((* if exam *))(((exam | escape_tex)))((* else *))\hrulefill((* endif *))}\par
+\begin{tabular}{@{}>{\bfseries}l@{\hspace{0.5cm}}p{4cm}@{}
+                @{\hspace{3cm}} % Add horizontal space between the two columns
+                >{\bfseries}l@{\hspace{0.5cm}}p{4cm}@{}}
+Semester: & ((* if planning *))\underline{\makebox[4cm][c]{(((planning | escape_tex)))}}((* else *))\underline{\hspace{4cm}}((* endif *)) &
+Course:   & ((* if uv *))\underline{\makebox[4cm][c]{(((uv | escape_tex)))}}((* else *))\underline{\hspace{4cm}}((* endif *)) \\[0.5em]
+Date:     & ((* if date *))\underline{\makebox[4cm][c]{(((date | escape_tex)))}}((* else *))\underline{\hspace{4cm}}((* endif *)) &
+Exam:     & ((* if exam *))\underline{\makebox[4cm][c]{(((exam | escape_tex)))}}((* else *))\underline{\hspace{4cm}}((* endif *)) \\
+\end{tabular}
+\bigskip
+
 
 \newcounter{stunum}
-\begin{list}{\arabic{stunum}.}{\usecounter{stunum}}
-  \setlength\itemsep{1em}
-  \item[] \makebox[4.5in][l]{\textbf{Last name,\quad Name}}\quad \textbf{Signature}
+\begin{longtable}{@{}r p{4.5in} p{2in}@{}}
+  \toprule
+  \textbf{\#} & \textbf{Student name} & \textbf{Signature} \\
+  \midrule\smallskip
+  \endfirsthead
+
+  \toprule
+  \textbf{\#} & \textbf{Student name} & \textbf{Signature} \\
+  \midrule\smallskip
+  \endhead
+
   ((* if blank *))
   ((* for i in range(num) *))
-  \item \hrulefill
+  \stepcounter{stunum}\arabic{stunum}. & \underline{\hspace{4.5in}} & \underline{\hspace{2in}} \\[1em]
   ((* endfor *))
   ((* else *))
   ((* for student in students *))
-  \item \name{(((student['name'] | escape_tex)))}{\hrulefill}
+  \stepcounter{stunum}\arabic{stunum}. & (((student['name'] | escape_tex)))\dotfill & \underline{\hspace{2in}} \\[1em]
   ((* endfor *))
   ((* endif *))
   ((* for i in range(extra) *))
-  \item \hrulefill
+  \stepcounter{stunum}\arabic{stunum}. & \underline{\hspace{4.5in}} & \underline{\hspace{2in}} \\[1em]
   ((* endfor *))
-\end{list}
-
-\vfill
-\paragraph{Surveillants}
-\begin{list}{}{\usecounter{stunum}}
-  \setlength\itemsep{1em}
-  \item[] \makebox[4.5in][l]{\textbf{Last name,\quad Name}}\quad \textbf{Signature}
-  \item\makebox[4.5in][l]{\hrulefill}\quad\hrulefill
-  \item\makebox[4.5in][l]{\hrulefill}\quad\hrulefill
-  \item\makebox[4.5in][l]{\hrulefill}\quad\hrulefill
-\end{list}
+\end{longtable}
 
 \end{document}
