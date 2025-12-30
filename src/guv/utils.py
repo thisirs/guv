@@ -205,6 +205,8 @@ class LaTeXEnvironment(jinja2.Environment):
             variable_end_string=")))",
             comment_start_string="((=",
             comment_end_string="=))",
+            trim_blocks=True,
+            lstrip_blocks=True
         )
         self.install_gettext_callables(gettext=_, ngettext=ngettext)
         self.filters["escape_tex"] = escape_tex
