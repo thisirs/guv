@@ -178,24 +178,27 @@ def render_from_contexts(template, contexts, save_tex=False, target=None):
     extension will be added.
 
     """
-
     pdfs = []
     texs = []
+    errors = []  # Store all errors encountered
+
     for context in contexts:
         try:
             tex_filepath = render_latex_template(template, context)
             texs.append(tex_filepath)
         except Exception as e:
-            raise GuvUserError(_("Error in creating the .tex file:"), str(e))
+            errors.append(GuvUserError(_("Error in creating the .tex file:"), str(e)))
+            continue  # Skip PDF generation for this context, but continue with others
 
         try:
-            compiler = LaTeXCompiler()
+            compiler = LaTeXCompiler(num_runs=2)
             pdf_filepath = compiler.compile(tex_filepath)
             pdfs.append(pdf_filepath)
         except Exception as e:
-            raise GuvUserError(_("Error in creating the .tex file:"), str(e))
+            errors.append(GuvUserError(_("Error in creating the .pdf file:"), str(e)))
+            continue  # Skip PDF for this context, but continue with others
 
-    # Écriture du pdf dans un zip si plusieurs
+    # Copy successful PDFs
     if len(pdfs) == 1:
         with Output(target + ".pdf") as out:
             shutil.move(pdfs[0], out.target)
@@ -205,7 +208,7 @@ def render_from_contexts(template, contexts, save_tex=False, target=None):
                 for filepath in pdfs:
                     z.write(filepath, os.path.basename(filepath))
 
-    # Écriture du tex dans un zip si plusieurs
+    # Copy all .tex files if requested
     if save_tex:
         if len(texs) == 1:
             with Output(target + ".tex") as out:
@@ -216,3 +219,6 @@ def render_from_contexts(template, contexts, save_tex=False, target=None):
                     for filepath in texs:
                         z.write(filepath, os.path.basename(filepath))
 
+    # Raise all errors at the end if any occurred
+    if errors:
+        raise errors[0]  # Or combine errors as needed (e.g., raise ExceptionGroup)
