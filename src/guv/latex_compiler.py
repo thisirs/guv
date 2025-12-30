@@ -7,7 +7,6 @@ import shutil
 class LaTeXCompileError(RuntimeError):
     pass
 
-
 class LaTeXCompiler:
     def __init__(
         self,
@@ -15,11 +14,13 @@ class LaTeXCompiler:
         interaction="nonstopmode",
         halt_on_error=True,
         keep_temp_dir=False,
+        num_runs=1,
     ):
         self.engine = engine
         self.interaction = interaction
         self.halt_on_error = halt_on_error
         self.keep_temp_dir = keep_temp_dir
+        self.num_runs = num_runs
 
         if shutil.which(self.engine) is None:
             raise FileNotFoundError(
@@ -43,44 +44,45 @@ class LaTeXCompiler:
         with tempfile.TemporaryDirectory(prefix="latex-build-") as tmpdir:
             tmpdir = pathlib.Path(tmpdir)
 
-            # copy source into temp dir
+            # Copy source into temp dir
             shutil.copy(tex_file, tmpdir / tex_file.name)
 
-            cmd = [
-                self.engine,
-                f"-interaction={self.interaction}",
-                f"-output-directory={tmpdir}",
-                f"-jobname={jobname}",
-            ]
+            for run in range(self.num_runs):
+                cmd = [
+                    self.engine,
+                    f"-interaction={self.interaction}",
+                    f"-output-directory={tmpdir}",
+                    f"-jobname={jobname}",
+                ]
 
-            if self.halt_on_error:
-                cmd.append("-halt-on-error")
+                if self.halt_on_error:
+                    cmd.append("-halt-on-error")
 
-            if extra_args:
-                cmd.extend(extra_args)
+                if extra_args:
+                    cmd.extend(extra_args)
 
-            cmd.append(tex_file.name)
+                cmd.append(tex_file.name)
 
-            proc = subprocess.run(
-                cmd,
-                cwd=tmpdir,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-            )
-
-            if proc.returncode != 0:
-                raise LaTeXCompileError(
-                    f"{self.engine} failed\n\n"
-                    f"STDOUT:\n{proc.stdout}\n\n"
-                    f"STDERR:\n{proc.stderr}"
+                proc = subprocess.run(
+                    cmd,
+                    cwd=tmpdir,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
                 )
+
+                if proc.returncode != 0:
+                    raise LaTeXCompileError(
+                        f"{self.engine} failed on run {run + 1}/{self.num_runs}\n\n"
+                        f"STDOUT:\n{proc.stdout}\n\n"
+                        f"STDERR:\n{proc.stderr}"
+                    )
 
             pdf_path = tmpdir / f"{jobname}.pdf"
 
             if not pdf_path.exists():
                 raise LaTeXCompileError(
-                    "Compilation finished without errors but no PDF was produced."
+                    f"Compilation finished without errors but no PDF was produced after {self.num_runs} runs."
                 )
 
             output_pdf.parent.mkdir(parents=True, exist_ok=True)
