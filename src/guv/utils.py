@@ -267,8 +267,11 @@ def read_dataframe(filename, read_method=None, kw_read=None):
     if read_method is None:
         if filename.endswith('.csv'):
             df = pd.read_csv(filename, **kw_read)
-        elif filename.endswith('.xlsx') or filename.endswith('.xls'):
+        elif filename.endswith('.xlsx'):
             df = pd.read_excel(filename, engine="openpyxl", **kw_read)
+        elif filename.endswith('.xls'):
+            import xlrd
+            df = pd.read_excel(filename, engine="xlrd", *kw_read)
         else:
             raise ValueError(_("Excel or CSV file only"))
     else:

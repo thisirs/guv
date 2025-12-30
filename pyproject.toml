@@ -21,6 +21,7 @@ dependencies = [
   "numpy",
   "openpyxl",
   "pandas",
+  "xlrd",
   "prompt_toolkit",
   "PyYAML",
   "schema",
