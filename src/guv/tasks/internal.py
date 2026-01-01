@@ -243,8 +243,16 @@ class XlsStudentData(UVTask):
             get_column_letter(max_column),
             max_row)
 
-        # On fige la première ligne et les deux premières colonnes
-        ws.freeze_panes = "C2"
+        # Freeze header row and first 1–2 columns only if they contain NAME /
+        # LASTNAME columns
+        offset = 0
+        if df.columns[0] in [self.settings.NAME_COLUMN, self.settings.LASTNAME_COLUMN]:
+            offset += 1
+        if df.columns[1] in [self.settings.NAME_COLUMN, self.settings.LASTNAME_COLUMN]:
+            offset += 1
+
+        if offset > 0:
+            ws.freeze_panes = f"{get_column_letter(offset + 1)}2"
 
         # On redimensionne les colonnes d'après la taille précédente
         # ou la taille de l'en-tête
