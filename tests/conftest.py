@@ -142,11 +142,11 @@ class Guvcapfd:
 
     def stdout_search(self, *regexes):
         for regex in regexes:
-            assert re.search(regex, self.outerr)
+            assert re.search(regex, self.outerr), f"Regexp {regex} not found"
 
     def no_warning(self):
-        assert not re.search("Warning:", self.outerr)
-        assert not re.search("WARNING", self.outerr)
+        assert not re.search("Warning:", self.outerr), "Warning found in output"
+        assert not re.search("WARNING", self.outerr), "Warning found in output"
 
 
 @pytest.fixture(scope="function")
