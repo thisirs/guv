@@ -1,11 +1,18 @@
 % -*- mode: latex; -*-
 \documentclass[12pt]{article}
 
-\usepackage{libertinus}
-\usepackage{libertinust1math} % For math support
+% Font selection (XeLaTeX or LuaLaTeX)
+\usepackage{fontspec}
+\usepackage{unicode-math}
+
+% Libertinus fonts
+\setmainfont{Libertinus Serif}
+\setsansfont{Libertinus Sans}
+\setmonofont{Libertinus Mono}
+\setmathfont{Libertinus Math}
+
 \usepackage[english]{babel}
-\usepackage{longtable}
-\usepackage[left=2cm,right=2cm,top=1cm,bottom=2cm]{geometry}
+\usepackage[a4paper,left=2cm,right=2cm,top=1cm,bottom=2cm]{geometry}
 \usepackage{longtable}
 \usepackage{booktabs}
 \usepackage{array}
