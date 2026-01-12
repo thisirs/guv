@@ -9,7 +9,7 @@ import guv
 
 DOMAIN = "guv"
 LOCALE_DIR = os.path.join(guv.__path__[0], "locale")
-LANGUAGE = os.environ.get("LANG", "en_US").split(".")[0]
+LANGUAGE = os.environ.get("LANG", "en_US").split("_")[0]
 TEMPLATE_DIR = os.path.join(guv.__path__[0], "templates")
 
 translation = gettext.translation(
