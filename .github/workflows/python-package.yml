@@ -30,6 +30,13 @@ jobs:
         python -m pip install --upgrade pip
         pip install uv
 
+    - name: Install TinyTeX
+      uses: r-lib/actions/setup-tinytex@v2
+
+    - name: Install additional LaTeX packages (if needed)
+      run: |
+        tlmgr install babel-french babel-english carlisle environ pgf datetime fmtcount  libertinus-fonts
+
     - name: Run tests
       run: |
         make test
