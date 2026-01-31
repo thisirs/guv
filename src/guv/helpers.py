@@ -18,7 +18,7 @@ from .exceptions import GuvUserError, ImproperlyConfigured
 from .logger import logger
 from .operation import Operation
 from .tasks.internal import Documents
-from .translations import _, TaskDocstring
+from .translations import _, Docstring
 from .utils import (check_if_absent, check_if_present, convert_to_numeric,
                     read_dataframe, slugrot_string)
 from .utils_config import check_filename, rel_to_dir
@@ -63,7 +63,7 @@ def concat(*columns):
 
 
 class FillnaColumn(Operation):
-    __doc__ = TaskDocstring()
+    __doc__ = Docstring()
 
     hash_fields = ["colname", "na_value", "group_column"]
 
@@ -121,7 +121,7 @@ class FillnaColumn(Operation):
 
 
 class ReplaceRegex(Operation):
-    __doc__ = TaskDocstring()
+    __doc__ = Docstring()
 
     hash_fields = ["colname", "reps", "new_colname", "backup"]
 
@@ -170,7 +170,7 @@ class ReplaceRegex(Operation):
 
 
 class ReplaceColumn(Operation):
-    __doc__ = TaskDocstring()
+    __doc__ = Docstring()
 
     hash_fields = ["colname", "rep_dict", "new_colname", "backup"]
 
@@ -215,7 +215,7 @@ class ReplaceColumn(Operation):
 
 
 class ApplyDf(Operation):
-    __doc__ = TaskDocstring()
+    __doc__ = Docstring()
 
     hash_fields = ["func"]
 
@@ -235,7 +235,7 @@ class ApplyDf(Operation):
 
 
 class ApplyColumn(Operation):
-    __doc__ = TaskDocstring()
+    __doc__ = Docstring()
 
     hash_fields = ["colname", "func"]
 
@@ -258,7 +258,7 @@ class ApplyColumn(Operation):
 
 
 class ComputeNewColumn(Operation):
-    __doc__ = TaskDocstring()
+    __doc__ = Docstring()
 
     hash_fields = ["cols", "func", "colname"]
 
@@ -298,7 +298,7 @@ class ComputeNewColumn(Operation):
 
 
 class ApplyCell(Operation):
-    __doc__ = TaskDocstring()
+    __doc__ = Docstring()
 
     hash_fields = ["name_or_email", "colname", "value"]
 
@@ -365,7 +365,7 @@ class FileOperation(Operation):
 
 
 class Add(FileOperation):
-    __doc__ = TaskDocstring()
+    __doc__ = Docstring()
 
     hash_fields = ["_filename", "func", "kw_func"]
 
@@ -388,7 +388,7 @@ class Add(FileOperation):
 
 
 class Aggregate(FileOperation):
-    __doc__ = TaskDocstring()
+    __doc__ = Docstring()
 
     hash_fields = ["_filename", "left_on", "right_on", "on", "subset", "drop", "rename", "merge_policy", "preprocessing", "postprocessing", "read_method", "kw_read"]
 
@@ -460,7 +460,7 @@ class Aggregate(FileOperation):
 
 
 class AggregateSelf(Operation):
-    __doc__ = TaskDocstring()
+    __doc__ = Docstring()
 
     hash_fields = ["columns"]
 
@@ -515,7 +515,7 @@ class AggregateSelf(Operation):
 
 
 class AggregateOrg(FileOperation):
-    __doc__ = TaskDocstring()
+    __doc__ = Docstring()
 
     hash_fields = ["_filename", "colname", "on", "postprocessing"]
 
@@ -619,7 +619,7 @@ class FileStringOperation(FileOperation):
 
 
 class Flag(FileStringOperation):
-    __doc__ = TaskDocstring()
+    __doc__ = Docstring()
 
     hash_fields = ["_filename", "colname", "flags"]
 
@@ -665,7 +665,7 @@ class Flag(FileStringOperation):
 
 
 class Switch(FileStringOperation):
-    __doc__ = TaskDocstring()
+    __doc__ = Docstring()
 
     msg_file = _("Aggregation of the exchange file `{filename}`")
     msg_string = _("Direct aggregation of exchanges `{string}`")
@@ -836,7 +836,7 @@ class MoodleFileOperation(FileOperation):
 
 
 class AggregateMoodleGroups(MoodleFileOperation):
-    __doc__ = TaskDocstring()
+    __doc__ = Docstring()
 
     hash_fields = ["_filename", "colname", "backup"]
 
@@ -887,7 +887,7 @@ class AggregateMoodleGroups(MoodleFileOperation):
 
 
 class AggregateMoodleGrades(MoodleFileOperation):
-    __doc__ = TaskDocstring()
+    __doc__ = Docstring()
 
     hash_fields = ["_filename", "rename"]
     read_dataframe_kwargs = {"na_values": "-"}
@@ -943,7 +943,7 @@ class AggregateMoodleGrades(MoodleFileOperation):
 
 
 class AggregateJury(FileOperation):
-    __doc__ = TaskDocstring()
+    __doc__ = Docstring()
 
     def __init__(self, filename: str):
         super().__init__(filename)

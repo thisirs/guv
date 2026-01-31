@@ -13,7 +13,7 @@ from .. import openpyxl_patched
 from ..config import settings
 from ..exceptions import ImproperlyConfigured
 from ..logger import logger
-from ..translations import TaskDocstring, _
+from ..translations import Docstring, _
 from ..utils import pformat
 from ..utils_config import Output, selected_uv
 from .base import UVTask
@@ -135,7 +135,7 @@ class Documents:
 
 
 class XlsStudentData(UVTask):
-    __doc__ = TaskDocstring()
+    __doc__ = Docstring()
 
     target_name = "effectif.xlsx"
     target_dir = "."

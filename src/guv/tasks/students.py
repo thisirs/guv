@@ -8,7 +8,7 @@ import pandas as pd
 
 from ..exceptions import GuvUserError
 from ..logger import logger
-from ..translations import TaskDocstring, _
+from ..translations import Docstring, _
 from ..utils import argument, normalize_string
 from ..utils_config import Output, ask_choice
 from .base import CliArgsMixin, UVTask
@@ -19,7 +19,7 @@ __all__ = ["SendEmail", "ZoomBreakoutRooms"]
 
 
 class ZoomBreakoutRooms(UVTask, CliArgsMixin):
-    __doc__ = TaskDocstring()
+    __doc__ = Docstring()
 
     target_dir = "generated"
     target_name = "zoom_breakout_rooms_{group}.csv"
@@ -54,7 +54,7 @@ class ZoomBreakoutRooms(UVTask, CliArgsMixin):
 
 
 class SendEmail(UVTask, CliArgsMixin):
-    __doc__ = TaskDocstring()
+    __doc__ = Docstring()
 
     uptodate = False
     cli_args = (

@@ -14,13 +14,16 @@ def generate_tasks(tasks):
             doc = None
             full_doc = None
         else:
-            if not isinstance(ref.__dict__["__doc__"], str):
-                ref.__dict__["__doc__"].replace_options = False
-            doc, *rest = ref.__doc__.split("\n", maxsplit=1)
+            # Get plain text version for terminal (no RST markup)
+            if hasattr(ref, 'doc_plain'):
+                plain_doc = ref.doc_plain()
+            else:
+                # Fallback for tasks without doc_plain
+                plain_doc = ref.__doc__
+
+            doc, *rest = plain_doc.split("\n", maxsplit=1)
             if rest:
-                # Remove {options} section from Sphinx
-                rest = re.sub(" *\\{options\\}\n+", "", rest[0])
-                full_doc = doc + "\n\n" + textwrap.dedent(rest)
+                full_doc = doc + "\n\n" + textwrap.dedent(rest[0])
             else:
                 full_doc = doc
 

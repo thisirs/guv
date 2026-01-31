@@ -172,7 +172,24 @@ class TaskBase:
 
     @classmethod
     def doc(cls):
+        """Return RST-formatted documentation for Sphinx/doit."""
         return cls.__doc__
+
+    @classmethod
+    def doc_plain(cls):
+        """Return plain text documentation for argparse terminal help."""
+        from ..translations import rst_to_plain, _file
+
+        # Load the raw RST docstring without triggering parser creation
+        class_name = cls.__name__
+        try:
+            rst_doc = _file(class_name + ".rst")
+        except FileNotFoundError:
+            # Fallback to __doc__ if no RST file
+            rst_doc = cls.__doc__ if cls.__doc__ else ""
+
+        # Convert to plain text (this strips RST markup)
+        return rst_to_plain(rst_doc)
 
     @classmethod
     def create_doit_tasks(cls):
@@ -340,7 +357,7 @@ class CliArgsMixin:
 
         if self._parser is None:
             parser = argparse.ArgumentParser(
-                description=self.doc(), prog=f"guv {self.task_name()}"
+                description=self.doc_plain(), prog=f"guv {self.task_name()}"
             )
 
             for arg in self.cli_args:
@@ -385,7 +402,9 @@ class CliArgsInheritMixin(CliArgsMixin):
     name_default = None
 
     def add_arguments(self):
-        self._parser = argparse.ArgumentParser()
+        self._parser = argparse.ArgumentParser(
+            description=self.doc_plain(), prog=f"guv {self.task_name()}"
+        )
         if self.name_required:
             self.add_argument(
                 "--name", required=True, help=_("Name of the grade sheet")

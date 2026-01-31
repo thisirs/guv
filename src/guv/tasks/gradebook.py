@@ -13,7 +13,7 @@ from .. import openpyxl_patched
 from ..openpyxl_utils import (fit_columns_dimension, frame_range,
                               generate_ranges, get_address_of_cell,
                               get_range_from_cells, get_segment, row_and_col)
-from ..translations import TaskDocstring, _, _file
+from ..translations import Docstring, _, _file
 from ..utils import generate_groupby, normalize_string, sort_values
 from ..utils_ask import checkboxlist_prompt, prompt_number
 from ..utils_config import ask_choice, rel_to_dir
@@ -172,7 +172,7 @@ class MarkingScheme:
 
 
 class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
-    __doc__ = TaskDocstring()
+    __doc__ = Docstring()
 
     config_argname = "--marking-scheme"
     config_help = _("Files containing the detailed grading scales")
@@ -450,7 +450,7 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
 
 
 class XlsGradeBookGroup(XlsGradeBookNoGroup):
-    __doc__ = TaskDocstring()
+    __doc__ = Docstring()
 
     config_argname = "--marking-scheme"
 
@@ -650,7 +650,7 @@ class GroupBlock:
 
 
 class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
-    __doc__ = TaskDocstring()
+    __doc__ = Docstring()
 
     config_help = _("Configuration file specifying the grades to use")
     config_required = False

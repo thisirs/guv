@@ -1,7 +1,7 @@
 from jinja2 import Template
 
 from ..exceptions import GuvUserError
-from ..translations import _, TaskDocstring
+from ..translations import _, Docstring
 from ..utils import (argument, generate_groupby, make_groups,
                      normalize_string, sort_values, get_latex_template)
 from ..utils_config import render_from_contexts
@@ -13,7 +13,7 @@ __all__ = ["PdfAttendance", "PdfAttendanceFull"]
 
 
 class PdfAttendance(UVTask, CliArgsMixin):
-    __doc__ = TaskDocstring()
+    __doc__ = Docstring()
 
     uptodate = False
     target_dir = "generated"
@@ -208,7 +208,7 @@ class PdfAttendance(UVTask, CliArgsMixin):
 
 
 class PdfAttendanceFull(UVTask, CliArgsMixin):
-    __doc__ = TaskDocstring()
+    __doc__ = Docstring()
 
     target_dir = "generated"
     target_name = "{title}_{group}_full"

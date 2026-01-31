@@ -12,7 +12,7 @@ import pandas as pd
 from ..exceptions import GuvUserError
 from ..logger import logger
 from ..scripts.moodle_date import CondOr, CondProfil
-from ..translations import _, TaskDocstring, _file
+from ..translations import _, Docstring, _file
 from ..utils import (
     argument,
     generate_groupby,
@@ -35,7 +35,7 @@ TIME_FORMAT = "%H:%M"
 
 
 class CsvGroups(UVTask, CliArgsMixin):
-    __doc__ = TaskDocstring()
+    __doc__ = Docstring()
 
     uptodate = False
     target_dir = "generated"
@@ -146,7 +146,7 @@ class CsvGroups(UVTask, CliArgsMixin):
 
 
 class CsvGroupsGroupings(UVTask, CliArgsMixin):
-    __doc__ = TaskDocstring()
+    __doc__ = Docstring()
 
     target_dir = "generated"
     target_name = "groups_groupings.csv"
@@ -219,7 +219,7 @@ class CsvGroupsGroupings(UVTask, CliArgsMixin):
 
 
 class JsonGroup(UVTask, CliArgsMixin):
-    __doc__ = TaskDocstring()
+    __doc__ = Docstring()
 
     target_dir = "generated"
     target_name = "{group}_group_moodle.json"
@@ -309,7 +309,7 @@ def get_coocurrence_dict(df, columns, nan_policy="same"):
 
 
 class CsvCreateGroups(UVTask, CliArgsMixin):
-    __doc__ = TaskDocstring()
+    __doc__ = Docstring()
 
     uptodate = False
     target_dir = "generated"
