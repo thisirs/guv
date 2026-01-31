@@ -17,3 +17,9 @@ tasks
 
 operations
 ```
+
+```{toctree}
+:maxdepth: 2
+
+completion
+```

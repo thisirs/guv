@@ -22,6 +22,11 @@ extensions = [
     'sphinx.ext.napoleon',
 ]
 
+# MyST parser configuration
+myst_enable_extensions = [
+    "colon_fence",  # Enable ::: admonition syntax
+]
+
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # -- Options for HTML output -------------------------------------------------
