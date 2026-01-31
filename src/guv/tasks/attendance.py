@@ -3,16 +3,16 @@ from jinja2 import Template
 from ..exceptions import GuvUserError
 from ..translations import _, Docstring
 from ..utils import (argument, generate_groupby, make_groups,
-                     normalize_string, sort_values, get_latex_template)
+                     normalize_string, sort_values)
 from ..utils_config import render_from_contexts
-from .base import CliArgsMixin, UVTask
+from .base import CliArgsMixin, UVTask, LatexTemplateOpt
 from .internal import XlsStudentData
 
 
 __all__ = ["PdfAttendance", "PdfAttendanceFull"]
 
 
-class PdfAttendance(UVTask, CliArgsMixin):
+class PdfAttendance(UVTask, CliArgsMixin, LatexTemplateOpt):
     __doc__ = Docstring()
 
     uptodate = False
@@ -65,6 +65,12 @@ class PdfAttendance(UVTask, CliArgsMixin):
             const=_("Extra time"),
             default=None,
             help=_("Specifies the column for students placed in a dedicated room. If the column is not specified, ``%(default)s``.")
+        ),
+        argument(
+            "--latex-template",
+            default=None,
+            metavar="PATH",
+            help=_("Path to a custom LaTeX template file. If not specified, uses the default template.")
         ),
         argument(
             "--save-tex",
@@ -201,13 +207,13 @@ class PdfAttendance(UVTask, CliArgsMixin):
     def run(self):
         contexts = self.generate_contexts()
 
-        template = get_latex_template(self.template_file)
+        template = self.get_template()
         render_from_contexts(
             template, contexts, save_tex=self.save_tex, target=self.target
         )
 
 
-class PdfAttendanceFull(UVTask, CliArgsMixin):
+class PdfAttendanceFull(UVTask, CliArgsMixin, LatexTemplateOpt):
     __doc__ = Docstring()
 
     target_dir = "generated"
@@ -239,6 +245,12 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
             help=_("Template to set the name of successive sessions in the attendance sheet. By default, it is ``%(default)s``. The only supported keyword is ``number`` which starts at 1."),
         ),
         argument(
+            "--latex-template",
+            default=None,
+            metavar="PATH",
+            help=_("Path to a custom LaTeX template file. If not specified, uses the default template.")
+        ),
+        argument(
             "--save-tex",
             action="store_true",
             default=False,
@@ -265,7 +277,7 @@ class PdfAttendanceFull(UVTask, CliArgsMixin):
 
         contexts = self.generate_contexts(df)
 
-        template = get_latex_template(self.template_file)
+        template = self.get_template()
         render_from_contexts(
             template, contexts, save_tex=self.save_tex, target=self.target
         )

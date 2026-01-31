@@ -574,3 +574,59 @@ class GroupOpt(CliArgsInheritMixin):
 
         return columns
 
+
+class LatexTemplateOpt:
+    """Mixin to add --latex-template option to tasks that use LaTeX templates.
+
+    This mixin provides a method to get the LaTeX template, either from a custom
+    path specified via --latex-template or from the default template_file.
+
+    To use this mixin:
+    1. Add it to your task class inheritance
+    2. Include argument(..., "--latex-template", ...) in cli_args
+    3. Call self.get_template() instead of get_latex_template(self.template_file)
+
+    Example:
+        class PdfAttendance(UVTask, CliArgsMixin, LatexTemplateOpt):
+            template_file = "attendance.tex.jinja2"
+            cli_args = (
+                ...,
+                argument("--latex-template", ...),
+            )
+
+            def run(self):
+                template = self.get_template()
+                ...
+    """
+
+    def get_template(self):
+        """Get LaTeX template from custom path or default template_file.
+
+        Returns:
+            Jinja2 Template object
+
+        Raises:
+            FileNotFoundError: If custom template file not found
+        """
+        from pathlib import Path
+        from jinja2 import FileSystemLoader
+        from ..utils import get_latex_template, LaTeXEnvironment
+
+        # Check if custom template was specified via CLI
+        if hasattr(self, 'latex_template') and self.latex_template is not None:
+            # Load custom template from filesystem
+            template_path = Path(self.latex_template)
+
+            if not template_path.exists():
+                raise FileNotFoundError(
+                    _("LaTeX template file not found: {path}").format(path=self.latex_template)
+                )
+
+            # Create Jinja2 environment with the custom template's directory
+            loader = FileSystemLoader(str(template_path.parent))
+            env = LaTeXEnvironment([str(template_path.parent)])
+            return env.get_template(template_path.name)
+        else:
+            # Use default template from localized template directories
+            return get_latex_template(self.template_file)
+
