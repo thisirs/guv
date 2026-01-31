@@ -207,6 +207,9 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="operations.html">Aggregating functions for <code class="docutils literal notranslate"><span class="pre">DOCS</span></code></a></li>
 </ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="completion.html">Shell Completion</a></li>
+</ul>
 
 </div>
 </div>
@@ -267,6 +270,7 @@ attendance sheets.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">-n</span> <span class="pre">[NAMES</span> <span class="pre">...]</span></code>, <code class="docutils literal notranslate"><span class="pre">--names</span> <span class="pre">[NAMES</span> <span class="pre">...]</span></code> : Specifies the names of the groups corresponding to <code class="docutils literal notranslate"><span class="pre">--count</span></code>. The list must be the same size as <code class="docutils literal notranslate"><span class="pre">--count</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">-e</span> <span class="pre">EXTRA</span></code>, <code class="docutils literal notranslate"><span class="pre">--extra</span> <span class="pre">EXTRA</span></code> : Allows adding additional empty lines in addition to those already present induced by <code class="docutils literal notranslate"><span class="pre">--group</span></code> or set by <code class="docutils literal notranslate"><span class="pre">--count</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--tiers-temps</span> <span class="pre">[TIERS_TEMPS]</span></code> : Specifies the column for students placed in a dedicated room. If the column is not specified, <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--latex-template</span> <span class="pre">PATH</span></code> : Path to a custom LaTeX template file. If not specified, uses the default template.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--save-tex</span></code> : Allows leaving the generated .tex files for possible modification.</p></li>
 </ul>
 <p class="rubric">Examples</p>
@@ -310,6 +314,7 @@ tracking over the semester.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">-g</span> <span class="pre">GROUP</span></code>, <code class="docutils literal notranslate"><span class="pre">--group</span> <span class="pre">GROUP</span></code> : Allows specifying a group column to make attendance sheets by groups.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">-n</span> <span class="pre">SLOTS</span></code>, <code class="docutils literal notranslate"><span class="pre">--slots</span> <span class="pre">SLOTS</span></code> : Allows specifying the number of sessions for the semester, i.e., the number of columns in the attendance sheet.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">-t</span> <span class="pre">TEMPLATE</span></code>, <code class="docutils literal notranslate"><span class="pre">--template</span> <span class="pre">TEMPLATE</span></code> : Template to set the name of successive sessions in the attendance sheet. By default, it is <code class="docutils literal notranslate"><span class="pre">S{{number}}</span></code>. The only supported keyword is <code class="docutils literal notranslate"><span class="pre">number</span></code> which starts at 1.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--latex-template</span> <span class="pre">PATH</span></code> : Path to a custom LaTeX template file. If not specified, uses the default template.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--save-tex</span></code> : Allows leaving the generated .tex files for possible modification.</p></li>
 </ul>
 <p class="rubric">Examples</p>

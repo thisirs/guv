@@ -3,10 +3,10 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Tasks" href="tasks.html" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="prev" title="Aggregating functions for DOCS" href="operations.html" />
 
     <!-- Generated with Sphinx 8.2.1 and Furo 2024.08.06 -->
-        <title>guv documentation</title>
+        <title>Shell Completion - guv documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=302659d7" />
@@ -166,7 +166,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="#"><div class="brand">guv  documentation</div></a>
+      <a href="index.html"><div class="brand">guv  documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -187,7 +187,7 @@
   <aside class="sidebar-drawer">
     <div class="sidebar-container">
       
-      <div class="sidebar-sticky"><a class="sidebar-brand" href="#">
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
   
   <span class="sidebar-brand-text">guv  documentation</span>
@@ -198,8 +198,8 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <ul class="current">
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">guv</a></li>
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="index.html">guv</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="tasks.html">Tasks</a></li>
@@ -207,8 +207,8 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="operations.html">Aggregating functions for <code class="docutils literal notranslate"><span class="pre">DOCS</span></code></a></li>
 </ul>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="completion.html">Shell Completion</a></li>
+<ul class="current">
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Shell Completion</a></li>
 </ul>
 
 </div>
@@ -229,7 +229,7 @@
         </a>
         <div class="content-icon-container">
           <div class="view-this-page">
-  <a class="muted-link" href="_sources/index.md.txt" title="View this page">
+  <a class="muted-link" href="_sources/completion.md.txt" title="View this page">
     <svg><use href="#svg-eye"></use></svg>
     <span class="visually-hidden">View this page</span>
   </a>
@@ -249,110 +249,151 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="guv">
-<h1><code class="docutils literal notranslate"><span class="pre">guv</span></code><a class="headerlink" href="#guv" title="Link to this heading">¶</a></h1>
-<p><strong><code class="docutils literal notranslate"><span class="pre">guv</span></code></strong> is a command-line tool designed to simplify the management of multiple
-courses. It helps centralize information related to each courses and easily
-integrate new data through configuration files. With <code class="docutils literal notranslate"><span class="pre">guv</span></code>, you can generate,
-attendance sheets, grade and jury spreadsheets, and much more!</p>
-<hr class="docutils" />
-<section id="features">
-<h2>✨ Features<a class="headerlink" href="#features" title="Link to this heading">¶</a></h2>
+          <section id="shell-completion">
+<h1>Shell Completion<a class="headerlink" href="#shell-completion" title="Link to this heading">¶</a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">guv</span></code> provides shell completion scripts for both Bash and Zsh, with support for multiple languages (English and French).</p>
+<section id="what-is-shell-completion">
+<h2>What is Shell Completion?<a class="headerlink" href="#what-is-shell-completion" title="Link to this heading">¶</a></h2>
+<p>Shell completion allows you to use the Tab key to:</p>
 <ul class="simple">
-<li><p>Centralized management courses information</p></li>
-<li><p>Excel grade sheets for courses assessment boards</p></li>
-<li><p>Easy customization via configuration files</p></li>
+<li><p>Complete command names</p></li>
+<li><p>Complete task names</p></li>
+<li><p>Complete option names</p></li>
+<li><p>Get file suggestions for file-based options</p></li>
+<li><p>See available column names for column-based options</p></li>
 </ul>
 </section>
-<hr class="docutils" />
+<section id="available-completion-scripts">
+<h2>Available Completion Scripts<a class="headerlink" href="#available-completion-scripts" title="Link to this heading">¶</a></h2>
+<p>The following completion scripts are included with <code class="docutils literal notranslate"><span class="pre">guv</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">_guv_bash_en</span></code> - Bash completion (English)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_guv_bash_fr</span></code> - Bash completion (French)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_guv_zsh_en</span></code> - Zsh completion (English)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">_guv_zsh_fr</span></code> - Zsh completion (French)</p></li>
+</ul>
+<p>These files are located in <code class="docutils literal notranslate"><span class="pre">src/guv/data/</span></code> within the installation directory.</p>
+</section>
 <section id="installation">
-<h2>🚀 Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h2>
-<p>Install <code class="docutils literal notranslate"><span class="pre">guv</span></code> directly via <code class="docutils literal notranslate"><span class="pre">pip</span></code>:</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/thisirs/guv.git
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h2>
+<section id="finding-the-completion-scripts">
+<h3>Finding the Completion Scripts<a class="headerlink" href="#finding-the-completion-scripts" title="Link to this heading">¶</a></h3>
+<p>First, find where <code class="docutils literal notranslate"><span class="pre">guv</span></code> is installed:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Find the guv installation directory</span>
+python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import guv; import os; print(os.path.dirname(guv.__file__))&quot;</span>
+</pre></div>
+</div>
+<p>The completion scripts will be in the <code class="docutils literal notranslate"><span class="pre">data/</span></code> subdirectory of this path.</p>
+</section>
+<section id="zsh-installation">
+<h3>Zsh Installation<a class="headerlink" href="#zsh-installation" title="Link to this heading">¶</a></h3>
+<section id="user-specific-installation-recommended">
+<h4>User-specific Installation (Recommended)<a class="headerlink" href="#user-specific-installation-recommended" title="Link to this heading">¶</a></h4>
+<p>Add to your <code class="docutils literal notranslate"><span class="pre">~/.zshrc</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># For English</span>
+<span class="nb">source</span><span class="w"> </span>/path/to/guv/src/guv/data/_guv_zsh_en
+
+<span class="c1"># For French</span>
+<span class="nb">source</span><span class="w"> </span>/path/to/guv/src/guv/data/_guv_zsh_fr
+</pre></div>
+</div>
+<p>Then reload your shell:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span><span class="w"> </span>~/.zshrc
 </pre></div>
 </div>
 </section>
-<hr class="docutils" />
-<section id="quick-start">
-<h2>🏃 Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading">¶</a></h2>
-<p>Follow the steps below to get started with <code class="docutils literal notranslate"><span class="pre">guv</span></code>:</p>
-<ol class="arabic">
-<li><p><strong>Create a semester structure with some courses</strong>:</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>createsemester<span class="w"> </span>Fall2024<span class="w"> </span>--uv<span class="w"> </span>CS042<span class="w"> </span>CS314
+<section id="system-wide-installation">
+<h4>System-wide Installation<a class="headerlink" href="#system-wide-installation" title="Link to this heading">¶</a></h4>
+<p>For all users on the system:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Copy to system completion directory</span>
+sudo<span class="w"> </span>cp<span class="w"> </span>/path/to/guv/src/guv/data/_guv_zsh_en<span class="w"> </span>/usr/share/zsh/site-functions/_guv
+
+<span class="c1"># Or for Oh My Zsh users</span>
+cp<span class="w"> </span>/path/to/guv/src/guv/data/_guv_zsh_en<span class="w"> </span>~/.oh-my-zsh/completions/_guv
 </pre></div>
 </div>
-<p>This creates a semester directory <code class="docutils literal notranslate"><span class="pre">Fall2024</span></code> containing to courses <code class="docutils literal notranslate"><span class="pre">CS314</span></code>
-and <code class="docutils literal notranslate"><span class="pre">CS042</span></code>.</p>
-</li>
-<li><p><strong>Provide a base listing file</strong>:</p>
-<p>Place the csv/Excel file of a listing of students under some directory, for
-example <code class="docutils literal notranslate"><span class="pre">Fall2024/CS042/documents</span></code> and declare it in
-<code class="docutils literal notranslate"><span class="pre">Fall2024/CS042/config.py</span></code> like this:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">DOCS</span> <span class="o">=</span> <span class="n">Documents</span><span class="p">()</span>
-<span class="n">DOCS</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;documents/base_listing.xlsx&quot;</span><span class="p">)</span>
+</section>
+</section>
+<section id="bash-installation">
+<h3>Bash Installation<a class="headerlink" href="#bash-installation" title="Link to this heading">¶</a></h3>
+<section id="id1">
+<h4>User-specific Installation (Recommended)<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h4>
+<p>Add to your <code class="docutils literal notranslate"><span class="pre">~/.bashrc</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># For English</span>
+<span class="nb">source</span><span class="w"> </span>/path/to/guv/src/guv/data/_guv_bash_en
+
+<span class="c1"># For French</span>
+<span class="nb">source</span><span class="w"> </span>/path/to/guv/src/guv/data/_guv_bash_fr
 </pre></div>
 </div>
-<p>Now go to <code class="docutils literal notranslate"><span class="pre">CS042</span></code> subdirectory and run <code class="docutils literal notranslate"><span class="pre">guv</span></code> without arguments. The result
-is in a file called <code class="docutils literal notranslate"><span class="pre">effectif.xlsx</span></code> under <code class="docutils literal notranslate"><span class="pre">Fall2024/CS042</span></code>.</p>
-<p>Depending on the column names of your listing, you might need to update
-the column mappings in the <code class="docutils literal notranslate"><span class="pre">config.py</span></code> file located in <code class="docutils literal notranslate"><span class="pre">Fall2024</span></code>.</p>
-</li>
-<li><p><strong>Use tasks to generate files</strong></p>
-<p>If <code class="docutils literal notranslate"><span class="pre">CS042</span></code> directory, you can now generate attendance sheets:</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>pdf_attendance<span class="w"> </span>--title<span class="w"> </span><span class="s2">&quot;Exam&quot;</span>
+<p>Then reload your shell:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span><span class="w"> </span>~/.bashrc
 </pre></div>
 </div>
-<p>or generate a gradebook (you will be asked for a marking scheme):</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>guv<span class="w"> </span>xls_gradebook_no_group<span class="w"> </span>--name<span class="w"> </span>Exam1
+</section>
+<section id="id2">
+<h4>System-wide Installation<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h4>
+<p>For all users on the system:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Debian/Ubuntu</span>
+sudo<span class="w"> </span>cp<span class="w"> </span>/path/to/guv/src/guv/data/_guv_bash_en<span class="w"> </span>/etc/bash_completion.d/guv
+
+<span class="c1"># RHEL/CentOS/Fedora</span>
+sudo<span class="w"> </span>cp<span class="w"> </span>/path/to/guv/src/guv/data/_guv_bash_en<span class="w"> </span>/etc/bash_completion.d/guv
+
+<span class="c1"># macOS (with Homebrew bash-completion)</span>
+cp<span class="w"> </span>/path/to/guv/src/guv/data/_guv_bash_en<span class="w"> </span>/usr/local/etc/bash_completion.d/guv
 </pre></div>
 </div>
-<p>See other tasks <a class="reference internal" href="tasks.html"><span class="std std-doc">here</span></a>.</p>
-</li>
-<li><p><strong>Aggregate more files to the base listing</strong></p>
-<p>If you want to add more information to the base listing:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">DOCS</span> <span class="o">=</span> <span class="n">Documents</span><span class="p">()</span>
-<span class="n">DOCS</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;documents/base_listing.xlsx&quot;</span><span class="p">)</span>
-<span class="n">DOCS</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="s2">&quot;documents/grades.xlsx&quot;</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s2">&quot;Email&quot;</span><span class="p">)</span>
+</section>
+</section>
+</section>
+<section id="usage-examples">
+<h2>Usage Examples<a class="headerlink" href="#usage-examples" title="Link to this heading">¶</a></h2>
+<p>Once installed, you can use Tab completion in various ways:</p>
+<section id="complete-task-names">
+<h3>Complete Task Names<a class="headerlink" href="#complete-task-names" title="Link to this heading">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>guv<span class="w"> </span>pdf_&lt;TAB&gt;
+pdf_attendance<span class="w">       </span>pdf_attendance_full
+
+$<span class="w"> </span>guv<span class="w"> </span>xls_&lt;TAB&gt;
+xls_grade_book_group<span class="w">    </span>xls_grade_book_no_group<span class="w">    </span>xls_grade_book_jury
+xls_student_data
 </pre></div>
 </div>
-<p>and see the result in <code class="docutils literal notranslate"><span class="pre">effectif.xlsx</span></code> under <code class="docutils literal notranslate"><span class="pre">Fall2024/CS042</span></code>.</p>
-<p>See other aggregating functions <a class="reference internal" href="operations.html"><span class="std std-doc">here</span></a>.</p>
-</li>
-</ol>
-<p>See all available tasks and aggregating functions <a class="reference external" href="https://thisirs.github.io/guv/">here</a>.</p>
-<div class="toctree-wrapper compound">
+</section>
+<section id="complete-option-names">
+<h3>Complete Option Names<a class="headerlink" href="#complete-option-names" title="Link to this heading">¶</a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>guv<span class="w"> </span>pdf_attendance<span class="w"> </span>--&lt;TAB&gt;
+--blank<span class="w">           </span>--group<span class="w">           </span>--names<span class="w">           </span>--save-tex
+--count<span class="w">           </span>--help<span class="w">            </span>--latex-template<span class="w">  </span>--tiers-temps
+--extra<span class="w">           </span>--title
+</pre></div>
 </div>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="tasks.html">Tasks</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="tasks.html#attendance">Attendance</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tasks.html#grades">Grades</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tasks.html#groups">Groups</a></li>
-<li class="toctree-l2"><a class="reference internal" href="tasks.html#students">Students</a></li>
-</ul>
-</li>
-</ul>
+</section>
+<section id="file-completion">
+<h3>File Completion<a class="headerlink" href="#file-completion" title="Link to this heading">¶</a></h3>
+<p>For options that expect file paths (like <code class="docutils literal notranslate"><span class="pre">--latex-template</span></code>), Tab will show files:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>guv<span class="w"> </span>pdf_attendance<span class="w"> </span>--latex-template<span class="w"> </span>&lt;TAB&gt;
+attendance.tex.jinja2<span class="w">    </span>custom_template.tex<span class="w">    </span>my_template.tex.jinja2
+
+$<span class="w"> </span>guv<span class="w"> </span>pdf_attendance<span class="w"> </span>--latex-template<span class="w"> </span>./templates/&lt;TAB&gt;
+./templates/attendance_custom.tex<span class="w">    </span>./templates/attendance_modern.tex
+</pre></div>
 </div>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="operations.html">Aggregating functions for <code class="docutils literal notranslate"><span class="pre">DOCS</span></code></a><ul>
-<li class="toctree-l2"><a class="reference internal" href="operations.html#aggregating-file-to-base-docs-file">Aggregating file to base <code class="docutils literal notranslate"><span class="pre">DOCS</span></code> file</a></li>
-<li class="toctree-l2"><a class="reference internal" href="operations.html#directly-modify-base-docs-file">Directly modify base <code class="docutils literal notranslate"><span class="pre">DOCS</span></code> file</a></li>
-</ul>
-</li>
-</ul>
+</section>
+<section id="column-completion">
+<h3>Column Completion<a class="headerlink" href="#column-completion" title="Link to this heading">¶</a></h3>
+<p>For options that expect column names (like <code class="docutils literal notranslate"><span class="pre">--group</span></code>), Tab will show available columns from <code class="docutils literal notranslate"><span class="pre">effectif.xlsx</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>guv<span class="w"> </span>pdf_attendance<span class="w"> </span>--group<span class="w"> </span>&lt;TAB&gt;
+Tutorial<span class="w">    </span>Practical<span class="w"> </span>work<span class="w">    </span>Lecture<span class="w">    </span>Project<span class="w"> </span>Group
+</pre></div>
 </div>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="completion.html">Shell Completion</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="completion.html#what-is-shell-completion">What is Shell Completion?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="completion.html#available-completion-scripts">Available Completion Scripts</a></li>
-<li class="toctree-l2"><a class="reference internal" href="completion.html#installation">Installation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="completion.html#usage-examples">Usage Examples</a></li>
-</ul>
-</li>
-</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Column completion only works when you’re in a directory with <code class="docutils literal notranslate"><span class="pre">generated/.columns.list</span></code> file,
+which is automatically created when you run tasks that process <code class="docutils literal notranslate"><span class="pre">effectif.xlsx</span></code>.</p>
 </div>
+</section>
 </section>
 </section>
 
@@ -361,16 +402,18 @@ the column mappings in the <code class="docutils literal notranslate"><span clas
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="tasks.html">
+          
+          <a class="prev-page" href="operations.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
-                  <span>Next</span>
+                  <span>Previous</span>
                 </div>
-                <div class="title">Tasks</div>
+                
+                <div class="title">Aggregating functions for <code class="docutils literal notranslate"><span class="pre">DOCS</span></code></div>
+                
               </div>
-              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          
         </div>
         <div class="bottom-of-page">
           <div class="left-details">
@@ -401,10 +444,28 @@ the column mappings in the <code class="docutils literal notranslate"><span clas
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#"><code class="docutils literal notranslate"><span class="pre">guv</span></code></a><ul>
-<li><a class="reference internal" href="#features">✨ Features</a></li>
-<li><a class="reference internal" href="#installation">🚀 Installation</a></li>
-<li><a class="reference internal" href="#quick-start">🏃 Quick Start</a><ul>
+<li><a class="reference internal" href="#">Shell Completion</a><ul>
+<li><a class="reference internal" href="#what-is-shell-completion">What is Shell Completion?</a></li>
+<li><a class="reference internal" href="#available-completion-scripts">Available Completion Scripts</a></li>
+<li><a class="reference internal" href="#installation">Installation</a><ul>
+<li><a class="reference internal" href="#finding-the-completion-scripts">Finding the Completion Scripts</a></li>
+<li><a class="reference internal" href="#zsh-installation">Zsh Installation</a><ul>
+<li><a class="reference internal" href="#user-specific-installation-recommended">User-specific Installation (Recommended)</a></li>
+<li><a class="reference internal" href="#system-wide-installation">System-wide Installation</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#bash-installation">Bash Installation</a><ul>
+<li><a class="reference internal" href="#id1">User-specific Installation (Recommended)</a></li>
+<li><a class="reference internal" href="#id2">System-wide Installation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#usage-examples">Usage Examples</a><ul>
+<li><a class="reference internal" href="#complete-task-names">Complete Task Names</a></li>
+<li><a class="reference internal" href="#complete-option-names">Complete Option Names</a></li>
+<li><a class="reference internal" href="#file-completion">File Completion</a></li>
+<li><a class="reference internal" href="#column-completion">Column Completion</a></li>
 </ul>
 </li>
 </ul>
