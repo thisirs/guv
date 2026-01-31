@@ -4,6 +4,7 @@ import importlib.metadata
 import inspect
 import logging
 import os
+from pathlib import Path
 import shlex
 import sys
 from datetime import datetime
@@ -180,7 +181,7 @@ def main(argv=sys.argv[1:]):
             else:
                 directory = settings._settings["SEMESTER_DIR"]
 
-            fp = os.path.join(directory, ".history")
+            fp = str(Path(directory) / ".history")
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             entry = f"[{timestamp}] {command_line}\n"
 

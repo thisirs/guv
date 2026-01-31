@@ -1,5 +1,6 @@
 from collections import defaultdict
 import os
+from pathlib import Path
 import shutil
 import time
 import zipfile
@@ -24,7 +25,7 @@ def check_filename(filename, errors="raise", **kwargs):
     if errors not in ("raise", "warning", "silent"):
         raise ValueError("invalid error value specified")
 
-    if os.path.exists(filename):
+    if Path(filename).exists():
         return True
 
     fn = rel_to_dir(filename, kwargs["base_dir"])
@@ -57,7 +58,7 @@ def configured_uv(uvs):
             )
 
         # Check that UV directory exists
-        if not os.path.exists(os.path.join(settings.SEMESTER_DIR, uv)):
+        if not (Path(settings.SEMESTER_DIR) / uv).exists():
             raise ImproperlyConfigured(
                 _("The folder for the UV {uv} does not exist.").format(uv=uv)
             )
@@ -92,7 +93,7 @@ def get_unique_uv():
     if "UV_DIR" not in settings or settings.UV_DIR is None:
         raise NotUVDirectory(_("The task must be executed in a UV folder"))
 
-    uv = os.path.basename(settings.UV_DIR)
+    uv = Path(settings.UV_DIR).name
     conf_uvs = configured_uv([uv])
 
     return list(conf_uvs)[0]
@@ -119,7 +120,7 @@ class Output:
         self.action = None
 
     def __enter__(self):
-        if os.path.exists(self._target):
+        if Path(self._target).exists():
             if self.protected:
                 self.action = ask_choice(
                     _("The file `{fn}` already exists. ").format(fn=rel_to_dir(self._target, settings.SEMESTER_DIR)) + _("Overwrite (d), keep (g), save (s), cancel (a)? "),
@@ -143,16 +144,16 @@ class Output:
         if self.action == "keep":
             raise AbortWithBody
         if self.action == "backup":
-            parts = os.path.splitext(self._target)
+            target_path = Path(self._target)
             timestr = time.strftime("_%Y%m%d-%H%M%S")
-            target0 = parts[0] + timestr + parts[1]
+            target0 = str(target_path.parent / f"{target_path.stem}{timestr}{target_path.suffix}")
             os.rename(self._target, target0)
             logger.info(_("Backup to `%s`"), rel_to_dir(target0))
         elif self.action == "overwrite":
             logger.info(_("Overwriting the file `%s`"), rel_to_dir(self._target))
         elif self.action == "write":
-            dirname = os.path.dirname(self._target)
-            if not os.path.exists(dirname):
+            dirname = Path(self._target).parent
+            if not dirname.exists():
                 os.makedirs(dirname)
             logger.info(_("Writing the file `%s`"), rel_to_dir(self._target))
 
@@ -206,7 +207,7 @@ def render_from_contexts(template, contexts, save_tex=False, target=None):
         with Output(target + ".zip") as out:
             with zipfile.ZipFile(out.target, "w") as z:
                 for filepath in pdfs:
-                    z.write(filepath, os.path.basename(filepath))
+                    z.write(filepath, Path(filepath).name)
 
     # Copy all .tex files if requested
     if save_tex:
@@ -217,7 +218,7 @@ def render_from_contexts(template, contexts, save_tex=False, target=None):
             with Output(target + "_source.zip") as out:
                 with zipfile.ZipFile(out.target, "w") as z:
                     for filepath in texs:
-                        z.write(filepath, os.path.basename(filepath))
+                        z.write(filepath, Path(filepath).name)
 
     # Raise all errors at the end if any occurred
     if errors:

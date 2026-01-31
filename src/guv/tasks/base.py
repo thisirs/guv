@@ -230,7 +230,7 @@ class SemesterTask(TaskBase):
         target of that class as a dependency.
         """
 
-        target = os.path.join(settings.SEMESTER_DIR, cls.target_dir, cls.target_name)
+        target = str(Path(settings.SEMESTER_DIR) / cls.target_dir / cls.target_name)
         return pformat(target, **kwargs)
 
     def selected_uv(self):
@@ -251,11 +251,7 @@ class SemesterTask(TaskBase):
         kw["target_dir"] = self.target_dir
         kw["target_name"] = self.target_name
         kw.update(kwargs)
-        target = os.path.join(
-            settings.SEMESTER_DIR,
-            kw["target_dir"],
-            kw["target_name"],
-        )
+        target = str(Path(settings.SEMESTER_DIR) / kw["target_dir"] / kw["target_name"])
         return pformat(target, **kw)
 
 
@@ -272,17 +268,12 @@ class UVTask(TaskBase):
     def target_from(cls, **kwargs):
         """Return a target from the class of the task and keywords arguments"""
 
-        target = os.path.join(
-            settings.SEMESTER_DIR,
-            kwargs["uv"],
-            cls.target_dir,
-            cls.target_name,
-        )
+        target = str(Path(settings.SEMESTER_DIR) / kwargs["uv"] / cls.target_dir / cls.target_name)
         return pformat(target, **kwargs)
 
     def build_dep(self, fn):
         """Return pathname of a dependency relative to UV directory"""
-        return os.path.join(self.settings.SEMESTER_DIR, self.uv, fn)
+        return str(Path(self.settings.SEMESTER_DIR) / self.uv / fn)
 
     def build_target(self, **kwargs):
         """Return a pathname of the target"""
@@ -291,12 +282,7 @@ class UVTask(TaskBase):
         kw["target_dir"] = self.target_dir
         kw["target_name"] = self.target_name
         kw.update(kwargs)
-        target = os.path.join(
-            settings.SEMESTER_DIR,
-            kw["uv"],
-            kw["target_dir"],
-            kw["target_name"],
-        )
+        target = str(Path(settings.SEMESTER_DIR) / kw["uv"] / kw["target_dir"] / kw["target_name"])
         return pformat(target, **kw)
 
     @property
@@ -475,7 +461,7 @@ class ConfigOpt(CliArgsInheritMixin):
         raise NotImplementedError()
 
     def parse_config(self, config_file):
-        if not os.path.exists(config_file):
+        if not Path(config_file).exists():
             raise FileNotFoundError(_("{config_help} `{config_file}` not found").format(config_help=self.config_help, config_file=config_file))
 
         with open(config_file, "r") as stream:
@@ -528,7 +514,7 @@ class MultipleConfigOpt(CliArgsInheritMixin):
 
         configs = []
         for config_file in config_files:
-            if not os.path.exists(config_file):
+            if not Path(config_file).exists():
                 raise FileNotFoundError(_("{config_help} `{config_file}` not found").format(config_help=self.config_help, config_file=config_file))
 
             with open(config_file, "r") as stream:

@@ -1,5 +1,6 @@
 import logging
 import os
+from pathlib import Path
 
 import pandas as pd
 from doit.exceptions import TaskFailed
@@ -71,12 +72,7 @@ class Documents:
 
     @classmethod
     def target_from(cls, **kwargs):
-        target = os.path.join(
-            settings.SEMESTER_DIR,
-            kwargs["uv"],
-            cls.target_dir,
-            cls.target_name
-        )
+        target = str(Path(settings.SEMESTER_DIR) / kwargs["uv"] / cls.target_dir / cls.target_name)
         return pformat(target, step=kwargs["step"])
 
     def setup(self, settings, info):
@@ -110,7 +106,7 @@ class Documents:
                 return func
 
             value = "-".join(op.hash() for op in lst)
-            config_file = os.path.join(settings.SEMESTER_DIR, self.uv, "config.py")
+            config_file = str(Path(settings.SEMESTER_DIR) / self.uv / "config.py")
 
             doit_task = {
                 "basename": f"DOCS_{i}",
@@ -183,7 +179,7 @@ class XlsStudentData(UVTask):
         self.target = self.build_target()
 
     def get_column_dimensions(self):
-        if not os.path.exists(self.target):
+        if not Path(self.target).exists():
             return {}
 
         def column_dimensions(ws):
@@ -211,7 +207,7 @@ class XlsStudentData(UVTask):
         df = pd.read_csv(self.student_data)
 
         # Write set of columns for completion
-        fp = os.path.join(self.settings.SEMESTER_DIR, self.uv, "generated", ".columns.list")
+        fp = str(Path(self.settings.SEMESTER_DIR) / self.uv / "generated" / ".columns.list")
         with open(fp, "w") as file:
             file.write("\n".join(f"{e}" for e in df.columns.values))
 
@@ -275,7 +271,7 @@ class XlsStudentData(UVTask):
         with Output(self.target) as out:
             wb.save(out.target)
 
-        target = os.path.splitext(self.target)[0] + ".csv"
+        target = str(Path(self.target).parent / f"{Path(self.target).stem}.csv")
         with Output(target) as out:
             df.to_csv(out.target, index=False)
 

@@ -4,13 +4,13 @@ import argparse
 import gettext
 import os
 from pathlib import Path
+from importlib.resources import files
 
-import guv
 
 DOMAIN = "guv"
-LOCALE_DIR = os.path.join(guv.__path__[0], "locale")
+LOCALE_DIR = str(files("guv") / "locale")
 LANGUAGE = os.environ.get("LANG", "en_US").split("_")[0]
-TEMPLATE_DIR = os.path.join(guv.__path__[0], "templates")
+TEMPLATE_DIR = str(files("guv") / "templates")
 
 translation = gettext.translation(
     domain=DOMAIN, localedir=LOCALE_DIR, languages=[LANGUAGE], fallback=True
@@ -98,8 +98,8 @@ def _file(filename):
 
 def get_localized_template_directories():
     return [
-        os.path.join(guv.__path__[0], "data", "templates", LANGUAGE),
-        os.path.join(guv.__path__[0], "data", "templates", "en")
+        str(files("guv") / "data" / "templates" / LANGUAGE),
+        str(files("guv") / "data" / "templates" / "en")
     ]
 
 

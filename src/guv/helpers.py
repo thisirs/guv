@@ -2,6 +2,7 @@ import copy
 import functools
 import importlib.metadata
 import os
+from pathlib import Path
 import re
 import textwrap
 from collections.abc import Callable
@@ -353,7 +354,7 @@ class FileOperation(Operation):
 
     @property
     def filename(self):
-        return os.path.join(self.base_dir, self._filename)
+        return str(Path(self.base_dir) / self._filename)
 
     @property
     def deps(self):
@@ -503,7 +504,7 @@ class AggregateSelf(Operation):
 
         # Backup manually added columns
         df = right_df[id_cols + self.columns]
-        filename = os.path.join(self.settings.UV_DIR, "generated", ".aggregate_self.xlsx")
+        filename = str(Path(self.settings.UV_DIR) / "generated" / ".aggregate_self.xlsx")
         df.to_excel(filename, index=False)
 
         return merge
@@ -595,7 +596,7 @@ class FileStringOperation(FileOperation):
     @property
     def lines(self):
         if self.is_file:
-            filename =  os.path.join(self.base_dir, self.filename_or_string)
+            filename = str(Path(self.base_dir) / self.filename_or_string)
             check_filename(filename, base_dir=self.base_dir)
             lines = open(filename, "r").readlines()
         else:

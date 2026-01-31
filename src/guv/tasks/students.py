@@ -1,5 +1,6 @@
 import getpass
 import os
+from pathlib import Path
 import smtplib
 
 import jinja2
@@ -70,7 +71,7 @@ class SendEmail(UVTask, CliArgsMixin):
         self.parse_args()
 
     def run(self):
-        if os.path.exists(self.template):
+        if Path(self.template).exists():
             self.send_emails()
         else:
             self.create_template()

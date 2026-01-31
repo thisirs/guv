@@ -1,6 +1,7 @@
 import importlib.metadata
 import argparse
 import os
+from pathlib import Path
 
 import jinja2
 
@@ -50,17 +51,17 @@ class CreateSemesterHandler:
     def run(self, other):
         parser = self.add_parser()
         args = parser.parse_args(other)
-        base_dir = os.path.join(os.getcwd(), args.directory)
-        doc_dir = os.path.join(base_dir, "documents")
-        gen_dir = os.path.join(base_dir, "generated")
+        base_dir = Path.cwd() / args.directory
+        doc_dir = base_dir / "documents"
+        gen_dir = base_dir / "generated"
 
-        logger.info(_("Creating folder %s"), os.path.relpath(base_dir, os.getcwd()))
+        logger.info(_("Creating folder %s"), base_dir.relative_to(Path.cwd()))
         os.makedirs(base_dir, exist_ok=True)
 
-        logger.info(_("Creating folder %s"), os.path.relpath(doc_dir, os.getcwd()))
+        logger.info(_("Creating folder %s"), doc_dir.relative_to(Path.cwd()))
         os.makedirs(doc_dir, exist_ok=True)
 
-        logger.info(_("Creating folder %s"), os.path.relpath(gen_dir, os.getcwd()))
+        logger.info(_("Creating folder %s"), gen_dir.relative_to(Path.cwd()))
         os.makedirs(gen_dir, exist_ok=True)
 
         context = {
@@ -73,11 +74,11 @@ class CreateSemesterHandler:
         jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(tmpl_dirs))
         tmpl = jinja_env.get_template("semester_config.py.jinja2")
         content = tmpl.render(context)
-        new_path = os.path.join(base_dir, "config.py")
+        new_path = base_dir / "config.py"
 
-        logger.info(_("Creating file %s"), os.path.relpath(new_path, os.getcwd()))
-        if os.path.exists(new_path):
-            raise FileExistsError(_("The file %s already exists") % os.path.relpath(new_path, os.getcwd()))
+        logger.info(_("Creating file %s"), new_path.relative_to(Path.cwd()))
+        if new_path.exists():
+            raise FileExistsError(_("The file %s already exists") % new_path.relative_to(Path.cwd()))
         with open(new_path, "w", encoding="utf-8") as new_file:
             new_file.write(content)
 
@@ -85,18 +86,19 @@ class CreateSemesterHandler:
         return 0
 
 def create_uv_dirs(base_dir, uvs):
+    base_path = Path(base_dir)
     for uv in uvs:
-        uv_dir = os.path.join(base_dir, uv)
-        doc_dir = os.path.join(uv_dir, "documents")
-        gen_dir = os.path.join(uv_dir, "generated")
+        uv_dir = base_path / uv
+        doc_dir = uv_dir / "documents"
+        gen_dir = uv_dir / "generated"
 
-        logger.info(_("Creating folder %s"), os.path.relpath(uv_dir, os.getcwd()))
+        logger.info(_("Creating folder %s"), uv_dir.relative_to(Path.cwd()))
         os.makedirs(uv_dir, exist_ok=True)
 
-        logger.info(_("Creating folder %s"), os.path.relpath(doc_dir, os.getcwd()))
+        logger.info(_("Creating folder %s"), doc_dir.relative_to(Path.cwd()))
         os.makedirs(doc_dir, exist_ok=True)
 
-        logger.info(_("Creating folder %s"), os.path.relpath(gen_dir, os.getcwd()))
+        logger.info(_("Creating folder %s"), gen_dir.relative_to(Path.cwd()))
         os.makedirs(gen_dir, exist_ok=True)
 
         tmpl_dirs = get_localized_template_directories()
@@ -105,17 +107,17 @@ def create_uv_dirs(base_dir, uvs):
 
         context = {}
         content = tmpl.render(context)
-        new_path = os.path.join(uv_dir, "config.py")
+        new_path = uv_dir / "config.py"
 
-        logger.info(_("Creating file %s"), os.path.relpath(new_path, os.getcwd()))
-        if os.path.exists(new_path):
-            raise FileExistsError(_("The file `%s` already exists") % os.path.relpath(new_path, os.getcwd()))
+        logger.info(_("Creating file %s"), new_path.relative_to(Path.cwd()))
+        if new_path.exists():
+            raise FileExistsError(_("The file `%s` already exists") % new_path.relative_to(Path.cwd()))
         with open(new_path, "w", encoding="utf-8") as new_file:
             new_file.write(content)
 
 
 def run_createuv(args):
-    base_dir = os.getcwd()
+    base_dir = Path.cwd()
     create_uv_dirs(base_dir, args.uv)
     return 0
 

@@ -204,10 +204,10 @@ class Settings:
             self.config_files = [str(Path(self.conf_dir) / "config.py")]
             self.semester_directory = str(Path(self.conf_dir))
             self._settings["UV_DIR"] = None
-            self._settings["SEMESTER"] = os.path.basename(self.semester_directory)
+            self._settings["SEMESTER"] = Path(self.semester_directory).name
             self._settings["SEMESTER_DIR"] = self.semester_directory
             self._settings["DOIT_CONFIG"] = {
-                "dep_file": os.path.join(self.semester_directory, ".guv.db"),
+                "dep_file": str(Path(self.semester_directory) / ".guv.db"),
                 "verbosity": 2,
                 "default_tasks": ["xls_student_data"],
             }
@@ -220,10 +220,10 @@ class Settings:
             ]
             self.semester_directory = str(Path(self.conf_dir).parent)
             self._settings["UV_DIR"] = self.conf_dir
-            self._settings["SEMESTER"] = os.path.basename(self.semester_directory)
+            self._settings["SEMESTER"] = Path(self.semester_directory).name
             self._settings["SEMESTER_DIR"] = self.semester_directory
             self._settings["DOIT_CONFIG"] = {
-                "dep_file": os.path.join(self.semester_directory, ".guv.db"),
+                "dep_file": str(Path(self.semester_directory) / ".guv.db"),
                 "verbosity": 2,
                 "default_tasks": ["xls_student_data"],
             }
@@ -245,7 +245,7 @@ class Settings:
 
     def load_file(self, config_file):
         logger.debug(_("Loading configuration file: `%s`"), config_file)
-        module_name = os.path.splitext(os.path.basename(config_file))[0]
+        module_name = Path(config_file).stem
         spec = importlib.util.spec_from_file_location(module_name, config_file)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)

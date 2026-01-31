@@ -1,7 +1,8 @@
 import json
 import os
+from importlib.resources import files
+from pathlib import Path
 
-import guv
 import jsonschema
 import yaml
 from openpyxl.formatting.rule import CellIsRule
@@ -18,7 +19,6 @@ from ..utils_ask import checkboxlist_prompt, prompt_number
 from ..utils_config import ask_choice, rel_to_dir
 from . import base
 from . import base_gradebook as baseg
-
 
 __all__ = ["XlsGradeBookGroup", "XlsGradeBookJury", "XlsGradeBookNoGroup"]
 
@@ -228,8 +228,8 @@ class XlsGradeBookNoGroup(baseg.AbstractGradeBook, base.MultipleConfigOpt):
     def validate_config(self, config):
         """Validation du fichier de configuration"""
 
-        tmpl_dir = os.path.join(guv.__path__[0], "schemas")
-        schema_file = os.path.join(tmpl_dir, "gradebook_marking_schema.json")
+        tmpl_dir = str(files("guv") / "schemas")
+        schema_file = str(Path(tmpl_dir) / "gradebook_marking_schema.json")
         schema = json.load(open(schema_file, "rb"))
 
         jsonschema.validate(config, schema)
@@ -759,8 +759,8 @@ class XlsGradeBookJury(baseg.AbstractGradeBook, base.ConfigOpt):
           - info
         """
 
-        tmpl_dir = os.path.join(guv.__path__[0], "schemas")
-        schema_file = os.path.join(tmpl_dir, "gradebook_jury_schema.json")
+        tmpl_dir = str(files("guv") / "schemas")
+        schema_file = str(Path(tmpl_dir) / "gradebook_jury_schema.json")
         schema = json.load(open(schema_file, "rb"))
 
         jsonschema.validate(config, schema)

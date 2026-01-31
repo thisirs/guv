@@ -1,5 +1,6 @@
 import hashlib
 import os
+from pathlib import Path
 import re
 import string
 import tempfile
@@ -237,7 +238,7 @@ def render_latex_template(template, context):
     filename_no_ext = context["filename_no_ext"]
 
     # Write tex
-    tex_filepath = os.path.join(temp_dir, filename_no_ext + ".tex")
+    tex_filepath = str(Path(temp_dir) / f"{filename_no_ext}.tex")
     with open(tex_filepath, "w") as fd:
         fd.write(tex)
 
@@ -329,10 +330,15 @@ def check_if_present(dataframe, columns, errors="raise"):
 def rel_to_dir_aux(path, ref_dir, root_dir):
     """Maybe make `path` relative to `ref_dir` if absolute and child of `root_dir`"""
 
-    if not os.path.isabs(path):
+    path_obj = Path(path)
+    if not path_obj.is_absolute():
         return path
 
-    if os.path.commonpath([root_dir]) == os.path.commonpath([root_dir, path]):
-        return os.path.relpath(path, ref_dir)
-
-    return path
+    # Check if path is a child of root_dir
+    try:
+        path_obj.relative_to(root_dir)
+        # If we get here, it's a child - return relative to ref_dir
+        return str(Path(path).relative_to(ref_dir))
+    except ValueError:
+        # Not a child of root_dir
+        return path

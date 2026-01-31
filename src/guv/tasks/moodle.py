@@ -1,6 +1,7 @@
 import json
 import math
 import os
+from pathlib import Path
 import random
 import shlex
 import sys
@@ -437,7 +438,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
                 )
         elif len(self.names) == 1:
             path = self.names[0]
-            if os.path.exists(path):
+            if Path(path).exists():
                 with open(path, "r") as fd:
                     lines = [l.strip() for l in fd.readlines()]
                 if self.random:
@@ -558,7 +559,7 @@ class CsvCreateGroups(UVTask, CliArgsMixin):
         df_groups = pd.DataFrame({"groupname": df[self.settings.LOGIN_COLUMN], 'groupingname': s_groups})
         df_groups = df_groups.sort_values(["groupingname", "groupname"])
 
-        csv_target = os.path.splitext(self.target)[0] + '_secret.csv'
+        csv_target = str(Path(self.target).parent / f"{Path(self.target).stem}_secret.csv")
         with Output(csv_target) as out:
             df_groups.to_csv(out.target, index=False)
 
