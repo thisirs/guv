@@ -3,7 +3,7 @@ import re
 import textwrap
 
 from .handlers import get_handlers
-from .tasks.base import CliArgsInheritMixin, CliArgsMixin, ConfigOpt, GroupOpt
+from .tasks.base import CliArgsInheritMixin, CliArgsMixin, ConfigOpt, GroupOpt, clean_argparse_kwargs
 from .translations import _
 from .utils import argument
 
@@ -93,6 +93,8 @@ def get_parser(tasks, add_hidden=False):
                 formatter_class=argparse.RawDescriptionHelpFormatter,
             )
             for arg in args:
-                sp.add_argument(*arg.args, **arg.kwargs)
+                # Clean RST markup from help text for terminal display
+                clean_kwargs = clean_argparse_kwargs(arg.kwargs)
+                sp.add_argument(*arg.args, **clean_kwargs)
 
     return parser

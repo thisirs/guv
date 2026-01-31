@@ -6,7 +6,7 @@
 _shtab_guv_commands() {
   local _commands=(
     "csv_create_groups:Random creation of student groups"
-    "csv_groups:CSV files of groups from \`\`effectif.xlsx\`\` for Moodle"
+    "csv_groups:CSV files of groups from effectif.xlsx for Moodle"
     "csv_groups_groupings:CSV file of groups and groupings for Moodle import"
     "doit:Allows access to underlying sub-commands"
     "pdf_attendance:PDF file of attendance sheets"
@@ -31,7 +31,7 @@ _shtab_guv_csv_create_groups_options=(
   {-n,--num-groups}"[Number of groups to create (per sub-groups if specified)]:num_groups:"
   {-s,--group-size}"[Group size\: pairs, trios or more]:group_size:"
   {-p,--proportions}"[List of proportions to create the groups]:proportions:"
-  {-t,--template}"[Template to give names to the groups with \`\{title\}\`, \`\{grouping_name\}\` or \`\{group_name\}\`]:_template:"
+  {-t,--template}"[Template to give names to the groups with \{title\}, \{grouping_name\} or \{group_name\}]:_template:"
   {-l,--names}"[List of keywords to build the group names]:names:"
   {-o,--ordered}"[Order the list of students alphabetically or by columns]:ordered:_guv_columns"
   {-g,--global}"[Do not reset the sequence of group names between each grouping]"
@@ -44,7 +44,7 @@ _shtab_guv_csv_create_groups_options=(
 
 _shtab_guv_csv_groups_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
-  {-g,--groups}"[List of groupings to consider via a column name. By default, the groupings \`\`Lecture\`\`, \`\`Tutorial\`\` and \`\`Practical work\`\` are used.]:groups:_guv_columns"
+  {-g,--groups}"[List of groupings to consider via a column name. By default, the groupings Lecture, Tutorial and Practical work are used.]:groups:_guv_columns"
   {-l,--long}"[Use the names of Lecture\/Tutorial\/Practical work groups in long format, i.e., \"TP1\" and \"TD1\" instead of \"T1\" and \"D1\"]"
   {-s,--single}"[Create a single file]"
 )
@@ -64,22 +64,24 @@ _shtab_guv_doit_options=(
 
 _shtab_guv_pdf_attendance_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
-  {-t,--title}"[Specifies a title that will be used in the attendance sheets and the name of the generated file. By default, it is \`\`Attendance sheet\`\`.]:title:"
-  {-g,--group}"[Allows creating groups to make as many attendance sheets. You must specify a column from the central file \`\`effectif.xlsx\`\`.]:group:_guv_column"
+  {-t,--title}"[Specifies a title that will be used in the attendance sheets and the name of the generated file. By default, it is Attendance sheet.]:title:"
+  {-g,--group}"[Allows creating groups to make as many attendance sheets. You must specify a column from the central file effectif.xlsx.]:group:_guv_column"
   {-b,--blank}"[Do not display the names of the students (useful only with --group).]"
-  {-c,--count}"[Uses a list of staff instead of \`\`--group\`\`. The group names can be specified by \`\`--names\`\`. Otherwise, the group names are in the form \`\`Group 1\`\`, \`\`Group 2\`\`,...]:count:"
-  {-n,--names}"[Specifies the names of the groups corresponding to \`\`--count\`\`. The list must be the same size as \`\`--count\`\`.]:names:"
-  {-e,--extra}"[Allows adding additional empty lines in addition to those already present induced by \`\`--group\`\` or set by \`\`--count\`\`.]:extra:"
-  "--tiers-temps[Specifies the column for students placed in a dedicated room. If the column is not specified, \`\`None\`\`.]:tiers_temps:_guv_column"
+  {-c,--count}"[Uses a list of staff instead of --group. The group names can be specified by --names. Otherwise, the group names are in the form Group 1, Group 2,...]:count:"
+  {-n,--names}"[Specifies the names of the groups corresponding to --count. The list must be the same size as --count.]:names:"
+  {-e,--extra}"[Allows adding additional empty lines in addition to those already present induced by --group or set by --count.]:extra:"
+  "--tiers-temps[Specifies the column for students placed in a dedicated room. If the column is not specified, None.]:tiers_temps:_guv_column"
+  "--latex-template[Path to a custom LaTeX template file. If not specified, uses the default template.]:latex_template:_files"
   "--save-tex[Allows leaving the generated .tex files for possible modification.]"
 )
 
 _shtab_guv_pdf_attendance_full_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
-  "--title[Specifies a title that will be used in the attendance sheets and the name of the generated file. By default, it is \`\`Attendance sheet\`\`.]:title:"
+  "--title[Specifies a title that will be used in the attendance sheets and the name of the generated file. By default, it is Attendance sheet.]:title:"
   {-g,--group}"[Allows specifying a group column to make attendance sheets by groups.]:group:_guv_column"
   {-n,--slots}"[Allows specifying the number of sessions for the semester, i.e., the number of columns in the attendance sheet.]:slots:"
-  {-t,--template}"[Template to set the name of successive sessions in the attendance sheet. By default, it is \`\`S\{number\}\`\`. The only supported keyword is \`\`number\`\` which starts at 1.]:template:"
+  {-t,--template}"[Template to set the name of successive sessions in the attendance sheet. By default, it is S\{\{number\}\}. The only supported keyword is number which starts at 1.]:template:"
+  "--latex-template[Path to a custom LaTeX template file. If not specified, uses the default template.]:latex_template:_files"
   "--save-tex[Allows leaving the generated .tex files for possible modification.]"
 )
 

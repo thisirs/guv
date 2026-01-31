@@ -14,10 +14,30 @@ from ..config import Settings, settings
 from ..exceptions import (DependentTaskParserError, ImproperlyConfigured,
                           NotUVDirectory, CommonColumns, MissingColumns)
 from ..logger import logger
-from ..translations import _
+from ..translations import _, rst_to_plain
 from ..utils import pformat, check_if_absent, check_if_present
 from ..utils_ask import prompt_number
 from ..utils_config import get_unique_uv, selected_uv, configured_uv, rel_to_dir
+
+
+def clean_argparse_kwargs(kwargs):
+    """Clean RST markup from argparse keyword arguments.
+
+    Removes RST markup (like double backticks) from the 'help' field
+    to make it suitable for terminal display and shell completions.
+
+    Args:
+        kwargs: Dictionary of argparse keyword arguments
+
+    Returns:
+        Dictionary with cleaned help text
+    """
+    if 'help' in kwargs and kwargs['help']:
+        # Create a copy to avoid modifying the original
+        kwargs = kwargs.copy()
+        # Strip RST markup from help text
+        kwargs['help'] = rst_to_plain(kwargs['help'])
+    return kwargs
 
 
 class TaskBase:
@@ -361,7 +381,9 @@ class CliArgsMixin:
             )
 
             for arg in self.cli_args:
-                parser.add_argument(*arg.args, **arg.kwargs)
+                # Clean RST markup from help text for terminal display
+                clean_kwargs = clean_argparse_kwargs(arg.kwargs)
+                parser.add_argument(*arg.args, **clean_kwargs)
             self._parser = parser
 
         return self._parser
@@ -418,7 +440,9 @@ class CliArgsInheritMixin(CliArgsMixin):
             )
 
     def add_argument(self, *args, **kwargs):
-        self._parser.add_argument(*args, **kwargs)
+        # Clean RST markup from help text for terminal display
+        clean_kwargs = clean_argparse_kwargs(kwargs)
+        self._parser.add_argument(*args, **clean_kwargs)
 
     def get_columns(self, **kwargs):
         return []

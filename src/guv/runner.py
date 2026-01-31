@@ -69,10 +69,12 @@ def print_completer(shell="zsh"):
             "column": ["group"]
         },
         "pdf_attendance": {
-            "column": ["--group", "--tiers-temps"]
+            "column": ["--group", "--tiers-temps"],
+            "file": ["--latex-template"]
         },
         "pdf_attendance_full": {
-            "column": ["--group"]
+            "column": ["--group"],
+            "file": ["--latex-template"]
         },
         "pdf_trombinoscope": {
             "column": ["--group", "--subgroup"]

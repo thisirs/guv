@@ -6,7 +6,7 @@
 _shtab_guv_commands() {
   local _commands=(
     "csv_create_groups:Création aléatoire de groupes d\'étudiants prêt à charger sous Moodle."
-    "csv_groups:Fichiers csv de groupes présents dans \`\`effectif.xlsx\`\` pour Moodle."
+    "csv_groups:Fichiers csv de groupes présents dans effectif.xlsx pour Moodle."
     "csv_groups_groupings:Fichier csv de groupes et groupements à charger sur Moodle pour les créer."
     "doit:Permet d\'avoir accès aux commandes doit sous-jacentes"
     "pdf_attendance:Fichier pdf de feuilles de présence."
@@ -15,7 +15,7 @@ _shtab_guv_commands() {
     "xls_grade_book_group:Fichier Excel de notes par groupe."
     "xls_grade_book_jury:Fichier Excel pour la gestion d\'un jury d\'UV"
     "xls_grade_book_no_group:Fichier Excel de notes individuelles."
-    "xls_student_data:Agrège les informations spécifiées dans la variable \`\`DOCS\`\`"
+    "xls_student_data:Agrège les informations spécifiées dans la variable DOCS"
     "zoom_breakout_rooms:Crée un fichier csv prêt à charger sur Zoom pour faire des groupes"
   )
   _describe 'guv commands' _commands
@@ -31,7 +31,7 @@ _shtab_guv_csv_create_groups_options=(
   {-n,--num-groups}"[Nombre de groupes à créer (par sous-groupes si spécifié)]:num_groups:"
   {-s,--group-size}"[Taille des groupes \: binômes, trinômes ou plus]:group_size:"
   {-p,--proportions}"[Liste de proportions pour créer les groupes]:proportions:"
-  {-t,--template}"[Modèle pour donner des noms aux groupes avec \`\{title\}\`, \`\{grouping_name\}\` ou \`\{group_name\}\`]:_template:"
+  {-t,--template}"[Modèle pour donner des noms aux groupes avec \{title\}, \{grouping_name\} ou \{group_name\}]:_template:"
   {-l,--names}"[Liste de mots clés pour construire les noms des groupes]:names:"
   {-o,--ordered}"[Ordonner la liste des étudiants par ordre alphabétique ou par colonnes]:ordered:_guv_columns"
   {-g,--global}"[Ne pas remettre à zéro la suite des noms de groupes entre chaque groupement]"
@@ -44,7 +44,7 @@ _shtab_guv_csv_create_groups_options=(
 
 _shtab_guv_csv_groups_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
-  {-g,--groups}"[Liste des groupements à considérer via un nom de colonne. Par défaut, les groupements \`\`Cours\`\`, \`\`TD\`\` et \`\`TP\`\` sont utilisés.]:groups:_guv_columns"
+  {-g,--groups}"[Liste des groupements à considérer via un nom de colonne. Par défaut, les groupements Cours, TD et TP sont utilisés.]:groups:_guv_columns"
   {-l,--long}"[Utiliser les noms de groupes de Cours\/TD\/TP au format long, c\'est à dire \"TP1\" et \"TD1\" au lieu de \"T1\" et \"D1\"]"
   {-s,--single}"[Créer un unique fichier]"
 )
@@ -64,22 +64,24 @@ _shtab_guv_doit_options=(
 
 _shtab_guv_pdf_attendance_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
-  {-t,--title}"[Spécifie un titre qui sera utilisé dans les feuilles de présence et le nom du fichier généré. Par défaut, on a \`\`Feuille de présence\`\`.]:title:"
-  {-g,--group}"[Permet de créer des groupes pour faire autant de feuilles de présence. Il faut spécifier une colonne du fichier central \`\`effectif.xlsx\`\`.]:group:_guv_column"
+  {-t,--title}"[Spécifie un titre qui sera utilisé dans les feuilles de présence et le nom du fichier généré. Par défaut, on a Feuille de présence.]:title:"
+  {-g,--group}"[Permet de créer des groupes pour faire autant de feuilles de présence. Il faut spécifier une colonne du fichier central effectif.xlsx.]:group:_guv_column"
   {-b,--blank}"[Ne pas faire apparaître le nom des étudiants (utile seulement avec --group).]"
-  {-c,--count}"[Utilise une liste d\'effectifs au lieu de \`\`--group\`\`. Le nom des groupes peut être spécifié par \`\`--names\`\`. Sinon, les noms de groupe sont de la forme \`\`Groupe 1\`\`, \`\`Groupe 2\`\`,...]:count:"
-  {-n,--names}"[Spécifie le nom des groupes correspondants à \`\`--count\`\`. La liste doit être de même taille que \`\`--count\`\`.]:names:"
-  {-e,--extra}"[Permet de rajouter des lignes supplémentaires vides en plus de celles déjà présentes induites par \`\`--group\`\` ou fixées par \`\`--count\`\`.]:extra:"
-  "--tiers-temps[Spécifie la colonne pour les étudiants placés dans une salle dédiée. Si colonne non spécifiée, \`\`None\`\`.]:tiers_temps:_guv_column"
+  {-c,--count}"[Utilise une liste d\'effectifs au lieu de --group. Le nom des groupes peut être spécifié par --names. Sinon, les noms de groupe sont de la forme Groupe 1, Groupe 2,...]:count:"
+  {-n,--names}"[Spécifie le nom des groupes correspondants à --count. La liste doit être de même taille que --count.]:names:"
+  {-e,--extra}"[Permet de rajouter des lignes supplémentaires vides en plus de celles déjà présentes induites par --group ou fixées par --count.]:extra:"
+  "--tiers-temps[Spécifie la colonne pour les étudiants placés dans une salle dédiée. Si colonne non spécifiée, None.]:tiers_temps:_guv_column"
+  "--latex-template[Chemin vers un fichier de template LaTeX personnalisé. Si non spécifié, utilise le template par défaut.]:latex_template:_files"
   "--save-tex[Permet de laisser les fichiers .tex générés pour modification éventuelle.]"
 )
 
 _shtab_guv_pdf_attendance_full_options=(
   "(- : *)"{-h,--help}"[show this help message and exit]"
-  "--title[Spécifie un titre qui sera utilisé dans les feuilles de présence et le nom du fichier généré. Par défaut, on a \`\`Feuille de présence\`\`.]:title:"
+  "--title[Spécifie un titre qui sera utilisé dans les feuilles de présence et le nom du fichier généré. Par défaut, on a Feuille de présence.]:title:"
   {-g,--group}"[Permet de spécifier une colonne de groupes pour faire des feuilles de présence par groupes.]:group:_guv_column"
   {-n,--slots}"[Permet de spécifier le nombre de séances pour le semestre c\'est à dire le nombre de colonne dans la feuille de présence.]:slots:"
-  {-t,--template}"[Modèle permettant de fixer le nom des séances successives dans la feuille de présence. Par défaut on a \`\`S\{number\}\`\`. Le seul mot-clé supporté est \`\`number\`\` qui commence à 1.]:template:"
+  {-t,--template}"[Modèle permettant de fixer le nom des séances successives dans la feuille de présence. Par défaut on a S\{\{number\}\}. Le seul mot-clé supporté est number qui commence à 1.]:template:"
+  "--latex-template[Chemin vers un fichier de template LaTeX personnalisé. Si non spécifié, utilise le template par défaut.]:latex_template:_files"
   "--save-tex[Permet de laisser les fichiers .tex générés pour modification éventuelle.]"
 )
 
