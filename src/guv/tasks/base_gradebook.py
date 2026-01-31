@@ -5,7 +5,7 @@ import pandas as pd
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 
-from .. import openpyxl_patched
+from .. import openpyxl_patched  # noqa: F401 - Imported for side effects (patches openpyxl)
 from ..logger import logger
 from ..openpyxl_utils import fit_cells_at_col, get_range_from_cells
 from ..translations import _, _file

@@ -1,5 +1,4 @@
 import hashlib
-import os
 from pathlib import Path
 import re
 import string
@@ -273,7 +272,7 @@ def read_dataframe(filename, read_method=None, kw_read=None):
         elif filename.endswith('.xlsx'):
             df = pd.read_excel(filename, engine="openpyxl", **kw_read)
         elif filename.endswith('.xls'):
-            import xlrd
+            import xlrd  # noqa: F401 - Needed for pandas engine
             df = pd.read_excel(filename, engine="xlrd", *kw_read)
         else:
             raise ValueError(_("Excel or CSV file only"))

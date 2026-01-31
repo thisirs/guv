@@ -1,5 +1,4 @@
 import logging
-import os
 from pathlib import Path
 
 import pandas as pd
@@ -9,7 +8,7 @@ from openpyxl import Workbook, load_workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.utils.dataframe import dataframe_to_rows
 
-from .. import openpyxl_patched
+from .. import openpyxl_patched  # noqa: F401 - Imported for side effects (patches openpyxl)
 from ..config import settings
 from ..exceptions import ImproperlyConfigured
 from ..logger import logger

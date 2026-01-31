@@ -1,5 +1,4 @@
 import json
-import os
 from importlib.resources import files
 from pathlib import Path
 
@@ -9,7 +8,7 @@ from openpyxl.formatting.rule import CellIsRule
 from openpyxl.styles import Alignment, PatternFill
 from openpyxl.utils import get_column_letter
 
-from .. import openpyxl_patched
+from .. import openpyxl_patched  # noqa: F401 - Imported for side effects (patches openpyxl)
 from ..openpyxl_utils import (fit_columns_dimension, frame_range,
                               generate_ranges, get_address_of_cell,
                               get_range_from_cells, get_segment, row_and_col)

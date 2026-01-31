@@ -1,6 +1,5 @@
 import argparse
 import logging
-import os
 import re
 import sys
 from pathlib import Path
@@ -68,7 +67,6 @@ class TaskBase:
         exception n'est rattrapée.
 
         """
-        pass
 
     def check_if_absent(self, df, columns, errors="raise", file=None, base_dir=None):
         if errors not in ("raise", "warning", "silent"):

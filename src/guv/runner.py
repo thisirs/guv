@@ -3,7 +3,6 @@ import importlib
 import importlib.metadata
 import inspect
 import logging
-import os
 from pathlib import Path
 import shlex
 import sys
