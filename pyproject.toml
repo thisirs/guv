@@ -17,7 +17,7 @@ scripts = { guv = "guv.runner:main" }
 dependencies = [
   "doit",
   "Jinja2",
-  "jsonschema",
+  "jsonschema<4.23",
   "numpy",
   "openpyxl",
   "pandas",
