@@ -11,12 +11,46 @@ from doit.tools import config_changed
 
 from ..config import Settings, settings
 from ..exceptions import (DependentTaskParserError, ImproperlyConfigured,
-                          NotUVDirectory, CommonColumns, MissingColumns)
+                          NotUVDirectory, CommonColumns, MissingColumns, GuvUserError)
 from ..logger import logger
 from ..translations import _, rst_to_plain
 from ..utils import pformat, check_if_absent, check_if_present
 from ..utils_ask import prompt_number
 from ..utils_config import get_unique_uv, selected_uv, configured_uv, rel_to_dir
+
+
+class DuplicateKeysLoader(yaml.SafeLoader):
+    """Custom YAML loader that raises an error on duplicate keys.
+
+    This prevents silent bugs where duplicate keys in YAML files
+    cause the last value to silently override previous values.
+    """
+    pass
+
+
+def _no_duplicates_constructor(loader, node, deep=False):
+    """Check for duplicate keys in YAML mappings."""
+    mapping = {}
+    for key_node, value_node in node.value:
+        key = loader.construct_object(key_node, deep=deep)
+        value = loader.construct_object(value_node, deep=deep)
+
+        if key in mapping:
+            raise GuvUserError(
+                _("Duplicate key '{key}' found in YAML file at line {line}").format(
+                    key=key, line=key_node.start_mark.line + 1
+                )
+            )
+        mapping[key] = value
+
+    return mapping
+
+
+# Register the constructor for mappings
+DuplicateKeysLoader.add_constructor(
+    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+    _no_duplicates_constructor
+)
 
 
 def clean_argparse_kwargs(kwargs):
@@ -506,7 +540,7 @@ class ConfigOpt(CliArgsInheritMixin):
             raise FileNotFoundError(_("{config_help} `{config_file}` not found").format(config_help=self.config_help, config_file=config_file))
 
         with open(config_file, "r") as stream:
-            config = list(yaml.load_all(stream, Loader=yaml.SafeLoader))[0]
+            config = list(yaml.load_all(stream, Loader=DuplicateKeysLoader))[0]
             config = self.validate_config(config)
             return config
 
@@ -559,7 +593,7 @@ class MultipleConfigOpt(CliArgsInheritMixin):
                 raise FileNotFoundError(_("{config_help} `{config_file}` not found").format(config_help=self.config_help, config_file=config_file))
 
             with open(config_file, "r") as stream:
-                loaded_yaml = yaml.load_all(stream, Loader=yaml.SafeLoader)
+                loaded_yaml = yaml.load_all(stream, Loader=DuplicateKeysLoader)
                 configs.extend([self.validate_config(c) for c in loaded_yaml])
 
         return configs
