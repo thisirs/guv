@@ -10,8 +10,6 @@ import openpyxl
 
 import pytest
 
-pytest_plugins = ["tests.plugins.test_path"]
-
 BASE_DIR = Path(__file__).parent
 
 
@@ -114,7 +112,7 @@ def collection_dir(tmp_path_factory):
     return tmp_path_factory.mktemp("collected_test_outputs")
 
 
-from tests.plugins.test_path import _TestPath
+from pytest_path_dependency.plugin import _TestPath
 
 
 @pytest.fixture(scope="class")

@@ -34,6 +34,7 @@ dev = [
   "pytest>=8.3.5",
   "pytest-dependency",
   "pytest-order",
+  "pytest-path-dependency @ git+https://codeberg.org/thisirs/pytest-path-dependency.git",
   "shtab",
 ]
 doc = [

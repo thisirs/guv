@@ -1,5 +1,5 @@
 import pytest
-from tests.plugins.test_path import path_dependency
+from pytest_path_dependency import path_dependency
 
 
 data = [
