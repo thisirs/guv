@@ -1,8 +1,8 @@
 # `guv`
 
 **`guv`** is a command-line tool designed to simplify the management of multiple
-courses. It helps centralize information related to each courses and easily
-integrate new data through configuration files. With `guv`, you can generate,
+courses. It helps centralize information related to each course and easily
+integrate new data through configuration files. With `guv`, you can generate
 attendance sheets, grade and jury spreadsheets, and much more!
 
 ---
@@ -35,7 +35,7 @@ Follow the steps below to get started with `guv`:
     guv createsemester Fall2024 --uv CS042 CS314
     ```
 
-    This creates a semester directory `Fall2024` containing to courses `CS314`
+    This creates a semester directory `Fall2024` containing two courses `CS314`
     and `CS042`.
 
 2. **Provide a base listing file**:
